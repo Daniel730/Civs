@@ -5,12 +5,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
+import java.util.logging.Level;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.persistence.PersistentDataType;
 import org.redcastlemedia.multitallented.civs.Civs;
 import org.redcastlemedia.multitallented.civs.ConfigManager;
 import org.redcastlemedia.multitallented.civs.localization.LocaleConstants;
@@ -20,12 +23,10 @@ import org.redcastlemedia.multitallented.civs.items.CVItem;
 import org.redcastlemedia.multitallented.civs.items.CivItem;
 import org.redcastlemedia.multitallented.civs.items.FolderType;
 import org.redcastlemedia.multitallented.civs.items.ItemManager;
-import org.redcastlemedia.multitallented.civs.localization.LocaleUtil;
 import org.redcastlemedia.multitallented.civs.menus.CivsMenu;
 import org.redcastlemedia.multitallented.civs.menus.CustomMenu;
 import org.redcastlemedia.multitallented.civs.menus.MenuIcon;
 import org.redcastlemedia.multitallented.civs.menus.MenuManager;
-import org.redcastlemedia.multitallented.civs.util.Constants;
 import org.redcastlemedia.multitallented.civs.util.Util;
 
 @CivsMenu(name = "shop") @SuppressWarnings("unused")
@@ -65,7 +66,7 @@ public class ShopMenu extends CustomMenu {
                 int currentLevel = 1;
                 for (String matString : ConfigManager.getInstance().getLevelList()) {
                     CVItem cvItem = CVItem.createCVItemFromString(matString);
-                    cvItem.setDisplayName(LocaleManager.getInstance().getTranslationWithPlaceholders(player,
+                    cvItem.setDisplayName(LocaleManager.getInstance().getTranslation(player,
                             "level").replace("$1", "" + currentLevel));
                     ArrayList<String> lore = new ArrayList<>();
                     lore.add("" + currentLevel);
@@ -125,13 +126,8 @@ public class ShopMenu extends CustomMenu {
                 return new ItemStack(Material.AIR);
             }
             CVItem icon = parent.getShopIcon(civilian.getLocale());
-            icon.setDisplayName(LocaleManager.getInstance()
-                    .getTranslationWithPlaceholders(player, parent.getProcessedName() + LocaleConstants.NAME_SUFFIX));
-            icon.getLore().clear();
-            icon.getLore().add(ChatColor.BLACK + parent.getProcessedName());
-            icon.getLore().addAll(Util.textWrap(civilian, LocaleManager.getInstance()
-                    .getTranslationWithPlaceholders(player,
-                    parent.getProcessedName() + "-desc")));
+            icon.setDisplayName(parent.getDisplayName(player));
+            icon.setLore(parent.getLore(player, false));
             putActions(civilian, menuIcon, icon.createItemStack(), count);
             return icon.createItemStack();
         } else if (menuIcon.getKey().equals("items")) {
@@ -149,8 +145,15 @@ public class ShopMenu extends CustomMenu {
                     if (!folderType.getVisible()) {
                         return new ItemStack(Material.AIR);
                     }
+                    List<String> preReqs = ConfigManager.getInstance().getFolderReqs().get(folderType.getKey());
+                    if (preReqs != null && !preReqs.isEmpty()) {
+                        List<String> unmetReqs = ItemManager.getInstance().getAllUnmetRequirements(preReqs, civilian, true);
+                        if (!unmetReqs.isEmpty()) {
+                            return new ItemStack(Material.AIR);
+                        }
+                    }
                 }
-                ItemStack itemStack = createShopItem(civItem, civilian);
+                ItemStack itemStack = civItem.createShopItemStack(player);
                 if (itemStack.getType() == Material.AIR) {
                     return itemStack;
                 }
@@ -173,27 +176,32 @@ public class ShopMenu extends CustomMenu {
     @Override
     public boolean doActionAndCancel(Civilian civilian, String actionString, ItemStack clickedItem) {
         if (actionString.equals("view-item")) {
-            String key = clickedItem.getItemMeta().getLore().get(0);
             Player player = Bukkit.getPlayer(civilian.getUuid());
             String sortType = (String) MenuManager.getData(civilian.getUuid(), "sort");
             HashMap<String, String> params = new HashMap<>();
-            String name = ChatColor.stripColor(key).toLowerCase();
-            CivItem civItem = ItemManager.getInstance().getItemType(name);
+            CivItem civItem = CivItem.getFromItemStack(clickedItem);
             if (civItem != null) {
                 if (civItem.getItemType() == CivItem.ItemType.REGION) {
-                    params.put("regionType", name);
+                    params.put("regionType", civItem.getProcessedName());
                     params.put("showPrice", "true");
                     MenuManager.getInstance().openMenu(player, "region-type", params);
                     return true;
                 } else if (civItem.getItemType() == CivItem.ItemType.TOWN) {
-                    params.put("townType", name);
+                    params.put("townType", civItem.getProcessedName());
                     params.put("showPrice", "true");
                     MenuManager.getInstance().openMenu(player, "town-type", params);
+                    return true;
+                } else if (civItem.getItemType() == CivItem.ItemType.FOLDER) {
+                    params.put("sort", "category");
+                    params.put("parent", civItem.getProcessedName());
+                    MenuManager.getInstance().openMenu(player, "shop", params);
                     return true;
                 }
             } else if (clickedItem.getType() == Material.BARRIER) {
                 return true;
             }
+            String key = clickedItem.getItemMeta().getLore().get(0);
+            String name = ChatColor.stripColor(key).toLowerCase();
             if ("level".equals(sortType)) {
                 int level = Integer.parseInt(name);
                 params.put("level", "" + level);
@@ -209,49 +217,6 @@ public class ShopMenu extends CustomMenu {
             return true;
         }
         return super.doActionAndCancel(civilian, actionString, clickedItem);
-    }
-
-    private ItemStack createShopItem(CivItem civItem, Civilian civilian) {
-        LocaleManager localeManager = LocaleManager.getInstance();
-        Player player = Bukkit.getPlayer(civilian.getUuid());
-        if (player == null) {
-            return new ItemStack(Material.AIR);
-        }
-        CVItem civItem1 = civItem.getShopIcon(civilian.getLocale());
-        if (civItem.getItemType() == CivItem.ItemType.FOLDER) {
-            FolderType folderType = (FolderType) civItem;
-            if (!folderType.getVisible() &&
-                    (Civs.perm == null || !Civs.perm.has(player, Constants.ADMIN_PERMISSION))) {
-                return new ItemStack(Material.AIR);
-            }
-            civItem1.setDisplayName(localeManager.getTranslationWithPlaceholders(player, folderType.getProcessedName() + "-name"));
-            civItem1.getLore().add(ChatColor.BLACK + folderType.getProcessedName());
-            civItem1.getLore().addAll(Util.textWrap(civilian, localeManager.getTranslationWithPlaceholders(player, folderType.getProcessedName() + "-desc")));
-        }
-        String maxLimit = civilian.isAtMax(civItem);
-        if (civItem.getItemType() != CivItem.ItemType.FOLDER && maxLimit != null) {
-            CVItem item = CVItem.createCVItemFromString(Material.BARRIER.name());
-            item.setDisplayName(localeManager.getTranslationWithPlaceholders(player,
-                    civItem.getProcessedName() + LocaleConstants.NAME_SUFFIX));
-            LocaleUtil.getTranslationMaxItem(maxLimit, civItem, player, item.getLore());
-            item.getLore().addAll(Util.textWrap(civilian, Util.parseColors(civItem.getDescription(civilian.getLocale()))));
-            return item.createItemStack();
-        }
-        if (!civItem.getItemType().equals(CivItem.ItemType.FOLDER)) {
-            civItem1.setDisplayName(localeManager.getTranslationWithPlaceholders(player,
-                    civItem.getProcessedName() + LocaleConstants.NAME_SUFFIX));
-            civItem1.getLore().clear();
-            civItem1.getLore().add(ChatColor.BLACK + civItem.getProcessedName());
-            civItem1.getLore().add(localeManager.getTranslationWithPlaceholders(player, "price")
-                    .replace("$1", Util.getNumberFormat(civItem.getPrice(), civilian.getLocale())));
-            civItem1.getLore().addAll(Util.textWrap(civilian, Util.parseColors(civItem.getDescription(civilian.getLocale()))));
-        }
-        ItemStack itemStack = civItem1.createItemStack();
-        if (civItem1.getMmoItemType() != null) {
-            List<String> lore = itemStack.getItemMeta().getLore();
-            lore.add(0, ChatColor.BLACK + civItem.getProcessedName());
-        }
-        return itemStack;
     }
 
     private ArrayList<CivItem> createLevelList(Civilian civilian, int level) {

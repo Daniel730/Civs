@@ -8,7 +8,10 @@
 
 icon: "NETHERRACK"
 enabled: true
-transition: {}
+transition:
+  0:
+    inactive: 604800 #1 week
+    to: DISESTABLISHMENT
 buffs:
   cost:
     percent: 35

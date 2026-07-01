@@ -3,8 +3,7 @@ icon: CHEST
 shop-icon: BROWN_BED
 dynmap-marker: house
 name: Hovel
-max: 2
-price: 200
+price: 250
 groups:
 - housing
 - allhovel
@@ -28,7 +27,6 @@ build-reqs:
 - g:primary*50
 
 rebuild: baseshack
-rebuild-required: true
 build-radius: 4 #9x9x9
 effects:
 - block_break
@@ -56,6 +54,10 @@ upkeep:
   1:
     input:
     - POTATO*32  # 768 or 12 stacks / day
-    payout: 6 # $144 / day
+    payout: 9 # $216 / day
     exp: 1
+  2:
+    input:
+      - APPLE*6   # 144 or 2.25 stacks / day
+    payout: 6.2 # 150 / day
 

@@ -22,6 +22,7 @@ import org.redcastlemedia.multitallented.civs.util.Util;
 @CivsSingleton
 public class TeleportEffect implements Listener, RegionCreatedListener {
     public static String KEY = "teleport";
+    public static String KEY_PUBLIC = "teleport_public";
 
     public static void getInstance() {
         Bukkit.getPluginManager().registerEvents(new TeleportEffect(), Civs.getInstance());
@@ -55,17 +56,27 @@ public class TeleportEffect implements Listener, RegionCreatedListener {
                         hasPotentialDestinations(region)) {
                     HashMap<String, String> params = new HashMap<>();
                     params.put("region", region.getId());
+                    MenuManager.clearHistory(player.getUniqueId());
                     MenuManager.getInstance().openMenu(player, "port", params);
                 }
             }
             return;
         }
 
-        if (!region.getPeople().containsKey(player.getUniqueId())) {
+        if (player.isSneaking() || (!region.getEffects().containsKey(KEY_PUBLIC) &&
+                !region.getPeople().containsKey(player.getUniqueId()))) {
             return;
         }
         Location destination = Region.idToLocation(locationString);
-        player.teleport(destination);
+        destination = HuntEffect.findNearbyLocationForTeleport(destination, 4, player);
+        if (destination != null) {
+            player.teleport(destination);
+        } else {
+            destination = HuntEffect.findNearbyLocationForTeleport(destination, 6, player);
+            if (destination != null) {
+                player.teleport(destination);
+            }
+        }
     }
 
     @Override
@@ -80,6 +91,7 @@ public class TeleportEffect implements Listener, RegionCreatedListener {
                     hasPotentialDestinations(region)) {
                 HashMap<String, String> params = new HashMap<>();
                 params.put("region", region.getId());
+                MenuManager.clearHistory(player.getUniqueId());
                 MenuManager.getInstance().openMenu(player, "port", params);
             }
             break;

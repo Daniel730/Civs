@@ -3,8 +3,7 @@ icon: CHEST
 shop-icon: PINK_BED
 dynmap-marker: default
 name: House
-max: 2
-price: 800
+price: 900
 groups:
 - housing
 - allhouse
@@ -28,7 +27,6 @@ build-reqs:
 - g:primary*175
 
 rebuild: basedwelling
-rebuild-required: true
 build-radius: 6 #13x13x13
 effects:
 - block_break
@@ -55,10 +53,10 @@ upkeep:
   1:
     input: #2.11
     - BREAD*6  # 144 or 2.25 stacks / day
-    payout: 12.6 # $303.84 / day
+    payout: 11 # $264 / day
     exp: 1
   2:
     input:
     - APPLE*5   # 120 or 1.87 stacks / day
-    payout: 7.8 # $187.2 / day
+    payout: 8 # $185 / day
 

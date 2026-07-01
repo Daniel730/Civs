@@ -17,7 +17,7 @@ build-reqs:
 - g:door*1
 - CHEST*2
 - FURNACE*2
-- LAPIS_ORE*3
+- LAPIS_ORE*3,DEEPSLATE_LAPIS_ORE*3
 - g:primary*45
 - g:secondary*6
 
@@ -42,7 +42,6 @@ upkeep:
   0:
     reagents:
     - IRON_PICKAXE
-    - STONE_PICKAXE
     input:
     - STONE_PICKAXE
     output:
@@ -50,8 +49,14 @@ upkeep:
   1:
     reagents:
     - DIAMOND_PICKAXE
-    - STONE_PICKAXE
     input:
     - STONE_PICKAXE
     output:
     - LAPIS_LAZULI*12
+  2:
+    reagents:
+    - NETHERITE_PICKAXE
+    input:
+    - STONE_PICKAXE
+    output:
+    - LAPIS_LAZULI*16

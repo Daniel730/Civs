@@ -16,8 +16,11 @@ import org.redcastlemedia.multitallented.civs.menus.CustomMenu;
 import org.redcastlemedia.multitallented.civs.menus.MenuIcon;
 import org.redcastlemedia.multitallented.civs.menus.MenuManager;
 import org.redcastlemedia.multitallented.civs.menus.MenuUtil;
+import org.redcastlemedia.multitallented.civs.regions.Region;
+import org.redcastlemedia.multitallented.civs.regions.RegionManager;
 import org.redcastlemedia.multitallented.civs.regions.RegionType;
 import org.redcastlemedia.multitallented.civs.util.Constants;
+import org.redcastlemedia.multitallented.civs.util.Util;
 
 @CivsMenu(name = "recipe") @SuppressWarnings("unused")
 public class RecipeMenu extends CustomMenu {
@@ -42,34 +45,48 @@ public class RecipeMenu extends CustomMenu {
         } else if (recipe.startsWith("failing:")) {
             RegionType regionType = (RegionType) ItemManager.getInstance().getItemType(regionTypeName);
             items = new ArrayList<>();
-            String[] failingUpkeeps = recipe.replace("failing:", "").split(",");
-            for (String index : failingUpkeeps) {
-                items.addAll(regionType.getUpkeeps().get(Integer.parseInt(index)).getInputs());
+            Region region = RegionManager.getInstance().getRegionById(params.get("region"));
+            if (!region.getMissingBlocks().isEmpty()) {
+                items = new ArrayList<>(region.getMissingBlocks());
             }
+            if (items.isEmpty()) {
+                String[] failingUpkeeps = recipe.replace("failing:", "").split(",");
+                for (String index : failingUpkeeps) {
+                    if (!index.isEmpty()) {
+                        items.addAll(regionType.getUpkeeps().get(Integer.parseInt(index)).getInputs());
+                    }
+                }
+            }
+            items = Util.convertListListToDisplayableList(items);
         } else if (recipe.equals("reqs")) {
             RegionType regionType = (RegionType) ItemManager.getInstance().getItemType(regionTypeName);
-            items = regionType.getReqs();
+            items = Util.convertListListToDisplayableList(regionType.getReqs());
         } else if (recipe.startsWith("reagent")) {
             int index = Integer.parseInt(recipe.replace("reagent", ""));
             RegionType regionType = (RegionType) ItemManager.getInstance().getItemType(regionTypeName);
-            items = regionType.getUpkeeps().get(index).getReagents();
+            items = Util.convertListListToDisplayableList(regionType.getUpkeeps().get(index).getReagents());
+        } else if (recipe.startsWith("tool")) {
+            int index = Integer.parseInt(recipe.replace("tool", ""));
+            RegionType regionType = (RegionType) ItemManager.getInstance().getItemType(regionTypeName);
+            items = Util.convertListListToDisplayableList(regionType.getUpkeeps().get(index).getTools());
         } else if (recipe.startsWith("input")) {
             int index = Integer.parseInt(recipe.replace("input", ""));
             RegionType regionType = (RegionType) ItemManager.getInstance().getItemType(regionTypeName);
-            items = regionType.getUpkeeps().get(index).getInputs();
+            items = Util.convertListListToDisplayableList(regionType.getUpkeeps().get(index).getInputs());
         } else if (recipe.startsWith("output")) {
             int index = Integer.parseInt(recipe.replace("output", ""));
             RegionType regionType = (RegionType) ItemManager.getInstance().getItemType(regionTypeName);
-            items = regionType.getUpkeeps().get(index).getOutputs();
+            items = Util.convertListListToDisplayableList(regionType.getUpkeeps().get(index).getOutputs());
+        } else if (recipe.startsWith("broken")) {
+            Region region = RegionManager.getInstance().getRegionById(params.get("region"));
+            items = Util.convertListListToDisplayableList(new ArrayList<>(region.getMissingBlocks()));
         } else if (recipe.startsWith("g:")) {
             items = new ArrayList<>();
-            String groupName = recipe.replace("g:", "");
-            String groupString = ConfigManager.getInstance().getItemGroups().get(groupName);
-            for (String matString : groupString.split(",")) {
-                List<CVItem> tempMap = new ArrayList<>();
-                CVItem cvItem = CVItem.createCVItemFromString(matString);
-                tempMap.add(cvItem);
-                items.add(tempMap);
+            List<CVItem> cvItems = CVItem.createListFromString(recipe);
+            for (CVItem cvItem : cvItems) {
+                List<CVItem> singleList = new ArrayList<>();
+                singleList.add(cvItem);
+                items.add(singleList);
             }
         } else {
             items = new ArrayList<>();

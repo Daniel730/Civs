@@ -31,7 +31,6 @@ upkeep:
   0:
     reagents:
     - IRON_PICKAXE
-    - STONE_PICKAXE
     input:
     - STONE_PICKAXE
     output:
@@ -39,15 +38,20 @@ upkeep:
   1:
     reagents:
     - DIAMOND_PICKAXE
-    - STONE_PICKAXE
     input:
     - STONE_PICKAXE
     output:
     - PRISMARINE_SHARD*6
+  2:
+    reagents:
+      - NETHERITE_PICKAXE
+    input:
+      - STONE_PICKAXE
+    output:
+      - PRISMARINE_SHARD*8
 
 biomes:
 - DEEP_OCEAN
 - DEEP_FROZEN_OCEAN
 - DEEP_COLD_OCEAN
 - DEEP_LUKEWARM_OCEAN
-- DEEP_WARM_OCEAN

@@ -6,6 +6,7 @@ name: Shelter
 min: 1
 max: 1
 is-in-shop: false
+start-in-inventory: true
 level: 1
 
 build-radius: 5
@@ -18,25 +19,25 @@ effects:
 - block_fire
 - block_explosion
 - deny_damage
-- port:private
+- port:owner
 - bed
 - active:1209600 #2 weeks
 
-period: 1800 # 30 minutes
+period: 600 # 10 minutes
 upkeep:
   0:
     input:
     - POTATO*32 #.16
-    payout: 5.12
+    payout: 2.5
   1:
     input:
     - CARROT*32 #.12
-    payout: 3.84
+    payout: 2
   2:
     input:
     - BREAD*4 #1.95
-    payout: 7.8
+    payout: 4
   3:
     input:
     - BEEF*32 #.10
-    payout: 10.24
+    payout: 5

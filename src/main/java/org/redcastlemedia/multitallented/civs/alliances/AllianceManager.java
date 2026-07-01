@@ -1,16 +1,22 @@
 package org.redcastlemedia.multitallented.civs.alliances;
 
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.redcastlemedia.multitallented.civs.Civs;
 import org.redcastlemedia.multitallented.civs.CivsSingleton;
+import org.redcastlemedia.multitallented.civs.ConfigManager;
 import org.redcastlemedia.multitallented.civs.events.RenameTownEvent;
 import org.redcastlemedia.multitallented.civs.events.TownDestroyedEvent;
+import org.redcastlemedia.multitallented.civs.localization.LocaleManager;
 import org.redcastlemedia.multitallented.civs.towns.Town;
 import org.redcastlemedia.multitallented.civs.towns.TownManager;
+import org.redcastlemedia.multitallented.civs.util.Constants;
+import org.redcastlemedia.multitallented.civs.util.Util;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -157,6 +163,27 @@ public class AllianceManager implements Listener {
         return false;
     }
 
+    public void sendAllyInvites(Town toTown, Town fromTown, Player player) {
+        if (toTown.getAllyInvites().contains(fromTown.getName())) {
+            return;
+        }
+        toTown.getAllyInvites().add(fromTown.getName());
+        player.sendMessage(Civs.getPrefix() + LocaleManager.getInstance().getTranslation(player,
+                "town-ally-request-sent").replace("$1", toTown.getName()));
+        for (UUID uuid : toTown.getRawPeople().keySet()) {
+            if (uuid.equals(player.getUniqueId())) {
+                continue;
+            }
+            if (toTown.getRawPeople().get(uuid).contains(Constants.OWNER)) {
+                Player pSend = Bukkit.getPlayer(uuid);
+                if (pSend != null && pSend.isOnline()) {
+                    pSend.sendMessage(Civs.getPrefix() + LocaleManager.getInstance().getTranslation(pSend,
+                            "town-ally-request-sent").replace("$1", fromTown.getName()));
+                }
+            }
+        }
+    }
+
     public void allyTheseTowns(Town town1, Town town2) {
         HashSet<Alliance> saveThese = new HashSet<>();
         HashSet<Alliance> removeThese = new HashSet<>();
@@ -205,6 +232,20 @@ public class AllianceManager implements Listener {
         for (Alliance alliance : saveThese) {
             saveAlliance(alliance);
         }
+        if (ConfigManager.getInstance().getPvpWorlds().contains(town1.getLocation().getWorld().getName()) ||
+                ConfigManager.getInstance().getPvpWorlds().contains(town2.getLocation().getWorld().getName())) {
+            Util.checkPvpTownStatus();
+        }
+    }
+
+    public void unAllyBroadcast(Town townBeingBrokenUpWith, Town allianceBreakerTown) {
+        unAlly(townBeingBrokenUpWith, allianceBreakerTown);
+        for (Player cPlayer : Bukkit.getOnlinePlayers()) {
+            cPlayer.sendMessage(Civs.getPrefix() + ChatColor.RED + LocaleManager.getInstance()
+                    .getTranslation(cPlayer, "town-ally-removed")
+                    .replace("$1", townBeingBrokenUpWith.getName())
+                    .replace("$2", allianceBreakerTown.getName()));
+        }
     }
 
     public void unAlly(Town town1, Town town2) {
@@ -220,6 +261,8 @@ public class AllianceManager implements Listener {
                     alliance.getMembers().contains(town2.getName());
             if (inAlliance) {
                 removeThese.add(alliance);
+            } else {
+                continue;
             }
             if (alliance.getMembers().size() > 2) {
                 Alliance alliance1 = new Alliance();
@@ -255,6 +298,10 @@ public class AllianceManager implements Listener {
         for (Alliance alliance : saveThese) {
             alliances.put(alliance.getName(), alliance);
             saveAlliance(alliance);
+        }
+        if (ConfigManager.getInstance().getPvpWorlds().contains(town1.getLocation().getWorld().getName()) ||
+                ConfigManager.getInstance().getPvpWorlds().contains(town2.getLocation().getWorld().getName())) {
+            Util.checkPvpTownStatus();
         }
     }
 

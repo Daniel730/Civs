@@ -1,21 +1,20 @@
 package org.redcastlemedia.multitallented.civs.scheduler;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Random;
-import java.util.UUID;
-
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
 import org.redcastlemedia.multitallented.civs.Civs;
 import org.redcastlemedia.multitallented.civs.ConfigManager;
+import org.redcastlemedia.multitallented.civs.civilians.Civilian;
+import org.redcastlemedia.multitallented.civs.civilians.CivilianManager;
 import org.redcastlemedia.multitallented.civs.items.ItemManager;
 import org.redcastlemedia.multitallented.civs.regions.Region;
 import org.redcastlemedia.multitallented.civs.regions.RegionManager;
 import org.redcastlemedia.multitallented.civs.regions.RegionType;
 import org.redcastlemedia.multitallented.civs.towns.*;
 import org.redcastlemedia.multitallented.civs.util.Constants;
+import org.redcastlemedia.multitallented.civs.util.Util;
+
+import java.util.*;
 
 public class DailyScheduler implements Runnable {
 
@@ -30,33 +29,65 @@ public class DailyScheduler implements Runnable {
             }
         }
 
+        for (Town town : TownManager.getInstance().getTowns()) {
+            if (town.isDevolvedToday()) {
+                town.setPvpEnabled(false);
+                town.setDevolvedToday(false);
+                TownManager.getInstance().saveTown(town);
+            }
+        }
+
+        TownManager.getInstance().checkAllTownsForWarEnabled();
         doTaxes();
         doVotes();
         addDailyPower();
+        depreciateHardship();
         TownTransitionUtil.checkTownTransitions();
+        Util.checkPvpTownStatus();
+    }
+
+    private void depreciateHardship() {
+        long hardshipDepreciationPeriod = ConfigManager.getInstance().getHardshipDepreciationPeriod();
+        for (Civilian civilian : CivilianManager.getInstance().getCivilians()) {
+            if (civilian.getHardship() < 2 && civilian.getHardship() > -2) {
+                continue;
+            }
+            if (civilian.getDaysSinceLastHardshipDepreciation() < hardshipDepreciationPeriod) {
+                civilian.setDaysSinceLastHardshipDepreciation(civilian.getDaysSinceLastHardshipDepreciation() + 1);
+                CivilianManager.getInstance().saveCivilian(civilian);
+                continue;
+            }
+            civilian.setDaysSinceLastHardshipDepreciation(0);
+
+            double baseHardship = 0;
+            String townName = TownManager.getInstance().getBiggestTown(civilian);
+            if (townName != null) {
+                Town town = TownManager.getInstance().getTown(townName);
+                if (town != null) {
+                    baseHardship = town.getPrice() / (double) town.getRawPeople().size();
+                }
+            }
+
+            double newHardship = ((civilian.getHardship() - baseHardship) / 2.0) + baseHardship;
+            civilian.setHardship(newHardship);
+            CivilianManager.getInstance().saveCivilian(civilian);
+        }
     }
 
     private void addDailyPower() {
-        HashMap<Town, Integer> addPower = new HashMap<>();
-
-        for (Town town : TownManager.getInstance().getTowns()) {
+        for (Town town : new ArrayList<>(TownManager.getInstance().getTowns())) {
             town.setGovTypeChangedToday(false);
             TownType townType = (TownType) ItemManager.getInstance().getItemType(town.getType());
             Government government = GovernmentManager.getInstance().getGovernment(town.getGovernmentType());
             if (government != null) {
                 for (GovTypeBuff buff : government.getBuffs()) {
                     if (buff.getBuffType() == GovTypeBuff.BuffType.POWER) {
-                        addPower.put(town, (int) Math.round((double) townType.getPower() * (1 + (double) buff.getAmount() / 100)));
+                        int amount = (int) Math.round((double) townType.getPower() * (1 + (double) buff.getAmount() / 100));
+                        TownManager.getInstance().setTownPower(town, town.getPower() + amount);
                         break;
                     }
                 }
             }
-            if (!addPower.containsKey(town)) {
-                addPower.put(town, townType.getPower());
-            }
-        }
-        for (Town town : addPower.keySet()) {
-            TownManager.getInstance().setTownPower(town, town.getPower() + addPower.get(town));
         }
     }
 

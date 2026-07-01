@@ -1,6 +1,6 @@
 type: region
 icon: OBSIDIAN
-shop-icon: SIGN
+shop-icon: OAK_SIGN
 dynmap-marker: king
 name: City_Hall
 price: 8000
@@ -37,7 +37,7 @@ effects:
 - block_fire
 - door_use
 - chest_use
-- port
+- port:town
 - cant_override
 - housing:2
 

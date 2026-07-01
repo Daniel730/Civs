@@ -3,7 +3,6 @@ icon: CHEST
 shop-icon: YELLOW_BED
 dynmap-marker: house
 name: Shack
-max: 2
 price: 100
 groups:
 - housing
@@ -53,6 +52,6 @@ upkeep:
   1:
     input:
     - POTATO*32  # 768 or 12 stacks / day
-    payout: 5.12 # $122.88 / day
+    payout: 6 # $144 / day
 
 

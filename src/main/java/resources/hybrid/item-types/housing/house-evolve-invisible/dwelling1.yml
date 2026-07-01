@@ -54,10 +54,14 @@ upkeep:
   1:
     input:
     - POTATO*32  # 768 or 12 stacks / day
-    payout: 5.12 # $122.88 / day
+    payout: 20 # $240 / day
   2:
     input:
     - APPLE*5   # 120 or 1.87 stacks / day
-    payout: 8.5 # 204 / day
+    payout: 8 # 185 / day
+  3:
+    input:
+      - COD*6 #144 / day
+    payout: 5 # $120 / day
     exp: 1
 

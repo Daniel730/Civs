@@ -2,45 +2,101 @@ package org.redcastlemedia.multitallented.civs.util;
 
 import java.text.NumberFormat;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.Objects;
 import java.util.Random;
+import java.util.Set;
 import java.util.UUID;
 import java.util.logging.Level;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import org.bukkit.*;
+import org.bukkit.Bukkit;
+import org.bukkit.Chunk;
+import org.bukkit.Color;
+import org.bukkit.FireworkEffect;
+import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
+import org.bukkit.OfflinePlayer;
+import org.bukkit.block.Block;
+import org.bukkit.block.Container;
+import org.bukkit.command.CommandSender;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.EntityType;
 import org.bukkit.entity.Firework;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.DoubleChestInventory;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.Damageable;
 import org.bukkit.inventory.meta.FireworkMeta;
+import org.bukkit.persistence.PersistentDataType;
 import org.redcastlemedia.multitallented.civs.Civs;
 import org.redcastlemedia.multitallented.civs.ConfigManager;
-import org.redcastlemedia.multitallented.civs.items.CVInventory;
-import org.redcastlemedia.multitallented.civs.localization.LocaleManager;
 import org.redcastlemedia.multitallented.civs.civilians.Bounty;
 import org.redcastlemedia.multitallented.civs.civilians.Civilian;
 import org.redcastlemedia.multitallented.civs.civilians.CivilianManager;
+import org.redcastlemedia.multitallented.civs.items.CVInventory;
 import org.redcastlemedia.multitallented.civs.items.CVItem;
 import org.redcastlemedia.multitallented.civs.items.ItemManager;
+import org.redcastlemedia.multitallented.civs.localization.LocaleManager;
 import org.redcastlemedia.multitallented.civs.regions.Region;
 import org.redcastlemedia.multitallented.civs.regions.RegionType;
-import org.redcastlemedia.multitallented.civs.towns.*;
+import org.redcastlemedia.multitallented.civs.towns.Government;
+import org.redcastlemedia.multitallented.civs.towns.GovernmentManager;
+import org.redcastlemedia.multitallented.civs.towns.GovernmentType;
+import org.redcastlemedia.multitallented.civs.towns.Town;
+import org.redcastlemedia.multitallented.civs.towns.TownManager;
+import org.redcastlemedia.multitallented.civs.towns.TownType;
 
+import com.google.common.base.Enums;
+
+import net.md_5.bungee.api.ChatColor;
 import net.md_5.bungee.api.chat.TextComponent;
 
 public final class Util {
 
     private Util() {
 
+    }
+
+    public static boolean isDisallowedByWorld(String worldName) {
+        return ConfigManager.getInstance().getBlackListWorlds().contains(worldName) ||
+                (!ConfigManager.getInstance().getWhiteListWorlds().isEmpty() &&
+                        !ConfigManager.getInstance().getWhiteListWorlds().contains(worldName));
+    }
+
+    public static void checkPvpTownStatus() {
+        for (Town town : TownManager.getInstance().getTowns()) {
+            if (isPvPWorldRelated(town)) {
+                town.setPvpEnabled(true);
+            }
+        }
+    }
+
+    public static boolean isPvPWorldRelated(Town town) {
+        if (ConfigManager.getInstance().getPvpWorlds().isEmpty()) {
+            return true;
+        }
+        Set<UUID> owners = town.getOwners();
+        for (Town cTown : TownManager.getInstance().getTowns()) {
+            if (cTown.getLocation().getWorld() == null ||
+                    !ConfigManager.getInstance().getPvpWorlds().contains(cTown.getLocation().getWorld().getName())) {
+                continue;
+            }
+            for (UUID cPerson : cTown.getPeople().keySet()) {
+                if (owners.contains(cPerson)) {
+                    return true;
+                }
+            }
+        }
+        return false;
     }
 
     public static void promoteWhoeverHasMostNoise(Town town, boolean save) {
@@ -277,6 +333,9 @@ public final class Util {
     public static boolean isChunkLoadedAt(Location location) {
         int x = (int) Math.floor(location.getX() / 16);
         int z = (int) Math.floor(location.getZ() / 16);
+        if (location.getWorld() == null) {
+            return false;
+        }
         return location.getWorld().isChunkLoaded(x, z);
     }
 
@@ -296,16 +355,30 @@ public final class Util {
     }
 
     public static List<String> parseColors(List<String> inputString) {
-        for (int i=0; i<inputString.size(); i++) {
+        for (int i = 0; i < inputString.size(); i++) {
             inputString.set(i, parseColors(inputString.get(i)));
         }
         return inputString;
     }
+
     public static String parseColors(String input) {
         if (input == null) {
             return null;
         }
-        String returnInput = new String(input);
+        String returnInput = input;
+        boolean continueLoop = true;
+        int i = 0;
+        while (continueLoop && i < 99) {
+            Pattern pattern = Pattern.compile("@\\{#[0-9A-Fa-f]{6}}");
+            Matcher matcher = pattern.matcher(returnInput);
+            continueLoop = matcher.find();
+            if (continueLoop) {
+                String group = matcher.group();
+                returnInput = returnInput.replace(matcher.group(),
+                        ChatColor.of(group.substring(2, group.length() - 1)) + "");
+            }
+            i++;
+        }
         for (ChatColor color : ChatColor.values()) {
             returnInput = returnInput.replaceAll("@\\{" + color.name() + "\\}", color + "");
         }
@@ -379,10 +452,45 @@ public final class Util {
         return false;
     }
 
+    public static void dropItemsFromContainer(Block block) {
+        if (block.getState() instanceof Container) {
+            Container container = (Container) block.getState();
+            if (container.getInventory() instanceof DoubleChestInventory) {
+                DoubleChestInventory doubleChestInventory = (DoubleChestInventory) container.getInventory();
+                if (Objects.equals(doubleChestInventory.getLeftSide().getLocation(), block.getLocation())) {
+                    for (ItemStack itemStack : doubleChestInventory.getLeftSide().getContents()) {
+                        if (itemStack != null && itemStack.getType() != Material.AIR) {
+                            block.getWorld().dropItemNaturally(block.getLocation(), itemStack);
+                        }
+                    }
+                } else {
+                    for (ItemStack itemStack : doubleChestInventory.getRightSide().getContents()) {
+                        if (itemStack != null && itemStack.getType() != Material.AIR) {
+                            block.getWorld().dropItemNaturally(block.getLocation(), itemStack);
+                        }
+                    }
+                }
+            } else {
+                for (ItemStack itemStack : container.getInventory()) {
+                    if (itemStack != null && itemStack.getType() != Material.AIR) {
+                        block.getWorld().dropItemNaturally(block.getLocation(), itemStack);
+                    }
+                }
+            }
+        }
+    }
+
     public static boolean isSolidBlock(Material type) {
         return type != Material.AIR &&
                 type != Material.LEVER &&
-                type != Material.WALL_SIGN &&
+                type != Material.OAK_WALL_SIGN &&
+                type != Material.BIRCH_WALL_SIGN &&
+                type != Material.JUNGLE_WALL_SIGN &&
+                type != Material.SPRUCE_WALL_SIGN &&
+                type != Material.DARK_OAK_WALL_SIGN &&
+                type != Enums.getIfPresent(Material.class, "CHERRY_WALL_SIGN").orNull() &&
+                type != Enums.getIfPresent(Material.class, "CHERRY_BUTTON").orNull() &&
+                type != Material.ACACIA_WALL_SIGN &&
                 type != Material.TORCH &&
                 type != Material.STONE_BUTTON &&
                 type != Material.BIRCH_BUTTON &&
@@ -392,14 +500,18 @@ public final class Util {
                 type != Material.ACACIA_BUTTON &&
                 type != Material.OAK_BUTTON;
     }
+
     public static boolean validateFileName(String fileName) {
         return fileName.matches("^[^.\\\\/:*?\"<>|]?[^\\\\/:*?\"<>|]*")
-                && getValidFileName(fileName).length()>0;
+                && !fileName.contains("&")
+                && getValidFileName(fileName).length()>0 &&
+                fileName.length() < 41;
     }
 
     public static String getValidFileName(String fileName) {
         return fileName.replaceAll("^[.\\\\/:*?\"<>|]?[\\\\/:*?\"<>|]*", "");
     }
+
     public static Locale getNumberFormatLocale(String locale) {
         Locale localeEnum = Locale.forLanguageTag(locale);
         if (localeEnum == null) {
@@ -408,10 +520,12 @@ public final class Util {
         }
         return localeEnum;
     }
+
     public static String getNumberFormat(double number, String locale) {
         String numberFormat = NumberFormat.getInstance(getNumberFormatLocale(locale)).format(number);
+        numberFormat = numberFormat.replace(" ", " ");
         if (numberFormat.isEmpty()) {
-            return NumberFormat.getCurrencyInstance().format(number);
+            return NumberFormat.getNumberInstance().format(number);
         } else {
             return numberFormat;
         }
@@ -423,8 +537,8 @@ public final class Util {
 
         //0 Prev button
         if (page > 0) {
-            CVItem cvItem = CVItem.createCVItemFromString("REDSTONE");
-            cvItem.setDisplayName(localeManager.getTranslationWithPlaceholders(player,
+            CVItem cvItem = CVItem.createCVItemFromString("DUST");
+            cvItem.setDisplayName(localeManager.getTranslation(player,
                     "prev-button"));
             inventory.setItem(0, cvItem.createItemStack());
         }
@@ -433,7 +547,7 @@ public final class Util {
         //8 Next button
         if (startIndex + 36 < totalSize) {
             CVItem cvItem1 = CVItem.createCVItemFromString("EMERALD");
-            cvItem1.setDisplayName(localeManager.getTranslationWithPlaceholders(player,
+            cvItem1.setDisplayName(localeManager.getTranslation(player,
                     "next-button"));
             inventory.setItem(8, cvItem1.createItemStack());
         }
@@ -457,11 +571,46 @@ public final class Util {
                         continue;
                     }
 
-                    if (orReq.equivalentItem(iss, true)) {
+                    if (orReq.equivalentItem(iss, orReq.getDisplayName() != null, !orReq.getLore().isEmpty())) {
                         if ((iss.getAmount() + amount) >= orReq.getQty()) {
                             continue outer;
                         } else {
                             amount += iss.getAmount();
+                        }
+                    }
+                }
+            }
+            return false;
+        }
+        return true;
+    }
+
+    public static boolean containsTools(List<List<CVItem>> req, CVInventory inv) {
+        if (req.isEmpty()) {
+            return true;
+        }
+        if (inv == null) {
+            return false;
+        }
+
+        outer:
+        for (List<CVItem> orReqs : req) {
+            for (CVItem orReq : orReqs) {
+
+                int amount = 0;
+                for (ItemStack iss : inv.getContents()) {
+                    if (iss == null) {
+                        continue;
+                    }
+                    if (!(iss.getItemMeta() instanceof Damageable itemDamage)) {
+                        continue;
+                    }
+                    if (orReq.equivalentItem(iss, orReq.getDisplayName() != null, !orReq.getLore().isEmpty())) {
+                        if (((iss.getType().getMaxDurability() - itemDamage.getDamage()) + amount) >= orReq.getQty()) {
+                            continue outer;
+                        }
+                        else {
+                            amount += (iss.getType().getMaxDurability() - itemDamage.getDamage());
                         }
                     }
                 }
@@ -479,13 +628,88 @@ public final class Util {
             if (section1.isSet(key + ".issuer")) {
                 bounty = new Bounty(UUID.fromString(section1.getString(key + ".issuer")),
                         section1.getDouble(key + ".amount"));
-            } else {
+            }
+            else {
                 bounty = new Bounty(null,
                         section1.getDouble(key + ".amount"));
             }
             bountyList.add(bounty);
         }
         return bountyList;
+    }
+
+    public static boolean damageItems(List<List<CVItem>> req, CVInventory inv) {
+        if (inv == null) {
+            return false;
+        }
+
+        //clone the list
+        ArrayList<ArrayList<CVItem>> hsItemsList = new ArrayList<>();
+        for (List<CVItem> hsItems : req) {
+            ArrayList<CVItem> tempList = new ArrayList<>();
+            for (CVItem hsItem : hsItems) {
+                tempList.add(hsItem.clone());
+            }
+            hsItemsList.add(tempList);
+        }
+
+        ArrayList<Integer> removeItems = new ArrayList<>();
+        HashMap<Integer, Integer> damageItems = new HashMap<>();
+
+        for (int i = 0; i < inv.getSize(); i++) {
+            ItemStack item = inv.getItem(i);
+            if (item == null) {
+                continue;
+            }
+            if (!(item.getItemMeta() instanceof Damageable itemDamage)) {
+                continue;
+            }
+            int j = 0;
+            boolean removeIndex = false;
+            outer1:
+            for (ArrayList<CVItem> hsItems : hsItemsList) {
+                for (CVItem hsItem : hsItems) {
+                    if (hsItem.equivalentItem(item, hsItem.getDisplayName() != null, !hsItem.getLore().isEmpty())) {
+                        if ((item.getType().getMaxDurability() - itemDamage.getDamage()) > hsItem.getQty()) {
+                            damageItems.put(i, hsItem.getQty());
+                            removeIndex = true;
+                        }
+                        else if ((item.getType().getMaxDurability() - itemDamage.getDamage()) == hsItem.getQty()) {
+                            removeItems.add(i);
+                            removeIndex = true;
+                        }
+                        else {
+                            removeItems.add(i);
+                            hsItem.setQty(hsItem.getQty() - item.getAmount());
+                        }
+                        break outer1;
+
+                    }
+                }
+                j++;
+            }
+            if (removeIndex) {
+                hsItemsList.remove(j);
+            }
+        }
+
+        if (!hsItemsList.isEmpty()) {
+            return false;
+        }
+
+        for (Integer i : damageItems.keySet()) {
+            ItemStack item = inv.getItem(i);
+            Damageable itemdmg = (Damageable) item.getItemMeta();
+            assert itemdmg != null;
+            itemdmg.setDamage(itemdmg.getDamage() + damageItems.get(i));
+            item.setItemMeta(itemdmg);
+            inv.setItem(i, item);
+        }
+
+        for (Integer i : removeItems) {
+            inv.setItem(i, null);
+        }
+        return true;
     }
 
     public static boolean removeItems(List<List<CVItem>> req, CVInventory inv) {
@@ -507,17 +731,17 @@ public final class Util {
         ArrayList<Integer> removeItems = new ArrayList<>();
         HashMap<Integer, Integer> reduceItems = new HashMap<>();
 
-        for (int i =0; i< inv.getSize(); i++) {
+        for (int i = 0; i < inv.getSize(); i++) {
             ItemStack item = inv.getItem(i);
             if (item == null) {
                 continue;
             }
 
-            int j=0;
+            int j = 0;
             boolean removeIndex = false;
             outer1: for (ArrayList<CVItem> hsItems : hsItemsList) {
                 for (CVItem hsItem : hsItems) {
-                    if (hsItem.equivalentItem(item, true)) {
+                    if (hsItem.equivalentItem(item, hsItem.getDisplayName() != null, !hsItem.getLore().isEmpty())) {
 
                         if (item.getAmount() > hsItem.getQty()) {
                             reduceItems.put(i, hsItem.getQty());
@@ -562,11 +786,19 @@ public final class Util {
             double prevChance = 0;
             for (CVItem item : tempItems) {
                 if ((prevChance < rand) && (prevChance + item.getChance() > rand)) {
+                    if (item.getMat() == Material.AIR) {
+                        continue outer;
+                    }
                     ItemStack is = item.createItemStack();
                     is.setAmount(1);
                     int amount = item.getQty();
                     int max = is.getMaxStackSize();
+                    int i = 0;
                     for (;;) {
+                        i++;
+                        if (i > 256) {
+                            break;
+                        }
                         ItemStack isa;
                         if (amount > max) {
                             isa = item.createItemStack();
@@ -606,7 +838,7 @@ public final class Util {
                     int amount = item.getQty();
                     int max = is.getMaxStackSize();
                     for (ItemStack iss : inv.getContents()) {
-                        if (iss == null) {
+                        if (iss == null || iss.getType() == Material.AIR) {
                             ItemStack isa;
                             if (amount > max) {
                                 isa = item.createItemStack();
@@ -623,7 +855,7 @@ public final class Util {
                                 continue outer;
                             }
                         }
-                        if (item.equivalentItem(iss)) {
+                        if (item.equivalentItem(iss, item.getDisplayName() != null, !item.getLore().isEmpty())) {
                             if (amount + iss.getAmount() > iss.getMaxStackSize()) {
                                 amount = amount - (iss.getMaxStackSize() - iss.getAmount());
                                 iss.setAmount(iss.getMaxStackSize());
@@ -657,6 +889,23 @@ public final class Util {
         return true;
     }
 
+    public static boolean isAdminOrOwner(Civilian civilian, Town town) {
+        if (town == null) {
+            return false;
+        }
+
+        Player player = Bukkit.getPlayer(civilian.getUuid());
+        if (isAdmin(player)) {
+            return true;
+        }
+        return town.getRawPeople().containsKey(civilian.getUuid()) &&
+                town.getRawPeople().get(civilian.getUuid()).equals(Constants.OWNER);
+    }
+
+    public static boolean isAdmin(Player player) {
+        return player != null && (player.isOp() || Civs.perm != null && Civs.perm.has(player, Constants.ADMIN_PERMISSION));
+    }
+
     public static boolean hasOverride(Region region, Civilian civilian) {
         Town town = TownManager.getInstance().getTownAt(region.getLocation());
         return hasOverride(region, civilian, town);
@@ -680,12 +929,62 @@ public final class Util {
         return override;
     }
 
+    public static List<List<CVItem>> convertListMapToDisplayableList(List<HashMap<Material, Integer>> missingBlocks) {
+        List<List<CVItem>> missingList = new ArrayList<>();
+        for (HashMap<Material, Integer> missingMap : missingBlocks) {
+            List<List<CVItem>> futureLists = new ArrayList<>();
+            for (Map.Entry<Material, Integer> entry : missingMap.entrySet()) {
+                int qty = entry.getValue();
+                int maxQty = entry.getKey().getMaxStackSize();
+                int i = 0;
+                do {
+                    if (futureLists.size() <= i) {
+                        futureLists.add(new ArrayList<>());
+                    }
+                    futureLists.get(i).add(new CVItem(entry.getKey(), Math.min(qty, maxQty)));
+                    qty -= maxQty;
+                    i++;
+                } while (maxQty > 0 && qty > 0 && i < 20);
+            }
+            if (!futureLists.isEmpty()) {
+                missingList.addAll(futureLists);
+            }
+        }
+        return missingList;
+    }
+
+    public static List<List<CVItem>> convertListListToDisplayableList(List<List<CVItem>> missingBlocks) {
+        List<List<CVItem>> missingList = new ArrayList<>();
+        for (List<CVItem> missingMap : missingBlocks) {
+            List<List<CVItem>> futureLists = new ArrayList<>();
+            for (CVItem cvItem : missingMap) {
+                int qty = cvItem.getQty();
+                int maxQty = cvItem.getMat().getMaxStackSize();
+                int i = 0;
+                do {
+                    if (futureLists.size() <= i) {
+                        futureLists.add(new ArrayList<>());
+                    }
+                    futureLists.get(i).add(new CVItem(cvItem.getMat(), Math.min(qty, maxQty)));
+                    qty -= maxQty;
+                    i++;
+                } while (maxQty > 0 && qty > 0 && i < 20);
+            }
+            if (!futureLists.isEmpty()) {
+                missingList.addAll(futureLists);
+            }
+        }
+        return missingList;
+    }
+
     public static void spawnRandomFirework(Player player) {
         if (Civs.getInstance() == null) {
             return;
         }
         Firework firework = (Firework) player.getWorld().spawnEntity(player.getLocation(), EntityType.FIREWORK);
         FireworkMeta fireworkMeta = firework.getFireworkMeta();
+
+        firework.getPersistentDataContainer().set(NamespacedKey.minecraft("civs_firework"), PersistentDataType.BYTE, (byte) 1);
 
         //Our random generator
         Random random = new Random();
@@ -724,6 +1023,7 @@ public final class Util {
         //Then apply this to our rocket
         firework.setFireworkMeta(fireworkMeta);
     }
+
     private static Color getColor(int i) {
         Color c = null;
         if(i==1){
@@ -779,5 +1079,35 @@ public final class Util {
         }
 
         return c;
+    }
+
+    public static void sendMessageToPlayerOrConsole(CommandSender commandSender, String key, String message) {
+        Player player = null;
+        if (commandSender instanceof Player) {
+            player = (Player) commandSender;
+        }
+        if (player != null) {
+            player.sendMessage(Civs.getPrefix() +
+                    LocaleManager.getInstance().getTranslation(player, key));
+        } else {
+            commandSender.sendMessage(message);
+        }
+    }
+
+    public static String formatTime(Player player, long duration) {
+        if (duration < 60) {
+            return LocaleManager.getInstance().getTranslation(player, "time-seconds")
+                    .replace("$1", "" + duration);
+        } else if (duration < 3600) {
+            return LocaleManager.getInstance().getTranslation(player, "time-minutes")
+                    .replace("$1", "" + (int) (duration / 60))
+                    .replace("$2", "" + (int) (duration % 60));
+        } else {
+            int hours = (int) (duration / 3600);
+            return LocaleManager.getInstance().getTranslation(player, "time-hours")
+                    .replace("$1", "" + hours)
+                    .replace("$2", "" + (int) ((duration - hours * 3600) / 60))
+                    .replace("$3", "" + (int) (duration % 60));
+        }
     }
 }

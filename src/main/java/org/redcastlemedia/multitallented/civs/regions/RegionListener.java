@@ -5,6 +5,7 @@ import java.util.HashMap;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.block.Action;
 import org.bukkit.event.block.BlockPlaceEvent;
@@ -43,7 +44,7 @@ public class RegionListener implements Listener {
      * If placing a region block, try to create a region
      * @param blockPlaceEvent
      */
-    @EventHandler(ignoreCancelled = true)
+    @EventHandler(ignoreCancelled = true, priority = EventPriority.HIGHEST)
     public void onBlockPlace(BlockPlaceEvent blockPlaceEvent) {
         RegionManager regionManager = RegionManager.getInstance();
 
@@ -55,17 +56,16 @@ public class RegionListener implements Listener {
         if (!CVItem.isCivsItem(heldItem)) {
             return;
         }
-        if (ConfigManager.getInstance().getBlackListWorlds()
-                .contains(blockPlaceEvent.getBlockPlaced().getWorld().getName())) {
+        if (Util.isDisallowedByWorld(blockPlaceEvent.getBlockPlaced().getWorld().getName())) {
             blockPlaceEvent.setCancelled(true);
-            blockPlaceEvent.getPlayer().sendMessage(Civs.getPrefix() + LocaleManager.getInstance().getTranslationWithPlaceholders(
+            blockPlaceEvent.getPlayer().sendMessage(Civs.getPrefix() + LocaleManager.getInstance().getTranslation(
                     blockPlaceEvent.getPlayer(), LocaleConstants.PERMISSION_DENIED));
             return;
         }
         CivItem civItem = CivItem.getFromItemStack(heldItem);
 
         if (civItem.getItemType() == CivItem.ItemType.TOWN) {
-            blockPlaceEvent.getPlayer().sendMessage(Civs.getPrefix() + LocaleManager.getInstance().getTranslationWithPlaceholders(
+            blockPlaceEvent.getPlayer().sendMessage(Civs.getPrefix() + LocaleManager.getInstance().getTranslation(
                     blockPlaceEvent.getPlayer(), "cant-place-town"));
             return;
         }
@@ -80,7 +80,7 @@ public class RegionListener implements Listener {
      * Open region info menu if right clicking air with region
      * @param event
      */
-    @EventHandler
+    @EventHandler @SuppressWarnings("unused")
     public void onRegionInfo(PlayerInteractEvent event) {
         Player player = event.getPlayer();
         ItemStack heldItem = player.getInventory().getItemInMainHand();
@@ -94,6 +94,7 @@ public class RegionListener implements Listener {
             MenuManager.clearHistory(civilian.getUuid());
             HashMap<String, String> params = new HashMap<>();
             params.put(Constants.TOWN_TYPE, townType.getProcessedName());
+            MenuManager.clearHistory(player.getUniqueId());
             MenuManager.getInstance().openMenu(player, "town-type", params);
             return;
         }
@@ -105,6 +106,7 @@ public class RegionListener implements Listener {
             HashMap<String, String> params = new HashMap<>();
             params.put(Constants.REGION_TYPE, regionType.getProcessedName());
             params.put(Constants.INFINITE_BOUNDING_BOX, "true");
+            MenuManager.clearHistory(player.getUniqueId());
             MenuManager.getInstance().openMenu(player, "region-type", params);
         }
     }
@@ -126,13 +128,13 @@ public class RegionListener implements Listener {
                 !event.getRegionType().getGroups().contains("utility")) {
             return;
         }
-        double price = event.getRegionType().getPrice();
-        price = Math.min(price, town.getBankAccount());
         Player player = Bukkit.getPlayer(event.getRegion().getRawPeople().keySet().iterator().next());
         if (player == null) {
             return;
         }
         Civilian civilian = CivilianManager.getInstance().getCivilian(player.getUniqueId());
+        double price = event.getRegionType().getPrice(civilian);
+        price = Math.min(price, town.getBankAccount());
         Civs.econ.depositPlayer(player, price);
         town.setBankAccount(town.getBankAccount() - price);
         TownManager.getInstance().saveTown(town);
@@ -172,7 +174,7 @@ public class RegionListener implements Listener {
             return;
         }
         Civilian civilian = CivilianManager.getInstance().getCivilian(event.getPlayer().getUniqueId());
-        double amount = event.getRegionType().getPrice() * (double) buff.getAmount() / 100;
+        double amount = event.getRegionType().getPrice(civilian) * (double) buff.getAmount() / 100;
         String amountString = Util.getNumberFormat(amount, civilian.getLocale());
         Civs.econ.depositPlayer(event.getPlayer(), amount);
         event.getPlayer().sendMessage(Civs.getPrefix() + LocaleManager.getInstance().getTranslation(
@@ -180,6 +182,6 @@ public class RegionListener implements Listener {
         ).replace("$1", amountString)
                 .replace("$2", event.getRegionType().getDisplayName())
                 .replace("$3", LocaleManager.getInstance().getTranslation(civilian.getLocale(),
-                        government.getName().toLowerCase() + "-name")));
+                        government.getName().toLowerCase() + LocaleConstants.NAME_SUFFIX)));
     }
 }

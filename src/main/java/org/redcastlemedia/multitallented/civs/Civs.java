@@ -1,16 +1,10 @@
 package org.redcastlemedia.multitallented.civs;
 
-import java.io.File;
-import java.lang.reflect.Method;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Set;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-
+import github.scarsz.discordsrv.DiscordSRV;
+import me.clip.placeholderapi.PlaceholderAPIPlugin;
+import net.Indyuce.mmoitems.MMOItems;
+import net.milkbowl.vault.economy.Economy;
+import net.milkbowl.vault.permission.Permission;
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
@@ -18,33 +12,45 @@ import org.bukkit.entity.Player;
 import org.bukkit.plugin.RegisteredServiceProvider;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.dynmap.DynmapCommonAPI;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.redcastlemedia.multitallented.civs.chat.ChatManager;
+import org.redcastlemedia.multitallented.civs.civilians.allowedactions.AllowedActionsListener;
 import org.redcastlemedia.multitallented.civs.commands.CivCommand;
 import org.redcastlemedia.multitallented.civs.commands.CivsCommand;
+import org.redcastlemedia.multitallented.civs.commands.TabComplete;
 import org.redcastlemedia.multitallented.civs.dynmaphook.DynmapHook;
+import org.redcastlemedia.multitallented.civs.pl3xmap.Pl3xMapHook;
+import org.redcastlemedia.multitallented.civs.placeholderexpansion.PlaceHook;
+import org.redcastlemedia.multitallented.civs.plugins.PluginListener;
 import org.redcastlemedia.multitallented.civs.regions.RegionManager;
+import org.redcastlemedia.multitallented.civs.regions.StructureUtil;
 import org.redcastlemedia.multitallented.civs.regions.effects.ConveyorEffect;
+import org.redcastlemedia.multitallented.civs.regions.effects.FlyEffect;
 import org.redcastlemedia.multitallented.civs.scheduler.CommonScheduler;
 import org.redcastlemedia.multitallented.civs.scheduler.DailyScheduler;
 import org.redcastlemedia.multitallented.civs.towns.TownManager;
 import org.redcastlemedia.multitallented.civs.util.Constants;
 import org.redcastlemedia.multitallented.civs.util.DebugLogger;
 import org.redcastlemedia.multitallented.civs.util.LogInfo;
-import org.redcastlemedia.multitallented.civs.placeholderexpansion.PlaceHook;
-import org.redcastlemedia.multitallented.civs.util.StructureUtil;
+import org.redcastlemedia.multitallented.civs.util.Util;
+import org.redcastlemedia.multitallented.civs.worldedit.WorldEditSessionListener;
 import org.reflections.Reflections;
 import org.reflections.util.ClasspathHelper;
 import org.reflections.util.ConfigurationBuilder;
 import org.reflections.util.FilterBuilder;
 
-import github.scarsz.discordsrv.DiscordSRV;
-import me.clip.placeholderapi.PlaceholderAPIPlugin;
-import net.Indyuce.mmoitems.MMOItems;
-import net.milkbowl.vault.economy.Economy;
-import net.milkbowl.vault.permission.Permission;
+import java.io.File;
+import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
+import java.util.*;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class Civs extends JavaPlugin {
 
     public static File dataLocation;
+    public static Boolean mimic = null;
     private HashMap<String, CivCommand> commandList = new HashMap<>();
     public static final String NAME = "Civs";
     public static Economy econ;
@@ -54,6 +60,7 @@ public class Civs extends JavaPlugin {
     public static PlaceholderAPIPlugin placeholderAPI;
     protected static Civs civs;
     public static Logger logger;
+    private TabComplete tabComplete;
 
     @Override
     public void onEnable() {
@@ -65,6 +72,7 @@ public class Civs extends JavaPlugin {
         setupPermissions();
 
         instantiateSingletons();
+        TownManager.getInstance().checkAllTownsForWarEnabled();
 
         initCommands();
 
@@ -75,12 +83,15 @@ public class Civs extends JavaPlugin {
     @Override
     public void onDisable() {
 //        BlockLogger.getInstance().saveBlocks();
+        FlyEffect.removeFlyFromAllPlayers();
         StructureUtil.removeAllBoundingBoxes();
         RegionManager.getInstance().saveAllUnsavedRegions();
         TownManager.getInstance().saveAllUnsavedTowns();
         ConveyorEffect.getInstance().onDisable();
         getLogger().info(LogInfo.DISABLED);
         Bukkit.getScheduler().cancelTasks(this);
+        AllowedActionsListener.getInstance().onDisable();
+        ChatManager.getInstance().onDisable();
     }
 
 
@@ -90,8 +101,8 @@ public class Civs extends JavaPlugin {
             args = new String[1];
             args[0] = "menu";
         }
-        if (commandSender instanceof Player && ConfigManager.getInstance().getBlackListWorlds()
-                .contains(((Player) commandSender).getWorld().getName())) {
+        if (commandSender instanceof Player &&
+                Util.isDisallowedByWorld(((Player) commandSender).getWorld().getName())) {
             return true;
         }
         CivCommand civCommand = commandList.get(args[0]);
@@ -117,10 +128,14 @@ public class Civs extends JavaPlugin {
             logger.log(Level.INFO, "{0}", LogInfo.HOOKCHAT + Constants.PLACEHOLDER_API);
         }
         if (mmoItems != null) {
-            logger.log(Level.INFO, "{0} MMOItems", LogInfo.HOOKCHAT);
+            logger.log(Level.INFO, "{0} MMOItems", LogInfo.HOOKITEMS);
         }
         if (discordSRV != null) {
             logger.log(Level.INFO, "{0} DiscordSRV", LogInfo.HOOKCHAT);
+        }
+        if (Bukkit.getPluginManager().isPluginEnabled("WorldEdit") && ConfigManager.getInstance().isSafeWE()) {
+            WorldEditSessionListener.init();
+            logger.log(Level.INFO, "{0}", LogInfo.HOOKWE);
         }
         logger.info(LogInfo.PH_INFO);
 
@@ -160,6 +175,9 @@ public class Civs extends JavaPlugin {
         Set<Class<? extends CivCommand>> commands = reflections.getSubTypesOf(CivCommand.class);
         for (Class<? extends CivCommand> currentCommandClass : commands) {
             try {
+                if (Modifier.isAbstract(currentCommandClass.getModifiers())) {
+                    continue;
+                }
                 CivCommand currentCommand = currentCommandClass.newInstance();
                 for (String key : currentCommandClass.getAnnotation(CivsCommand.class).keys()) {
                     commandList.put(key, currentCommand);
@@ -169,9 +187,15 @@ public class Civs extends JavaPlugin {
                 Civs.logger.log(Level.SEVERE, "Exception generated", e);
             }
         }
+        tabComplete = new TabComplete(commandList);
     }
 
-//    private void initListeners() {
+    @Override
+    public @Nullable List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command command, @NotNull String alias, String[] args) {
+        return tabComplete.onTabComplete(sender, command, alias, args);
+    }
+
+    //    private void initListeners() {
 //        Bukkit.getPluginManager().registerEvents(new SpellListener(), this);
 //        Bukkit.getPluginManager().registerEvents(new AIListener(), this);
 //    }
@@ -199,11 +223,18 @@ public class Civs extends JavaPlugin {
         if (Bukkit.getPluginManager().isPluginEnabled("DiscordSRV")) {
             discordSRV = DiscordSRV.getPlugin();
         }
-        Bukkit.getPluginManager().registerEvents(new DynmapHook(), this);
         if (Bukkit.getPluginManager().isPluginEnabled("dynmap")) {
+            Bukkit.getPluginManager().registerEvents(new DynmapHook(), this);
             DynmapHook.dynmapCommonAPI = (DynmapCommonAPI) Bukkit.getPluginManager().getPlugin("dynmap");
             DynmapHook.initMarkerSet();
         }
+
+        if (Bukkit.getPluginManager().isPluginEnabled("Pl3xMap")) {
+            Pl3xMapHook pl3xMapHook = new Pl3xMapHook();
+            Bukkit.getPluginManager().registerEvents(pl3xMapHook, this);
+            pl3xMapHook.initMarkerSet();
+        }
+        Bukkit.getPluginManager().registerEvents(new PluginListener(), this);
     }
 
     private void instantiateSingletons() {
@@ -212,25 +243,20 @@ public class Civs extends JavaPlugin {
         configurationBuilder.addUrls(ClasspathHelper.forPackage("org.redcastlemedia.multitallented.civs"));
         filterBuilder.includePackage("org.redcastlemedia.multitallented.civs")
                 .excludePackage("org.redcastlemedia.multitallented.civs.dynmaphook")
-                .excludePackage("org.redcastlemedia.multitallented.civs.placeholderexpansion");
+                .excludePackage("ru.endlesscode.mimic")
+                .excludePackage("org.redcastlemedia.multitallented.civs.placeholderexpansion")
+                .excludePackage("org.redcastlemedia.multitallented.civs.worldedit");
         configurationBuilder.filterInputsBy(filterBuilder);
         Reflections reflections = new Reflections(configurationBuilder);
         Set<Class<?>> classes = reflections.getTypesAnnotatedWith(CivsSingleton.class);
         List<Class<?>> classList = new ArrayList<>(classes);
-        classList.sort(new Comparator<Class<?>>() {
-            @Override
-            public int compare(Class<?> o1, Class<?> o2) {
-                return o1.getAnnotation(CivsSingleton.class).priority().compareTo(o2.getAnnotation(CivsSingleton.class).priority());
-            }
-        });
+        classList.sort(Comparator.comparing(o -> o.getAnnotation(CivsSingleton.class).priority()));
         for (Class<?> currentSingleton : classList) {
             try {
                 Method method = currentSingleton.getMethod("getInstance");
-                if (method != null) {
-                    method.invoke(currentSingleton);
-                }
+                method.invoke(currentSingleton);
             } catch (Exception e) {
-
+                logger.log(Level.SEVERE, "There was an error when calling  " + currentSingleton+".getInstance()", e);
             }
         }
     }
@@ -242,9 +268,9 @@ public class Civs extends JavaPlugin {
         return perm;
     }
     public static String getPrefix() {
-        return ConfigManager.getInstance().getCivsChatPrefix() + " ";
+        return ConfigManager.getInstance().getCivsChatPrefix();
     }
-    public static String getRawPrefix() { return ConfigManager.getInstance().civsChatPrefix + " ";}
+    public static String getRawPrefix() { return ConfigManager.getInstance().civsChatPrefix;}
     public static synchronized Civs getInstance() {
         return civs;
     }

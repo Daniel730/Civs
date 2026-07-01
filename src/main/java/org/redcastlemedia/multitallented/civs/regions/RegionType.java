@@ -1,27 +1,24 @@
 package org.redcastlemedia.multitallented.civs.regions;
 
-import lombok.Getter;
-import lombok.Setter;
-
-import org.bukkit.block.Biome;
-import org.redcastlemedia.multitallented.civs.items.CivItem;
-import org.redcastlemedia.multitallented.civs.towns.GovTypeBuff;
-import org.redcastlemedia.multitallented.civs.towns.Government;
-import org.redcastlemedia.multitallented.civs.items.CVItem;
-
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.bukkit.block.Biome;
+import org.redcastlemedia.multitallented.civs.items.CVItem;
+import org.redcastlemedia.multitallented.civs.items.CivItem;
+import org.redcastlemedia.multitallented.civs.towns.GovTypeBuff;
+import org.redcastlemedia.multitallented.civs.towns.Government;
+
+import lombok.Getter;
+import lombok.Setter;
+
 public class RegionType extends CivItem {
 
-    private final String name;
     private final List<List<CVItem>> reqs;
-
     private final HashMap<String, String> effects;
-
     private final int buildRadius;
     private final int buildRadiusX;
     private final int buildRadiusY;
@@ -44,8 +41,14 @@ public class RegionType extends CivItem {
     private final List<String> commandsOnDestruction;
     @Getter @Setter
     private String dynmapMarkerKey = "";
+    @Getter @Setter
+    private boolean startInInventory = false;
+    @Getter @Setter
+    private Set<String> govTypes = new HashSet<>();
+    @Getter @Setter
+    private boolean isWarEnabled = false;
 
-    public RegionType(String name,
+    public RegionType(String key, String name,
                       CVItem icon,
                       CVItem shopIcon,
                       List<String> civReqs,
@@ -75,6 +78,7 @@ public class RegionType extends CivItem {
         super(civReqs,
                 true,
                 ItemType.REGION,
+                key,
                 name, icon.getMat(),
                 shopIcon,
                 civQty,
@@ -85,7 +89,6 @@ public class RegionType extends CivItem {
                 groups,
                 isInShop,
                 level);
-        this.name = name;
         this.reqs = reqs;
         this.upkeeps = upkeeps;
         this.effects = effects;
@@ -103,9 +106,6 @@ public class RegionType extends CivItem {
         this.worlds = worlds;
         this.commandsOnCreation = new ArrayList<>();
         this.commandsOnDestruction = new ArrayList<>();
-    }
-    public String getName() {
-        return name;
     }
     public List<List<CVItem>> getReqs() {
         return cloneReqMap(reqs);

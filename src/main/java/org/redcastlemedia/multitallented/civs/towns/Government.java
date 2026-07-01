@@ -5,12 +5,12 @@ import lombok.Getter;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.redcastlemedia.multitallented.civs.civilians.Civilian;
+import org.redcastlemedia.multitallented.civs.localization.LocaleConstants;
 import org.redcastlemedia.multitallented.civs.localization.LocaleManager;
 import org.redcastlemedia.multitallented.civs.items.CVItem;
 import org.redcastlemedia.multitallented.civs.util.Util;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -24,15 +24,19 @@ public class Government {
     @Getter
     private final List<GovTransition> transitions;
     private final CVItem icon;
+    @Getter
+    private final boolean selectable;
 
     public Government(String name, GovernmentType governmentType,
                       Set<GovTypeBuff> buffs, CVItem cvItem,
-                      List<GovTransition> transitions) {
+                      List<GovTransition> transitions,
+                      boolean selectable) {
         this.name = name;
         this.governmentType = governmentType;
         this.buffs = buffs;
         this.icon = cvItem;
         this.transitions = transitions;
+        this.selectable = selectable;
     }
 
     public CVItem getIcon(Civilian civilian) {
@@ -42,12 +46,12 @@ public class Government {
     public CVItem getIcon(Civilian civilian, boolean isUseBuffs) {
         Player player = Bukkit.getPlayer(civilian.getUuid());
         CVItem cvItem = icon.clone();
-        cvItem.setDisplayName(LocaleManager.getInstance().getTranslationWithPlaceholders(player,
-                name.toLowerCase() + "-name"));
+        cvItem.setDisplayName(LocaleManager.getInstance().getTranslation(player,
+                name.toLowerCase() + LocaleConstants.NAME_SUFFIX));
         ArrayList<String> lore = new ArrayList<>();
         lore.add("Gov Type: " + name);
-        lore.addAll(Util.textWrap(LocaleManager.getInstance().getTranslationWithPlaceholders(player,
-                name.toLowerCase() + "-desc")));
+        lore.addAll(Util.textWrap(LocaleManager.getInstance().getTranslation(player,
+                name.toLowerCase() + LocaleConstants.DESC_SUFFIX)));
         if (isUseBuffs) {
             lore.addAll(getBuffDescriptions(civilian));
         }
@@ -60,7 +64,7 @@ public class Government {
         Player player = Bukkit.getPlayer(civilian.getUuid());
         for (GovTypeBuff buff : buffs) {
             String applyString = getApplyString(buff);
-            lore.addAll(Util.textWrap(civilian, LocaleManager.getInstance().getTranslationWithPlaceholders(
+            lore.addAll(Util.textWrap(civilian, LocaleManager.getInstance().getTranslation(
                     player, buff.getBuffType().name().toLowerCase() + "-buff-desc")
                     .replace("$1", buff.getAmount() + "")
                     .replace("$2", applyString)));

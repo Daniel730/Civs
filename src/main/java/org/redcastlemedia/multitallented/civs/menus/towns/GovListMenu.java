@@ -1,18 +1,29 @@
 package org.redcastlemedia.multitallented.civs.menus.towns;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
-import org.redcastlemedia.multitallented.civs.localization.LocaleManager;
 import org.redcastlemedia.multitallented.civs.civilians.Civilian;
 import org.redcastlemedia.multitallented.civs.items.CVItem;
+import org.redcastlemedia.multitallented.civs.localization.LocaleManager;
 import org.redcastlemedia.multitallented.civs.menus.CivsMenu;
 import org.redcastlemedia.multitallented.civs.menus.CustomMenu;
 import org.redcastlemedia.multitallented.civs.menus.MenuIcon;
 import org.redcastlemedia.multitallented.civs.menus.MenuManager;
-import org.redcastlemedia.multitallented.civs.towns.*;
+import org.redcastlemedia.multitallented.civs.towns.Government;
+import org.redcastlemedia.multitallented.civs.towns.GovernmentManager;
+import org.redcastlemedia.multitallented.civs.towns.GovernmentType;
+import org.redcastlemedia.multitallented.civs.towns.Town;
+import org.redcastlemedia.multitallented.civs.towns.TownManager;
 import org.redcastlemedia.multitallented.civs.util.Constants;
-
-import java.util.*;
 
 @CivsMenu(name = "gov-list") @SuppressWarnings("unused")
 public class GovListMenu extends CustomMenu {
@@ -37,21 +48,30 @@ public class GovListMenu extends CustomMenu {
                     townsByGov.put(currentGovName, new HashSet<>());
                 }
                 townsByGov.get(currentGovName).add(town);
-                if (govPower.containsKey(town.getGovernmentType())) {
+                if (govPower.containsKey(town.getGovernmentType().toLowerCase())) {
                     govPower.put(town.getGovernmentType().toLowerCase(), town.getPower() +
                             govPower.get(town.getGovernmentType().toLowerCase()));
                 } else {
                     govPower.put(town.getGovernmentType().toLowerCase(), town.getPower());
                 }
             }
-            govList.sort(new Comparator<String>() {
-                @Override
-                public int compare(String o1, String o2) {
-                    return govPower.getOrDefault(o2, 0).compareTo(govPower.getOrDefault(o1, 0));
+            for (String currentGovName : GovernmentManager.getInstance().getGovermentTypes()) {
+                if (!govPower.containsKey(currentGovName.toLowerCase())) {
+                    govList.remove(currentGovName);
                 }
+            }
+            govList.sort((o1, o2) -> {
+                int power1 = govPower.getOrDefault(o1.toLowerCase(), 0);
+                int power2 = govPower.getOrDefault(o2.toLowerCase(), 0);
+                return Integer.compare(power2, power1);
             });
             data.put("townsByGov", townsByGov);
             data.put("govPower", govPower);
+        } else {
+            govList = new ArrayList<>(govList.stream().filter(govName -> {
+                Government government = GovernmentManager.getInstance().getGovernment(govName);
+                return government.isSelectable();
+            }).toList());
         }
         data.put("govList", govList);
         data.put("govMap", new HashMap<ItemStack, String>());
@@ -64,7 +84,14 @@ public class GovListMenu extends CustomMenu {
 
     @Override @SuppressWarnings("unchecked")
     protected ItemStack createItemStack(Civilian civilian, MenuIcon menuIcon, int count) {
+        Player player = Bukkit.getPlayer(civilian.getUuid());
+        if (player == null) {
+            return new ItemStack(Material.AIR);
+        }
         if (menuIcon.getKey().equals("governments")) {
+            HashMap<String, Integer> govPower = (HashMap<String, Integer>) MenuManager.getData(civilian.getUuid(), "govPower");
+            boolean isLeaderboard = govPower != null;
+
             List<String> govList = (List<String>) MenuManager.getData(civilian.getUuid(), "govList");
             int page = (int) MenuManager.getData(civilian.getUuid(), "page");
             int startIndex = page * menuIcon.getIndex().size();
@@ -74,16 +101,13 @@ public class GovListMenu extends CustomMenu {
             String govName = govList.get(startIndex + count);
             Government government = GovernmentManager.getInstance().getGovernment(govName);
             CVItem cvItem;
-            boolean isLeaderboard = false;
-            HashMap<String, Integer> govPower = (HashMap<String, Integer>) MenuManager.getData(civilian.getUuid(), "govPower");
-            if (govPower != null) {
-                if (govPower.get(govName) == null) {
+            if (isLeaderboard) {
+                if (govPower.get(govName.toLowerCase()) == null) {
                     return new ItemStack(Material.AIR);
                 }
                 cvItem = government.getIcon(civilian, false);
-                cvItem.getLore().add(LocaleManager.getInstance().getTranslation(civilian.getLocale(), "points")
-                        .replace("$1", "" + govPower.get(govName)));
-                isLeaderboard = true;
+                cvItem.getLore().add(LocaleManager.getInstance().getTranslation(player, "points")
+                        .replace("$1", "" + govPower.get(govName.toLowerCase())));
             } else {
                 cvItem = government.getIcon(civilian, true);
             }
@@ -91,7 +115,7 @@ public class GovListMenu extends CustomMenu {
             if (isLeaderboard) {
                 String townList = "";
                 HashMap<String, Set<Town>> townsByGov = (HashMap<String, Set<Town>>) MenuManager.getData(civilian.getUuid(), "townsByGov");
-                for (Town currentTown : townsByGov.get(govName)) {
+                for (Town currentTown : townsByGov.get(govName.toLowerCase())) {
                     townList += currentTown.getName() + ",";
                 }
                 townList = townList.substring(0, townList.length() - 1);
@@ -99,7 +123,17 @@ public class GovListMenu extends CustomMenu {
                 theseActions.add("menu:select-town?townList=" + townList);
                 putActionList(civilian, itemStack, theseActions);
             } else {
-                putActions(civilian, menuIcon, itemStack, count);
+                if (GovernmentType.COLONIALISM == government.getGovernmentType()) {
+                    Town town = (Town) MenuManager.getData(civilian.getUuid(), "town");
+                    if (town != null) {
+                        ArrayList<String> theseActions = new ArrayList<>();
+                        theseActions.add("select-gov");
+                        theseActions.add("menu:select-town?colony=" + town.getName());
+                        putActionList(civilian, itemStack, theseActions);
+                    }
+                } else {
+                    putActions(civilian, menuIcon, itemStack, count);
+                }
             }
             ((HashMap<ItemStack, String>) MenuManager.getData(civilian.getUuid(), "govMap")).put(itemStack, govName);
             return itemStack;

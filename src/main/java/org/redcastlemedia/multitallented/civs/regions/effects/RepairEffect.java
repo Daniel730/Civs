@@ -1,9 +1,11 @@
 package org.redcastlemedia.multitallented.civs.regions.effects;
 
 import java.util.HashSet;
+import java.util.Set;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.enchantments.Enchantment;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -15,6 +17,7 @@ import org.bukkit.inventory.meta.Damageable;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.redcastlemedia.multitallented.civs.Civs;
 import org.redcastlemedia.multitallented.civs.CivsSingleton;
+import org.redcastlemedia.multitallented.civs.items.CVItem;
 import org.redcastlemedia.multitallented.civs.localization.LocaleManager;
 import org.redcastlemedia.multitallented.civs.regions.Region;
 import org.redcastlemedia.multitallented.civs.regions.RegionManager;
@@ -27,19 +30,22 @@ public class RepairEffect implements Listener {
     }
 
     private static final String KEY = "repair";
-    private HashSet<Material> getRequiredReagent(Material material) {
-        HashSet<Material> returnSet = new HashSet<>();
+    public static Set<Material> getRequiredReagent(Material material) {
+        Set<Material> returnSet = new HashSet<>();
         switch (material) {
             case WOODEN_HOE:
             case WOODEN_PICKAXE:
             case WOODEN_SHOVEL:
             case WOODEN_SWORD:
+            case SHIELD:
                 returnSet.add(Material.OAK_PLANKS);
                 returnSet.add(Material.SPRUCE_PLANKS);
                 returnSet.add(Material.BIRCH_PLANKS);
                 returnSet.add(Material.JUNGLE_PLANKS);
                 returnSet.add(Material.DARK_OAK_PLANKS);
                 returnSet.add(Material.ACACIA_PLANKS);
+                returnSet.add(Material.CRIMSON_PLANKS);
+                returnSet.add(Material.WARPED_PLANKS);
                 return returnSet;
             case LEATHER_CHESTPLATE:
             case LEATHER_HELMET:
@@ -53,6 +59,7 @@ public class RepairEffect implements Listener {
             case STONE_SHOVEL:
             case STONE_SWORD:
                 returnSet.add(Material.COBBLESTONE);
+                returnSet.add(Material.BLACKSTONE);
                 return returnSet;
             case IRON_PICKAXE:
             case IRON_SHOVEL:
@@ -88,16 +95,34 @@ public class RepairEffect implements Listener {
             case DIAMOND_BOOTS:
                 returnSet.add(Material.DIAMOND);
                 return returnSet;
+            case NETHERITE_PICKAXE:
+            case NETHERITE_SHOVEL:
+            case NETHERITE_SWORD:
+            case NETHERITE_AXE:
+            case NETHERITE_HOE:
+            case NETHERITE_CHESTPLATE:
+            case NETHERITE_HELMET:
+            case NETHERITE_LEGGINGS:
+            case NETHERITE_BOOTS:
+                returnSet.add(Material.NETHERITE_SCRAP);
+                return returnSet;
+            case TURTLE_HELMET:
+                returnSet.add(Material.TURTLE_SCUTE);
+                return returnSet;
             case BOW:
+            case CROSSBOW:
             case FISHING_ROD:
                 returnSet.add(Material.STRING);
+                return returnSet;
+            case ELYTRA:
+                returnSet.add(Material.PHANTOM_MEMBRANE);
                 return returnSet;
             default:
                 return returnSet;
         }
     }
 
-    protected int getRepairCost(Material mat, double damage) {
+    public static int getRepairCost(Material mat, double damage) {
         int amt;
         switch (mat) {
             case WOODEN_SHOVEL:
@@ -105,6 +130,11 @@ public class RepairEffect implements Listener {
             case GOLDEN_SHOVEL:
             case IRON_SHOVEL:
             case DIAMOND_SHOVEL:
+            case NETHERITE_SHOVEL:
+            case NETHERITE_HOE:
+            case NETHERITE_SWORD:
+            case NETHERITE_PICKAXE:
+            case NETHERITE_AXE:
                 amt = (int) Math.ceil(damage / mat.getMaxDurability() * 1.0D);
                 return Math.max(amt, 1);
             case WOODEN_HOE:
@@ -119,6 +149,8 @@ public class RepairEffect implements Listener {
             case DIAMOND_SWORD:
             case DIAMOND_HOE:
             case IRON_SWORD:
+            case NETHERITE_BOOTS:
+            case NETHERITE_HELMET:
                 amt = (int) Math.ceil(damage / mat.getMaxDurability() * 2.0D);
                 return Math.max(amt, 1);
             case BOW:
@@ -131,18 +163,22 @@ public class RepairEffect implements Listener {
             case IRON_AXE:
             case IRON_PICKAXE:
             case DIAMOND_PICKAXE:
+            case CROSSBOW:
+            case NETHERITE_LEGGINGS:
                 amt = (int) Math.ceil(damage / mat.getMaxDurability() * 3.0D);
                 return Math.max(amt, 1);
             case GOLDEN_BOOTS:
             case IRON_BOOTS:
             case LEATHER_BOOTS:
             case DIAMOND_BOOTS:
+            case NETHERITE_CHESTPLATE:
                 amt = (int) Math.ceil(damage / mat.getMaxDurability() * 4.0D);
                 return Math.max(amt, 1);
             case DIAMOND_HELMET:
             case LEATHER_HELMET:
             case IRON_HELMET:
             case GOLDEN_HELMET:
+            case TURTLE_HELMET:
                 amt = (int) Math.ceil(damage / mat.getMaxDurability() * 5.0D);
                 return Math.max(amt, 1);
             case DIAMOND_LEGGINGS:
@@ -155,6 +191,7 @@ public class RepairEffect implements Listener {
             case DIAMOND_CHESTPLATE:
             case IRON_CHESTPLATE:
             case GOLDEN_CHESTPLATE:
+            case ELYTRA:
                 amt = (int) Math.ceil(damage / mat.getMaxDurability() * 8.0D);
                 return Math.max(amt, 1);
             default:
@@ -162,14 +199,171 @@ public class RepairEffect implements Listener {
         }
     }
 
-    @EventHandler(ignoreCancelled = true)
+    public static boolean isArmor(Material mat) {
+        switch (mat) {
+            case GOLDEN_BOOTS:
+            case IRON_BOOTS:
+            case LEATHER_BOOTS:
+            case DIAMOND_BOOTS:
+            case CHAINMAIL_BOOTS:
+            case DIAMOND_HELMET:
+            case LEATHER_HELMET:
+            case IRON_HELMET:
+            case GOLDEN_HELMET:
+            case CHAINMAIL_HELMET:
+            case DIAMOND_LEGGINGS:
+            case LEATHER_LEGGINGS:
+            case IRON_LEGGINGS:
+            case GOLDEN_LEGGINGS:
+            case CHAINMAIL_LEGGINGS:
+            case LEATHER_CHESTPLATE:
+            case DIAMOND_CHESTPLATE:
+            case IRON_CHESTPLATE:
+            case GOLDEN_CHESTPLATE:
+            case CHAINMAIL_CHESTPLATE:
+            case NETHERITE_HELMET:
+            case NETHERITE_CHESTPLATE:
+            case NETHERITE_LEGGINGS:
+            case NETHERITE_BOOTS:
+            case TURTLE_HELMET:
+                return true;
+            default:
+                return false;
+        }
+    }
+    public static boolean isHelmet(Material mat) {
+        switch (mat) {
+            case DIAMOND_HELMET:
+            case LEATHER_HELMET:
+            case IRON_HELMET:
+            case GOLDEN_HELMET:
+            case CHAINMAIL_HELMET:
+            case NETHERITE_HELMET:
+            case TURTLE_HELMET:
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    public static boolean isCombatEnchantment(Enchantment enchantment) {
+        switch (enchantment.getKey().getKey().toUpperCase()) {
+            case "SHARPNESS":
+            case "PROTECTION":
+            case "PROJECTILE_PROTECTION":
+            case "FIRE_PROTECTION":
+            case "BLAST_PROTECTION":
+            case "THORNS":
+            case "KNOCKBACK":
+            case "FIRE_ASPECT":
+            case "SWEEPING":
+            case "POWER":
+            case "PUNCH":
+            case "FLAME":
+            case "IMPALING":
+            case "CHANNELING":
+            case "MULTISHOT":
+            case "QUICK_CHARGE":
+            case "PIERCING":
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    public static boolean isChestplate(Material mat) {
+        switch (mat) {
+            case LEATHER_CHESTPLATE:
+            case DIAMOND_CHESTPLATE:
+            case IRON_CHESTPLATE:
+            case GOLDEN_CHESTPLATE:
+            case CHAINMAIL_CHESTPLATE:
+            case NETHERITE_CHESTPLATE:
+                return true;
+            default:
+                return false;
+        }
+    }
+    public static boolean isLeggings(Material mat) {
+        switch (mat) {
+            case DIAMOND_LEGGINGS:
+            case LEATHER_LEGGINGS:
+            case IRON_LEGGINGS:
+            case GOLDEN_LEGGINGS:
+            case CHAINMAIL_LEGGINGS:
+            case NETHERITE_LEGGINGS:
+                return true;
+            default:
+                return false;
+        }
+    }
+    public static boolean isBoots(Material mat) {
+        switch (mat) {
+            case GOLDEN_BOOTS:
+            case IRON_BOOTS:
+            case LEATHER_BOOTS:
+            case DIAMOND_BOOTS:
+            case CHAINMAIL_BOOTS:
+            case NETHERITE_BOOTS:
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    public static boolean isWeapon(Material type) {
+        switch (type) {
+            case DIAMOND_SWORD:
+            case IRON_SWORD:
+            case GOLDEN_SWORD:
+            case STONE_SWORD:
+            case DIAMOND_AXE:
+            case IRON_AXE:
+            case GOLDEN_AXE:
+            case STONE_AXE:
+            case TRIDENT:
+            case BOW:
+            case NETHERITE_SWORD:
+            case CROSSBOW:
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    public static boolean isAxe(Material type) {
+        switch (type) {
+            case DIAMOND_AXE:
+            case IRON_AXE:
+            case GOLDEN_AXE:
+            case STONE_AXE:
+            case NETHERITE_AXE:
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    public static boolean isSword(Material type) {
+        switch (type) {
+            case DIAMOND_SWORD:
+            case IRON_SWORD:
+            case GOLDEN_SWORD:
+            case STONE_SWORD:
+            case NETHERITE_SWORD:
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    @EventHandler
     public void onPlayerInteract(PlayerInteractEvent event) {
         if (event.getClickedBlock() == null || event.getHand() == null) {
             return;
         }
 
         if ((!event.getAction().equals(Action.RIGHT_CLICK_BLOCK) && !event.getAction().equals(Action.LEFT_CLICK_BLOCK)) ||
-                (!event.getClickedBlock().getType().equals(Material.IRON_BLOCK)) ||
                 event.getHand().equals(EquipmentSlot.HAND)) {
             return;
         }
@@ -177,6 +371,10 @@ public class RepairEffect implements Listener {
         Region r = RegionManager.getInstance().getRegionAt(event.getClickedBlock().getLocation());
 
         if (r == null || !r.getEffects().containsKey(KEY)) {
+            return;
+        }
+        CVItem cvItem = CVItem.createCVItemFromString(r.getEffects().get(KEY));
+        if (event.getClickedBlock().getType() != cvItem.getMat()) {
             return;
         }
 
@@ -194,7 +392,7 @@ public class RepairEffect implements Listener {
         }
         if (item.getType() == Material.AIR) {
             player.sendMessage(Civs.getPrefix() +
-                    LocaleManager.getInstance().getTranslationWithPlaceholders(player, "hold-repair-item"));
+                    LocaleManager.getInstance().getTranslation(player, "hold-repair-item"));
             return;
         }
 
@@ -209,18 +407,18 @@ public class RepairEffect implements Listener {
         Damageable damageable = (Damageable) itemMeta;
         if (damageable == null) {
             player.sendMessage(Civs.getPrefix() +
-                    LocaleManager.getInstance().getTranslationWithPlaceholders(player, "cant-repair-item"));
+                    LocaleManager.getInstance().getTranslation(player, "cant-repair-item"));
             event.setCancelled(true);
             return;
         }
         int repairCost = getRepairCost(item.getType(), damageable.getDamage());
         if (repairCost == 0) {
             player.sendMessage(Civs.getPrefix() +
-                    LocaleManager.getInstance().getTranslationWithPlaceholders(player, "cant-repair-item"));
+                    LocaleManager.getInstance().getTranslation(player, "cant-repair-item"));
             event.setCancelled(true);
             return;
         }
-        HashSet<Material> reagents = getRequiredReagent(item.getType());
+        Set<Material> reagents = getRequiredReagent(item.getType());
         if (!reagents.isEmpty()) {
             boolean hasReagent = false;
             Material firstMat = reagents.iterator().next();
@@ -233,7 +431,7 @@ public class RepairEffect implements Listener {
                 player.getInventory().removeItem(cost);
             }
             if (!hasReagent) {
-                String message = LocaleManager.getInstance().getTranslationWithPlaceholders(player, "more-repair-items");
+                String message = LocaleManager.getInstance().getTranslation(player, "more-repair-items");
                 message = message.replace("$1", firstMat.name().toLowerCase().replace("_", " "));
                 player.sendMessage(Civs.getPrefix() + message);
                 return;

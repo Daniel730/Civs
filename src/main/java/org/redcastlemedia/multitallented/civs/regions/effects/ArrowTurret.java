@@ -7,7 +7,6 @@ import org.bukkit.Material;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
-import org.bukkit.block.Chest;
 import org.bukkit.entity.*;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -25,7 +24,6 @@ import org.redcastlemedia.multitallented.civs.items.UnloadedInventoryHandler;
 import org.redcastlemedia.multitallented.civs.regions.Region;
 import org.redcastlemedia.multitallented.civs.regions.RegionType;
 import org.redcastlemedia.multitallented.civs.spells.effects.DamageEffect;
-import org.redcastlemedia.multitallented.civs.items.CVItem;
 import org.redcastlemedia.multitallented.civs.util.Util;
 
 import java.util.*;
@@ -203,7 +201,7 @@ public class ArrowTurret implements Listener {
         }
         Arrow arrow = (Arrow) projectile;
         Player damagee = (Player) event.getEntity();
-        double maxHP = damagee.getAttribute(Attribute.GENERIC_MAX_HEALTH).getValue(); //TODO check to make sure this works
+        double maxHP = damagee.getAttribute(Attribute.MAX_HEALTH).getValue(); //TODO check to make sure this works
         if (arrowDamages.get(arrow) == null) {
             return;
         }

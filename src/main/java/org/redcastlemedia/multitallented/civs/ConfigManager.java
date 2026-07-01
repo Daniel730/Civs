@@ -1,23 +1,25 @@
 package org.redcastlemedia.multitallented.civs;
 
-import org.bukkit.Material;
-import org.bukkit.configuration.ConfigurationSection;
-import org.bukkit.configuration.file.FileConfiguration;
-import org.redcastlemedia.multitallented.civs.civilians.ChatChannel;
-import org.redcastlemedia.multitallented.civs.towns.GovernmentType;
-import org.redcastlemedia.multitallented.civs.items.CVItem;
-import org.redcastlemedia.multitallented.civs.util.FallbackConfigUtil;
-import org.redcastlemedia.multitallented.civs.util.Util;
-
 import java.io.File;
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
-import java.util.Set;
+import java.util.NavigableMap;
+import java.util.TreeMap;
 import java.util.logging.Level;
+
+import org.bukkit.Material;
+import org.bukkit.configuration.ConfigurationSection;
+import org.bukkit.configuration.file.FileConfiguration;
+import org.redcastlemedia.multitallented.civs.chat.ChatChannelConfig;
+import org.redcastlemedia.multitallented.civs.civilians.ChatChannel;
+import org.redcastlemedia.multitallented.civs.items.CVItem;
+import org.redcastlemedia.multitallented.civs.towns.GovernmentType;
+import org.redcastlemedia.multitallented.civs.util.FallbackConfigUtil;
+import org.redcastlemedia.multitallented.civs.util.Util;
 
 import lombok.Getter;
 
@@ -27,6 +29,10 @@ public class ConfigManager {
 
     private static ConfigManager configManager;
     List<String> blackListWorlds = new ArrayList<>();
+    @Getter
+    List<String> whiteListWorlds = new ArrayList<>();
+    @Getter
+    List<String> pvpWorlds = new ArrayList<>();
     String defaultLanguage;
     boolean allowCivItemDropping;
     boolean explosionOverride;
@@ -38,6 +44,7 @@ public class ConfigManager {
     String defaultClass;
     HashMap<String, Integer> groups;
     HashMap<String, CVItem> folderIcons;
+    @Getter Map<String, List<String>> folderReqs = new HashMap<>();
     HashMap<String, Integer> creatureHealth = new HashMap<>();
     boolean useStarterBook;
     long jailTime;
@@ -84,8 +91,6 @@ public class ConfigManager {
     boolean useTutorial;
     @Getter
     boolean useGuide;
-    @Getter
-    String tutorialUrl;
     @Getter
     List<String> levelList;
     @Getter
@@ -148,9 +153,54 @@ public class ConfigManager {
     int lineBreakLength;
     Map<String, Integer> lineLengthMap;
     @Getter
-    EnumMap<ChatChannel.ChatChannelType, String> chatChannels;
+    EnumMap<ChatChannel.ChatChannelType, ChatChannelConfig> chatChannels;
+    @Getter
+    Map<String, String> chatTagFormat;
     @Getter
     long unloadedChestRefreshRate;
+    @Getter
+    int hardshipDepreciationPeriod;
+    @Getter
+    double huntKarma;
+    @Getter
+    boolean allowHuntNewPlayers;
+    @Getter
+    double hardshipPerKill;
+    @Getter
+    boolean useHardshipSystem;
+    @Getter
+    boolean keepRegionChunksLoaded;
+    @Getter boolean useSkills;
+    @Getter boolean huntCrossWorld;
+    @Getter boolean silentExp;
+    @Getter boolean deleteInvalidRegions;
+    @Getter boolean skinsInMenu;
+    @Getter boolean useBounties;
+    @Getter boolean warningLogger;
+    @Getter double percentPowerForUpgrade;
+    @Getter boolean showKillStreakMessages;
+    @Getter boolean combatTagEnabled;
+    @Getter boolean useBossBar;
+    @Getter double refundPercentage;
+    @Getter int ceaseFireStart;
+    @Getter int ceaseFireEnd;
+    @Getter boolean allowFireworkUseInCombat;
+    @Getter boolean dropElytraAndRiptideInCombat;
+    @Getter boolean dropElytraAndRiptideInEnemyTowns;
+    @Getter double elytraDamageMultiplier;
+    @Getter boolean catapultTntDamageOnly;
+    @Getter boolean useWarEnabled;
+
+    @Getter
+    String chatChannelFormat;
+    @Getter
+    private int residenciesCount;
+    @Getter
+    private NavigableMap<Integer, String> residenciesCountOverride;
+
+    @Getter private boolean safeWE;
+
+    @Getter private String pl3xMapTownMarkerDesc;
 
     public ConfigManager() {
         loadDefaults();
@@ -259,6 +309,8 @@ public class ConfigManager {
         try {
 
             blackListWorlds = config.getStringList("black-list-worlds");
+            whiteListWorlds = config.getStringList("white-list-worlds");
+            pvpWorlds = config.getStringList("pvp-worlds");
             defaultLanguage = config.getString("default-language", "en");
             allowCivItemDropping = config.getBoolean("allow-civ-item-sharing", false);
             explosionOverride = config.getBoolean("explosion-override", false);
@@ -268,11 +320,25 @@ public class ConfigManager {
             expModifier = config.getDouble("exp-modifier", 0.2);
             expBase = config.getInt("exp-base", 100);
             defaultClass = config.getString("default-class", "default");
+            showKillStreakMessages = config.getBoolean("show-killstreak-messages", true);
+            dropElytraAndRiptideInCombat = config.getBoolean("drop-elytra-and-riptide-in-combat", false);
+            dropElytraAndRiptideInEnemyTowns = config.getBoolean("drop-elytra-and-riptide-in-enemy-town", false);
+            elytraDamageMultiplier = config.getDouble("elytra-damage-multiplier", 1.0);
             folderIcons = new HashMap<>();
             ConfigurationSection section2 = config.getConfigurationSection("folders");
             if (section2 != null) {
                 for (String key : section2.getKeys(false)) {
-                    folderIcons.put(key, CVItem.createCVItemFromString(config.getString("folders." + key, "CHEST")));
+                    String iconString = "CHEST";
+                    if (config.isSet("folders." + key + ".icon")) {
+                        iconString = config.getString("folders." + key + ".icon", "CHEST");
+                    } else {
+                        iconString = config.getString("folders." + key, "CHEST");
+                    }
+                    if (config.isSet("folders." + key + ".pre-reqs")) {
+                        List<String> preReqs = config.getStringList("folders." + key + ".pre-reqs");
+                        folderReqs.put(key, preReqs);
+                    }
+                    folderIcons.put(key, CVItem.createCVItemFromString(iconString));
                 }
             }
             itemGroups = new HashMap<>();
@@ -310,8 +376,8 @@ public class ConfigManager {
             moneyPerKarma = config.getDouble("money.karma", 0.1);
             karmaPerKill = config.getInt("karma-per-kill", 1);
             karmaPerKillStreak = config.getInt("karma-per-kill-streak", 1);
-            powerPerKill = config.getInt("power-per-kill", 1);
-            powerPerNPCKill = config.getInt("power-per-npc-kill", 1);
+            powerPerKill = config.getInt("power-per-kill", 30);
+            powerPerNPCKill = config.getInt("power-per-npc-kill", 5);
             villagerCooldown = config.getLong("villager-cooldown", 300);
             denyArrowTurretShootAtMobs = config.getBoolean("disable-arrow-turret-shooting-at-mobs", false);
             portMana = config.getInt("port.mana", 0);
@@ -323,7 +389,9 @@ public class ConfigManager {
             portSlowWarmup = config.getBoolean("port.slow-warmup", true);
             portReagents = config.getStringList("port.reagents");
             combatTagDuration = config.getInt("combat-tag-duration", 60);
+            huntCrossWorld = config.getBoolean("allow-hunt-cross-world", false);
             portDuringCombat = config.getBoolean("port.port-during-combat", false);
+            allowFireworkUseInCombat = config.getBoolean("allow-firework-use-in-combat", true);
             getTownRingSettings(config);
             karmaDepreciatePeriod = config.getLong("karma-depreciate-period", 43200);
             combatLogPenalty = config.getInt("combat-log-out-percent-damage", 80);
@@ -331,23 +399,27 @@ public class ConfigManager {
             allowFoodHealInCombat = config.getBoolean("allow-food-heal-in-combat", true);
             allowTeleportInCombat = config.getBoolean("allow-teleporting-during-combat", false);
             townGracePeriod = config.getLong("town-grace-period", 43200); //12 hours
-            useClassesAndSpells = config.getBoolean("use-classes-and-spells", false);
             useTutorial = config.getBoolean("tutorial.use-tutorial", true);
             useGuide = config.getBoolean("tutorial.use-guide", true);
-            tutorialUrl = config.getString("tutorial.url");
             checkWaterSpread = config.getBoolean("check-water-spread", true);
             customItemDescriptions = processMap(config.getConfigurationSection("custom-items"));
             levelList = config.getStringList("levels");
             useParticleBoundingBoxes = config.getBoolean("use-particle-bounding-boxes", false);
+            combatTagEnabled = config.getBoolean("combat-tag-enabled", true);
+            useWarEnabled = config.getBoolean("use-war-enabled", true);
             getGovSettings(config);
             maxTax = config.getDouble("max-town-tax", 50);
             daysBetweenVotes = config.getInt("days-between-elections", 7);
             capitalismVotingCost = config.getDouble("capitalism-voting-cost", 200);
             topGuideSpacer = config.getString("top-guide-spacer", "-----------------Civs-----------------");
             bottomGuideSpacer = config.getString("bottom-guide-spacer", "--------------------------------------");
-            civsChatPrefix = config.getString("civs-chat-prefix", "@{GREEN}[Civs]");
+            civsChatPrefix = config.getString("civs-chat-prefix", "@{GREEN}[Civs] ");
             prefixAllText = Util.parseColors(config.getString("prefix-all-text", ""));
             civsItemPrefix = config.getString("civs-item-prefix", "Civs");
+            skinsInMenu = config.getBoolean("show-player-skins-in-menus", true);
+            catapultTntDamageOnly = config.getBoolean("catapult-tnt-damage-only", false);
+            ceaseFireEnd = config.getInt("cease-fire-end", -1);
+            ceaseFireStart = config.getInt("cease-fire-start", -1);
             if ("".equals(civsItemPrefix)) {
                 civsItemPrefix = "Civs";
             }
@@ -369,7 +441,21 @@ public class ConfigManager {
             minPopulationForGovTransition = config.getInt("min-population-for-auto-gov-transition", 4);
             lineBreakLength = config.getInt("line-break-length", 40);
             unloadedChestRefreshRate = config.getLong("unloaded-chest-refresh-rate", 10) * 60000;
+            hardshipDepreciationPeriod = config.getInt("hardship-depreciation-period-in-days", 7);
+            huntKarma = config.getDouble("hunt-karma", -250.0);
+            allowHuntNewPlayers = config.getBoolean("hunt-new-players", true);
+            hardshipPerKill = config.getDouble("hardship-per-kill", 0);
+            useHardshipSystem = config.getBoolean("hardship-should-pay-damages", false);
+            keepRegionChunksLoaded = config.getBoolean("keep-region-chunks-loaded", true);
+            silentExp = config.getBoolean("no-exp-chat-messages", false);
+            deleteInvalidRegions = config.getBoolean("delete-invalid-regions", false);
             lineLengthMap = new HashMap<>();
+            useBounties = config.getBoolean("use-bounties", true);
+            useSkills = config.getBoolean("allow-skills", true);
+            warningLogger = config.getBoolean("show-warning-logs", false);
+            useBossBar = config.getBoolean("show-civs-boss-bar", true);
+            percentPowerForUpgrade = config.getDouble("percent-power-for-town-upgrade", 0.1);
+            refundPercentage = config.getDouble("refund-percentage", 0.5);
             if (config.isSet("line-break-length-per-language")) {
                 for (String key : config.getConfigurationSection("line-break-length-per-language").getKeys(false)) {
                     lineLengthMap.put(key, config.getInt("line-break-length-per-language." + key, lineBreakLength));
@@ -379,18 +465,53 @@ public class ConfigManager {
             if (config.isSet("chat-channels")) {
                 for (String chatChannel : config.getConfigurationSection("chat-channels").getKeys(false)) {
                     try {
-                        if (config.getBoolean("chat-channels." + chatChannel + ".enabled", false)) {
-                            chatChannels.put(ChatChannel.ChatChannelType.valueOf(chatChannel.toUpperCase()),
-                                    config.getString("chat-channels." + chatChannel + ".icon", Material.GRASS.name()));
-                        }
+                        boolean enabled = config.getBoolean("chat-channels." + chatChannel + ".enabled", false);
+                        boolean override = config.getBoolean("chat-channels." + chatChannel + ".override", false);
+                        String format = config.getString("chat-channels." + chatChannel + ".format", "$channel$ $player$: $message$");
+                        String icon = config.getString("chat-channels." + chatChannel + ".icon", Material.SHORT_GRASS.name());
+                        ChatChannel.ChatChannelType chatChannelType = ChatChannel.ChatChannelType.valueOf(chatChannel.toUpperCase());
+
+                        chatChannels.put(chatChannelType,
+                                new ChatChannelConfig(chatChannelType, enabled, Material.valueOf(icon.toUpperCase(Locale.ROOT)), format, override));
                     } catch (Exception e) {
                         Civs.logger.log(Level.WARNING, "Invalid chat channel type {0}", chatChannel);
                     }
                 }
             }
-            if (chatChannels.isEmpty()) {
-                chatChannels.put(ChatChannel.ChatChannelType.GLOBAL, Material.GRASS.name());
+
+            if (config.isSet("chat-tags-format")) {
+                for (String tag : config.getConfigurationSection("chat-tags-format").getKeys(false)) {
+                    try {
+                        chatTagFormat.put(tag,config.getString("chat-tags-format." + tag, "[$1]"));
+                    } catch (Exception e) {
+                        Civs.logger.log(Level.WARNING, "Unable to read chat-tags-format section");
+                    }
+                }
             }
+
+            chatChannelFormat = config.getString("chat-channel-format", "[$channel$]$player$: $message$");
+
+            if (config.isSet("player-residencies-count")) {
+                residenciesCount = config.getInt("player-residencies-count");
+            }
+
+            if (config.isSet("player-residencies-count-override")) {
+                for (String count : config.getConfigurationSection("player-residencies-count-override").getKeys(false)) {
+                    String perm = config.getString("player-residencies-count-override." + count);
+                    residenciesCountOverride.put(Integer.parseInt(count), perm);
+                }
+            }
+
+            safeWE = config.getBoolean("safe-worldedit", false);
+
+            pl3xMapTownMarkerDesc = config.getString("pl3xmap-town-desc",
+                    "<h3>%town%</h3> " +
+                        "<b>%town_type%</b> </br>" +
+                    "════════</br>" +
+                    "<b>Government</b>: %government% </br>" +
+                    "<b>Players</b>: %player_count% </br>" +
+                    "<b>Alliance</b>: %alliance% </br>" +
+                    "");
 
         } catch (Exception e) {
             Civs.logger.log(Level.SEVERE, "Unable to read from config.yml", e);
@@ -435,10 +556,40 @@ public class ConfigManager {
     }
 
     private void loadDefaults() {
+        useWarEnabled = true;
+        catapultTntDamageOnly = false;
+        dropElytraAndRiptideInCombat = false;
+        dropElytraAndRiptideInEnemyTowns = false;
+        elytraDamageMultiplier = 1.0;
+        allowFireworkUseInCombat = true;
+        ceaseFireEnd = -1;
+        ceaseFireStart = -1;
+        refundPercentage = 0.5;
+        useBossBar = true;
+        combatTagEnabled = true;
+        warningLogger = false;
+        percentPowerForUpgrade = 0.1;
+        huntCrossWorld = false;
+        skinsInMenu = true;
+        useBounties = true;
+        deleteInvalidRegions = false;
+        defaultGovernmentType = GovernmentType.DICTATORSHIP.name();
+        silentExp = false;
+        useSkills = true;
+        keepRegionChunksLoaded = true;
+        hardshipPerKill = 0;
+        allowHuntNewPlayers = false;
+        hardshipDepreciationPeriod = 7;
+        huntKarma = -250.0;
         lineLengthMap = new HashMap<>();
         unloadedChestRefreshRate = 600000;
         chatChannels = new EnumMap<>(ChatChannel.ChatChannelType.class);
-        chatChannels.put(ChatChannel.ChatChannelType.GLOBAL, Material.GRASS.name());
+        ChatChannelConfig chatChannelConfig = new ChatChannelConfig(ChatChannel.ChatChannelType.GLOBAL,
+                true,
+                Material.SHORT_GRASS,
+                "[$town$] $player$: $message$",
+                false);
+        chatChannels.put(ChatChannel.ChatChannelType.GLOBAL, chatChannelConfig);
         lineBreakLength = 40;
         minPopulationForGovTransition = 4;
         defaultConfigSet = "hybrid";
@@ -457,7 +608,7 @@ public class ConfigManager {
         announcementPeriod = 240;
         useAnnouncements = true;
         prefixAllText = "";
-        civsChatPrefix = "@{GREEN}[Civs]";
+        civsChatPrefix = "@{GREEN}[Civs] ";
         civsItemPrefix = "Civs";
         capitalismVotingCost = 200;
         daysBetweenVotes = 7;
@@ -489,8 +640,8 @@ public class ConfigManager {
         moneyPerKarma = 0.1;
         karmaPerKillStreak = 1;
         karmaPerKill = 1;
-        powerPerKill = 1;
-        powerPerNPCKill = 1;
+        powerPerKill = 30;
+        powerPerNPCKill = 5;
         villagerCooldown = 300;
         denyArrowTurretShootAtMobs = false;
         portMana = 0;
@@ -503,6 +654,7 @@ public class ConfigManager {
         portSlowWarmup = true;
         combatTagDuration = 60;
         portDuringCombat = false;
+        showKillStreakMessages = false;
         townRings = true;
         karmaDepreciatePeriod = 43200;
         combatLogPenalty = 80;
@@ -518,6 +670,12 @@ public class ConfigManager {
         levelList = new ArrayList<>();
         defaultGovernmentType = GovernmentType.DICTATORSHIP.name();
         allowChangingOfGovType = false;
+        residenciesCount = -1;
+        residenciesCountOverride = new TreeMap<>();
+        chatTagFormat = new HashMap<>();
+        chatTagFormat.put("town_f", "[$1]");
+        chatTagFormat.put("nation_f", "[$1]");
+        safeWE = false;
     }
 
     public static ConfigManager getInstance() {

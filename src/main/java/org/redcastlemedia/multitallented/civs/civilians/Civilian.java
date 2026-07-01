@@ -1,6 +1,7 @@
 package org.redcastlemedia.multitallented.civs.civilians;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -13,35 +14,47 @@ import java.util.UUID;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.redcastlemedia.multitallented.civs.Civs;
 import org.redcastlemedia.multitallented.civs.ConfigManager;
+import org.redcastlemedia.multitallented.civs.anticheat.ExemptionType;
 import org.redcastlemedia.multitallented.civs.civclass.CivClass;
 import org.redcastlemedia.multitallented.civs.civclass.ClassManager;
+import org.redcastlemedia.multitallented.civs.civclass.ClassType;
+import org.redcastlemedia.multitallented.civs.items.CVItem;
 import org.redcastlemedia.multitallented.civs.items.CivItem;
 import org.redcastlemedia.multitallented.civs.items.ItemManager;
 import org.redcastlemedia.multitallented.civs.regions.Region;
 import org.redcastlemedia.multitallented.civs.regions.RegionManager;
 import org.redcastlemedia.multitallented.civs.regions.RegionType;
+import org.redcastlemedia.multitallented.civs.skills.Skill;
+import org.redcastlemedia.multitallented.civs.spells.civstate.BuiltInCivState;
 import org.redcastlemedia.multitallented.civs.spells.civstate.CivState;
+import org.redcastlemedia.multitallented.civs.spells.effects.ManaEffect;
 import org.redcastlemedia.multitallented.civs.towns.Town;
 import org.redcastlemedia.multitallented.civs.towns.TownManager;
+import org.redcastlemedia.multitallented.civs.util.ActionBarUtil;
+import org.redcastlemedia.multitallented.civs.util.MessageUtil;
 
 import lombok.Getter;
 import lombok.Setter;
-import org.redcastlemedia.multitallented.civs.items.CVItem;
 
 public class Civilian {
 
+    @Getter
     private final UUID uuid;
     @Getter
     private final Map<CivItem, Integer> exp;
-    private Set<CivClass> civClasses;
+    @Getter
+    private final Set<CivClass> civClasses = new HashSet<>();
     private String locale;
     @Getter @Setter
     private Map<String, Integer> stashItems;
     @Getter
     private final Map<String, CivState> states;
+    @Getter @Setter
     private Location respawnPoint = null;
     private long lastJail = 0;
     private int kills;
@@ -52,35 +65,47 @@ public class Civilian {
     private double points;
     private int karma;
     private int mana;
-    private int expOrbs;
+    @Getter @Setter
     private long lastDamage = -1;
+    @Getter @Setter
     private UUID lastDamager;
+    @Getter @Setter
     private Set<UUID> friends = new HashSet<>();
+    @Getter @Setter
     private List<Bounty> bounties = new ArrayList<>();
+    @Getter @Setter
     private long lastKarmaDepreciation;
-
+    @Getter @Setter
+    private double hardship;
+    @Getter @Setter
+    private int daysSinceLastHardshipDepreciation;
     @Getter @Setter
     private int tutorialIndex;
-
+    @Getter @Setter
+    private Set<String> completedTutorialSteps = new HashSet<>();
     @Getter @Setter
     private String tutorialPath;
-
     @Getter @Setter
     private int tutorialProgress;
-
     @Getter @Setter
     private boolean useAnnouncements;
-
     @Getter @Setter
     private ChatChannel chatChannel;
 
-    public Civilian(UUID uuid, String locale, Map<String, Integer> stashItems, Set<CivClass> civClasses,
+    private CivClass currentClass;
+    @Getter
+    private final Set<ExemptionType> exemptions = new HashSet<>();
+    @Getter @Setter
+    private HashMap<String, Skill> skills = new HashMap<>();
+    @Getter
+    private Map<Integer, ItemStack> combatBar = new HashMap<>();
+
+    public Civilian(UUID uuid, String locale, Map<String, Integer> stashItems,
                     Map<CivItem, Integer> exp, int kills, int killStreak, int deaths, int highestKillStreak,
-                    double points, int karma, int expOrbs) {
+                    double points, int karma) {
         this.uuid = uuid;
         this.locale = locale;
         this.stashItems = stashItems;
-        this.civClasses = civClasses;
         this.exp = exp;
         this.states = new HashMap<>();
         this.kills = kills;
@@ -90,31 +115,35 @@ public class Civilian {
         this.points = points;
         this.karma = karma;
         this.mana = 0;
-        this.expOrbs = expOrbs;
         this.chatChannel = new ChatChannel(ChatChannel.ChatChannelType.GLOBAL, null);
     }
 
-    public UUID getUuid() {
-        return uuid;
-    }
-    public Set<CivClass> getCivClasses() {
-        civClasses.remove(null);
-        if (civClasses.isEmpty()) {
-            civClasses.add(ClassManager.getInstance().createDefaultClass(uuid));
-        }
-        return civClasses;
-    }
     public String getLocale() {
         if (locale == null) {
             locale = ConfigManager.getInstance().getDefaultLanguage();
         }
         return locale;
     }
+    public CivClass getRawCurrentClass() {
+        return currentClass;
+    }
+    public CivClass getCurrentClass() {
+        if (currentClass == null) {
+//            Civs.logger.log(Level.WARNING, "Null class detected for player {}", uuid);
+            if (!civClasses.isEmpty()) {
+                ClassManager.getInstance().switchClass(this, this.civClasses.iterator().next());
+            } else {
+                currentClass = ClassManager.getInstance().createDefaultClass(uuid);
+            }
+            if (currentClass == null) {
+//                Civs.logger.log(Level.SEVERE, "Unable to recover default class for player {}", uuid);
+            }
+        }
+        return currentClass;
+    }
     public void setLocale(String locale) {
         this.locale = locale;
     }
-    public Location getRespawnPoint() { return respawnPoint; }
-    public void setRespawnPoint(Location location) { this.respawnPoint = location; }
     public long getLastJail() { return lastJail; }
     public void refreshJail() { lastJail = System.currentTimeMillis(); }
     public int getKills() { return kills; }
@@ -132,40 +161,41 @@ public class Civilian {
     public int getKarma() { return karma; }
     public void setKarma(int karma) { this.karma = karma; }
     public int getMana() { return mana; }
-    public void setExpOrbs(int expOrbs) { this.expOrbs = expOrbs; }
     public void setMana(int mana) {
-        this.mana = mana < 0 ? 0 : mana > 100 ? 100 : mana;
-        updateExpBar();
+        setMana(mana, true);
     }
-    public long getLastDamage() {
-        return lastDamage;
+    public void setMana(int mana, boolean setManaBar) {
+        this.mana = Math.max(mana, 0);
+        Player player = Bukkit.getPlayer(uuid);
+        if (setManaBar && player != null && player.isOnline()) {
+            String message = ManaEffect.getManaBar(this);
+            ActionBarUtil.sendActionBar(player, message);
+        }
     }
-    public void setLastDamage(long lastDamage) {
-        this.lastDamage = lastDamage;
-    }
-    public UUID getLastDamager() {
-        return lastDamager;
-    }
-    public void setLastDamager(UUID lastDamager) {
-        this.lastDamager = lastDamager;
-    }
-    public List<Bounty> getBounties() {
-        return bounties;
-    }
-    public void setBounties(List<Bounty> bounties) {
-        this.bounties = bounties;
-    }
-    public Set<UUID> getFriends() {
-        return friends;
-    }
-    public void setFriends(Set<UUID> friends) {
-        this.friends = friends;
-    }
-    public long getLastKarmaDepreciation() {
-        return lastKarmaDepreciation;
-    }
-    public void setLastKarmaDepreciation(long lastKarmaDepreciation) {
-        this.lastKarmaDepreciation = lastKarmaDepreciation;
+
+    public void setCurrentClass(CivClass civClass) {
+        OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(uuid);
+        Player player = offlinePlayer.getPlayer();
+        if (currentClass != null) {
+            CivItem civItem = ItemManager.getInstance().getItemType(currentClass.getType());
+            if (civItem != null && Civs.perm != null && player != null) {
+                ClassType classTypeOld = (ClassType) civItem;
+                for (Map.Entry<String, Integer> entry : classTypeOld.getClassPermissions().entrySet()) {
+                    if (civClass.getLevel() >= entry.getValue()) {
+                        Civs.perm.playerRemove(player, entry.getKey());
+                    }
+                }
+            }
+        }
+        currentClass = civClass;
+        ClassType classTypeNew = (ClassType) ItemManager.getInstance().getItemType(civClass.getType());
+        if (Civs.perm != null && player != null) {
+            for (Map.Entry<String, Integer> entry : classTypeNew.getClassPermissions().entrySet()) {
+                if (currentClass.getLevel() >= entry.getValue()) {
+                    Civs.perm.playerAdd(player, entry.getKey());
+                }
+            }
+        }
     }
 
     public boolean isInCombat() {
@@ -194,16 +224,33 @@ public class Civilian {
         return true;
     }
 
-    private void updateExpBar() {
-        Player player = Bukkit.getPlayer(uuid);
-        if (mana > 99 || mana < 1) {
-            player.setTotalExperience(expOrbs);
+    public boolean hasBuiltInState(BuiltInCivState builtInCivState) {
+        for (CivState state : states.values()) {
+            if (state.getVars().containsKey(builtInCivState.name())) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public void addExp(CivItem civItem, int amount) {
+        if (civItem == null || exp == null) {
             return;
         }
-        player.setTotalExperience(mana + 1288 + (mana > 33 ? 1 : 0) + (mana > 66 ? 1 : 0));
+        exp.merge(civItem, amount, Integer::sum);
     }
 
     public int getLevel(CivItem civItem) {
+        if (civItem != null && civItem.getItemType() == CivItem.ItemType.CLASS) {
+            int level = 0;
+            for (CivClass civClass : civClasses) {
+                if (civClass.getType().equalsIgnoreCase(civItem.getProcessedName())) {
+                    level = Math.max(level, civClass.getLevel());
+                }
+            }
+            return level;
+        }
+
         if (civItem == null || exp == null || exp.get(civItem) == null) {
             return 1;
         }
@@ -234,9 +281,14 @@ public class Civilian {
     }
 
     public String isAtMax(CivItem civItem) {
+        return isAtMax(civItem, false);
+    }
+
+    public String isAtMax(CivItem civItem, boolean isCountRebuild) {
         String processedName = civItem.getProcessedName();
         int rebuildBonus = 0;
-        if (CivItem.ItemType.REGION == civItem.getItemType() && null != ((RegionType) civItem).getRebuild()) {
+        if (isCountRebuild && CivItem.ItemType.REGION == civItem.getItemType() &&
+                null != ((RegionType) civItem).getRebuild() && !((RegionType) civItem).getRebuild().isEmpty()) {
             rebuildBonus = 1;
         }
         boolean atMax = civItem.getCivMax() != -1 &&
@@ -393,5 +445,33 @@ public class Civilian {
 
     public boolean isFriend(Civilian friend) {
         return friends.contains(friend.getUuid());
+    }
+
+    public void awardSkill(Player player, Collection<String> skillTypes, String skillName) {
+        if (!ConfigManager.getInstance().isUseSkills()) {
+            return;
+        }
+        for (Skill skill : skills.values()) {
+            if (skill.getType().equalsIgnoreCase(skillName)) {
+                double currentExp = 0;
+                for (String potionName : skillTypes) {
+                    currentExp += skill.addAccomplishment(potionName);
+                }
+                MessageUtil.saveCivilianAndSendExpNotification(player, this, skill, currentExp);
+            }
+        }
+    }
+
+    public void awardSkill(Player player, String skillType, String skillName) {
+        if (!ConfigManager.getInstance().isUseSkills()) {
+            return;
+        }
+        for (Skill skill : skills.values()) {
+            if (skill.getType().equalsIgnoreCase(skillName)) {
+                double currentExp = 0;
+                currentExp += skill.addAccomplishment(skillType);
+                MessageUtil.saveCivilianAndSendExpNotification(player, this, skill, currentExp);
+            }
+        }
     }
 }

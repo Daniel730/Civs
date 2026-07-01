@@ -38,6 +38,7 @@ effects:
 - door_use
 - chest_use
 - housing:1
+- evolve:villa3.24
 - buyable
 
 towns:
@@ -47,25 +48,26 @@ towns:
 period: 3600 #1 hour
 upkeep:
   0:
-    power-input: 1
+    power-input: 3
   1:
     input: #2.11
-    - GOLDEN_CARROT*5  # 120 or 1.87 stacks / day
-    - PUMPKIN_PIE*1 # 24 stacks / day
-    payout: 41.6 # $1000 / day
+      - GOLDEN_CARROT*1  # 24 / day
+    payout: 21 # $504 / day
   2:
     input:
-      - COOKED_BEEF*4,BEEF*24 # 576 or 9 stacks / day
-    payout: 5.2 # $100.8 / day
+      - COOKED_BEEF*4,BEEF*32 # 768 or 12 stacks / day
+    payout: 6     # $144 / day
   3:
     input:
-      - MILK_BUCKET # 24 stacks / day
-    output:
-      - BUCKET
-    payout: 12.4 # $297 / day
+      - PUMPKIN_PIE*1 # 24 stacks / day
+    payout: 23 # $552 / day
   4:
     input:
-    - GOLDEN_APPLE*1 # 24 / day
-    payout: 20 # $480 / day
+      - HONEY_BOTTLE*4 # 96 / day
+    payout: 9 # $216 / day
+  5:
+    input:
+      - MUSHROOM_STEW*1 # 24 / day
+    payout: 16 # $384 / day
     exp: 1
 

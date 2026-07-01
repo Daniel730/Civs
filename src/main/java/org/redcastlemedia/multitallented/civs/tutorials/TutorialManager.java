@@ -2,13 +2,13 @@ package org.redcastlemedia.multitallented.civs.tutorials;
 
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
-import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
 import org.redcastlemedia.multitallented.civs.Civs;
 import org.redcastlemedia.multitallented.civs.CivsSingleton;
 import org.redcastlemedia.multitallented.civs.ConfigManager;
+import org.redcastlemedia.multitallented.civs.localization.LocaleConstants;
 import org.redcastlemedia.multitallented.civs.localization.LocaleManager;
 import org.redcastlemedia.multitallented.civs.civilians.Civilian;
 import org.redcastlemedia.multitallented.civs.civilians.CivilianManager;
@@ -25,6 +25,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.logging.Level;
 
 @CivsSingleton(priority = CivsSingleton.SingletonLoadPriority.HIGH)
 public class TutorialManager {
@@ -47,7 +48,7 @@ public class TutorialManager {
 
     private void loadTutorialFile() {
         File dataFolder = Civs.dataLocation;
-        File tutorialFile = new File(dataFolder, "Civs/tutorial.yml");
+        File tutorialFile = new File(dataFolder, "tutorial.yml");
         FileConfiguration tutorialConfig = FallbackConfigUtil.getConfig(tutorialFile, "tutorial.yml");
 
         try {
@@ -58,7 +59,6 @@ public class TutorialManager {
                     iconString = "CHEST";
                 }
                 path.setIcon(CVItem.createCVItemFromString(iconString));
-                ConfigurationSection section = tutorialConfig.getConfigurationSection(key + ".names");
 
                 for (Map<?,?> map : tutorialConfig.getMapList(key + ".steps")) {
                     TutorialStep tutorialStep = new TutorialStep();
@@ -106,8 +106,7 @@ public class TutorialManager {
                 tutorials.put(key, path);
             }
         } catch (Exception e) {
-            e.printStackTrace();
-            Civs.logger.severe("Unable to load tutorial.yml");
+            Civs.logger.log(Level.SEVERE, "Unable to load tutorial.yml", e);
         }
     }
 
@@ -137,7 +136,7 @@ public class TutorialManager {
         }
 
         if ((type.equals(TutorialType.BUILD) || type.equals(TutorialType.UPKEEP) ||
-                type.equals(TutorialType.BUY)) &&
+                type.equals(TutorialType.BUY) || type.equals(TutorialType.MENU_ACTION)) &&
                 !param.equalsIgnoreCase(step.getRegion())) {
             return;
         }
@@ -181,13 +180,33 @@ public class TutorialManager {
             }
         }
 
+        String key = getKey(civilian.getTutorialPath(), type, step);
         civilian.setTutorialProgress(0);
-        civilian.setTutorialIndex(civilian.getTutorialIndex() + 1);
+        civilian.getCompletedTutorialSteps().add(key);
+        int nextIndex;
+        do {
+            nextIndex = civilian.getTutorialIndex() + 1;
+            key = null;
+            if (path.getSteps().size() > nextIndex) {
+                TutorialStep nextStep = path.getSteps().get(nextIndex);
+                TutorialType tutorialType = TutorialType.valueOf(nextStep.getType().toUpperCase());
+                key = getKey(civilian.getTutorialPath(), tutorialType, nextStep);
+            }
+        } while (key != null && civilian.getCompletedTutorialSteps().contains(key));
+        civilian.setTutorialIndex(nextIndex);
         CivilianManager.getInstance().saveCivilian(civilian);
 
         Util.spawnRandomFirework(player);
 
         sendMessageForCurrentTutorialStep(civilian, true);
+    }
+
+    public String getKey(String path, TutorialType type, TutorialStep step) {
+        if (TutorialType.KILL.equals(type)) {
+            return path + ":" + step.getType() + ":" + step.getKillType() + ":" + step.getTimes();
+        } else {
+            return path + ":" + step.getType() + ":" + step.getRegion() + ":" + step.getTimes();
+        }
     }
 
     public void sendMessageForCurrentTutorialStep(Civilian civilian, boolean useHr) {
@@ -208,29 +227,44 @@ public class TutorialManager {
 
 
         Player player = Bukkit.getPlayer(civilian.getUuid());
-        String rawMessage = LocaleManager.getInstance().getTranslation(civilian.getLocale(),
-                "tut-" + civilian.getTutorialPath() + "-" + civilian.getTutorialIndex());
-        if (rawMessage == null || rawMessage.isEmpty()) {
+        if (player == null || !player.isOnline()) {
             return;
         }
-        if (player != null && player.isOnline()) {
-            if (useHr) {
-                player.sendMessage("-----------------" + Civs.NAME + "-----------------");
-            }
-            List<String> messages = Util.parseColors(Util.textWrap(civilian, rawMessage));
-            for (String message : messages) {
-                player.sendMessage(Civs.getPrefix() + message);
-            }
-            if (useHr) {
-                player.sendMessage("--------------------------------------");
-            }
+        for (String message : getNextTutorialStepMessage(civilian, useHr)) {
+            player.sendMessage(Civs.getPrefix() + message);
         }
 
         String type = step.getType();
-        if ("choose".equals(type) && player != null) {
+        if ("choose".equals(type)) {
             player.closeInventory();
+            MenuManager.clearHistory(player.getUniqueId());
             MenuManager.getInstance().openMenu(player, "tutorial-choose-path", new HashMap<>());
         }
+    }
+
+    public List<String> getNextTutorialStepMessage(Civilian civilian, boolean useHr) {
+        return getTutorialMessage(civilian, civilian.getTutorialPath(), civilian.getTutorialIndex(), useHr);
+    }
+
+    public List<String> getTutorialMessage(Civilian civilian, String path, int index, boolean useHr) {
+        List<String> messages = new ArrayList<>();
+        Player player = Bukkit.getPlayer(civilian.getUuid());
+        if (player == null || !player.isOnline()) {
+            return messages;
+        }
+        String rawMessage = LocaleManager.getInstance().getTranslation(player,
+                "tut-" + path + "-" + index);
+        if (rawMessage == null || rawMessage.isEmpty()) {
+            return messages;
+        }
+        if (useHr) {
+            messages.add("-----------------" + Civs.NAME + "-----------------");
+        }
+        messages.addAll(Util.parseColors(Util.textWrap(civilian, rawMessage)));
+        if (useHr) {
+            messages.add("--------------------------------------");
+        }
+        return messages;
     }
 
 
@@ -249,7 +283,7 @@ public class TutorialManager {
         return tutorials.get(pathName);
     }
 
-    public List<CVItem> getPaths(Civilian civilian) {
+    public List<CVItem> getPathIcons(Civilian civilian) {
         ArrayList<CVItem> returnList = new ArrayList<>();
         if (civilian.getTutorialIndex() == -1) {
             return returnList;
@@ -263,6 +297,10 @@ public class TutorialManager {
         }
         if (civilian.getTutorialIndex() < 0) {
             civilian.setTutorialIndex(0);
+        }
+        int index = civilian.getTutorialIndex();
+        if (path.getSteps().size() <= index) {
+            return returnList;
         }
         TutorialStep step = path.getSteps().get(civilian.getTutorialIndex());
         if (step == null) {
@@ -279,19 +317,50 @@ public class TutorialManager {
             TutorialPath newPath = tutorials.get(pathKey);
             CVItem cvItem = newPath.getIcon();
             String name = LocaleManager.getInstance().getTranslation(civilian.getLocale(),
-                    "tut-" + pathKey + "-name");
+                    "tut-" + pathKey + LocaleConstants.NAME_SUFFIX);
             cvItem.setDisplayName(name);
-            ArrayList<String> lore = new ArrayList<>();
-            lore.add(pathKey);
-            cvItem.setLore(lore);
+            cvItem.setLore(Util.textWrap(civilian, LocaleManager.getInstance().getTranslation(civilian.getLocale(),
+                    "tut-" + pathKey + LocaleConstants.DESC_SUFFIX)));
             returnList.add(cvItem);
         }
 
         return returnList;
     }
 
+    public List<String> getPaths(Civilian civilian) {
+        ArrayList<String> returnList = new ArrayList<>();
+        if (civilian.getTutorialIndex() == -1) {
+            return returnList;
+        }
+        TutorialPath path = tutorials.get(civilian.getTutorialPath());
+        if (path == null) {
+            return returnList;
+        }
+        if (civilian.getTutorialIndex() >= path.getSteps().size()) {
+            civilian.setTutorialIndex(path.getSteps().size() - 1);
+        }
+        if (civilian.getTutorialIndex() < 0) {
+            civilian.setTutorialIndex(0);
+        }
+        if (path.getSteps().size() <= civilian.getTutorialIndex()) {
+            return returnList;
+        }
+        TutorialStep step = path.getSteps().get(civilian.getTutorialIndex());
+        if (step == null) {
+            return returnList;
+        }
+        if (!"choose".equals(step.getType())) {
+            return returnList;
+        }
+        ArrayList<String> pathsList = step.getPaths();
+        if (pathsList == null) {
+            return returnList;
+        }
+        return pathsList;
+    }
+
     public void printTutorial(HumanEntity player, Civilian civilian) {
-        String tutorialUrl = ConfigManager.getInstance().getTutorialUrl();
+        String tutorialUrl = LocaleManager.getInstance().getTranslation((Player) player, "tutorial-url");
         player.sendMessage(Util.parseColors(ConfigManager.getInstance().getTopGuideSpacer()));
         TutorialManager.getInstance().sendMessageForCurrentTutorialStep(civilian, false);
         player.sendMessage(LocaleManager.getInstance().getTranslation(civilian.getLocale(), "tutorial-click"));
@@ -304,6 +373,9 @@ public class TutorialManager {
         BUILD,
         UPKEEP,
         KILL,
-        BUY
+        BUY,
+        MENU_ACTION,
+        CHOOSE,
+        END
     }
 }

@@ -1,15 +1,9 @@
 package org.redcastlemedia.multitallented.civs.localization;
 
-import java.io.File;
-import java.util.HashMap;
-import java.util.Set;
-import java.util.logging.Level;
-import java.util.regex.Pattern;
-
+import me.clip.placeholderapi.PlaceholderAPI;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
-import org.bukkit.entity.Player;
 import org.redcastlemedia.multitallented.civs.Civs;
 import org.redcastlemedia.multitallented.civs.CivsSingleton;
 import org.redcastlemedia.multitallented.civs.ConfigManager;
@@ -20,7 +14,11 @@ import org.redcastlemedia.multitallented.civs.util.Util;
 import org.reflections.Reflections;
 import org.reflections.scanners.ResourcesScanner;
 
-import me.clip.placeholderapi.PlaceholderAPI;
+import java.io.File;
+import java.util.HashMap;
+import java.util.Set;
+import java.util.logging.Level;
+import java.util.regex.Pattern;
 
 @CivsSingleton(priority = CivsSingleton.SingletonLoadPriority.HIGHEST)
 public class LocaleManager {
@@ -28,21 +26,32 @@ public class LocaleManager {
     private static LocaleManager localeManager;
     HashMap<String, HashMap<String, String>> languageMap = new HashMap<>();
 
-    public String getTranslationWithPlaceholders(OfflinePlayer player, String key) {
+    public String getTranslation(OfflinePlayer player, String key) {
         Civilian civilian = CivilianManager.getInstance().getCivilian(player.getUniqueId());
         String messageWithPlaceholders = getTranslation(civilian.getLocale(), key);
         return replacePlaceholders(player, messageWithPlaceholders);
     }
 
-    public String getRawTranslationWithPlaceholders(OfflinePlayer player, String key) {
+    public String getRawTranslation(OfflinePlayer player, String key) {
         Civilian civilian = CivilianManager.getInstance().getCivilian(player.getUniqueId());
         String messageWithPlaceholders = getRawTranslation(civilian.getLocale(), key);
         return replacePlaceholders(player, messageWithPlaceholders);
     }
 
-    @Deprecated
     public String getTranslation(String language, String key) {
+        if (key.isEmpty()) {
+            return "";
+        }
         String textPrefix = ConfigManager.getInstance().getPrefixAllText();
+        String[] variables = getVariables(key);
+        key = key.split("\\{")[0];
+        if (key.isEmpty() && variables.length > 0) {
+            StringBuilder returnString = new StringBuilder();
+            for (String var : variables) {
+                returnString.append(var).append(" ");
+            }
+            return returnString.toString();
+        }
         if (!languageMap.containsKey(language) ||
                 !languageMap.get(language).containsKey(key) ||
                 languageMap.get(language).get(key).isEmpty()) {
@@ -56,12 +65,29 @@ public class LocaleManager {
                 Civs.logger.log(Level.SEVERE, "Unable to find any translation for {0}", key);
                 return "";
             }
-            return Util.parseColors(textPrefix + translation);
+            return Util.parseColors(textPrefix + replaceVariables(translation, variables));
         }
-        return Util.parseColors(textPrefix + languageMap.get(language).get(key));
+        return Util.parseColors(textPrefix + replaceVariables(languageMap.get(language).get(key), variables));
     }
 
-    @Deprecated
+    private String[] getVariables(String key) {
+        if (!key.contains("{")) {
+            return new String[0];
+        }
+        String[] keySplit = key.split("\\{");
+        if (keySplit.length < 2) {
+            return new String[0];
+        }
+        return key.split("\\{")[1].split(",,");
+    }
+
+    private String replaceVariables(String translation, String[] vars) {
+        for (int i = 0; i < vars.length; i++) {
+            translation = translation.replace("$" + (i+1), vars[i]);
+        }
+        return translation;
+    }
+
     public String getRawTranslation(String language, String key) {
         String textPrefix = ConfigManager.getInstance().getPrefixAllText();
         if (!languageMap.containsKey(language) ||
@@ -80,6 +106,11 @@ public class LocaleManager {
             return input;
         }
         return PlaceholderAPI.setPlaceholders(player, input);
+    }
+
+    public void reload() {
+        languageMap.clear();
+        loadAllConfigs();
     }
 
     private void loadAllConfigs() {
@@ -143,5 +174,11 @@ public class LocaleManager {
     public boolean hasTranslation(String language, String key) {
         return languageMap.get(language) != null &&
                 languageMap.get(language).get(key) != null;
+    }
+
+    public void addTranslation(String language, String key, String value) {
+        if (languageMap.containsKey(language)) {
+            languageMap.get(language).put(key, value);
+        }
     }
 }

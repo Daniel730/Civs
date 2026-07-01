@@ -1,10 +1,13 @@
 package org.redcastlemedia.multitallented.civs.commands;
 
+import java.util.List;
+
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.redcastlemedia.multitallented.civs.Civs;
 import org.redcastlemedia.multitallented.civs.ConfigManager;
+import org.redcastlemedia.multitallented.civs.localization.LocaleConstants;
 import org.redcastlemedia.multitallented.civs.localization.LocaleManager;
 import org.redcastlemedia.multitallented.civs.civilians.Civilian;
 import org.redcastlemedia.multitallented.civs.civilians.CivilianManager;
@@ -17,7 +20,7 @@ import org.redcastlemedia.multitallented.civs.util.OwnershipUtil;
 import org.redcastlemedia.multitallented.civs.util.Util;
 
 @CivsCommand(keys = { "tax" })
-public class TaxCommand implements CivCommand {
+public class TaxCommand extends CivCommand {
     @Override
     public boolean runCommand(CommandSender commandSender, Command command, String label, String[] args) {
         if (!(commandSender instanceof Player) || args.length < 3) {
@@ -41,12 +44,13 @@ public class TaxCommand implements CivCommand {
         if (government.getGovernmentType() == GovernmentType.LIBERTARIAN ||
                 government.getGovernmentType() == GovernmentType.LIBERTARIAN_SOCIALISM ||
                 government.getGovernmentType() == GovernmentType.ANARCHY ||
+                government.getGovernmentType() == GovernmentType.DISESTABLISHMENT ||
                 government.getGovernmentType() == GovernmentType.COOPERATIVE ||
                 government.getGovernmentType() == GovernmentType.COMMUNISM) {
 
             player.sendMessage(Civs.getPrefix() + LocaleManager.getInstance().getTranslation(civilian.getLocale(),
                     "town-tax-gov-type").replace("$1", LocaleManager.getInstance().getTranslation(civilian.getLocale(),
-                    government.getName().toLowerCase() + "-name")));
+                    government.getName().toLowerCase() + LocaleConstants.NAME_SUFFIX)));
 
             return true;
         }
@@ -65,5 +69,21 @@ public class TaxCommand implements CivCommand {
                 .replace("$2", taxString));
 
         return true;
+    }
+
+    @Override
+    public boolean canUseCommand(CommandSender commandSender) {
+        return commandSender instanceof Player;
+    }
+
+    @Override
+    public List<String> getWord(CommandSender commandSender, String[] args) {
+        if (args.length == 2) {
+            return getTownNames(args[1]);
+        }
+        if (args.length == 3) {
+            return getListOfAmounts();
+        }
+        return super.getWord(commandSender, args);
     }
 }

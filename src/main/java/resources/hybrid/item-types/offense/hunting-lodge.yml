@@ -2,12 +2,14 @@ type: region
 icon: OBSIDIAN
 shop-icon: PLAYER_HEAD
 dynmap-marker: cross
-name: Hunting_Lodge
+name: Hunting-Lodge
 price: 400
 max: 1
 groups:
 - offense
 level: 1
+
+war-enabled: true
 
 build-reqs:
 - g:sign*1
@@ -25,4 +27,4 @@ effects:
 - block_build
 - block_liquid
 - block_fire
-- hunt
+- hunt:60

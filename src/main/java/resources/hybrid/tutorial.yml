@@ -15,6 +15,22 @@ default:
   - type: upkeep
     region: shelter
     rewards:
+      items:
+        - IRON_PICKAXE
+        - IRON_AXE
+        - IRON_SHOVEL
+        - IRON_SWORD
+  - type: menu_action
+    region: menu:region-list
+    rewards:
+      items:
+        - IRON_HELMET
+        - IRON_CHESTPLATE
+        - IRON_LEGGINGS
+        - IRON_BOOTS
+  - type: menu_action
+    region: teleport
+    rewards:
       money: 200
   - type: buy
     region: coal_shop
@@ -44,9 +60,16 @@ warrior:
     region: altar
     rewards:
       items:
-      - IRON_BLOCK*3
-      - IRON_SWORD
-      money: 300
+      - DIAMOND_BLOCK
+      - IRON_BLOCK
+      - REDSTONE_BLOCK
+      - DIAMOND_SWORD
+      - LEATHER
+      - STICK
+      - WOODEN_SWORD
+      - KELP
+      - WOODEN_AXE
+      money: 500
   - type: upkeep
     region: altar
     rewards:
@@ -76,8 +99,9 @@ warrior:
       - DIAMOND*3
       money: 1000
   - type: build
-    region: siege_machine
+    region: catapult
     rewards:
+      money: 250
       items:
       - TNT*64
   - type: build
@@ -185,10 +209,25 @@ builder:
 merchant:
   icon: DIAMOND*64
   steps:
+  - type: build
+    region: plot7x7
+    rewards:
+      money: 100
+  - type: buy
+    region: shack
+    rewards:
+      items:
+        - OAK_LOG*64
+        - OAK_LOG*64
+        - GLASS*6
+        - WHITE_WOOL*3
+        - COBBLESTONE*64
   - type: upkeep
     region: shack
     rewards:
       money: 400
+      items:
+        - POTATO*64
   - type: buy
     region: hovel
     rewards:
@@ -231,7 +270,7 @@ merchant:
       - BREAD*64
       - BREAD*64
       - BREAD*16
-      money: 100
+      money: 400
   - type: upkeep
     region: house1
     rewards:
@@ -254,6 +293,9 @@ merchant:
     region: jade_shop
     rewards:
       items:
-      - DIAMOND*3
-      money: 700
+      - DIAMOND*9
+      - EMERALD*18
+      - GOLD_INGOT*27
+      - NETHER_STAR*1
+      money: 1000
   - type: end

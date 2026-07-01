@@ -11,7 +11,6 @@ import java.io.File;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
 import java.util.logging.Level;
 
 public final class FallbackConfigUtil {
@@ -28,8 +27,10 @@ public final class FallbackConfigUtil {
         FileConfiguration config = new YamlConfiguration();
         try {
             InputStream inputStream = FallbackConfigUtil.class.getResourceAsStream(url);
-            BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8));
-            config.load(reader);
+            if (inputStream != null && !url.contains("config.yml")) {
+                BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8));
+                config.load(reader);
+            }
             if (originalFile != null && originalFile.exists()) {
                 FileConfiguration configOverride = new YamlConfiguration();
                 configOverride.load(originalFile);

@@ -47,25 +47,31 @@ towns:
 period: 3600 #1 hour
 upkeep:
   0:
-    power-input: 1
+    power-input: 2
   1:
     input: #2.11
-    - GOLDEN_CARROT*4  # 96 or 1.5 stacks / day
-    payout: 20.8 # $500 / day
+      - GOLDEN_CARROT*1  # 24 / day
+    payout: 20 # $480 / day
   2:
     input:
-    - PUMPKIN_PIE*1 # 24 stacks / day
-    payout: 19.4 # $465 / day
-    exp: 1
+      - COOKIE*12 # 288 or 4.5 stacks / day
+    payout: 10    # $240 / day
   3:
     input:
-    - COOKED_BEEF*3,BEEF*18 # 432 or 6.75 stacks / day
-    payout: 4.2 # $100.8 / day
+      - COOKED_BEEF*4,BEEF*32 # 768 or 12 stacks / day
+    payout: 7     # $168 / day
   4:
     input:
-    - COOKIE*12 # 288 or 4.5 stacks / day
-    - MILK_BUCKET # 24 stacks / day
-    output:
-    - BUCKET
-    payout: 28.6 # $686 / day
+      - MILK_BUCKET # 24 stacks / day
+    payout: 8 # $196 / day
+  5:
+    input:
+      - PUMPKIN_PIE*1 # 24 stacks / day
+    payout: 18 # $432 / day
+    exp: 1
+  6:
+    input:
+      - COOKED_PORKCHOP*4,PORKCHOP*32 # 96 / day
+    payout: 6        # $144 / day
+
 

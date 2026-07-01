@@ -38,9 +38,7 @@ effects:
 period: 3600 #1 hour
 upkeep:
   0:
-    power-input: 1
-  1:
     input:
-    - IRON_INGOT*12 # 288 iron / day
-    payout: 24          # $576 / day
+    - IRON_INGOT*10 # 240 iron / day
+    payout: 18          # $532 / day
 
