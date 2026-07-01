@@ -1,0 +1,75 @@
+#enabled: true
+#type: region
+#icon: CHEST
+#shop-icon: PURPLE_BED
+#dynmap-marker: bighouse
+#name: Mansion2
+#is-in-shop: false
+#max: 2
+#price: 2000
+#groups:
+#  - housing
+#  - allmansion
+#  - basemansion
+#  - allhousing
+#level: 4
+#
+#pre-reqs:
+#  - member=village:town:city:metropolis
+#
+#build-reqs:
+#  - CHEST*8
+#  - g:door*1
+#  - g:window*8
+#  - g:bed*1
+#  - g:sign*1
+#  - FURNACE*2
+#  - CRAFTING_TABLE
+#  - g:roof*85
+#  - g:secondary*65
+#  - g:primary*200
+#
+#build-radius: 10 #21x21x21
+#effects:
+#  - block_break
+#  - block_build
+#  - block_liquid
+#  - block_fire
+#  - door_use
+#  - chest_use
+#  - housing:1
+#  - evolve:mansion3.24
+#  - buyable
+#
+#towns:
+#  - village
+#  - town
+#  - city
+#  - metropolis
+#
+#period: 3600 #1 hour
+#upkeep:
+#  0:
+#    power-input: 2
+#  1:
+#    input:
+#      - BREAD*5  # 120 or 1.88 stacks / day
+#    payout: 13 # $312 / day
+#  2:
+#    input:
+#      - CARROT*12   # 288 or 4.5 stacks / day
+#    payout: 18 # $432 / day
+#  3:
+#    input:
+#      - COOKED_BEEF*4,BEEF*32 # 768 or 12 stacks / day
+#    payout: 6 # $144 / day
+#  4:
+#    input:
+#      - COOKIE*12 # 288 or 4.5 stacks / day
+#    payout: 9    # $216 / day
+#  5:
+#    input:
+#      - MILK_BUCKET # 24 / day
+#    payout: 6 # $144 / day
+#    exp: 1
+#

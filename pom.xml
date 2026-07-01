@@ -1,0 +1,392 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>org.redcastlemedia.multitallented</groupId>
+    <artifactId>civs</artifactId>
+    <version>1.11.6</version>
+
+    <properties>
+        <maven.compiler.source>25</maven.compiler.source>
+        <maven.compiler.target>25</maven.compiler.target>
+        <maven.compiler.release>25</maven.compiler.release>
+        <github.global.server>github</github.global.server>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    </properties>
+
+    <repositories>
+        <repository>
+            <id>spigot-repo</id>
+            <url>https://hub.spigotmc.org/nexus/content/repositories/snapshots/</url>
+        </repository>
+        <!--Bungeecord Repo-->
+        <!--Only include if using the Spigot API dependency-->
+        <repository>
+            <id>bungeecord-repo</id>
+            <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+        </repository>
+        <repository>
+            <id>herocraft</id> <!-- Vault Repo -->
+            <url>https://nexus.hc.to/content/repositories/pub_releases/</url>
+        </repository>
+        <repository>
+            <id>placeholderapi</id>
+            <url>https://repo.extendedclip.com/content/repositories/placeholderapi/</url>
+        </repository>
+        <repository>
+            <id>Scarsz-Nexus</id>
+            <url>https://nexus.scarsz.me/content/groups/public/</url>
+        </repository>
+        <repository>
+            <id>dynmap</id>
+            <url>https://repo.mikeprimm.com/</url>
+        </repository>
+        <repository>
+            <id>janmm14-public</id>
+            <url>https://repo.janmm14.de/repository/public/</url>
+        </repository>
+        <repository>
+            <id>reflex.public</id>
+            <name>Public Reflex Repository</name>
+            <url>https://archiva.reflex.rip/repository/public/</url>
+        </repository>
+        <repository>
+            <id>papermc</id>
+            <url>https://repo.papermc.io/repository/maven-public/</url>
+        </repository>
+        <repository>
+            <id>enginehub-maven</id>
+            <url>https://maven.enginehub.org/repo/</url>
+        </repository>
+        <repository>
+            <id>jitpack.io</id>
+            <url>https://jitpack.io</url>
+        </repository>
+        <repository>
+            <id>phoenix</id>
+            <url>https://nexus.phoenixdevt.fr/repository/maven-public/</url>
+        </repository>
+        <repository>
+            <id>Modrinth</id>
+            <url>https://api.modrinth.com/maven</url>
+        </repository>
+    </repositories>
+
+    <dependencies>
+
+        <dependency>
+            <groupId>org.reflections</groupId>
+            <artifactId>reflections</artifactId>
+            <version>0.9.12</version>
+            <scope>compile</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>io.papermc.paper</groupId>
+            <artifactId>paper-api</artifactId>
+            <!-- Paper switched to a "<mcVersion>.build.<buildNumber>" scheme starting with the
+                 26.x line. Maven does not support "+" wildcards like Gradle, so we pin to the
+                 open-ended range below to always resolve the latest 26.1.2 build. If this range
+                 fails to resolve, replace it with an explicit "26.1.2.build.N" version from
+                 https://repo.papermc.io/repository/maven-public/io/papermc/paper/paper-api/ -->
+            <version>26.1.2.build.72-stable</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>me.clip</groupId>
+            <artifactId>placeholderapi</artifactId>
+            <version>2.10.0</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
+            <version>5.14.2</version>
+            <scope>test</scope>
+        </dependency>
+
+
+        <dependency>
+            <groupId>net.milkbowl.vault</groupId>
+            <artifactId>VaultAPI</artifactId>
+            <version>1.7</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.dynmap</groupId>
+            <artifactId>dynmap-api</artifactId>
+            <version>2.0</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <!-- PHASE 1 RISK: pinned to an old MMOItems/MythicLib snapshot built against a much older
+             Minecraft/Paper API. Civs source code (CVItem, ItemManager, PluginListener, Civs.java)
+             references MMOItems/MythicLib types directly, so this cannot simply be removed without
+             also refactoring those classes. Needs a Paper 26.1.2-compatible build in Phase 1. -->
+        <dependency>
+            <groupId>net.Indyuce</groupId>
+            <artifactId>MMOItems-API</artifactId>
+            <version>6.9.4-SNAPSHOT</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>io.lumine</groupId>
+            <artifactId>MythicLib-dist</artifactId>
+            <version>1.6.1-SNAPSHOT</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>com.github.NeumimTo</groupId>
+            <artifactId>SpartanAPI</artifactId>
+            <version>6033d44eba</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>com.github.Olexorus</groupId>
+            <artifactId>WitherAC</artifactId>
+            <version>0a45a67bee</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>com.github.Updated-NoCheatPlus.NoCheatPlus</groupId>
+            <artifactId>nocheatplus</artifactId>
+            <version>v1.5</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>rip.reflex</groupId>
+            <artifactId>ReflexAPI</artifactId>
+            <scope>provided</scope>
+            <version>7</version>
+        </dependency>
+
+        <dependency>
+            <groupId>de.janmm14</groupId>
+            <artifactId>aac-api</artifactId>
+            <version>4.2.0</version>
+            <scope>provided</scope>
+        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>AntiAuraAPI</groupId>-->
+<!--            <artifactId>API</artifactId>-->
+<!--            <version>0.0.1</version>-->
+<!--            <scope>system</scope>-->
+<!--            <systemPath>${basedir}/lib/AAAPI.jar</systemPath>-->
+<!--        </dependency> -->
+        <!-- Paper bundles Adventure (including MiniMessage) natively since 1.17, so these are
+             "provided" instead of shaded/compiled into the plugin jar. The adventure-platform-bukkit
+             bridge dependency was removed entirely: Paper's Player/CommandSender implement
+             net.kyori.adventure.audience.Audience directly, so BukkitAudiences is unnecessary. -->
+        <dependency>
+            <groupId>net.kyori</groupId>
+            <artifactId>adventure-api</artifactId>
+            <version>4.17.0</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <dependency>
+            <groupId>net.kyori</groupId>
+            <artifactId>adventure-text-minimessage</artifactId>
+            <version>4.17.0</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>net.kyori</groupId>
+            <artifactId>adventure-text-serializer-legacy</artifactId>
+            <version>4.17.0</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>junit</groupId>
+            <artifactId>junit</artifactId>
+            <version>4.12</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>1.18.36</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>com.discordsrv</groupId>
+            <artifactId>discordsrv</artifactId>
+            <version>1.19.1</version>
+            <scope>provided</scope>
+            <exclusions>
+                <exclusion>
+                    <groupId>*</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+            </exclusions>
+        </dependency>
+        <!-- PHASE 1 RISK: this SNAPSHOT predates Paper 26.1.2 and its repository (enginehub-maven)
+             is disabled below. Only used by WorldEditSessionListener.java. If resolution fails,
+             either re-enable the enginehub-maven repository with a current WorldEdit version, or
+             temporarily remove this dependency together with WorldEditSessionListener.java. -->
+        <dependency>
+            <groupId>com.sk89q.worldedit</groupId>
+            <artifactId>worldedit-bukkit</artifactId>
+            <version>7.3.13</version>
+            <scope>provided</scope>
+        </dependency>
+        <!-- PHASE 1 RISK: pinned to Minecraft 1.20.4; only used by Pl3xMapHook.java. Needs a
+             Paper 26.1.2-compatible Pl3xMap build from Modrinth in Phase 1. -->
+        <dependency>
+            <groupId>maven.modrinth</groupId>
+            <artifactId>pl3xmap</artifactId>
+            <version>1.20.4-484</version>
+            <scope>provided</scope>
+        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>net.pl3x.map</groupId>-->
+<!--            <artifactId>pl3xmap-api</artifactId>-->
+<!--            <version>1.0.0-SNAPSHOT</version>-->
+<!--            <scope>provided</scope>-->
+<!--        </dependency>-->
+    </dependencies>
+    <pluginRepositories>
+        <pluginRepository>
+            <id>maven-snapshots</id>
+            <url>https://repository.apache.org/content/repositories/snapshots/</url>
+        </pluginRepository>
+    </pluginRepositories>
+
+    <distributionManagement>
+        <repository>
+            <id>internal.repo</id>
+            <name>Temporary Staging Repository</name>
+            <url>file://${project.build.directory}/mvn-repo</url>
+        </repository>
+    </distributionManagement>
+    <build>
+        <sourceDirectory>src/main/java</sourceDirectory>
+        <testSourceDirectory>src/test/java</testSourceDirectory>
+        <resources>
+            <resource>
+                <targetPath>.</targetPath>
+                <filtering>true</filtering>
+                <directory>${basedir}/src/main/java</directory>
+                <includes>
+                    <include>plugin.yml</include>
+                    <include>resources/**</include>
+                </includes>
+            </resource>
+        </resources>
+        <plugins>
+            <plugin>
+                <groupId>com.github.github</groupId>
+                <artifactId>site-maven-plugin</artifactId>
+                <version>0.11</version>
+                <configuration>
+                    <message>Maven artifacts for ${project.version}</message> <!-- git commit message -->
+                    <noJekyll>true</noJekyll>  <!-- disable webpage processing -->
+                    <outputDirectory>${project.build.directory}/mvn-repo</outputDirectory> <!-- matches distribution management repository url above -->
+                    <branch>refs/heads/mvn-repo</branch> <!-- remote branch name -->
+                    <includes><include>**/*</include></includes>
+                    <repositoryName>Civs</repositoryName> <!-- github repo name -->
+                    <repositoryOwner>Multitallented</repositoryOwner> <!-- organization or user name  -->
+                </configuration>
+                <executions> <!-- run site-maven-plugin's 'site' target as part of the build's normal 'deploy' phase -->
+                    <execution>
+                        <goals>
+                            <goal>site</goal>
+                        </goals>
+                        <phase>deploy</phase>
+                    </execution>
+                </executions>
+            </plugin>
+<!--            <plugin>-->
+<!--                <artifactId>maven-deploy-plugin</artifactId>-->
+<!--                <version>2.8.2</version>-->
+<!--                <configuration>-->
+<!--                    <altDeploymentRepository>internal.repo::default::file://${project.build.directory}/mvn-repo</altDeploymentRepository>-->
+<!--                </configuration>-->
+<!--            </plugin>-->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>3.2.5</version>
+                <configuration>
+                    <!-- PHASE 0: legacy Bukkit-mock test sources (WorldImpl, etc.) are not yet
+                         updated for the paper-api 26.1.2 interfaces, so tests are skipped for now.
+                         Use -Dmaven.test.skip=true to also skip test *compilation*, since
+                         -DskipTests alone only skips running them. Migrating to MockBukkit is
+                         tracked for Phase 1. -->
+                    <skipTests>true</skipTests>
+                    <argLine>--add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.logging/java.util.logging=ALL-UNNAMED</argLine>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-shade-plugin</artifactId>
+                <version>3.4.1</version>
+                <configuration>
+                    <shadedArtifactAttached>false</shadedArtifactAttached>
+                    <artifactSet>
+                        <includes>
+                            <include>*:*</include>
+                        </includes>
+                    </artifactSet>
+                    <filters>
+                        <filter>
+                            <artifact>*:*</artifact>
+                        </filter>
+                    </filters>
+                    <relocations>
+                        <relocation>
+                            <pattern>org.reflections</pattern>
+                            <shadedPattern>shaded.org.reflections</shadedPattern>
+                            <includes>
+                                <include>org.reflections.**</include>
+                            </includes>
+                        </relocation>
+                        <!-- net.kyori (Adventure) relocation removed: adventure-api/adventure-text-minimessage
+                             are now "provided" scope since Paper bundles Adventure natively (since 1.17),
+                             so they are no longer shaded into the plugin jar. -->
+                    </relocations>
+                </configuration>
+                <executions>
+                    <execution>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>shade</goal>
+                        </goals>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.13.0</version>
+                <configuration>
+                    <release>25</release>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-assembly-plugin</artifactId>
+                <executions>
+                    <execution>
+                    <phase>package</phase>
+                    <goals>
+                        <goal>single</goal>
+                    </goals>
+                    <configuration>
+                        <appendAssemblyId>false</appendAssemblyId>
+                        <descriptors>
+                        <descriptor>src/assembly/zip.xml</descriptor>
+                        </descriptors>
+                    </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>

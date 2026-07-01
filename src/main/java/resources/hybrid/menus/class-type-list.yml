@@ -1,0 +1,25 @@
+size: 54
+name: NewClass
+# variables
+#  class: selected class
+# actions
+#  switch-class: switches your class to a new class
+items:
+  prev:
+    index: 3
+  classicon:
+    index: 4
+    name: classes
+    icon: ENCHANTING_TABLE
+    actions: []
+  back:
+    index: 8
+  next:
+    index: 6
+  classes:
+    index: 9-53
+    # icon: item icon
+    # name: item name
+    actions:
+      - switch-class
+      - menu:class?class=$class$

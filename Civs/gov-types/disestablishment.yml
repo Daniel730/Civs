@@ -1,0 +1,32 @@
+###### BUILT IN #####
+## all members can be owners.
+## all members can remove people from the town
+## anyone can join the town
+## town destroy option in menu blocked
+## town owners can override region ownership
+## no taxes
+## no bank
+#
+#icon: "GLASS"
+#enabled: true
+#selectable: false
+#transition: {}
+#buffs:
+#  cost:
+#    percent: 30
+#    groups:
+#    - utility
+#    - defense
+#    - allhousing
+#    - offense
+#  payout:
+#    percent: 20
+#    groups:
+#    - shops
+#  cooldown:
+#    percent: 15
+#    groups:
+#    - utility
+#    - defense
+#    regions:
+#    - inn

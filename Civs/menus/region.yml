@@ -1,0 +1,101 @@
+#size: 27
+#name: Region
+## variables:
+##  region: region id
+##  regionTypeName: region type name
+##  failingUpkeeps: list of failing upkeeps
+## actions:
+##  cancel-sale: cancels the sale of this region
+##  buy-region: buys the region
+#items:
+#  icon:
+#    index: 4
+#    # icon: region shop-icon
+#    # name: region name
+#    # desc: region desc
+#    actions:
+#      - menu:region-type?regionType=$regionTypeName$
+#  upkeep-working:
+#    index: 13
+#    icon: GREEN_WOOL
+#    name: operation
+#    desc: region-working
+#    actions: []
+#  upkeep-not-working:
+#    index: 13
+#    icon: RED_WOOL
+#    name: operation
+#    desc: region-not-working
+#    actions:
+#      - menu:recipe?region=$region$&regionType=$regionTypeName$&recipe=failing:$failingUpkeeps$
+#  location:
+#    index: 26
+#    icon: RED_BED
+#    #name: location coords
+#    desc: region-in-town
+#    actions:
+#      - menu:port
+#  income:
+#    index: 17
+#    icon: WRITABLE_BOOK
+#    name: income
+#    desc: income-desc
+#    actions: []
+#  destroy:
+#    index: 18
+#    icon: BARRIER
+#    name: destroy
+#    actions:
+#      - menu:confirmation?region=$region$&type=destroy
+#  back:
+#    index: 8
+#  people:
+#    index: 9
+#    icon: PLAYER_HEAD
+#    name: view-members
+#    actions:
+#      - menu:people?region=$region$
+#  add-person:
+#    index: 10
+#    icon: PLAYER_HEAD
+#    name: add-member
+#    actions:
+#      - menu:people?region=$region$&invite=true
+#  sale:
+#    index: 19
+#    icon: EMERALD_BLOCK
+#    name: sell-region
+#    desc: use-sell-command
+#    actions:
+#      - message:use-sell-command
+#  cancel-sale:
+#    index: 1
+#    icon: EMERALD_ORE
+#    name: cancel-sale
+#    actions:
+#      - cancel-sale
+#      - refresh
+#  buy-region:
+#    index: 1
+#    icon: EMERALD
+#    name: buy-region
+#    actions:
+#      - buy-region
+#      - refresh
+#  warehouse-enabled:
+#    index: 0
+#    icon: CHEST_MINECART
+#    name: warehouse-toggle-on
+#    desc: warehouse-toggle-desc
+#    actions:
+#      - toggle-warehouse
+#      - refresh
+#  warehouse-disabled:
+#    index: 0
+#    icon: MINECART
+#    name: warehouse-toggle-off
+#    desc: warehouse-toggle-desc
+#    actions:
+#      - toggle-warehouse
+#      - refresh
+#

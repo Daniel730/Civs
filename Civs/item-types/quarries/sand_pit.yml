@@ -1,0 +1,45 @@
+#enabled: true
+#type: region
+#icon: CHEST
+#shop-icon: SAND
+#dynmap-marker: minecart
+#name: Sand_Pit
+#price: 80
+#groups:
+#  - raw
+#  - quarry
+#level: 1
+#
+#build-reqs:
+#  - SAND*24
+#  - FURNACE*2
+#  - CHEST*2
+#
+#build-radius: 3 #7x7x7
+#effects:
+#  - block_break
+#  - block_build
+#  - conveyor:SAND
+#
+#period: 60
+#upkeep:
+#  0:
+#    tools:
+#      - STONE_SHOVEL
+#    output:
+#      - SAND*4
+#  1:
+#    tools:
+#      - IRON_SHOVEL
+#    output:
+#      - SAND*8
+#  2:
+#    tools:
+#      - DIAMOND_SHOVEL
+#    output:
+#      - SAND*32
+#  3:
+#    tools:
+#      - NETHERITE_SHOVEL
+#    output:
+#      - SAND*76

@@ -1,0 +1,45 @@
+#enabled: true
+#type: region
+#icon: CHEST
+#shop-icon: RED_SAND
+#dynmap-marker: minecart
+#name: Red_Sand_Pit
+#price: 80
+#groups:
+#  - raw
+#  - quarry
+#level: 1
+#
+#build-reqs:
+#  - RED_SAND*24
+#  - FURNACE*2
+#  - CHEST*2
+#
+#build-radius: 3 #7x7x7
+#effects:
+#  - block_break
+#  - block_build
+#  - conveyor:RED_SAND
+#
+#period: 60
+#upkeep:
+#  0:
+#    tools:
+#      - STONE_SHOVEL
+#    output:
+#      - RED_SAND*4
+#  1:
+#    tools:
+#      - IRON_SHOVEL
+#    output:
+#      - RED_SAND*8
+#  2:
+#    tools:
+#      - DIAMOND_SHOVEL
+#    output:
+#      - RED_SAND*32
+#  3:
+#    tools:
+#      - NETHERITE_SHOVEL
+#    output:
+#      - RED_SAND*76

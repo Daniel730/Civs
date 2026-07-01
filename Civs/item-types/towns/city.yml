@@ -1,0 +1,61 @@
+#enabled: true
+#type: town
+#icon: GLOWSTONE
+#shop-icon: EMERALD_BLOCK
+#name: City
+#max: 1
+#price: 66000
+#groups:
+#  - superregion
+#level: 6
+#
+#pre-reqs:
+#  - town:population=1
+#
+#build-reqs:
+#  - city_hall:1
+#  - quarry:1
+#  - farm:3
+#  - utility:2
+#
+#limits:
+#  - allhousing:162
+#  - shop:96
+#  - arrowtrapgroup:18
+#  - library:4
+#  - smithy:2
+#  - purifier:3
+#  - church:5
+#  - bank:2
+#  - warehouse:3
+#  - barracks:3
+#  - inn:3
+#  - jail:1
+#  - vault:4
+#  - embassy:8
+#  - idolgroup:4
+#  - jammer_trap:0
+#  - catapult:0
+#  - gunpowder_mine:4
+#
+#critical-build-reqs:
+#  - town_center
+#
+#child: town
+#child-population: 80
+#build-radius: 150
+#build-radius-y: 500
+#effects:
+#  - block_break
+#  - door_use
+#  - block_build
+#  - block_liquid
+#  - block_fire
+#  - deny_mob_spawn
+#  - power_shield
+#  - daily_shield
+#  - control_override
+#  - anticamp:2.1500.800 #2 damage for 25 minutes costs $800
+#
+#power: 3300
+#max-power: 19000

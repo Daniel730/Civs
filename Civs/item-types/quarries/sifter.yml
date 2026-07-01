@@ -1,0 +1,69 @@
+#enabled: true
+#type: region
+#icon: CHEST
+#shop-icon: NETHER_STAR
+#dynmap-marker: minecart
+#name: Sifter
+#price: 8000
+#groups:
+#  - raw
+#  - quarry
+#level: 7
+#
+#pre-reqs:
+#  - member=metropolis
+#
+#build-reqs:
+#  - DIRT*24,GRASS_BLOCK*24,COARSE_DIRT*24,PODZOL*24
+#  - DIAMOND_BLOCK*2
+#  - GLOWSTONE*2
+#  - FURNACE*2
+#  - CHEST*2
+#
+#towns:
+#  - metropolis
+#
+#build-radius: 3
+#
+#effects:
+#  - block_break
+#  - block_build
+#  - block_liquid
+#  - block_fire
+#
+#period: 15 #15 seconds
+#upkeep:
+#  0:
+#    reagents:
+#      - POTION
+#      - WITHER_SKELETON_SKULL*3
+#    tools:
+#      - IRON_SHOVEL
+#    input:
+#      - SOUL_SAND*4
+#      - BONE*2
+#    output:
+#      - DIRT*1%75,SOUL_SOIL*1%20,GOLD_BLOCK*2%4,NETHER_STAR*1%1
+#  1:
+#    reagents:
+#      - POTION
+#      - ECHO_SHARD
+#    input:
+#      - SCULK_SHRIEKER*1,SCULK_CATALYST*1
+#      - APPLE
+#      - GOLD_BLOCK
+#    output:
+#      - ROTTEN_FLESH*1%75,GOLDEN_APPLE*1%17,ENCHANTED_GOLDEN_APPLE*1%8
+#  2:
+#    reagents:
+#      - POTION
+#    tools:
+#      - SHEARS
+#    input:
+#      - FEATHER*8
+#      - PHANTOM_MEMBRANE*4
+#      - CHORUS_FRUIT
+#      - SHULKER_SHELL
+#    output:
+#      - SLIME_BALL*1%75,SLIME_BLOCK*1%17,ELYTRA*1%8
+#

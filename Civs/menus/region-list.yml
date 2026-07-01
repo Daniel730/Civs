@@ -1,0 +1,25 @@
+#size: 45
+#name: RegionList
+## variables:
+##  region: the region you click on
+## actions:
+##  view-region: opens the region menu for that region
+#items:
+#  prev:
+#    index: 3
+#  regionicon:
+#    index: 4
+#    icon: BRICKS
+#    name: regions
+#    actions: []
+#  next:
+#    index: 5
+#  back:
+#    index: 8
+#  regions:
+#    index: 9-44
+#    # icon: region icon
+#    # name: region name
+#    # desc: region key + desc
+#    actions:
+#      - view-region

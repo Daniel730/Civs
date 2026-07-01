@@ -1,0 +1,52 @@
+#enabled: true
+#type: region
+#icon: CHEST
+#shop-icon: PRISMARINE_SHARD
+#dynmap-marker: anchor
+#name: Marine_Mine
+#max: 1
+#price: 150
+#groups:
+#  - mine
+#level: 1
+#
+#build-reqs:
+#  - g:window*2
+#  - g:door*1
+#  - CHEST*2
+#  - FURNACE*2
+#  - PRISMARINE_BRICKS*4
+#  - g:primary*55
+#  - g:secondary*6
+#
+#build-radius: 4
+#
+#effects:
+#  - block_break
+#  - block_build
+#  - block_liquid
+#  - block_fire
+#
+#period: 60 #1 minute
+#upkeep:
+#  0:
+#    tools:
+#      - IRON_PICKAXE
+#    output:
+#      - PRISMARINE_SHARD*4
+#  1:
+#    tools:
+#      - DIAMOND_PICKAXE
+#    output:
+#      - PRISMARINE_SHARD*6
+#  2:
+#    tools:
+#      - NETHERITE_PICKAXE
+#    output:
+#      - PRISMARINE_SHARD*8
+#
+#biomes:
+#  - DEEP_OCEAN
+#  - DEEP_FROZEN_OCEAN
+#  - DEEP_COLD_OCEAN
+#  - DEEP_LUKEWARM_OCEAN

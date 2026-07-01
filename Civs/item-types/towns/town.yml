@@ -1,0 +1,62 @@
+#enabled: true
+#type: town
+#icon: GLOWSTONE
+#shop-icon: GOLD_BLOCK
+#name: Town
+#max: 1
+#price: 22000
+#groups:
+#  - superregion
+#level: 5
+#
+#pre-reqs:
+#  - village:population=1
+#
+#build-reqs:
+#  - town_hall:1
+#  - quarry:1
+#  - farm:3
+#  - utility:2
+#
+#limits:
+#  - allhousing:78
+#  - shop:48
+#  - arrowtrapgroup:12
+#  - library:3
+#  - smithy:2
+#  - purifier:3
+#  - church:3
+#  - bank:2
+#  - warehouse:1
+#  - barracks:2
+#  - inn:2
+#  - jail:1
+#  - vault:1
+#  - embassy:5
+#  - idolgroup:1
+#  - jammer_trap:0
+#  - catapult:0
+#  - gunpowder_mine:3
+#
+#critical-build-reqs:
+#  - town_center
+#
+#child: village
+#child-population: 40
+#build-radius: 110
+#build-radius-y: 500
+#effects:
+#  - block_break
+#  - door_use
+#  - block_build
+#  - block_liquid
+#  - block_fire
+#  - deny_mob_spawn
+#  - power_shield
+#  - daily_shield
+#  - control_override
+#  - anticamp:2.1500.600 #2 damage for 25 minutes costs $600
+#
+#power: 770
+#max-power: 14500
+#

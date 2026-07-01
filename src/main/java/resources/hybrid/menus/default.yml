@@ -1,0 +1,18 @@
+# global-actions:
+#  close: closes the menu
+#  print-tutorial: prints the current tutorial step
+#  menu:name?varname=var opens a menu and passes those variables
+#  command:command goes here
+#  permission:perm.something
+back:
+  icon: ARROW
+  name: back-button
+  # desc: []
+prev:
+  icon: CYAN_GLAZED_TERRACOTTA
+  name: prev-button
+  # desc: []
+next:
+  icon: MAGENTA_GLAZED_TERRACOTTA
+  name: next-button
+  # desc: []
