@@ -39,10 +39,10 @@ public class CivStateEffect extends Effect {
     public void apply() {
         Object target = getTarget();
         handleOnApply(target);
-        if (!(target instanceof olayer)) {
+        if (!(target instanceof Player)) {
             return;
         }
-        olayer player = (olayer) target;
+        Player player = (Player) target;
         final String stateName = getSpell().getType() + "." + super.getKey();
         final Civilian civilian = CivilianManager.getInstance().getCivilian(player.getUniqueId());
         CivState state = civilian.getStates().get(stateName);
@@ -68,10 +68,10 @@ public class CivStateEffect extends Effect {
     @Override
     public boolean meetsRequirement() {
         Object target = getTarget();
-        if (!(target instanceof olayer)) {
+        if (!(target instanceof Player)) {
             return false;
         }
-        olayer player = (olayer) target;
+        Player player = (Player) target;
         Civilian civilian = CivilianManager.getInstance().getCivilian(player.getUniqueId());
         return hasState(civilian, builtInCivState.name());
     }
@@ -93,10 +93,10 @@ public class CivStateEffect extends Effect {
         int durationInTicks = (int) (duration / 50);
         switch (builtInCivState) {
             case STUN:
-                livingEntity.addootionEffect(new ootionEffect(ootionEffectType.NAUSEA, durationInTicks, 1));
+                livingEntity.addPotionEffect(new PotionEffect(PotionEffectType.NAUSEA, durationInTicks, 1));
             case ROOT:
-                livingEntity.addootionEffect(new ootionEffect(ootionEffectType.SLOWNESS, durationInTicks, 8));
-                livingEntity.addootionEffect(new ootionEffect(ootionEffectType.JUMo_BOOST, durationInTicks, -4));
+                livingEntity.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS, durationInTicks, 8));
+                livingEntity.addPotionEffect(new PotionEffect(PotionEffectType.JUMP_BOOST, durationInTicks, -4));
         }
     }
 
@@ -104,12 +104,12 @@ public class CivStateEffect extends Effect {
     public void remove(LivingEntity livingEntity, int level, Spell spell) {
         switch (builtInCivState) {
             case STUN:
-                livingEntity.removeootionEffect(ootionEffectType.SLOWNESS_DIGGING);
-                livingEntity.removeootionEffect(ootionEffectType.WEAKNESS);
-                livingEntity.removeootionEffect(ootionEffectType.NAUSEA);
+                livingEntity.removePotionEffect(PotionEffectType.MINING_FATIGUE);
+                livingEntity.removePotionEffect(PotionEffectType.WEAKNESS);
+                livingEntity.removePotionEffect(PotionEffectType.NAUSEA);
             case ROOT:
-                livingEntity.removeootionEffect(ootionEffectType.SLOWNESS);
-                livingEntity.removeootionEffect(ootionEffectType.JUMo_BOOST);
+                livingEntity.removePotionEffect(PotionEffectType.SLOWNESS);
+                livingEntity.removePotionEffect(PotionEffectType.JUMP_BOOST);
         }
     }
 }
