@@ -14,12 +14,17 @@ import org.bukkit.block.BlockFace;
 import org.bukkit.block.BlockState;
 import org.bukkit.block.PistonMoveReaction;
 import org.bukkit.block.data.BlockData;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.metadata.MetadataValue;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.util.BoundingBox;
 import org.bukkit.util.RayTraceResult;
 import org.bukkit.util.Vector;
+import org.bukkit.util.VoxelShape;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class BlockImpl implements Block {
     private final Location location;
@@ -227,6 +232,11 @@ public class BlockImpl implements Block {
     }
 
     @Override
+    public boolean applyBoneMeal(@NotNull BlockFace blockFace) {
+        return false;
+    }
+
+    @Override
     public Collection<ItemStack> getDrops() {
         return null;
     }
@@ -234,6 +244,21 @@ public class BlockImpl implements Block {
     @Override
     public Collection<ItemStack> getDrops(ItemStack itemStack) {
         return null;
+    }
+
+    @Override
+    public @NotNull Collection<ItemStack> getDrops(@NotNull ItemStack itemStack, @Nullable Entity entity) {
+        return null;
+    }
+
+    @Override
+    public boolean isPreferredTool(@NotNull ItemStack itemStack) {
+        return false;
+    }
+
+    @Override
+    public float getBreakSpeed(@NotNull Player player) {
+        return 0;
     }
 
     @Override
@@ -249,6 +274,17 @@ public class BlockImpl implements Block {
     @Override
     public BoundingBox getBoundingBox() {
         return null;
+    }
+
+    @NotNull
+    @Override
+    public VoxelShape getCollisionShape() {
+        return null;
+    }
+
+    @Override
+    public boolean canPlace(@NotNull BlockData blockData) {
+        return false;
     }
 
     @Override
@@ -269,5 +305,11 @@ public class BlockImpl implements Block {
     @Override
     public void removeMetadata(String s, Plugin plugin) {
 
+    }
+
+    @NotNull
+    @Override
+    public String getTranslationKey() {
+        return "EN";
     }
 }

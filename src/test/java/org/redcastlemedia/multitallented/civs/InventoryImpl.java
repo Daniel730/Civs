@@ -1,6 +1,6 @@
 package org.redcastlemedia.multitallented.civs;
 
-import org.apache.commons.lang.Validate;
+import org.apache.commons.lang3.Validate;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.entity.HumanEntity;
@@ -17,6 +17,12 @@ import java.util.ListIterator;
 public class InventoryImpl implements Inventory {
     private HashMap<Integer, ItemStack> contents = new HashMap<>();
 
+    public InventoryImpl() {
+        for (int i = 0; i < getSize(); i++) {
+            contents.put(i, null);
+        }
+    }
+
     @Override
     public int getSize() {
         return 27;
@@ -30,11 +36,6 @@ public class InventoryImpl implements Inventory {
     @Override
     public void setMaxStackSize(int i) {
 
-    }
-
-    @Override
-    public String getName() {
-        return null;
     }
 
     @Override
@@ -221,9 +222,13 @@ public class InventoryImpl implements Inventory {
 
     @Override
     public ItemStack[] getContents() {
-        ItemStack[] itemStacks = new ItemStack[contents.keySet().size()];
+        ItemStack[] itemStacks = new ItemStack[this.getSize()];
         for (Integer i : contents.keySet()) {
-            itemStacks[i] = new ItemStack(contents.get(i).getType(), contents.get(i).getAmount());
+            if (contents.get(i) == null) {
+                itemStacks[i] = null;
+            } else {
+                itemStacks[i] = new ItemStack(contents.get(i).getType(), contents.get(i).getAmount());
+            }
         }
         return itemStacks;
     }
@@ -283,7 +288,17 @@ public class InventoryImpl implements Inventory {
 
     @Override
     public int firstEmpty() {
-        return 0;
+        for (int i = 0; i < getSize(); i++) {
+            if (contents.get(i) == null || contents.get(i).getType() == Material.AIR) {
+                return i;
+            }
+        }
+        return -1;
+    }
+
+    @Override
+    public boolean isEmpty() {
+        return false;
     }
 
     @Override
@@ -308,11 +323,6 @@ public class InventoryImpl implements Inventory {
 
     @Override
     public List<HumanEntity> getViewers() {
-        return null;
-    }
-
-    @Override
-    public String getTitle() {
         return null;
     }
 

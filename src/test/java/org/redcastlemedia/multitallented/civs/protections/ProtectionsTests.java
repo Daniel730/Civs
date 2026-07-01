@@ -3,6 +3,7 @@ package org.redcastlemedia.multitallented.civs.protections;
 import org.bukkit.Bukkit;
 import org.bukkit.GameMode;
 import org.bukkit.Location;
+import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.BlockFace;
 import org.bukkit.entity.Player;
@@ -14,17 +15,21 @@ import org.bukkit.event.entity.EntityExplodeEvent;
 import org.bukkit.event.player.PlayerInteractEvent;
 import org.junit.Before;
 import org.junit.Test;
+import org.redcastlemedia.multitallented.civs.PlayerInventoryImpl;
 import org.redcastlemedia.multitallented.civs.SuccessException;
 import org.redcastlemedia.multitallented.civs.TestUtil;
+import org.redcastlemedia.multitallented.civs.items.CVItem;
 import org.redcastlemedia.multitallented.civs.regions.Region;
 import org.redcastlemedia.multitallented.civs.regions.RegionManager;
 import org.redcastlemedia.multitallented.civs.regions.RegionsTests;
+import org.redcastlemedia.multitallented.civs.towns.Town;
 import org.redcastlemedia.multitallented.civs.towns.TownManager;
 import org.redcastlemedia.multitallented.civs.towns.TownTests;
 import org.redcastlemedia.multitallented.civs.util.Constants;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.UUID;
 
 import static org.junit.Assert.*;
@@ -40,6 +45,16 @@ public class ProtectionsTests extends TestUtil {
         TownManager.getInstance().reload();
         block = mock(Block.class);
         when(block.getLocation()).thenReturn(new Location(TestUtil.world, 0, 0,0));
+    }
+
+    @Test
+    public void missingBlocksShouldBeRemoved() {
+        Region region = RegionsTests.createNewRegion("greenhouse");
+        List<CVItem> tempList = new ArrayList<>();
+        tempList.add(new CVItem(Material.DIRT, 1));
+        region.getMissingBlocks().add(tempList);
+        ProtectionHandler.getInstance().removeBlockFromMissingBlocks(region, Material.DIRT);
+        assertTrue(region.getMissingBlocks().isEmpty());
     }
 
     @Test
@@ -62,6 +77,34 @@ public class ProtectionsTests extends TestUtil {
         when(player2.getGameMode()).thenReturn(GameMode.SURVIVAL);
         UUID uuid2 = new UUID(1, 3);
         when(player2.getUniqueId()).thenReturn(uuid2);
+
+        HashMap<UUID, String> owners = new HashMap<>();
+        owners.put(uuid2, Constants.OWNER);
+        Location regionLocation = new Location(Bukkit.getWorld("world"), 0,0,0);
+        HashMap<String, String> effects = new HashMap<>();
+        effects.put("block_break", null);
+        effects.put("block_build", null);
+        RegionManager.getInstance().addRegion(new Region("cobble", owners, regionLocation, RegionsTests.getRadii(), effects,0));
+        ProtectionHandler protectionHandler = new ProtectionHandler();
+        BlockBreakEvent event = new BlockBreakEvent(TestUtil.block3, player);
+        protectionHandler.onBlockBreak(event);
+        assertTrue(event.isCancelled());
+    }
+
+    @Test
+    public void blockBreakInProtectionInTownShouldBeCancelled() {
+        Town town = TownTests.loadTown("test", "settlement", new Location(TestUtil.world, 0, 0, 0));
+        RegionsTests.loadRegionTypeCobble();
+        Player player = mock(Player.class);
+        when(player.getGameMode()).thenReturn(GameMode.SURVIVAL);
+        UUID uuid = new UUID(1, 2);
+        when(player.getUniqueId()).thenReturn(uuid);
+        Player player2 = mock(Player.class);
+        when(player2.getGameMode()).thenReturn(GameMode.SURVIVAL);
+        UUID uuid2 = new UUID(1, 3);
+        when(player2.getUniqueId()).thenReturn(uuid2);
+        town.getRawPeople().put(uuid, "member");
+        town.getRawPeople().put(uuid2, "member");
 
         HashMap<UUID, String> owners = new HashMap<>();
         owners.put(uuid2, Constants.OWNER);
@@ -102,10 +145,12 @@ public class ProtectionsTests extends TestUtil {
         RegionsTests.loadRegionTypeDirt();
 
         Player player = mock(Player.class);
+        when(player.getInventory()).thenReturn(new PlayerInventoryImpl());
         UUID uuid = new UUID(1, 2);
         when(player.getUniqueId()).thenReturn(uuid);
 
         Player player2 = mock(Player.class);
+        when(player2.getInventory()).thenReturn(new PlayerInventoryImpl());
         UUID uuid2 = new UUID(1, 3);
         when(player2.getUniqueId()).thenReturn(uuid2);
 
@@ -124,9 +169,11 @@ public class ProtectionsTests extends TestUtil {
     public void chestUseShouldBeCancelled() {
         RegionsTests.loadRegionTypeCobble();
         Player player = mock(Player.class);
+        when(player.getInventory()).thenReturn(new PlayerInventoryImpl());
         UUID uuid = new UUID(1, 2);
         when(player.getUniqueId()).thenReturn(uuid);
         Player player2 = mock(Player.class);
+        when(player2.getInventory()).thenReturn(new PlayerInventoryImpl());
         UUID uuid2 = new UUID(1, 3);
         when(player2.getUniqueId()).thenReturn(uuid2);
 
@@ -151,8 +198,10 @@ public class ProtectionsTests extends TestUtil {
         RegionsTests.loadRegionTypeCobble();
         Player player = mock(Player.class);
         UUID uuid = new UUID(1, 2);
+        when(player.getInventory()).thenReturn(new PlayerInventoryImpl());
         when(player.getUniqueId()).thenReturn(uuid);
         Player player2 = mock(Player.class);
+        when(player2.getInventory()).thenReturn(new PlayerInventoryImpl());
         UUID uuid2 = new UUID(1, 3);
         when(player2.getUniqueId()).thenReturn(uuid2);
 
@@ -207,8 +256,7 @@ public class ProtectionsTests extends TestUtil {
         Location regionLocation = new Location(Bukkit.getWorld("world"), 0 , 0, -7);
         explodeInRegion(false, regionLocation);
         ProtectionHandler protectionHandler = new ProtectionHandler();
-        ProtectionHandler.CheckRegionBlocks checkRegionBlocks = protectionHandler.new CheckRegionBlocks(regionLocation);
-        checkRegionBlocks.run();
+        protectionHandler.checkRegionBlocks(regionLocation);
         assertNull(RegionManager.getInstance().getRegionAt(regionLocation));
     }
 
@@ -217,8 +265,7 @@ public class ProtectionsTests extends TestUtil {
         Location regionLocation = new Location(Bukkit.getWorld("world"), -4 , 0, 0);
         explodeInRegion(false, regionLocation);
         ProtectionHandler protectionHandler = new ProtectionHandler();
-        ProtectionHandler.CheckRegionBlocks checkRegionBlocks = protectionHandler.new CheckRegionBlocks(regionLocation);
-        checkRegionBlocks.run();
+        protectionHandler.checkRegionBlocks(regionLocation);
         assertNull(RegionManager.getInstance().getRegionAt(regionLocation));
     }
 

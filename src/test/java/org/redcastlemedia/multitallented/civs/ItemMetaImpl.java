@@ -1,5 +1,13 @@
 package org.redcastlemedia.multitallented.civs;
 
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import org.bukkit.NamespacedKey;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.attribute.AttributeModifier;
 import org.bukkit.enchantments.Enchantment;
@@ -7,20 +15,20 @@ import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemFlag;
 import org.bukkit.inventory.meta.Damageable;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.inventory.meta.SkullMeta;
 import org.bukkit.inventory.meta.tags.CustomItemTagContainer;
-
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import org.bukkit.persistence.PersistentDataContainer;
+import org.bukkit.profile.PlayerProfile;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import com.google.common.collect.Multimap;
 
-public class ItemMetaImpl implements ItemMeta, Damageable {
+public class ItemMetaImpl implements ItemMeta, Damageable, SkullMeta {
 
     private String displayName = null;
     private List<String> lore = new ArrayList<>();
+    private int customModelData = 0;
     public ItemMetaImpl() {
 
     }
@@ -72,6 +80,21 @@ public class ItemMetaImpl implements ItemMeta, Damageable {
     @Override
     public void setLore(List<String> list) {
         this.lore = list;
+    }
+
+    @Override
+    public boolean hasCustomModelData() {
+        return false;
+    }
+
+    @Override
+    public int getCustomModelData() {
+        return this.customModelData;
+    }
+
+    @Override
+    public void setCustomModelData(Integer integer) {
+        this.customModelData = integer;
     }
 
     @Override
@@ -184,9 +207,20 @@ public class ItemMetaImpl implements ItemMeta, Damageable {
         return false;
     }
 
+    @NotNull
+    @Override
+    public String getAsString() {
+        return null;
+    }
+
     @Override
     public CustomItemTagContainer getCustomTagContainer() {
         return null;
+    }
+
+    @Override
+    public void setVersion(int i) {
+
     }
 
 
@@ -206,13 +240,55 @@ public class ItemMetaImpl implements ItemMeta, Damageable {
     }
 
     @Override
-    public ItemMetaImpl clone() {
-        return new ItemMetaImpl(displayName, lore);
+    public @Nullable String getOwner() {
+        return null;
     }
 
     @Override
-    public Spigot spigot() {
+    public boolean hasOwner() {
+        return false;
+    }
+
+    @Override
+    public boolean setOwner(@Nullable String s) {
+        return false;
+    }
+
+    @Override
+    public @Nullable OfflinePlayer getOwningPlayer() {
         return null;
+    }
+
+    @Override
+    public boolean setOwningPlayer(@Nullable OfflinePlayer offlinePlayer) {
+        return false;
+    }
+
+    @Nullable
+    @Override
+    public PlayerProfile getOwnerProfile() {
+        return null;
+    }
+
+    @Override
+    public void setOwnerProfile(@Nullable PlayerProfile playerProfile) {
+
+    }
+
+    @Override
+    public void setNoteBlockSound(@Nullable NamespacedKey namespacedKey) {
+
+    }
+
+    @Nullable
+    @Override
+    public NamespacedKey getNoteBlockSound() {
+        return null;
+    }
+
+    @Override
+    public ItemMetaImpl clone() {
+        return new ItemMetaImpl(displayName, lore);
     }
 
     @Override
@@ -220,4 +296,8 @@ public class ItemMetaImpl implements ItemMeta, Damageable {
         return null;
     }
 
+    @Override
+    public PersistentDataContainer getPersistentDataContainer() {
+        return null;
+    }
 }

@@ -1,27 +1,72 @@
 package org.redcastlemedia.multitallented.civs;
 
-import org.bukkit.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+
+import java.io.File;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Random;
+import java.util.Set;
+import java.util.UUID;
+import java.util.function.Predicate;
+
+import org.bukkit.BlockChangeDelegate;
+import org.bukkit.Chunk;
+import org.bukkit.ChunkSnapshot;
+import org.bukkit.Difficulty;
+import org.bukkit.Effect;
+import org.bukkit.FeatureFlag;
+import org.bukkit.FluidCollisionMode;
+import org.bukkit.GameRule;
+import org.bukkit.HeightMap;
+import org.bukkit.Location;
+import org.bukkit.Material;
+import org.bukkit.NamespacedKey;
+import org.bukkit.Particle;
+import org.bukkit.Raid;
+import org.bukkit.Sound;
+import org.bukkit.SoundCategory;
+import org.bukkit.StructureType;
+import org.bukkit.TreeType;
+import org.bukkit.World;
+import org.bukkit.WorldBorder;
+import org.bukkit.WorldType;
 import org.bukkit.block.Biome;
 import org.bukkit.block.Block;
+import org.bukkit.block.BlockState;
 import org.bukkit.block.data.BlockData;
-import org.bukkit.entity.*;
+import org.bukkit.boss.DragonBattle;
+import org.bukkit.entity.AbstractArrow;
+import org.bukkit.entity.Arrow;
+import org.bukkit.entity.Entity;
+import org.bukkit.entity.EntityType;
+import org.bukkit.entity.FallingBlock;
+import org.bukkit.entity.Item;
+import org.bukkit.entity.LightningStrike;
+import org.bukkit.entity.LivingEntity;
+import org.bukkit.entity.Player;
+import org.bukkit.entity.SpawnCategory;
+import org.bukkit.entity.Villager;
+import org.bukkit.generator.BiomeProvider;
 import org.bukkit.generator.BlockPopulator;
 import org.bukkit.generator.ChunkGenerator;
+import org.bukkit.generator.structure.Structure;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.material.MaterialData;
 import org.bukkit.metadata.MetadataValue;
+import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.util.BoundingBox;
 import org.bukkit.util.Consumer;
 import org.bukkit.util.RayTraceResult;
+import org.bukkit.util.StructureSearchResult;
 import org.bukkit.util.Vector;
-
-import java.io.File;
-import java.util.*;
-import java.util.function.Predicate;
-
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import lombok.Setter;
 
@@ -80,7 +125,33 @@ public class WorldImpl implements World {
     }
 
     @Override
+    public int getHighestBlockYAt(int i, int i1, @NotNull HeightMap heightMap) {
+        return 0;
+    }
+
+    @Override
+    public int getHighestBlockYAt(@NotNull Location location, @NotNull HeightMap heightMap) {
+        return 0;
+    }
+
+    @Override
+    public @NotNull Block getHighestBlockAt(int i, int i1, @NotNull HeightMap heightMap) {
+        return null;
+    }
+
+    @Override
+    public @NotNull Block getHighestBlockAt(@NotNull Location location, @NotNull HeightMap heightMap) {
+        return null;
+    }
+
+    @Override
     public Chunk getChunkAt(int i, int i1) {
+        return null;
+    }
+
+    @NotNull
+    @Override
+    public Chunk getChunkAt(int i, int i1, boolean b) {
         return null;
     }
 
@@ -152,17 +223,7 @@ public class WorldImpl implements World {
     }
 
     @Override
-    public boolean unloadChunk(int i, int i1, boolean b, boolean b1) {
-        return false;
-    }
-
-    @Override
     public boolean unloadChunkRequest(int i, int i1) {
-        return false;
-    }
-
-    @Override
-    public boolean unloadChunkRequest(int i, int i1, boolean b) {
         return false;
     }
 
@@ -192,12 +253,50 @@ public class WorldImpl implements World {
     }
 
     @Override
+    public boolean addPluginChunkTicket(int i, int i1, Plugin plugin) {
+        return false;
+    }
+
+    @Override
+    public boolean removePluginChunkTicket(int i, int i1, Plugin plugin) {
+        return false;
+    }
+
+    @Override
+    public void removePluginChunkTickets(Plugin plugin) {
+
+    }
+
+    @Override
+    public Collection<Plugin> getPluginChunkTickets(int i, int i1) {
+        return null;
+    }
+
+    @Override
+    public Map<Plugin, Collection<Chunk>> getPluginChunkTickets() {
+        return null;
+    }
+
+
+    @Override
     public Item dropItem(Location location, ItemStack itemStack) {
+        return null;
+    }
+
+    @NotNull
+    @Override
+    public Item dropItem(@NotNull Location location, @NotNull ItemStack itemStack, @Nullable Consumer<Item> consumer) {
         return null;
     }
 
     @Override
     public Item dropItemNaturally(Location location, ItemStack itemStack) {
+        return null;
+    }
+
+    @NotNull
+    @Override
+    public Item dropItemNaturally(@NotNull Location location, @NotNull ItemStack itemStack, @Nullable Consumer<Item> consumer) {
         return null;
     }
 
@@ -207,7 +306,7 @@ public class WorldImpl implements World {
     }
 
     @Override
-    public <T extends Arrow> T spawnArrow(Location location, Vector vector, float v, float v1, Class<T> aClass) {
+    public <T extends AbstractArrow> T spawnArrow(Location location, Vector vector, float v, float v1, Class<T> aClass) {
         return null;
     }
 
@@ -223,6 +322,12 @@ public class WorldImpl implements World {
 
     @Override
     public Entity spawnEntity(Location location, EntityType entityType) {
+        return null;
+    }
+
+    @NotNull
+    @Override
+    public Entity spawnEntity(@NotNull Location location, @NotNull EntityType entityType, boolean b) {
         return null;
     }
 
@@ -347,6 +452,11 @@ public class WorldImpl implements World {
     }
 
     @Override
+    public boolean setSpawnLocation(int i, int i1, int i2, float v) {
+        return false;
+    }
+
+    @Override
     public boolean setSpawnLocation(int i, int i1, int i2) {
         return false;
     }
@@ -369,6 +479,11 @@ public class WorldImpl implements World {
     @Override
     public void setFullTime(long l) {
 
+    }
+
+    @Override
+    public long getGameTime() {
+        return 0;
     }
 
     @Override
@@ -412,6 +527,21 @@ public class WorldImpl implements World {
     }
 
     @Override
+    public boolean isClearWeather() {
+        return false;
+    }
+
+    @Override
+    public void setClearWeatherDuration(int i) {
+
+    }
+
+    @Override
+    public int getClearWeatherDuration() {
+        return 0;
+    }
+
+    @Override
     public boolean createExplosion(double v, double v1, double v2, float v3) {
         return false;
     }
@@ -427,12 +557,27 @@ public class WorldImpl implements World {
     }
 
     @Override
+    public boolean createExplosion(double v, double v1, double v2, float v3, boolean b, boolean b1, Entity entity) {
+        return false;
+    }
+
+    @Override
     public boolean createExplosion(Location location, float v) {
         return false;
     }
 
     @Override
     public boolean createExplosion(Location location, float v, boolean b) {
+        return false;
+    }
+
+    @Override
+    public boolean createExplosion(Location location, float v, boolean b, boolean b1) {
+        return false;
+    }
+
+    @Override
+    public boolean createExplosion(Location location, float v, boolean b, boolean b1, Entity entity) {
         return false;
     }
 
@@ -461,6 +606,12 @@ public class WorldImpl implements World {
         return null;
     }
 
+    @Nullable
+    @Override
+    public BiomeProvider getBiomeProvider() {
+        return null;
+    }
+
     @Override
     public void save() {
 
@@ -481,6 +632,12 @@ public class WorldImpl implements World {
 
     @Override
     public <T extends Entity> T spawn(Location location, Class<T> aClass, Consumer<T> consumer) throws IllegalArgumentException {
+        return null;
+    }
+
+    @NotNull
+    @Override
+    public <T extends Entity> T spawn(@NotNull Location location, @NotNull Class<T> aClass, boolean b, @Nullable Consumer<T> consumer) throws IllegalArgumentException {
         return null;
     }
 
@@ -544,9 +701,101 @@ public class WorldImpl implements World {
         return null;
     }
 
+    @NotNull
+    @Override
+    public Biome getBiome(@NotNull Location location) {
+        return null;
+    }
+
+    @Override
+    public @NotNull Biome getBiome(int i, int i1, int i2) {
+        return null;
+    }
+
+    @Override
+    public void setBiome(@NotNull Location location, @NotNull Biome biome) {
+
+    }
+
     @Override
     public void setBiome(int i, int i1, Biome biome) {
 
+    }
+
+    @Override
+    public void setBiome(int i, int i1, int i2, @NotNull Biome biome) {
+
+    }
+
+    @NotNull
+    @Override
+    public BlockState getBlockState(@NotNull Location location) {
+        return null;
+    }
+
+    @NotNull
+    @Override
+    public BlockState getBlockState(int i, int i1, int i2) {
+        return null;
+    }
+
+    @NotNull
+    @Override
+    public BlockData getBlockData(@NotNull Location location) {
+        return null;
+    }
+
+    @NotNull
+    @Override
+    public BlockData getBlockData(int i, int i1, int i2) {
+        return null;
+    }
+
+    @NotNull
+    @Override
+    public Material getType(@NotNull Location location) {
+        return null;
+    }
+
+    @NotNull
+    @Override
+    public Material getType(int i, int i1, int i2) {
+        return null;
+    }
+
+    @Override
+    public void setBlockData(@NotNull Location location, @NotNull BlockData blockData) {
+
+    }
+
+    @Override
+    public void setBlockData(int i, int i1, int i2, @NotNull BlockData blockData) {
+
+    }
+
+    @Override
+    public void setType(@NotNull Location location, @NotNull Material material) {
+
+    }
+
+    @Override
+    public void setType(int i, int i1, int i2, @NotNull Material material) {
+
+    }
+
+    @Override
+    public boolean generateTree(@NotNull Location location, @NotNull Random random, @NotNull TreeType treeType) {
+        return false;
+    }
+
+    @Override
+    public boolean generateTree(@NotNull Location location, @NotNull Random random, @NotNull TreeType treeType, @Nullable Consumer<BlockState> consumer) {
+        return false;
+    }
+
+    @Override
+    public boolean generateTree(@NotNull Location location, @NotNull Random random, @NotNull TreeType treeType, @Nullable Predicate<BlockState> predicate) {
+        return false;
     }
 
     @Override
@@ -555,7 +804,67 @@ public class WorldImpl implements World {
     }
 
     @Override
+    public double getTemperature(int i, int i1, int i2) {
+        return 0;
+    }
+
+    @Override
     public double getHumidity(int i, int i1) {
+        return 0;
+    }
+
+    @Override
+    public double getHumidity(int i, int i1, int i2) {
+        return 0;
+    }
+
+    @Override
+    public int getLogicalHeight() {
+        return 0;
+    }
+
+    @Override
+    public boolean isNatural() {
+        return false;
+    }
+
+    @Override
+    public boolean isBedWorks() {
+        return false;
+    }
+
+    @Override
+    public boolean hasSkyLight() {
+        return false;
+    }
+
+    @Override
+    public boolean hasCeiling() {
+        return false;
+    }
+
+    @Override
+    public boolean isPiglinSafe() {
+        return false;
+    }
+
+    @Override
+    public boolean isRespawnAnchorWorks() {
+        return false;
+    }
+
+    @Override
+    public boolean hasRaids() {
+        return false;
+    }
+
+    @Override
+    public boolean isUltraWarm() {
+        return false;
+    }
+
+    @Override
+    public int getMinHeight() {
         return 0;
     }
 
@@ -615,6 +924,16 @@ public class WorldImpl implements World {
     }
 
     @Override
+    public boolean isHardcore() {
+        return false;
+    }
+
+    @Override
+    public void setHardcore(boolean b) {
+
+    }
+
+    @Override
     public long getTicksPerAnimalSpawns() {
         return 0;
     }
@@ -631,6 +950,56 @@ public class WorldImpl implements World {
 
     @Override
     public void setTicksPerMonsterSpawns(int i) {
+
+    }
+
+    @Override
+    public long getTicksPerWaterSpawns() {
+        return 0;
+    }
+
+    @Override
+    public void setTicksPerWaterSpawns(int i) {
+
+    }
+
+    @Override
+    public long getTicksPerWaterAmbientSpawns() {
+        return 0;
+    }
+
+    @Override
+    public void setTicksPerWaterAmbientSpawns(int i) {
+
+    }
+
+    @Override
+    public long getTicksPerWaterUndergroundCreatureSpawns() {
+        return 0;
+    }
+
+    @Override
+    public void setTicksPerWaterUndergroundCreatureSpawns(int i) {
+
+    }
+
+    @Override
+    public long getTicksPerAmbientSpawns() {
+        return 0;
+    }
+
+    @Override
+    public void setTicksPerAmbientSpawns(int i) {
+
+    }
+
+    @Override
+    public long getTicksPerSpawns(@NotNull SpawnCategory spawnCategory) {
+        return 0;
+    }
+
+    @Override
+    public void setTicksPerSpawns(@NotNull SpawnCategory spawnCategory, int i) {
 
     }
 
@@ -665,12 +1034,42 @@ public class WorldImpl implements World {
     }
 
     @Override
+    public int getWaterUndergroundCreatureSpawnLimit() {
+        return 0;
+    }
+
+    @Override
+    public void setWaterUndergroundCreatureSpawnLimit(int i) {
+
+    }
+
+    @Override
+    public int getWaterAmbientSpawnLimit() {
+        return 0;
+    }
+
+    @Override
+    public void setWaterAmbientSpawnLimit(int i) {
+
+    }
+
+    @Override
     public int getAmbientSpawnLimit() {
         return 0;
     }
 
     @Override
     public void setAmbientSpawnLimit(int i) {
+
+    }
+
+    @Override
+    public int getSpawnLimit(@NotNull SpawnCategory spawnCategory) {
+        return 0;
+    }
+
+    @Override
+    public void setSpawnLimit(@NotNull SpawnCategory spawnCategory, int i) {
 
     }
 
@@ -691,6 +1090,26 @@ public class WorldImpl implements World {
 
     @Override
     public void playSound(Location location, String s, SoundCategory soundCategory, float v, float v1) {
+
+    }
+
+    @Override
+    public void playSound(@NotNull Entity entity, @NotNull Sound sound, float v, float v1) {
+
+    }
+
+    @Override
+    public void playSound(@NotNull Entity entity, @NotNull String s, float v, float v1) {
+
+    }
+
+    @Override
+    public void playSound(@NotNull Entity entity, @NotNull Sound sound, @NotNull SoundCategory soundCategory, float v, float v1) {
+
+    }
+
+    @Override
+    public void playSound(@NotNull Entity entity, @NotNull String s, @NotNull SoundCategory soundCategory, float v, float v1) {
 
     }
 
@@ -809,8 +1228,51 @@ public class WorldImpl implements World {
         return null;
     }
 
+    @Nullable
+    @Override
+    public StructureSearchResult locateNearestStructure(@NotNull Location location, @NotNull org.bukkit.generator.structure.StructureType structureType, int i, boolean b) {
+        return null;
+    }
+
+    @Nullable
+    @Override
+    public StructureSearchResult locateNearestStructure(@NotNull Location location, @NotNull Structure structure, int i, boolean b) {
+        return null;
+    }
+
+    @Override
+    public int getViewDistance() {
+        return 0;
+    }
+
+    @Override
+    public int getSimulationDistance() {
+        return 0;
+    }
+
     @Override
     public Spigot spigot() {
+        return null;
+    }
+
+    @Override
+    public Raid locateNearestRaid(Location location, int i) {
+        return null;
+    }
+
+    @Override
+    public List<Raid> getRaids() {
+        return null;
+    }
+
+    @Override
+    public @Nullable DragonBattle getEnderDragonBattle() {
+        return null;
+    }
+
+    @NotNull
+    @Override
+    public Set<FeatureFlag> getFeatureFlags() {
         return null;
     }
 
@@ -841,6 +1303,18 @@ public class WorldImpl implements World {
 
     @Override
     public Set<String> getListeningPluginChannels() {
+        return null;
+    }
+
+    @NotNull
+    @Override
+    public NamespacedKey getKey() {
+        return null;
+    }
+
+    @NotNull
+    @Override
+    public PersistentDataContainer getPersistentDataContainer() {
         return null;
     }
 }

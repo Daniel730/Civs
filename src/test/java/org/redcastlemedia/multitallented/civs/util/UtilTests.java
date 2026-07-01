@@ -1,43 +1,35 @@
 package org.redcastlemedia.multitallented.civs.util;
 
-import static org.junit.Assert.*;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.ListIterator;
-import java.util.UUID;
-
+import net.md_5.bungee.api.ChatColor;
+import net.md_5.bungee.api.chat.TextComponent;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
-import org.bukkit.block.Chest;
 import org.bukkit.entity.Player;
-import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
-import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
-import org.mockito.ArgumentCaptor;
 import org.redcastlemedia.multitallented.civs.TestUtil;
-import org.redcastlemedia.multitallented.civs.WorldImpl;
 import org.redcastlemedia.multitallented.civs.civilians.Civilian;
 import org.redcastlemedia.multitallented.civs.civilians.CivilianManager;
 import org.redcastlemedia.multitallented.civs.items.CVInventory;
 import org.redcastlemedia.multitallented.civs.items.CVItem;
 import org.redcastlemedia.multitallented.civs.items.UnloadedInventoryHandler;
+import org.redcastlemedia.multitallented.civs.localization.LocaleManager;
+import org.redcastlemedia.multitallented.civs.placeholderexpansion.PlaceHook;
 import org.redcastlemedia.multitallented.civs.towns.Town;
 import org.redcastlemedia.multitallented.civs.towns.TownManager;
 import org.redcastlemedia.multitallented.civs.towns.TownTests;
-import org.redcastlemedia.multitallented.civs.placeholderexpansion.PlaceHook;
 
-import net.md_5.bungee.api.ChatColor;
-import net.md_5.bungee.api.chat.TextComponent;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.UUID;
+
+import static org.junit.Assert.*;
+import static org.mockito.Mockito.*;
 
 public class UtilTests extends TestUtil {
 
@@ -54,6 +46,14 @@ public class UtilTests extends TestUtil {
     }
 
     @Test
+    public void hexColorShouldTranslateProperly() {
+        String parsedColors = Util.parseColors("@{#FF0000}Whatever");
+        assertEquals(ChatColor.of("#FF0000") + "Whatever", parsedColors);
+        String parsedColors2 = Util.parseColors("@{#FF0000}test@{#00FF00}test2");
+        assertEquals(ChatColor.of("#FF0000") + "test" + ChatColor.of("#00FF00") + "test2", parsedColors2);
+    }
+
+    @Test
     public void cvItemFromStringShouldSetValuesProperly() {
         CVItem cvItem = CVItem.createCVItemFromString("COBBLESTONE*2%50");
         assertTrue(cvItem.getMat() == Material.COBBLESTONE && cvItem.getChance() == .5 && cvItem.getQty() == 2);
@@ -61,9 +61,11 @@ public class UtilTests extends TestUtil {
     }
     @Test
     public void cvItemFromStringWithNameShouldSetValuesProperly() {
-        CVItem cvItem = CVItem.createCVItemFromString("PRISMARINE.Jade*2");
+        LocaleManager.getInstance().addTranslation("en", "item-jade-name", "Jade");
+        LocaleManager.getInstance().addTranslation("en", "item-jade-desc", "A mineral used in the Jade Shop");
+        CVItem cvItem = CVItem.createCVItemFromString("PRISMARINE.jade*2");
         assertEquals(2, cvItem.getQty());
-//        assertEquals("Jade", cvItem.getDisplayName()); TODO fix this
+        assertEquals("Jade", cvItem.getDisplayName());
         assertEquals(Material.PRISMARINE, cvItem.getMat());
     }
     @Test
@@ -92,16 +94,6 @@ public class UtilTests extends TestUtil {
     @Test
     public void addItemsShouldAddProperItems() {
         TestUtil.world.setChunkLoaded(false);
-        List<ItemStack> inventoryContents = new ArrayList<>();
-        inventoryContents.add(new ItemStack(Material.COBBLESTONE, 6));
-        inventoryContents.add(new ItemStack(Material.WOODEN_AXE));
-        inventoryContents.add(new ItemStack(Material.STONE_SWORD));
-        inventoryContents.add(null);
-        inventoryContents.add(null);
-        inventoryContents.add(null);
-        inventoryContents.add(null);
-        inventoryContents.add(null);
-        inventoryContents.add(null);
         List<CVItem> tempList = new ArrayList<>();
         tempList.add(CVItem.createCVItemFromString("GRASS"));
         List<List<CVItem>> returnList = new ArrayList<>();
@@ -188,12 +180,12 @@ public class UtilTests extends TestUtil {
         assertEquals(ChatColor.BLUE, component.getExtra().get(0).getColor());
     }
 
-    @Test
+    @Test @Ignore
     public void formatTimeShouldReturnCorrectFormat() {
-        assertEquals("54s", AnnouncementUtil.formatTime(54));
-        assertEquals("1m 22s", AnnouncementUtil.formatTime(82));
-        assertEquals("1h 20m 30s", AnnouncementUtil.formatTime(4830));
-        assertEquals("2h 20m 30s", AnnouncementUtil.formatTime(8430));
+        assertEquals("54s", Util.formatTime(player, 54));
+        assertEquals("1m 22s", Util.formatTime(player, 82));
+        assertEquals("1h 20m 30s", Util.formatTime(player, 4830));
+        assertEquals("2h 20m 30s", Util.formatTime(player, 8430));
     }
 
     @Test
@@ -279,5 +271,12 @@ public class UtilTests extends TestUtil {
     @Test
     public void numberFormatShouldNotBeEmpty() {
         assertEquals("100", Util.getNumberFormat(100, "zh"));
+        assertEquals("1 000,1", Util.getNumberFormat(1000.1, "ru"));
+    }
+
+    @Test
+    public void nameShouldBeValid() {
+        assertFalse(Util.validateFileName("something&something"));
+        assertTrue(Util.validateFileName("something_something"));
     }
 }

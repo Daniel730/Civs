@@ -1,9 +1,6 @@
 package org.redcastlemedia.multitallented.civs.listeners;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -11,17 +8,26 @@ import java.util.UUID;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.attribute.Attribute;
+import org.bukkit.attribute.AttributeInstance;
 import org.bukkit.entity.Player;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDamageEvent;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.Matchers;
+import org.redcastlemedia.multitallented.civs.PlayerInventoryImpl;
 import org.redcastlemedia.multitallented.civs.TestUtil;
 import org.redcastlemedia.multitallented.civs.civilians.Civilian;
 import org.redcastlemedia.multitallented.civs.civilians.CivilianManager;
 import org.redcastlemedia.multitallented.civs.civilians.CivilianTests;
 import org.redcastlemedia.multitallented.civs.protections.DeathListener;
 import org.redcastlemedia.multitallented.civs.regions.RegionManager;
+import org.redcastlemedia.multitallented.civs.regions.RegionsTests;
+import org.redcastlemedia.multitallented.civs.towns.Town;
+import org.redcastlemedia.multitallented.civs.towns.TownManager;
+import org.redcastlemedia.multitallented.civs.towns.TownTests;
 
 public class DeathListenerTests extends TestUtil {
 
@@ -35,17 +41,27 @@ public class DeathListenerTests extends TestUtil {
 
     @Before
     public void onBefore() {
+        TownManager.getInstance().reload();
         RegionManager.getInstance().reload();
         CivilianManager.getInstance();
         this.player1 = mock(Player.class);
+        when(player1.getWorld()).thenReturn(world);
+        AttributeInstance mockAttribute = mock(AttributeInstance.class);
+        when(player1.getAttribute(Matchers.any(Attribute.class))).thenReturn(mockAttribute);
+        when(player1.getInventory()).thenReturn(new PlayerInventoryImpl());
         when(player1.getUniqueId()).thenReturn(new UUID(1, 3));
         Location location1 = new Location(Bukkit.getWorld("world"), 0,0,0);
         when(player1.getLocation()).thenReturn(location1);
         this.player2 = mock(Player.class);
+        when(player2.getWorld()).thenReturn(world);
+        when(player2.getInventory()).thenReturn(new PlayerInventoryImpl());
         when(player2.getUniqueId()).thenReturn(new UUID(1, 4));
         Location location2 = new Location(Bukkit.getWorld("world"), 1, 0, 1);
         when(player2.getLocation()).thenReturn(location2);
+        when(player2.getAttribute(Matchers.any(Attribute.class))).thenReturn(mockAttribute);
         this.player3 = mock(Player.class);
+        when(player3.getAttribute(Matchers.any(Attribute.class))).thenReturn(mockAttribute);
+        when(player3.getInventory()).thenReturn(new PlayerInventoryImpl());
         Location location3 = new Location(Bukkit.getWorld("world"), 2, 0, 2);
         when(player3.getUniqueId()).thenReturn(new UUID(1, 5));
         when(player3.getLocation()).thenReturn(location3);
@@ -58,11 +74,25 @@ public class DeathListenerTests extends TestUtil {
         this.deathListener = new DeathListener();
     }
 
+    @After
+    public void cleanup() {
+        RegionManager.getInstance().reload();
+        TownManager.getInstance().reload();
+    }
+
     @Test
     public void damageShouldRegisterInCivilian() {
+        RegionsTests.createNewRegion("catapult", player2.getUniqueId());
+        RegionsTests.createNewRegion("catapult", civilian1.getUuid());
         this.deathListener.onEntityDamage(this.damageEvent);
         assertEquals(player2.getUniqueId(), civilian1.getLastDamager());
         assertTrue(civilian1.getLastDamage() > -1);
+    }
+
+    @Test
+    public void damageBetweenNonWarEnabledPeopleShouldBeCancelled() {
+        this.deathListener.onEntityDamage(this.damageEvent);
+        assertNull(civilian1.getLastDamager());
     }
 
     @Test
@@ -93,6 +123,13 @@ public class DeathListenerTests extends TestUtil {
 
     @Test
     public void lastDamageShouldUpdate() {
+        Town town = TownTests.loadTown("test", "settlement", new Location(world, 0, 0,0));
+        town.getRawPeople().put(player3.getUniqueId(), "member");
+        town.getRawPeople().put(player2.getUniqueId(), "member");
+        town.getRawPeople().put(civilian1.getUuid(), "member");
+        RegionsTests.createNewRegion("catapult", player3.getUniqueId());
+        RegionsTests.createNewRegion("catapult", player2.getUniqueId());
+        RegionsTests.createNewRegion("catapult", civilian1.getUuid());
         this.civilian1.setLastDamager(player3.getUniqueId());
         long prevTime = System.currentTimeMillis() - 3000;
         this.civilian1.setLastDamage(prevTime);

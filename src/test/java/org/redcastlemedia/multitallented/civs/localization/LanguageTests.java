@@ -27,8 +27,8 @@ public class LanguageTests extends TestUtil {
         mockLanguageMap.put("no-region-type-found", "No se encontró ningún tipo de región");
         LocaleManager.getInstance().languageMap.put("es", mockLanguageMap);
         LocaleManager localeManager = LocaleManager.getInstance();
-        Civilian civilian = new Civilian(TestUtil.player.getUniqueId(), "es", new HashMap<>(), null, new HashMap<>(),
-                0, 0,0,0,0, 0, 0);
+        Civilian civilian = new Civilian(TestUtil.player.getUniqueId(), "es", null, new HashMap<>(),
+                0, 0,0,0,0, 0);
 
         assertEquals("No se encontró ningún tipo de región",
                 localeManager.getTranslation(civilian.getLocale(), "no-region-type-found"));
@@ -43,7 +43,7 @@ public class LanguageTests extends TestUtil {
         when(itemMeta.getDisplayName()).thenReturn("Cobble");
         ArrayList<String> lore = new ArrayList<>();
         lore.add(TestUtil.player.getUniqueId().toString());
-        lore.add("Civs Cobble");
+        lore.add("Cobble");
         when(itemStack.hasItemMeta()).thenReturn(true);
         when(itemMeta.getLore()).thenReturn(lore);
         when(itemStack.getItemMeta()).thenReturn(itemMeta);
@@ -52,5 +52,29 @@ public class LanguageTests extends TestUtil {
         PlayerDropItemEvent playerDropItemEvent = new PlayerDropItemEvent(TestUtil.player, item);
         CivilianListener civilianListener = new CivilianListener();
         civilianListener.onCivilianDropItem(playerDropItemEvent);
+    }
+
+    @Test
+    public void keyWithoutVariablesShouldStillTranslate() {
+        String translation = LocaleManager.getInstance().getTranslation("en", "karma{");
+        assertEquals("Karma: $1", translation);
+    }
+
+    @Test
+    public void translationWithVariableShouldParse() {
+        String translation = LocaleManager.getInstance().getTranslation("en", "karma{2");
+        assertEquals("Karma: 2", translation);
+    }
+
+    @Test
+    public void translationWithoutMultipleVariableShouldParse() {
+        String translation = LocaleManager.getInstance().getTranslation("en", "karma{2,000");
+        assertEquals("Karma: 2,000", translation);
+    }
+
+    @Test
+    public void multipleKeysShouldDoMultipleTranslations() {
+        String translation = LocaleManager.getInstance().getTranslation("en", "karma{2,000");
+        assertEquals("Karma: 2,000", translation);
     }
 }
