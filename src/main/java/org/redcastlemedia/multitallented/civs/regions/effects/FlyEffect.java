@@ -79,7 +79,7 @@ public class FlyEffect implements Listener {
     private static void removeFlyFromPlayer(Player player) {
         if (player != null) {
             player.setFlying(false);
-            player.addPotionEffect(new PotionEffect(PotionEffectType.SLOWNESS_FALLING, 200, 1));
+            player.addPotionEffect(new PotionEffect(PotionEffectType.SLOW_FALLING, 200, 1));
         }
     }
 }

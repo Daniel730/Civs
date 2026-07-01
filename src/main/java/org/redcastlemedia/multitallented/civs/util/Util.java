@@ -981,7 +981,7 @@ public final class Util {
         if (Civs.getInstance() == null) {
             return;
         }
-        Firework firework = (Firework) player.getWorld().spawnEntity(player.getLocation(), EntityType.FIREWORK);
+        Firework firework = (Firework) player.getWorld().spawnEntity(player.getLocation(), EntityType.FIREWORK_ROCKET);
         FireworkMeta fireworkMeta = firework.getFireworkMeta();
 
         firework.getPersistentDataContainer().set(NamespacedKey.minecraft("civs_firework"), PersistentDataType.BYTE, (byte) 1);
