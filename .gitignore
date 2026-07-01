@@ -1,3 +1,15 @@
+dependency-reduced-pom.xml
+
+# Emacs ignores
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+auto-save-list
+tramp
+.\#*
+
 # Created by .ignore support plugin (hsz.mobi)
 ### macOS template
 # General
@@ -65,3 +77,11 @@ debugger.xml
 editor.xml
 vcs.xml
 ide.general.xml
+/dependency-reduced-pom.xml
+
+# Cursor / local build artifacts
+.cursor/
+compile-errors.txt
+lib/
+pom-fix.patch
+power-fix.patch
