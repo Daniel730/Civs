@@ -2,45 +2,44 @@
 #type: region
 #icon: CHEST
 #shop-icon: RED_SAND
+#dynmap-marker: minecart
+#name: Red_Sand_Pit
 #price: 80
 #groups:
-#- raw
-#- quarry
+#  - raw
+#  - quarry
 #level: 1
 #
 #build-reqs:
-#- RED_SAND*24
-#- FURNACE*2
-#- CHEST*2
+#  - RED_SAND*24
+#  - FURNACE*2
+#  - CHEST*2
 #
 #build-radius: 3 #7x7x7
 #effects:
-#- block_break
-#- block_build
-#- conveyor:RED_SAND
+#  - block_break
+#  - block_build
+#  - conveyor:RED_SAND
 #
 #period: 60
 #upkeep:
 #  0:
-#    reagents:
-#    - STONE_SHOVEL
+#    tools:
+#      - STONE_SHOVEL
 #    output:
-#    - RED_SAND*4
+#      - RED_SAND*4
 #  1:
-#    reagents:
-#    - IRON_SHOVEL
+#    tools:
+#      - IRON_SHOVEL
 #    output:
-#    - RED_SAND*8
+#      - RED_SAND*8
 #  2:
-#    reagents:
-#    - DIAMOND_SHOVEL
+#    tools:
+#      - DIAMOND_SHOVEL
 #    output:
-#    - RED_SAND*32
-#
-#biomes:
-#- BADLANDS
-#- BADLANDS_PLATEAU
-#- MODIFIED_BADLANDS_PLATEAU
-#- WOODED_BADLANDS_PLATEAU
-#- MODIFIED_WOODED_BADLANDS_PLATEAU
-#- ERODED_BADLANDS
+#      - RED_SAND*32
+#  3:
+#    tools:
+#      - NETHERITE_SHOVEL
+#    output:
+#      - RED_SAND*76

@@ -3,39 +3,35 @@
 ## variables:
 ##  $lastRename$ uuid of last person to rename alliance
 ##  $selectedTown$ selected alliance member town you own
-##  $allianceName$
+##  $alliance$
 ## custom actions:
 ##  leave-alliance unallies all towns in the alliance
 #items:
 #  icon:
-#    index: 0
+#    index: 4
 #    icon: GOLDEN_SWORD
 #    # name: alliance name
-#  select-town:
-#    index: 1
-#    # icon: town icon
-#    # name: town name
-#    desc: your-towns
-#    actions:
-#      - menu:select-town?prevMenu=alliance&preserveData=true
 #  rename:
-#    index: 2
+#    index: 10
 #    icon: PAPER
 #    name: rename-alliance
 #    desc: rename-alliance-desc
+#    actions:
+#      - typing:click-me:really-command{$alliance$
+#      - close
 #  last-rename:
-#    index: 3
+#    index: 17
 #    # icon: player's head
 #    # name: player's name
 #    desc: last-renamed-by
 #    actions:
 #      - menu:player?uuid=$lastRename$
 #  prev:
-#    index: 4
+#    index: 3
 #  next:
 #    index: 5
 #  leave-alliance:
-#    index: 6
+#    index: 9
 #    icon: BARRIER
 #    name: leave-alliance
 #    actions:
@@ -44,7 +40,7 @@
 #  back:
 #    index: 8
 #  members:
-#    index: 9-53
+#    index: 18-53
 #    # name: town name
 #    actions:
 #      - menu:town?town=$itemName$
