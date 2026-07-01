@@ -4,19 +4,37 @@ description: Allows you to create structures and towns.
 main: org.redcastlemedia.multitallented.civs.Civs
 name: Civs
 load: POSTWORLD
-version: 1.6.6
-api-version: 1.14
+version: ${project.version}
+api-version: 1.21
 depend: [Vault]
 softdepend:
 - PlaceholderAPI
 - DiscordSRV
 - MMOItems
+- MMOCore
+- Spartan
+- AAC
+- BAC
+- BasicAntiCheat
+- NoCheatPlus
+- WitherAC
+- Reflex
+- Pl3xMap
 commands:
   cv:
     aliases: ['township', 'townships', 'towns', 'town', 'to', 'hs', 'towny', 'fa', 'f', 'faction']
     description: Civs commands
     usage: /<command>
 permissions:
+  civs.menu:
+    description: Allows you to use the menu
+    default: true
+  civs.bounty.player:
+    description: Allows you to set bounties on players
+    default: true
+  civs.bounty.town:
+    description: Allows you to set bounties on towns
+    default: true
   civs.join:
     description: Allows players to join towns
     default: true
@@ -34,5 +52,8 @@ permissions:
     default: op
   civs.bypasspvp:
     description: Lets you bypass war machines, bounties, and other combat features
+    default: false
+  civs.streaming:
+    description: Hides coords and other identifying info for streamers
     default: false
 loadafter: [Vault, PlaceholderAPI, MMOItems]
