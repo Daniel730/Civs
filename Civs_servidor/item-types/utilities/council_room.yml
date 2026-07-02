@@ -24,3 +24,14 @@ effects:
   - block_break
   - block_build
   - block_liquid
+  - block_fire
+  - door_use
+  - chest_use
+  - port:town
+  - cant_override
+  - housing:2
+
+period: 900 #15 minutes
+upkeep:
+  0:
+    power-output: 2
