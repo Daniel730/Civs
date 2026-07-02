@@ -174,7 +174,11 @@ public class CustomMenu {
 
     protected List<String> getActions(Civilian civilian, ItemStack itemStack) {
         if (actions.containsKey(civilian.getUuid())) {
-            actions.get(civilian.getUuid()).get(itemStack.getType().name() + ":" + itemStack.getItemMeta().getDisplayName());
+            List<String> actionList = actions.get(civilian.getUuid())
+                    .get(itemStack.getType().name() + ":" + itemStack.getItemMeta().getDisplayName());
+            if (actionList != null) {
+                return actionList;
+            }
         }
         return new ArrayList<>();
     }

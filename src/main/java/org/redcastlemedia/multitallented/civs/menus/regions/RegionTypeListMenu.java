@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
@@ -39,10 +40,10 @@ public class RegionTypeListMenu extends CustomMenu {
         String category = params.get("category");
         String townName = params.get("town");
         String regionList = params.get("regionList");
-        HashMap<String, Integer> regionTypes;
+        Map<String, Integer> regionTypes;
         if (regionList != null) {
             String[] regionListSplit = regionList.split(",");
-            regionTypes = new HashMap<>();
+            regionTypes = new TreeMap<>();
             for (String regionString : regionListSplit) {
                 String[] regionSplit = regionString.split(":");
                 if (regionSplit.length < 2) {
@@ -52,17 +53,17 @@ public class RegionTypeListMenu extends CustomMenu {
                 }
             }
         } else if (category == null || townName == null) {
-            regionTypes = new HashMap<>();
+            regionTypes = new TreeMap<>();
         } else if (category.equals("reqs")) {
             TownType townType = (TownType) ItemManager.getInstance().getItemType(townName);
-            regionTypes = new HashMap<>();
+            regionTypes = new TreeMap<>();
             addAllTypes(regionTypes, townType.getReqs());
         } else if (category.equals("limits")) {
-            regionTypes = new HashMap<>();
+            regionTypes = new TreeMap<>();
             TownType townType = (TownType) ItemManager.getInstance().getItemType(townName);
             addAllTypes(regionTypes, townType.getRegionLimits());
         } else {
-            regionTypes = new HashMap<>();
+            regionTypes = new TreeMap<>();
         }
         data.put(REGION_TYPES, regionTypes);
 
