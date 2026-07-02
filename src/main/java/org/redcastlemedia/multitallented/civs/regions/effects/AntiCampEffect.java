@@ -26,8 +26,11 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.UUID;
 
-import net.md_5.bungee.api.chat.ClickEvent;
-import net.md_5.bungee.api.chat.TextComponent;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.event.ClickEvent;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextDecoration;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 
 @CivsSingleton
 public class AntiCampEffect implements Listener {
@@ -146,15 +149,15 @@ public class AntiCampEffect implements Listener {
                 "activate-anticamp-question").replace("$1", player.getDisplayName())
                 .replace("$2", town.getName())
                 .replace("$3", "" + antiCampCost) + " ";
-        TextComponent component = Util.parseColorsComponent(activateMessage);
+        Component component = LegacyComponentSerializer.legacySection().deserialize(Util.parseColors(activateMessage));
 
-        TextComponent acceptComponent = new TextComponent("[✓]");
-        acceptComponent.setColor(net.md_5.bungee.api.ChatColor.GREEN);
-        acceptComponent.setUnderlined(true);
-        acceptComponent.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/cv anticamp " + town.getName()));
-        component.addExtra(acceptComponent);
+        Component acceptComponent = Component.text("[✓]")
+                .color(NamedTextColor.GREEN)
+                .decorate(TextDecoration.UNDERLINED)
+                .clickEvent(ClickEvent.runCommand("/cv anticamp " + town.getName()));
+        component = component.append(acceptComponent);
 
-        player.spigot().sendMessage(component);
+        player.sendMessage(component);
     }
 
     @EventHandler
