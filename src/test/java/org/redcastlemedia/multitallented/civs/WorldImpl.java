@@ -61,7 +61,7 @@ import org.bukkit.metadata.MetadataValue;
 import org.bukkit.persistence.PersistentDataContainer;
 import org.bukkit.plugin.Plugin;
 import org.bukkit.util.BoundingBox;
-import org.bukkit.util.Consumer;
+import java.util.function.Consumer;
 import org.bukkit.util.RayTraceResult;
 import org.bukkit.util.StructureSearchResult;
 import org.bukkit.util.Vector;
@@ -285,7 +285,7 @@ public class WorldImpl implements World {
 
     @NotNull
     @Override
-    public Item dropItem(@NotNull Location location, @NotNull ItemStack itemStack, @Nullable Consumer<Item> consumer) {
+    public Item dropItem(@NotNull Location location, @NotNull ItemStack itemStack, @Nullable Consumer<? super Item> consumer) {
         return null;
     }
 
@@ -296,7 +296,7 @@ public class WorldImpl implements World {
 
     @NotNull
     @Override
-    public Item dropItemNaturally(@NotNull Location location, @NotNull ItemStack itemStack, @Nullable Consumer<Item> consumer) {
+    public Item dropItemNaturally(@NotNull Location location, @NotNull ItemStack itemStack, @Nullable Consumer<? super Item> consumer) {
         return null;
     }
 
@@ -377,7 +377,7 @@ public class WorldImpl implements World {
     }
 
     @Override
-    public Collection<Entity> getNearbyEntities(Location location, double v, double v1, double v2, Predicate<Entity> predicate) {
+    public Collection<Entity> getNearbyEntities(Location location, double v, double v1, double v2, Predicate<? super Entity> predicate) {
         return null;
     }
 
@@ -387,7 +387,7 @@ public class WorldImpl implements World {
     }
 
     @Override
-    public Collection<Entity> getNearbyEntities(BoundingBox boundingBox, Predicate<Entity> predicate) {
+    public Collection<Entity> getNearbyEntities(BoundingBox boundingBox, Predicate<? super Entity> predicate) {
         return null;
     }
 
@@ -402,12 +402,12 @@ public class WorldImpl implements World {
     }
 
     @Override
-    public RayTraceResult rayTraceEntities(Location location, Vector vector, double v, Predicate<Entity> predicate) {
+    public RayTraceResult rayTraceEntities(Location location, Vector vector, double v, Predicate<? super Entity> predicate) {
         return null;
     }
 
     @Override
-    public RayTraceResult rayTraceEntities(Location location, Vector vector, double v, double v1, Predicate<Entity> predicate) {
+    public RayTraceResult rayTraceEntities(Location location, Vector vector, double v, double v1, Predicate<? super Entity> predicate) {
         return null;
     }
 
@@ -427,7 +427,27 @@ public class WorldImpl implements World {
     }
 
     @Override
-    public RayTraceResult rayTrace(Location location, Vector vector, double v, FluidCollisionMode fluidCollisionMode, boolean b, double v1, Predicate<Entity> predicate) {
+    public RayTraceResult rayTrace(Location location, Vector vector, double v, FluidCollisionMode fluidCollisionMode, boolean b, double v1, Predicate<? super Entity> predicate) {
+        return null;
+    }
+
+    @Override
+    public RayTraceResult rayTrace(@NotNull Consumer<io.papermc.paper.raytracing.PositionedRayTraceConfigurationBuilder> consumer) {
+        return null;
+    }
+
+    @Override
+    public RayTraceResult rayTrace(@NotNull io.papermc.paper.math.Position position, @NotNull Vector vector, double v, @NotNull FluidCollisionMode fluidCollisionMode, boolean b, double v1, @Nullable Predicate<? super Entity> predicate, @Nullable Predicate<? super Block> predicate1) {
+        return null;
+    }
+
+    @Override
+    public RayTraceResult rayTraceBlocks(@NotNull io.papermc.paper.math.Position position, @NotNull Vector vector, double v, @NotNull FluidCollisionMode fluidCollisionMode, boolean b, @Nullable Predicate<? super Block> predicate) {
+        return null;
+    }
+
+    @Override
+    public RayTraceResult rayTraceEntities(@NotNull io.papermc.paper.math.Position position, @NotNull Vector vector, double v, double v1, @Nullable Predicate<? super Entity> predicate) {
         return null;
     }
 
@@ -582,6 +602,11 @@ public class WorldImpl implements World {
     }
 
     @Override
+    public boolean createExplosion(@Nullable Entity entity, @NotNull Location location, float v, boolean b, boolean b1, boolean b2) {
+        return false;
+    }
+
+    @Override
     public Environment getEnvironment() {
         return null;
     }
@@ -618,6 +643,11 @@ public class WorldImpl implements World {
     }
 
     @Override
+    public void save(boolean b) {
+
+    }
+
+    @Override
     public List<BlockPopulator> getPopulators() {
         return null;
     }
@@ -631,13 +661,23 @@ public class WorldImpl implements World {
     }
 
     @Override
-    public <T extends Entity> T spawn(Location location, Class<T> aClass, Consumer<T> consumer) throws IllegalArgumentException {
+    public <T extends Entity> T spawn(Location location, Class<T> aClass, Consumer<? super T> consumer) throws IllegalArgumentException {
         return null;
     }
 
     @NotNull
     @Override
-    public <T extends Entity> T spawn(@NotNull Location location, @NotNull Class<T> aClass, boolean b, @Nullable Consumer<T> consumer) throws IllegalArgumentException {
+    public <T extends Entity> T spawn(@NotNull Location location, @NotNull Class<T> aClass, boolean b, @Nullable Consumer<? super T> consumer) throws IllegalArgumentException {
+        return null;
+    }
+
+    @Override
+    public <T extends LivingEntity> T spawn(@NotNull Location location, @NotNull Class<T> aClass, @NotNull org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason spawnReason, boolean b, @Nullable Consumer<? super T> consumer) throws IllegalArgumentException {
+        return null;
+    }
+
+    @Override
+    public <T extends Entity> T spawn(@NotNull Location location, @NotNull Class<T> aClass, @Nullable Consumer<? super T> consumer, @NotNull org.bukkit.event.entity.CreatureSpawnEvent.SpawnReason spawnReason) throws IllegalArgumentException {
         return null;
     }
 
@@ -789,12 +829,12 @@ public class WorldImpl implements World {
     }
 
     @Override
-    public boolean generateTree(@NotNull Location location, @NotNull Random random, @NotNull TreeType treeType, @Nullable Consumer<BlockState> consumer) {
+    public boolean generateTree(@NotNull Location location, @NotNull Random random, @NotNull TreeType treeType, @Nullable Consumer<? super BlockState> consumer) {
         return false;
     }
 
     @Override
-    public boolean generateTree(@NotNull Location location, @NotNull Random random, @NotNull TreeType treeType, @Nullable Predicate<BlockState> predicate) {
+    public boolean generateTree(@NotNull Location location, @NotNull Random random, @NotNull TreeType treeType, @Nullable Predicate<? super BlockState> predicate) {
         return false;
     }
 
@@ -1089,7 +1129,17 @@ public class WorldImpl implements World {
     }
 
     @Override
+    public void playSound(Location location, Sound sound, SoundCategory soundCategory, float v, float v1, long l) {
+
+    }
+
+    @Override
     public void playSound(Location location, String s, SoundCategory soundCategory, float v, float v1) {
+
+    }
+
+    @Override
+    public void playSound(Location location, String s, SoundCategory soundCategory, float v, float v1, long l) {
 
     }
 
@@ -1109,7 +1159,17 @@ public class WorldImpl implements World {
     }
 
     @Override
+    public void playSound(@NotNull Entity entity, @NotNull Sound sound, @NotNull SoundCategory soundCategory, float v, float v1, long l) {
+
+    }
+
+    @Override
     public void playSound(@NotNull Entity entity, @NotNull String s, @NotNull SoundCategory soundCategory, float v, float v1) {
+
+    }
+
+    @Override
+    public void playSound(@NotNull Entity entity, @NotNull String s, @NotNull SoundCategory soundCategory, float v, float v1, long l) {
 
     }
 
@@ -1224,6 +1284,11 @@ public class WorldImpl implements World {
     }
 
     @Override
+    public <T> void spawnParticle(Particle particle, List<Player> list, Player player, double v, double v1, double v2, int i, double v3, double v4, double v5, double v6, T t, boolean b) {
+
+    }
+
+    @Override
     public Location locateNearestStructure(Location location, StructureType structureType, int i, boolean b) {
         return null;
     }
@@ -1243,6 +1308,16 @@ public class WorldImpl implements World {
     @Override
     public int getViewDistance() {
         return 0;
+    }
+
+    @Override
+    public int getSendViewDistance() {
+        return 0;
+    }
+
+    @Override
+    public void setSendViewDistance(int i) {
+
     }
 
     @Override
@@ -1315,6 +1390,233 @@ public class WorldImpl implements World {
     @NotNull
     @Override
     public PersistentDataContainer getPersistentDataContainer() {
+        return null;
+    }
+
+    @NotNull
+    @Override
+    public Collection<org.bukkit.generator.structure.GeneratedStructure> getStructures(int i, int i1) {
+        return null;
+    }
+
+    @NotNull
+    @Override
+    public Collection<org.bukkit.generator.structure.GeneratedStructure> getStructures(int i, int i1, @NotNull Structure structure) {
+        return null;
+    }
+
+    @Override
+    public Entity addEntity(Entity entity) {
+        return entity;
+    }
+
+    @Override
+    public Iterable<net.kyori.adventure.audience.Audience> audiences() {
+        return null;
+    }
+
+    @Override
+    public <T extends Entity> T createEntity(Location location, Class<T> aClass) {
+        return null;
+    }
+
+    @Override
+    public Location findLightningRod(Location location) {
+        return null;
+    }
+
+    @Override
+    public Location findLightningTarget(Location location) {
+        return null;
+    }
+
+    @Override
+    public void getChunkAtAsync(int i, int i1, boolean b, boolean b1, Consumer<? super Chunk> consumer) {
+
+    }
+
+    @Override
+    public int getChunkCount() {
+        return 0;
+    }
+
+    @Override
+    public void getChunksAtAsync(int i, int i1, int i2, int i3, boolean b, Runnable runnable) {
+
+    }
+
+    @Override
+    public Biome getComputedBiome(int i, int i1, int i2) {
+        return this.getBiome(i, i1, i2);
+    }
+
+    @Override
+    public double getCoordinateScale() {
+        return 1;
+    }
+
+    @Override
+    public Entity getEntity(UUID uuid) {
+        return null;
+    }
+
+    @Override
+    public int getEntityCount() {
+        return 0;
+    }
+
+    @Override
+    public io.papermc.paper.block.fluid.FluidData getFluidData(int i, int i1, int i2) {
+        return null;
+    }
+
+    @Override
+    public Collection<Material> getInfiniburn() {
+        return null;
+    }
+
+    @Override
+    public Collection<Chunk> getIntersectingChunks(BoundingBox boundingBox) {
+        return null;
+    }
+
+    @Override
+    public io.papermc.paper.world.MoonPhase getMoonPhase() {
+        return null;
+    }
+
+    @Override
+    public int getPlayerCount() {
+        return 0;
+    }
+
+    @Override
+    public Collection<Player> getPlayersSeeingChunk(int i, int i1) {
+        return null;
+    }
+
+    @Override
+    public Collection<Player> getPlayersSeeingChunk(Chunk chunk) {
+        return null;
+    }
+
+    @Override
+    public Raid getRaid(int i) {
+        return null;
+    }
+
+    @Override
+    public int getTickableTileEntityCount() {
+        return 0;
+    }
+
+    @Override
+    public int getTileEntityCount() {
+        return 0;
+    }
+
+    @Override
+    public float getVoidDamageAmount() {
+        return 0;
+    }
+
+    @Override
+    public double getVoidDamageMinBuildHeightOffset() {
+        return 0;
+    }
+
+    @Override
+    public java.nio.file.Path getWorldPath() {
+        return null;
+    }
+
+    @Override
+    public boolean hasBonusChest() {
+        return false;
+    }
+
+    @Override
+    public boolean hasCollisionsIn(BoundingBox boundingBox) {
+        return false;
+    }
+
+    @Override
+    public boolean hasStructureAt(io.papermc.paper.math.Position position, Structure structure) {
+        return false;
+    }
+
+    @Override
+    public boolean isDayTime() {
+        return true;
+    }
+
+    @Override
+    public boolean isFixedTime() {
+        return false;
+    }
+
+    @Override
+    public boolean isVoidDamageEnabled() {
+        return true;
+    }
+
+    @Override
+    public net.kyori.adventure.key.Key key() {
+        return null;
+    }
+
+    @Override
+    public boolean lineOfSightExists(Location location, Location location1) {
+        return false;
+    }
+
+    @Override
+    public List<io.papermc.paper.entity.poi.PoiSearchResult> locateAllPoiInRange(Location location, Predicate<io.papermc.paper.entity.poi.PoiType> predicate, int i, io.papermc.paper.entity.poi.PoiType.Occupancy occupancy) {
+        return null;
+    }
+
+    @Override
+    public org.bukkit.util.BiomeSearchResult locateNearestBiome(Location location, int i, int i1, int i2, Biome... biomes) {
+        return null;
+    }
+
+    @Override
+    public Location locateNearestPoi(Location location, io.papermc.paper.entity.poi.PoiType poiType, int i, io.papermc.paper.entity.poi.PoiType.Occupancy occupancy) {
+        return null;
+    }
+
+    @Override
+    public void sendGameEvent(Entity entity, org.bukkit.GameEvent gameEvent, Vector vector) {
+
+    }
+
+    @Override
+    public void setSimulationDistance(int i) {
+
+    }
+
+    @Override
+    public void setViewDistance(int i) {
+
+    }
+
+    @Override
+    public void setVoidDamageAmount(float v) {
+
+    }
+
+    @Override
+    public void setVoidDamageEnabled(boolean b) {
+
+    }
+
+    @Override
+    public void setVoidDamageMinBuildHeightOffset(double v) {
+
+    }
+
+    @Override
+    public BiomeProvider vanillaBiomeProvider() {
         return null;
     }
 }
