@@ -19,7 +19,16 @@ import org.redcastlemedia.multitallented.civs.util.Util;
 
 public class WorldEditSessionListener {
 
+    // Guards against double-registering the event bus listener. This can otherwise happen
+    // if WorldEdit is already enabled when Civs starts (handled in Civs#fancyPrintLog) and
+    // PluginListener's PluginEnableEvent fallback for WorldEdit is also triggered.
+    private static boolean initialized = false;
+
     public static void init() {
+        if (initialized) {
+            return;
+        }
+        initialized = true;
         WorldEdit.getInstance().getEventBus().register(new Object() {
 
             @Subscribe
