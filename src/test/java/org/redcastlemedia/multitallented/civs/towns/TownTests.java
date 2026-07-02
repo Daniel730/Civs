@@ -35,6 +35,7 @@ public class TownTests extends TestUtil {
 
     @Before
     public void onBefore() {
+        when(TestUtil.player.getLocation()).thenReturn(new Location(world, 0.5, 0.5, 0.5));
         TownManager.getInstance().reload();
         RegionManager.getInstance().reload();
         GovernmentManager.getInstance().reload();

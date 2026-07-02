@@ -758,7 +758,11 @@ public class TownManager {
         if (townType.getChild() != null) {
             modifier = 1;
         }
-        List<Town> intersectTowns = checkIntersect(player.getLocation(), townType, modifier);
+        Location intersectLocation = player.getLocation();
+        if (town != null) {
+            intersectLocation = town.getLocation();
+        }
+        List<Town> intersectTowns = checkIntersect(intersectLocation, townType, modifier);
         if (handleIntersectingTown(player, town, localeManager, townType, intersectTowns)) {
             return;
         }
