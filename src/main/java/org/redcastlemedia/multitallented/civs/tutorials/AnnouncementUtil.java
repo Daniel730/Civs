@@ -31,10 +31,11 @@ import org.redcastlemedia.multitallented.civs.towns.TownManager;
 import org.redcastlemedia.multitallented.civs.util.Constants;
 import org.redcastlemedia.multitallented.civs.util.Util;
 
-import net.md_5.bungee.api.ChatColor;
-import net.md_5.bungee.api.chat.BaseComponent;
-import net.md_5.bungee.api.chat.ClickEvent;
-import net.md_5.bungee.api.chat.TextComponent;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.event.ClickEvent;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextDecoration;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 
 public final class AnnouncementUtil {
     private static HashMap<UUID, HashSet<String>> alreadySentMessages = new HashMap<>();
@@ -283,22 +284,22 @@ public final class AnnouncementUtil {
     }
 
     private static void sendToPlayer(Player player, String input, String key) {
-        BaseComponent message = Util.parseColorsComponent(Civs.getRawPrefix());
-        TextComponent mainMessage = new TextComponent(Util.parseColorsComponent(input));
+        Component message = LegacyComponentSerializer.legacySection().deserialize(Util.parseColors(Civs.getRawPrefix()));
+        Component mainMessage = LegacyComponentSerializer.legacySection().deserialize(Util.parseColors(input));
         if (key.startsWith("ann-bank")) {
             String townName = key.replace("ann-bank-", "");
-            mainMessage.setClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, "/cv withdraw " + townName + " "));
+            mainMessage = mainMessage.clickEvent(ClickEvent.suggestCommand("/cv withdraw " + townName + " "));
         } else {
-            mainMessage.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/cv tutaction " + key));
+            mainMessage = mainMessage.clickEvent(ClickEvent.runCommand("/cv tutaction " + key));
         }
-        message.addExtra(mainMessage);
+        message = message.append(mainMessage);
 
-        TextComponent unsub = new TextComponent("[✘]");
-        unsub.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/cv toggleann"));
-        unsub.setColor(ChatColor.RED);
-        unsub.setUnderlined(true);
-        message.addExtra(unsub);
-        player.spigot().sendMessage(message);
+        Component unsub = Component.text("[✘]")
+                .color(NamedTextColor.RED)
+                .decorate(TextDecoration.UNDERLINED)
+                .clickEvent(ClickEvent.runCommand("/cv toggleann"));
+        message = message.append(unsub);
+        player.sendMessage(message);
     }
 
 }
