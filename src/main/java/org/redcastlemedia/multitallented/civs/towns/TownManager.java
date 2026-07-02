@@ -529,7 +529,7 @@ public class TownManager {
         if (changed) {
             town.setHousing(housingCount);
             town.setVillagers(villagerCount);
-            saveTown(town);
+            saveTownUrgent(town);
         }
         return changed;
     }
