@@ -32,7 +32,13 @@ import net.md_5.bungee.api.chat.ClickEvent;
 import net.md_5.bungee.api.chat.TextComponent;
 
 public class CustomMenu {
-    protected HashSet<MenuIcon> itemIndexes;
+    // LinkedHashSet (not HashSet): MenuIcon has no equals()/hashCode() override, so a
+    // plain HashSet's iteration order depends on Object's identity hash code, which is
+    // not stable across JVM runs. That made menu item layout (and therefore which item
+    // wins duplicate-index collisions) non-deterministic between runs. LinkedHashSet
+    // preserves insertion order (i.e. the order items appear in the menu's yml config),
+    // which is both deterministic and the intuitively "correct" rendering order.
+    protected LinkedHashSet<MenuIcon> itemIndexes;
     protected HashMap<String, Integer> itemsPerPage = new HashMap<>();
     protected HashMap<UUID, HashMap<String, List<String>>> actions = new HashMap<>();
     protected HashMap<UUID, CycleGUI> cycleItems = new HashMap<>();
@@ -184,7 +190,7 @@ public class CustomMenu {
         }
     }
 
-    public void loadConfig(HashSet<MenuIcon> itemIndexes,
+    public void loadConfig(LinkedHashSet<MenuIcon> itemIndexes,
                     int size, String name) {
         this.itemIndexes = itemIndexes;
         this.size = size;

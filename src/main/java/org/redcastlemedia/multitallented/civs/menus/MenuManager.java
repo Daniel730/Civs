@@ -4,6 +4,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -245,7 +246,9 @@ public class MenuManager implements Listener {
         int newSize = config.getInt("size", 36);
         int size = MenuUtil.getInventorySize(newSize);
         String name = config.getString("name", "Unnamed");
-        HashSet<MenuIcon> items = new HashSet<>();
+        // LinkedHashSet: see CustomMenu.itemIndexes for why iteration order must be
+        // deterministic (config insertion order), not HashSet's identity-hash order.
+        LinkedHashSet<MenuIcon> items = new LinkedHashSet<>();
         ConfigurationSection section = config.getConfigurationSection("items");
         if (section != null) {
             for (String key : section.getKeys(false)) {
