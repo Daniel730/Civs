@@ -1,6 +1,7 @@
 package org.redcastlemedia.multitallented.civs.menus.common;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -70,6 +71,7 @@ public class PortMenu extends CustomMenu {
             }
             regions.add(currentRegion);
         }
+        regions.sort(Comparator.comparing(Region::getId));
         data.put("ports", regions);
         data.put("portMap", new HashMap<ItemStack, Region>());
         int maxPage = (int) Math.ceil((double) regions.size() / (double) itemsPerPage.get("ports"));
