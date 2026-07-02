@@ -61,6 +61,14 @@ items:
     name: add-member
     actions:
       - menu:people?region=$region$&invite=true
+  rename:
+    index: 11
+    icon: PAPER
+    name: rename-plot
+    desc: rename-plot-desc
+    actions:
+      - typing:click-me:rename-plot-command{$region$
+      - close
   sale:
     index: 19
     icon: EMERALD_BLOCK

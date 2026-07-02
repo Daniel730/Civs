@@ -25,6 +25,7 @@ import org.redcastlemedia.multitallented.civs.ConfigManager;
 import org.redcastlemedia.multitallented.civs.civilians.Civilian;
 import org.redcastlemedia.multitallented.civs.civilians.CivilianManager;
 import org.redcastlemedia.multitallented.civs.events.RegionUpkeepEvent;
+import org.redcastlemedia.multitallented.civs.items.CivItem;
 import org.redcastlemedia.multitallented.civs.items.CVInventory;
 import org.redcastlemedia.multitallented.civs.items.CVItem;
 import org.redcastlemedia.multitallented.civs.items.ItemManager;
@@ -99,14 +100,31 @@ public class Region {
     @Getter @Setter
     private double forSale = -1;
     @Getter @Setter
+    private String displayName = null;
+    @Getter @Setter
     private boolean warehouseEnabled = true;
     @Getter @Setter
     private List<List<CVItem>> missingBlocks = new ArrayList<>();
     @Getter
     private List<String> chests = new ArrayList<>();
-    @Getter
+    @Getter @Setter
     private boolean idle = false;
     @Getter @Setter private Location previousConveyorDestination;
+
+    public boolean isPlot() {
+        return effects != null && effects.containsKey("plot");
+    }
+
+    public String getDisplayName(Player player) {
+        if (displayName != null && !displayName.isEmpty()) {
+            return displayName;
+        }
+        CivItem regionType = ItemManager.getInstance().getItemType(type);
+        if (regionType == null) {
+            return type;
+        }
+        return regionType.getDisplayName(player);
+    }
 
     public Region(String type,
                   HashMap<UUID, String> people,

@@ -106,7 +106,7 @@ public class RegionMenu extends CustomMenu {
         boolean canSeeSellOptions = personCount == 1 && regionType.getEffects().containsKey(ForSaleEffect.KEY);
         if ("icon".equals(menuIcon.getKey())) {
             CVItem cvItem = regionType.getShopIcon(player);
-            cvItem.setDisplayName(regionType.getDisplayName(player));
+            cvItem.setDisplayName(region.getDisplayName(player));
             cvItem.setLore(regionType.getLore(player, false));
             ItemStack itemStack = cvItem.createItemStack();
             putActions(civilian, menuIcon, itemStack, count);
@@ -141,6 +141,18 @@ public class RegionMenu extends CustomMenu {
             if (!canSeeSellOptions || region.getForSale() == -1 || !isOwner) {
                 return new ItemStack(Material.AIR);
             }
+        } else if ("rename".equals(menuIcon.getKey()) || "rename-plot".equals(menuIcon.getKey())) {
+            if (!region.isPlot() || !isOwner) {
+                return new ItemStack(Material.AIR);
+            }
+            CVItem cvItem = menuIcon.createCVItem(player, count);
+            if (menuIcon.getDesc() != null && !menuIcon.getDesc().isEmpty()) {
+                cvItem.setLore(Util.textWrap(civilian, LocaleManager.getInstance().getTranslation(player,
+                        menuIcon.getDesc()).replace("$1", region.getId())));
+            }
+            ItemStack itemStack = cvItem.createItemStack();
+            putActions(civilian, menuIcon, itemStack, count);
+            return itemStack;
         } else if ("buy-region".equals(menuIcon.getKey())) {
             if (isOwner || region.getRawPeople().containsKey(civilian.getUuid()) ||
                     region.getForSale() == -1 ||
@@ -149,7 +161,7 @@ public class RegionMenu extends CustomMenu {
             }
             CVItem cvItem = CVItem.createCVItemFromString(menuIcon.getIcon());
             cvItem.setDisplayName(LocaleManager.getInstance().getTranslation(player,
-                    menuIcon.getName()).replace("$1", regionType.getDisplayName(player))
+                    menuIcon.getName()).replace("$1", region.getDisplayName(player))
                     .replace("$2", Util.getNumberFormat(region.getForSale(), civilian.getLocale())));
             cvItem.setLore(Util.textWrap(civilian, LocaleManager.getInstance().getTranslation(player,
                     menuIcon.getDesc())));
@@ -224,6 +236,18 @@ public class RegionMenu extends CustomMenu {
             if (region.isWarehouseEnabled() || !hasUpkeepsOrInput || !isOwner) {
                 return new ItemStack(Material.AIR);
             }
+        } else if ("rename".equals(menuIcon.getKey())) {
+            if (!isOwner || !region.getEffects().containsKey("plot")) {
+                return new ItemStack(Material.AIR);
+            }
+            CVItem cvItem = menuIcon.createCVItem(player, count);
+            if (menuIcon.getDesc() != null && !menuIcon.getDesc().isEmpty()) {
+                cvItem.setLore(Util.textWrap(civilian, LocaleManager.getInstance().getTranslation(player,
+                        menuIcon.getDesc())));
+            }
+            ItemStack itemStack = cvItem.createItemStack();
+            putActions(civilian, menuIcon, itemStack, count);
+            return itemStack;
         } else if ("missing-blocks".equals(menuIcon.getKey())) {
             if (region.getMissingBlocks().isEmpty()) {
                 return new ItemStack(Material.AIR);
@@ -268,7 +292,7 @@ public class RegionMenu extends CustomMenu {
         region.getRawPeople().put(civilian.getUuid(), Constants.OWNER);
         RegionType regionType = (RegionType) ItemManager.getInstance().getItemType(region.getType());
         Civs.econ.withdrawPlayer(player, region.getForSale());
-        String localName = regionType.getDisplayName(player);
+        String localName = region.getDisplayName(player);
 
         Set<UUID> owners = region.getOwners();
         int split = owners.size();

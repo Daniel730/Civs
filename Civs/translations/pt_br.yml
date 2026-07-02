@@ -227,6 +227,13 @@
 #click-me: ">>>Clique aqui<<<"
 #bounty-command: " /cv bounty $1 quantidade"
 #rename-command: /cv rename $1 NovoNome
+#rename-plot: Renomear plot
+#rename-plot-desc: Use /cv rename-plot NovoNome
+#rename-plot-command: /cv rename-plot NovoNome
+#plot-renamed: Seu plot foi renomeado para $1
+#plot-name-taken: Você já tem um plot chamado $1
+#specify-plot-name: Por favor, especifique um nome para o plot
+#not-a-plot: Você precisa estar em um plot para renomeá-lo
 #really-command: " /cv really $1 NovoNome"
 #town-ally: Definir $1 como aliados
 #town-unally: Definir $1 como inimigos

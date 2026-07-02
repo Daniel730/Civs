@@ -5,7 +5,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.bukkit.Bukkit;
 import org.bukkit.Material;
+import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.redcastlemedia.multitallented.civs.civilians.Civilian;
 import org.redcastlemedia.multitallented.civs.items.CVItem;
@@ -16,6 +18,7 @@ import org.redcastlemedia.multitallented.civs.menus.MenuIcon;
 import org.redcastlemedia.multitallented.civs.menus.MenuManager;
 import org.redcastlemedia.multitallented.civs.regions.Region;
 import org.redcastlemedia.multitallented.civs.regions.RegionManager;
+import org.redcastlemedia.multitallented.civs.regions.RegionType;
 import org.redcastlemedia.multitallented.civs.towns.Town;
 import org.redcastlemedia.multitallented.civs.towns.TownManager;
 
@@ -98,7 +101,14 @@ public class RegionListMenu extends CustomMenu {
                 return new ItemStack(Material.AIR);
             }
             Region region = regionArray[startIndex + count];
-            CVItem cvItem = ItemManager.getInstance().getItemType(region.getType()).getShopIcon(civilian.getLocale());
+            RegionType regionType = (RegionType) ItemManager.getInstance().getItemType(region.getType());
+            Player player = Bukkit.getPlayer(civilian.getUuid());
+            CVItem cvItem = regionType.getShopIcon(civilian.getLocale());
+            if (player != null) {
+                cvItem.setDisplayName(region.getDisplayName(player));
+            } else if (region.getDisplayName() != null) {
+                cvItem.setDisplayName(region.getDisplayName());
+            }
             Town town = TownManager.getInstance().getTownAt(region.getLocation());
             if (town != null) {
                 cvItem.getLore().add(town.getName());

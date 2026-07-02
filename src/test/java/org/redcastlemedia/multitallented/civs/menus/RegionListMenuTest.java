@@ -6,11 +6,13 @@ import java.util.Map;
 
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.redcastlemedia.multitallented.civs.TestUtil;
 import org.redcastlemedia.multitallented.civs.civilians.Civilian;
 import org.redcastlemedia.multitallented.civs.civilians.CivilianManager;
+import org.redcastlemedia.multitallented.civs.commands.RenamePlotCommandTest;
 import org.redcastlemedia.multitallented.civs.regions.Region;
 import org.redcastlemedia.multitallented.civs.regions.RegionManager;
 import org.redcastlemedia.multitallented.civs.regions.RegionsTests;
@@ -26,6 +28,11 @@ public class RegionListMenuTest extends TestUtil {
         civilian = CivilianManager.getInstance().getCivilian(TestUtil.player.getUniqueId());
     }
 
+    @After
+    public void cleanup() {
+        RegionManager.getInstance().reload();
+    }
+
     @Test
     public void regionListMenuShouldProperlySetAction() {
         RegionsTests.createNewRegion("shelter", TestUtil.player.getUniqueId());
@@ -33,5 +40,17 @@ public class RegionListMenuTest extends TestUtil {
         Map<ItemStack, Region> regionMap = (Map<ItemStack, Region>) MenuManager.getData(TestUtil.player.getUniqueId(), "regionMap");
         assertEquals(1, regionMap.values().size());
         assertEquals(inventory.getItem(9), regionMap.keySet().iterator().next());
+    }
+
+    @Test
+    public void regionListMenuShouldShowCustomPlotName() {
+        RenamePlotCommandTest.loadRegionTypePlot();
+        Region region = RegionsTests.createNewRegion("plot11x11", TestUtil.player.getUniqueId());
+        region.setDisplayName("MyPlot");
+        MenuManager.openMenuFromString(civilian, "region-list");
+        Map<ItemStack, Region> regionMap = (Map<ItemStack, Region>) MenuManager.getData(TestUtil.player.getUniqueId(), "regionMap");
+        assertEquals(1, regionMap.values().size());
+        ItemStack itemStack = regionMap.keySet().iterator().next();
+        assertEquals("MyPlot", itemStack.getItemMeta().getDisplayName());
     }
 }

@@ -326,6 +326,11 @@ public class RegionManager {
             }
             regionConfig.set("effects", convertRegionEffects(region.getEffects()));
             regionConfig.set("type", region.getType());
+            if (region.getDisplayName() != null && !region.getDisplayName().isEmpty()) {
+                regionConfig.set("display-name", region.getDisplayName());
+            } else {
+                regionConfig.set("display-name", null);
+            }
             regionConfig.set("exp", region.getExp());
             regionConfig.set("warehouse-enabled", region.isWarehouseEnabled());
             if (region.getLastActive() > 0) {
@@ -402,6 +407,10 @@ public class RegionManager {
                     (HashMap<String, String>) regionType.getEffects().clone(),
                     exp);
             region.setWarehouseEnabled(regionConfig.getBoolean("warehouse-enabled", true));
+            String displayName = regionConfig.getString("display-name");
+            if (displayName != null && !displayName.isEmpty()) {
+                region.setDisplayName(displayName);
+            }
             double forSale = regionConfig.getDouble("sale", -1);
             if (forSale != -1) {
                 region.setForSale(forSale);
@@ -1101,6 +1110,24 @@ public class RegionManager {
         if (withinX && withinY && withinZ) {
             returnRegions.add(region);
         }
+    }
+
+    public boolean isDisplayNameTaken(UUID ownerUuid, String displayName, Region exclude) {
+        for (Region region : getAllRegions()) {
+            if (region == exclude) {
+                continue;
+            }
+            if (region.getDisplayName() == null || region.getDisplayName().isEmpty()) {
+                continue;
+            }
+            if (!region.getOwners().contains(ownerUuid)) {
+                continue;
+            }
+            if (region.getDisplayName().equalsIgnoreCase(displayName)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public static synchronized RegionManager getInstance() {

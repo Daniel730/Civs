@@ -99,7 +99,7 @@ public class PortMenu extends CustomMenu {
             Region region = regionArray[startIndex + count];
             RegionType regionType = (RegionType) ItemManager.getInstance().getItemType(region.getType());
             CVItem cvItem = regionType.getShopIcon(player);
-            cvItem.setDisplayName(regionType.getDisplayName(player));
+            cvItem.setDisplayName(region.getDisplayName(player));
             cvItem.getLore().clear();
             if (Civs.perm == null || !Civs.perm.playerHas(player, Constants.STREAM_PERMISSION)) {
                 String coordString = LocaleManager.getInstance().getTranslation(player, "coords")
