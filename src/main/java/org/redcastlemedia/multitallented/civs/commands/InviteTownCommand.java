@@ -23,9 +23,11 @@ import org.redcastlemedia.multitallented.civs.towns.TownType;
 import org.redcastlemedia.multitallented.civs.util.Constants;
 import org.redcastlemedia.multitallented.civs.util.Util;
 
-import net.md_5.bungee.api.ChatColor;
-import net.md_5.bungee.api.chat.ClickEvent;
-import net.md_5.bungee.api.chat.TextComponent;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.event.ClickEvent;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextDecoration;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 
 @CivsCommand(keys = { "invite" }) @SuppressWarnings("unused")
 public class InviteTownCommand extends CivCommand {
@@ -116,16 +118,16 @@ public class InviteTownCommand extends CivCommand {
                 "invite-player").replace("$1", senderName)
                 .replace("$2", town.getType())
                 .replace("$3", townName) + " ";
-        TextComponent component = Util.parseColorsComponent(inviteMessage);
+        Component component = LegacyComponentSerializer.legacySection().deserialize(Util.parseColors(inviteMessage));
 
-        TextComponent acceptComponent = new TextComponent("[✓]");
-        acceptComponent.setColor(ChatColor.GREEN);
-        acceptComponent.setUnderlined(true);
-        acceptComponent.setClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/cv accept"));
-        component.addExtra(acceptComponent);
+        Component acceptComponent = Component.text("[✓]")
+                .color(NamedTextColor.GREEN)
+                .decorate(TextDecoration.UNDERLINED)
+                .clickEvent(ClickEvent.runCommand("/cv accept"));
+        component = component.append(acceptComponent);
 
         if (townManager.addInvite(invitee.getUniqueId(), town)) {
-            invitee.spigot().sendMessage(component);
+            invitee.sendMessage(component);
         }
         return true;
     }
