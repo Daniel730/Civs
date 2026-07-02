@@ -690,7 +690,8 @@ public class RegionManager {
 
         broadcastWonder(player, regionType);
 
-        Region region = new Region(regionType.getProcessedName(), people, location, radii, regionType.getEffects(), 0);
+        Region region = new Region(regionType.getProcessedName(), people, location, radii,
+                (HashMap<String, String>) regionType.getEffects().clone(), 0);
         addRegion(region);
         TownManager.getInstance().checkWarEnabled(town, regionType, player, true);
         StructureUtil.removeBoundingBox(civilian.getUuid());
