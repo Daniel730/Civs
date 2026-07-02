@@ -73,6 +73,7 @@ public class Civs extends JavaPlugin {
 
         instantiateSingletons();
         TownManager.getInstance().checkAllTownsForWarEnabled();
+        TownManager.getInstance().recalculateAllHousingAndVillagers();
 
         initCommands();
 

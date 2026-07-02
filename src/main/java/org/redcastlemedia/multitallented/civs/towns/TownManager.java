@@ -43,6 +43,7 @@ import org.redcastlemedia.multitallented.civs.regions.Region;
 import org.redcastlemedia.multitallented.civs.regions.RegionManager;
 import org.redcastlemedia.multitallented.civs.regions.RegionType;
 import org.redcastlemedia.multitallented.civs.regions.effects.HousingEffect;
+import org.redcastlemedia.multitallented.civs.regions.effects.VillagerEffect;
 import org.redcastlemedia.multitallented.civs.util.AsyncFileWriter;
 import org.redcastlemedia.multitallented.civs.util.Constants;
 import org.redcastlemedia.multitallented.civs.util.DebugLogger;
@@ -506,6 +507,44 @@ public class TownManager {
 
     public void saveTown(Town town) {
         needsSaving.add(town);
+    }
+
+    public boolean recalculateHousingAndVillagers(Town town) {
+        int housingCount = 0;
+        int villagerCount = 0;
+        for (Region region : getRegionsInTown(town)) {
+            if (region.getEffects().containsKey(HousingEffect.KEY)) {
+                housingCount += parseEffectCount(region.getEffects(), HousingEffect.KEY);
+            }
+            if (region.getEffects().containsKey(VillagerEffect.KEY)) {
+                villagerCount += parseEffectCount(region.getEffects(), VillagerEffect.KEY);
+            }
+        }
+        boolean changed = town.getHousing() != housingCount || town.getVillagers() != villagerCount;
+        if (changed) {
+            town.setHousing(housingCount);
+            town.setVillagers(villagerCount);
+            saveTown(town);
+        }
+        return changed;
+    }
+
+    public void recalculateAllHousingAndVillagers() {
+        for (Town town : new ArrayList<>(getTowns())) {
+            recalculateHousingAndVillagers(town);
+        }
+    }
+
+    private int parseEffectCount(HashMap<String, String> effects, String key) {
+        String value = effects.get(key);
+        if (value == null || value.isEmpty()) {
+            return 1;
+        }
+        try {
+            return Integer.parseInt(value);
+        } catch (NumberFormatException e) {
+            return 1;
+        }
     }
 
     public void saveAllUnsavedTowns() {
@@ -977,9 +1016,8 @@ public class TownManager {
     int getHousingCount(Location newTownLocation, TownType townType) {
         int housingCount = 0;
         for (Region region : getRegionsInTown(newTownLocation, townType.getBuildRadius(), townType.getBuildRadiusY())) {
-            RegionType regionType = (RegionType) ItemManager.getInstance().getItemType(region.getType());
-            if (regionType.getEffects().containsKey(HousingEffect.KEY)) {
-                housingCount += Integer.parseInt(regionType.getEffects().get(HousingEffect.KEY));
+            if (region.getEffects().containsKey(HousingEffect.KEY)) {
+                housingCount += parseEffectCount(region.getEffects(), HousingEffect.KEY);
             }
         }
         return housingCount;
