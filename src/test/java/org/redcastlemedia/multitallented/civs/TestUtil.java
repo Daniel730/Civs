@@ -1,6 +1,7 @@
 package org.redcastlemedia.multitallented.civs;
 
-import static org.mockito.Matchers.any;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.*;
 
 import java.io.File;
@@ -16,6 +17,8 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.Server;
 import org.bukkit.UnsafeValues;
+import org.bukkit.Keyed;
+import org.bukkit.NamespacedKey;
 import org.bukkit.attribute.Attribute;
 import org.bukkit.attribute.AttributeInstance;
 import org.bukkit.block.Block;
@@ -31,12 +34,15 @@ import org.bukkit.plugin.PluginLogger;
 import org.bukkit.plugin.PluginManager;
 import org.bukkit.scheduler.BukkitScheduler;
 import org.junit.BeforeClass;
-import org.mockito.Matchers;
+import org.mockito.ArgumentMatchers;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
 import org.redcastlemedia.multitallented.civs.civilians.CivilianManager;
 import org.redcastlemedia.multitallented.civs.menus.MenuManager;
 import org.redcastlemedia.multitallented.civs.skills.SkillManager;
+
+import io.papermc.paper.registry.RegistryAccess;
+import io.papermc.paper.registry.RegistryKey;
 
 public abstract class TestUtil {
     public static WorldImpl world;
@@ -75,6 +81,21 @@ public abstract class TestUtil {
             return;
         }
         Civs.logger = mock(PluginLogger.class);
+        // Production code swallows many exceptions into Civs.logger.log(SEVERE, msg, throwable)
+        // and returns null/continues; without this, those exceptions vanish silently
+        // during tests, making failures (e.g. a menu method returning null) very hard
+        // to diagnose. Print them so the real cause shows up in the test output.
+        doAnswer(new Answer() {
+            @Override
+            public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
+                Object[] args = invocationOnMock.getArguments();
+                if (args.length >= 3 && args[2] instanceof Throwable) {
+                    System.err.println("Civs.logger.log(" + args[0] + ", " + args[1] + ")");
+                    ((Throwable) args[2]).printStackTrace();
+                }
+                return null;
+            }
+        }).when(Civs.logger).log(any(java.util.logging.Level.class), ArgumentMatchers.anyString(), any(Throwable.class));
 
         Civs.dataLocation = new File("Civs");
 
@@ -88,23 +109,25 @@ public abstract class TestUtil {
                 Object[] args = invocationOnMock.getArguments();
                 return args[0];
             }
-        }).when(logger).severe(Matchers.anyString());
+        }).when(logger).severe(ArgumentMatchers.anyString());
         doAnswer(new Answer() {
             @Override
             public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
                 Object[] args = invocationOnMock.getArguments();
                 return args[0];
             }
-        }).when(logger).warning(Matchers.anyString());
+        }).when(logger).warning(ArgumentMatchers.anyString());
         doAnswer(new Answer() {
             @Override
             public Object answer(InvocationOnMock invocationOnMock) throws Throwable {
                 Object[] args = invocationOnMock.getArguments();
                 return args[0];
             }
-        }).when(logger).info(Matchers.anyString());
+        }).when(logger).info(ArgumentMatchers.anyString());
         when(server.getLogger()).thenReturn(logger);
-        when(server.createInventory(any(InventoryHolder.class), Matchers.anyInt(), Matchers.anyString())).thenReturn(inventory);
+        // nullable() (not any()): production code frequently calls Bukkit.createInventory(null, ...)
+        // with no holder, and any(Class) does not match null arguments.
+        when(server.createInventory(nullable(InventoryHolder.class), ArgumentMatchers.anyInt(), ArgumentMatchers.anyString())).thenReturn(inventory);
 
 
         ItemFactory itemFactory = mock(ItemFactory.class);
@@ -112,7 +135,24 @@ public abstract class TestUtil {
         when(itemFactory.getItemMeta(any(Material.class))).thenReturn(new ItemMetaImpl());
         when(server.getItemFactory()).thenReturn(itemFactory);
         UnsafeValues unsafeValues = mock(UnsafeValues.class);
-        when(unsafeValues.toLegacy(Material.CHEST)).thenReturn(Material.CHEST);
+        // ItemStackImpl#isSimilar() calls fromLegacy()/toLegacy() to normalize the
+        // Material before comparing; without a stub these return null for every
+        // Material, making equals() always false.
+        when(unsafeValues.toLegacy(any(Material.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(unsafeValues.fromLegacy(any(Material.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(unsafeValues.createDamageSourceBuilder(any(org.bukkit.damage.DamageType.class)))
+                .thenAnswer(inv -> new DamageSourceImpl.Builder(inv.getArgument(0)));
+        // ItemStack.empty() (used internally for e.g. `new ItemStack(Material.AIR)`)
+        // delegates to this since Paper 26; without it, craftDelegate stays null.
+        when(unsafeValues.createEmptyStack()).thenAnswer(inv -> new ItemStackImpl(Material.AIR, 0));
+        // Legacy enum-style lookups (e.g. Biome.valueOf(), ItemType by Material) delegate
+        // to Bukkit.getUnsafe().get(RegistryKey, NamespacedKey) rather than RegistryAccess
+        // directly, so it needs to be wired to the same fake registries used elsewhere.
+        when(unsafeValues.get(any(RegistryKey.class), any(NamespacedKey.class))).thenAnswer(inv -> {
+            RegistryKey<? extends Keyed> registryKey = inv.getArgument(0);
+            NamespacedKey key = inv.getArgument(1);
+            return RegistryAccess.registryAccess().getRegistry(registryKey).get(key);
+        });
         when(server.getUnsafe()).thenReturn(unsafeValues);
         ItemMeta im = new ItemMetaImpl();
         when(itemFactory.getItemMeta(any(Material.class))).thenReturn(im);
