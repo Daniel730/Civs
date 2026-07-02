@@ -1,0 +1,21 @@
+name: Kingdomshow
+type: settlement
+location: 96fdb524-786e-417c-abcf-b10de4c67c92~2035.5~69.5~-2005.5
+devolved-today: false
+has-war-buildings: false
+war-enabled-today: false
+last-active: 1782994454667
+child-locations: []
+housing: 4
+population: 4
+villagers: 2
+last-disable: -1
+power: 1263
+max-power: 4180
+gov-type: COOPERATIVE
+taxes: 0.0
+bank: 193.87120000000039
+last-vote: 1782582839209
+people:
+  712d8552-bfde-39ec-8839-93b272f345a0: memberrecruiter
+  aa803bc0-f38b-3216-bf76-f1d7537b155c: owner
