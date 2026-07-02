@@ -1,6 +1,7 @@
 package org.redcastlemedia.multitallented.civs.menus.common;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -231,6 +232,7 @@ public class ShopMenu extends CustomMenu {
             }
             levelList.add(civItem);
         }
+        levelList.sort(Comparator.comparing(CivItem::getProcessedName));
         return levelList;
     }
 }

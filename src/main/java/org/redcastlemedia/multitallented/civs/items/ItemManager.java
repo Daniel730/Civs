@@ -355,6 +355,7 @@ public class ItemManager {
             }
         }
         returnList.removeAll(checkList);
+        returnList.sort(Comparator.comparing(CivItem::getProcessedName));
         return returnList;
     }
 
