@@ -43,6 +43,7 @@ import org.redcastlemedia.multitallented.civs.regions.Region;
 import org.redcastlemedia.multitallented.civs.regions.RegionManager;
 import org.redcastlemedia.multitallented.civs.regions.RegionType;
 import org.redcastlemedia.multitallented.civs.regions.effects.HousingEffect;
+import org.redcastlemedia.multitallented.civs.util.AsyncFileWriter;
 import org.redcastlemedia.multitallented.civs.util.Constants;
 import org.redcastlemedia.multitallented.civs.util.DebugLogger;
 import org.redcastlemedia.multitallented.civs.util.Util;
@@ -493,7 +494,8 @@ public class TownManager {
 
     public void saveAllUnsavedTowns() {
         for (Town town : new HashSet<>(needsSaving)) {
-            saveTownNow(town);
+            // Synchronous on shutdown so the write finishes before the JVM exits.
+            saveTownNow(town, false);
         }
         needsSaving.clear();
     }
@@ -517,6 +519,13 @@ public class TownManager {
     }
 
     private void saveTownNow(Town town) {
+        saveTownNow(town, true);
+    }
+
+    private void saveTownNow(Town town, boolean async) {
+        if (Civs.getInstance() == null) {
+            return;
+        }
         if (ConfigManager.getInstance().isDebugLog()) {
             DebugLogger.saves++;
         }
@@ -608,7 +617,13 @@ public class TownManager {
                 config.set("colonial-town", town.getColonialTown());
             }
 
-            config.save(townFile);
+            String yamlContents = config.saveToString();
+            String fileLabel = town.getName() + ".yml";
+            if (async) {
+                AsyncFileWriter.writeAsync(townFile, yamlContents, fileLabel);
+            } else {
+                AsyncFileWriter.writeSync(townFile, yamlContents, fileLabel);
+            }
         } catch (Exception e) {
             e.printStackTrace();
             Civs.logger.severe("Unable to save town " + town.getName() + ".yml");

@@ -36,6 +36,7 @@ import org.redcastlemedia.multitallented.civs.towns.TownManager;
 import org.redcastlemedia.multitallented.civs.tutorials.TutorialManager;
 import org.redcastlemedia.multitallented.civs.tutorials.TutorialPath;
 import org.redcastlemedia.multitallented.civs.tutorials.TutorialStep;
+import org.redcastlemedia.multitallented.civs.util.AsyncFileWriter;
 import org.redcastlemedia.multitallented.civs.util.Constants;
 import org.redcastlemedia.multitallented.civs.util.Util;
 
@@ -366,7 +367,8 @@ public class CivilianManager {
             }
             civConfig.set("last-karma-depreciation", civilian.getLastKarmaDepreciation());
 
-            civConfig.save(civilianFile);
+            String yamlContents = civConfig.saveToString();
+            AsyncFileWriter.writeAsync(civilianFile, yamlContents, civilian.getUuid() + ".yml");
         } catch (Exception ex) {
             Civs.logger.severe("Unable to write " + civilian.getUuid() + ".yml");
             ex.printStackTrace();

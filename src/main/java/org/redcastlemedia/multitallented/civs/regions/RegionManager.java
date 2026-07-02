@@ -257,12 +257,17 @@ public class RegionManager {
 
     public void saveAllUnsavedRegions() {
         for (Region region : new HashSet<>(needsSaving)) {
-            saveRegionNow(region);
+            // Synchronous on shutdown so the write finishes before the JVM exits.
+            saveRegionNow(region, false);
         }
         needsSaving.clear();
     }
 
     private static void saveRegionNow(Region region) {
+        saveRegionNow(region, true);
+    }
+
+    private static void saveRegionNow(Region region, boolean async) {
         if (Civs.getInstance() == null) {
             return;
         }
@@ -290,10 +295,10 @@ public class RegionManager {
                 return;
             }
         }
-        saveRegionToFile(region, regionFile);
+        saveRegionToFile(region, regionFile, async);
     }
 
-    private static void saveRegionToFile(Region region, File regionFile) {
+    private static void saveRegionToFile(Region region, File regionFile, boolean async) {
         FileConfiguration regionConfig = new YamlConfiguration();
         try {
             regionConfig.set("location", region.getId());
@@ -333,7 +338,13 @@ public class RegionManager {
             } else {
                 regionConfig.set("previous-conveyor", null);
             }
-            regionConfig.save(regionFile);
+            String yamlContents = regionConfig.saveToString();
+            String fileLabel = region.getId() + ".yml";
+            if (async) {
+                AsyncFileWriter.writeAsync(regionFile, yamlContents, fileLabel);
+            } else {
+                AsyncFileWriter.writeSync(regionFile, yamlContents, fileLabel);
+            }
         } catch (Exception e) {
             Civs.logger.severe("Unable to write to " + region.getId() + ".yml");
         }
