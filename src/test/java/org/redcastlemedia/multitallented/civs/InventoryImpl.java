@@ -337,6 +337,21 @@ public class InventoryImpl implements Inventory {
     }
 
     @Override
+    public InventoryHolder getHolder(boolean b) {
+        return null;
+    }
+
+    @Override
+    public int close() {
+        return 0;
+    }
+
+    @Override
+    public HashMap<Integer, ItemStack> removeItemAnySlot(ItemStack... items) throws IllegalArgumentException {
+        return removeItem(items);
+    }
+
+    @Override
     public ListIterator<ItemStack> iterator() {
         ArrayList<ItemStack> items = new ArrayList<>();
         for (int i = 0; i < 27; i++) {

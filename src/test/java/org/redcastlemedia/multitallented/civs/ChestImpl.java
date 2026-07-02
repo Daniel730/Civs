@@ -7,9 +7,11 @@ import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Block;
+import org.bukkit.block.BlockState;
 import org.bukkit.block.Chest;
 import org.bukkit.block.data.BlockData;
 import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.loot.LootTable;
 import org.bukkit.material.MaterialData;
 import org.bukkit.metadata.MetadataValue;
@@ -175,6 +177,11 @@ public class ChestImpl implements Chest {
     }
 
     @Override
+    public void setLootTable(LootTable lootTable, long l) {
+
+    }
+
+    @Override
     public LootTable getLootTable() {
         return null;
     }
@@ -221,6 +228,111 @@ public class ChestImpl implements Chest {
 
     @Override
     public void close() {
+
+    }
+
+    @Override
+    public boolean isBlocked() {
+        return false;
+    }
+
+    @Override
+    public boolean isSnapshot() {
+        return false;
+    }
+
+    @Override
+    public boolean canPlayerLoot(java.util.UUID uuid) {
+        return false;
+    }
+
+    @Override
+    public boolean hasBeenFilled() {
+        return false;
+    }
+
+    @Override
+    public boolean hasPendingRefill() {
+        return false;
+    }
+
+    @Override
+    public boolean hasPlayerLooted(java.util.UUID uuid) {
+        return false;
+    }
+
+    @Override
+    public boolean isCollidable() {
+        return true;
+    }
+
+    @Override
+    public boolean isOpen() {
+        return false;
+    }
+
+    @Override
+    public boolean isRefillEnabled() {
+        return false;
+    }
+
+    @Override
+    public boolean isSuffocating() {
+        return false;
+    }
+
+    @Override
+    public boolean setHasPlayerLooted(java.util.UUID uuid, boolean b) {
+        return false;
+    }
+
+    @Override
+    public Long getLastLooted(java.util.UUID uuid) {
+        return null;
+    }
+
+    @Override
+    public java.util.Collection<ItemStack> getDrops(ItemStack itemStack, org.bukkit.entity.Entity entity) {
+        return null;
+    }
+
+    @Override
+    public long getLastFilled() {
+        return 0;
+    }
+
+    @Override
+    public long getNextRefill() {
+        return 0;
+    }
+
+    @Override
+    public long setNextRefill(long l) {
+        return 0;
+    }
+
+    @Override
+    public net.kyori.adventure.text.Component customName() {
+        return null;
+    }
+
+    @Override
+    public void customName(net.kyori.adventure.text.Component component) {
+
+    }
+
+    @Override
+    public BlockState copy() {
+        return this;
+    }
+
+    @Override
+    public BlockState copy(Location location) {
+        return this;
+    }
+
+    @Override
+    public void setLockItem(ItemStack itemStack) {
 
     }
 }

@@ -157,6 +157,11 @@ public class BlockImpl implements Block {
     }
 
     @Override
+    public BlockState getState(boolean b) {
+        return this.blockState;
+    }
+
+    @Override
     public Biome getBiome() {
         return this.biome;
     }
@@ -228,6 +233,21 @@ public class BlockImpl implements Block {
 
     @Override
     public boolean breakNaturally(ItemStack itemStack) {
+        return false;
+    }
+
+    @Override
+    public boolean breakNaturally(boolean b, boolean b1) {
+        return false;
+    }
+
+    @Override
+    public boolean breakNaturally(ItemStack itemStack, boolean b, boolean b1) {
+        return false;
+    }
+
+    @Override
+    public boolean breakNaturally(ItemStack itemStack, boolean b, boolean b1, boolean b2) {
         return false;
     }
 
@@ -311,5 +331,75 @@ public class BlockImpl implements Block {
     @Override
     public String getTranslationKey() {
         return "EN";
+    }
+
+    @Override
+    public boolean isSuffocating() {
+        return false;
+    }
+
+    @Override
+    public org.bukkit.SoundGroup getBlockSoundGroup() {
+        return null;
+    }
+
+    @Override
+    public boolean isBuildable() {
+        return true;
+    }
+
+    @Override
+    public boolean isBurnable() {
+        return false;
+    }
+
+    @Override
+    public boolean isCollidable() {
+        return true;
+    }
+
+    @Override
+    public boolean isReplaceable() {
+        return false;
+    }
+
+    @Override
+    public boolean isSolid() {
+        return true;
+    }
+
+    @Override
+    public boolean isValidTool(ItemStack itemStack) {
+        return true;
+    }
+
+    @Override
+    public com.destroystokyo.paper.block.BlockSoundGroup getSoundGroup() {
+        return null;
+    }
+
+    @Override
+    public String translationKey() {
+        return "EN";
+    }
+
+    @Override
+    public Biome getComputedBiome() {
+        return this.biome;
+    }
+
+    @Override
+    public void fluidTick() {
+
+    }
+
+    @Override
+    public void randomTick() {
+
+    }
+
+    @Override
+    public void tick() {
+
     }
 }

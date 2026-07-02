@@ -6,6 +6,7 @@ import org.bukkit.Material;
 import org.bukkit.entity.HumanEntity;
 import org.bukkit.event.inventory.InventoryType;
 import org.bukkit.inventory.EquipmentSlot;
+import org.bukkit.inventory.InventoryHolder;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 import org.jetbrains.annotations.NotNull;
@@ -438,6 +439,21 @@ public class PlayerInventoryImpl implements PlayerInventory {
     @Override
     public HumanEntity getHolder() {
         return null;
+    }
+
+    @Override
+    public InventoryHolder getHolder(boolean b) {
+        return null;
+    }
+
+    @Override
+    public int close() {
+        return 0;
+    }
+
+    @Override
+    public HashMap<Integer, ItemStack> removeItemAnySlot(ItemStack... items) throws IllegalArgumentException {
+        return removeItem(items);
     }
 
     @Override
