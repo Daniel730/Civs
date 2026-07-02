@@ -223,25 +223,25 @@ public class PortCommand extends CivCommand {
             if (!r.getEffects().containsKey(Constants.PORT)) {
                 return false;
             }
-            if ("public".equals(r.getEffects().get(Constants.PORT))) {
+            String portScope = r.getEffects().get(Constants.PORT);
+            if ("public".equals(portScope)) {
                 return true;
             }
-            boolean privatePort = r.getEffects().get(Constants.PORT) != null &&
-                    !r.getEffects().get(Constants.PORT).equals("");
             if (town == null) {
                 town = TownManager.getInstance().getTownAt(r.getLocation());
             }
-            boolean townPrivatePort = privatePort && r.getEffects().get(Constants.PORT).equals("town");
-            boolean memberPrivatePort = privatePort && r.getEffects().get(Constants.PORT).equals(Constants.MEMBER);
-            boolean ownerPrivatePort = privatePort && r.getEffects().get(Constants.PORT).equals(Constants.OWNER);
+            boolean privatePort = portScope != null && !portScope.isEmpty();
+            boolean townPrivatePort = privatePort && "town".equals(portScope);
+            boolean memberPrivatePort = privatePort && Constants.MEMBER.equals(portScope);
+            boolean ownerPrivatePort = privatePort && Constants.OWNER.equals(portScope);
+            if (townPrivatePort) {
+                return town != null && town.getPeople().containsKey(uuid) &&
+                        !town.getPeople().get(uuid).contains(Constants.ALLY);
+            }
             if (!r.getPeople().containsKey(uuid)) {
                 return false;
             }
             if (privatePort) {
-                if (townPrivatePort && (town == null || !town.getPeople().containsKey(uuid) ||
-                        town.getPeople().get(uuid).contains(Constants.ALLY))) {
-                    return false;
-                }
                 if (memberPrivatePort && r.getPeople().get(uuid).contains(Constants.ALLY)) {
                     return false;
                 }

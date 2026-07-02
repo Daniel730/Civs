@@ -53,6 +53,37 @@ public class PortMenuTest extends TestUtil {
         assertTrue(PortCommand.canPort(region, player.getUniqueId(), null));
     }
 
+    @Test
+    public void townPortShouldBeVisibleWithoutRegionMembership() {
+        loadRegionTypeTownPort();
+        Region region = loadRegion("town_port");
+        Town town = TownTests.loadTown("town-port-test", "settlement", region.getLocation());
+        town.getRawPeople().put(player.getUniqueId(), Constants.MEMBER);
+
+        assertTrue(PortCommand.canPort(region, player.getUniqueId(), town));
+    }
+
+    @Test
+    public void townPortShouldAppearInPortMenu() {
+        loadRegionTypeTownPort();
+        Region region = loadRegion("town_port");
+        Town town = TownTests.loadTown("town-port-menu", "settlement", region.getLocation());
+        town.getRawPeople().put(player.getUniqueId(), Constants.MEMBER);
+
+        Inventory inventory = MenuManager.getInstance().openMenu(TestUtil.player, "port", new HashMap<>());
+
+        assertEquals(Material.IRON_BLOCK, inventory.getItem(9).getType());
+    }
+
+    private void loadRegionTypeTownPort() {
+        FileConfiguration config = new YamlConfiguration();
+        config.set("icon", "IRON_BLOCK");
+        ArrayList<String> effects = new ArrayList<>();
+        effects.add("port:town");
+        config.set("effects", effects);
+        ItemManager.getInstance().loadRegionType(config, "town_port");
+    }
+
     private void loadRegionTypePPort() {
         FileConfiguration config = new YamlConfiguration();
         config.set("icon", "IRON_BLOCK");
