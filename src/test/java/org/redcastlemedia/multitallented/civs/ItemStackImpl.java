@@ -172,7 +172,13 @@ public class ItemStackImpl extends ItemStack {
     }
 
     public ItemStackImpl clone() {
-        ItemStackImpl itemStack = (ItemStackImpl)super.clone();
+        // Since Paper 26, ItemStack.clone() delegates to a server-backed
+        // "craftDelegate" instance that only exists on a running server (see
+        // ItemStack#of), so calling super.clone() here would NPE in tests.
+        // This class already re-implements every other ItemStack method
+        // independently of that delegate, so clone() is built the same way:
+        // a plain field-by-field copy instead of going through the parent.
+        ItemStackImpl itemStack = new ItemStackImpl(this.type, this.amount);
         if (this.meta != null) {
             itemStack.meta = this.meta.clone();
         }
@@ -326,8 +332,29 @@ public class ItemStackImpl extends ItemStack {
         return this.setItemMeta0(itemMeta, this.type);
     }
 
+    // Since Paper 26, ItemStack.setItemMeta(ItemMeta) delegates to the (here null)
+    // craftDelegate, so without this EXACT-signature override (the ItemMetaImpl
+    // overload above is a distinct overload, not an override, and is therefore
+    // never chosen when calling code - as all production code does - holds an
+    // ItemMeta-typed reference) calling setItemMeta on an ItemStackImpl would NPE.
+    @Override
+    public boolean setItemMeta(ItemMeta itemMeta) {
+        return this.setItemMeta0((ItemMetaImpl) itemMeta, this.type);
+    }
+
     private boolean setItemMeta0(ItemMetaImpl itemMeta, Material material) {
         this.meta = itemMeta;
         return true;
+    }
+
+    // Since Paper 26, ItemStack.hashCode() delegates to the (here null)
+    // craftDelegate; overriding it directly avoids that NPE.
+    @Override
+    public int hashCode() {
+        int hash = 7;
+        hash = 79 * hash + (this.getType() != null ? this.getType().hashCode() : 0);
+        hash = 79 * hash + this.getAmount();
+        hash = 79 * hash + (this.hasItemMeta() ? this.getItemMeta().hashCode() : 0);
+        return hash;
     }
 }
