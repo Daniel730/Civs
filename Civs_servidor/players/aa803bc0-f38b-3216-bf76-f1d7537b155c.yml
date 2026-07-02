@@ -1,0 +1,107 @@
+locale: en
+hardship: 595.7900000000001
+mana: 0
+days-since-hardship-depreciation: 5
+tutorial-index: 0
+tutorial-path: builder
+tutorial-progress: 0
+use-announcements: false
+kills: 0
+kill-streak: 0
+deaths: 0
+highest-kill-streak: 0
+points: 0.0
+karma: 0
+classes:
+- 879f0aec-ac9f-4f7a-86d1-d2f17f102253
+last-karma-depreciation: 0
+skills:
+  exploration:
+    PLAINS: 1
+    SUNFLOWER_PLAINS: 1
+    CHERRY_GROVE: 1
+    SNOWY_TAIGA: 1
+    WINDSWEPT_FOREST: 1
+    SNOWY_PLAINS: 1
+    WARPED_FOREST: 1
+    DRIPSTONE_CAVES: 1
+    FROZEN_RIVER: 1
+  crafting:
+    SPRUCE_PLANKS: 5
+    CHEST: 5
+    FURNACE: 1
+    SPRUCE_DOOR: 1
+    SPRUCE_PRESSURE_PLATE: 1
+    SPRUCE_FENCE_GATE: 2
+    IRON_INGOT: 1
+    WHEAT: 3
+    HAY_BLOCK: 1
+    SPRUCE_FENCE: 1
+    COBBLESTONE_SLAB: 2
+    STICK: 2
+    DIAMOND_PICKAXE: 1
+    DIAMOND_SWORD: 1
+    DIAMOND_HELMET: 1
+    POLISHED_DIORITE: 2
+    CRAFTING_TABLE: 2
+    STONE_PICKAXE: 1
+    GLASS_BOTTLE: 2
+  building:
+    coal_mine: 2
+    purifier: 2
+    hovel: 1
+    npc_hovel: 4
+    council_room: 1
+    greenhouse: 1
+    sand_pit: 1
+    potato_farm: 1
+    ranch: 2
+    leather_shop: 1
+  food:
+    BAKED_POTATO: 7
+    POTATO: 7
+    COOKED_BEEF: 5
+  armor:
+    IRON_HELMET: 30
+    IRON_CHESTPLATE: 30
+    IRON_LEGGINGS: 30
+    IRON_BOOTS: 30
+    DIAMOND_HELMET: 12
+    DIAMOND_CHESTPLATE: 12
+    DIAMOND_BOOTS: 12
+    DIAMOND_LEGGINGS: 11
+  axe:
+    ZOMBIE: 4
+    SKELETON: 1
+    COW: 8
+    ENDERMAN: 2
+  mining:
+    COPPER_ORE: 28
+    IRON_ORE: 20
+    DEEPSLATE_COPPER_ORE: 10
+    DEEPSLATE_GOLD_ORE: 34
+    GOLD_ORE: 1
+    DEEPSLATE_DIAMOND_ORE: 4
+    DEEPSLATE_REDSTONE_ORE: 17
+    DEEPSLATE_LAPIS_ORE: 5
+    COAL_ORE: 38
+  enchant:
+    efficiency1: 1
+  sword:
+    ZOMBIE: 9
+    SKELETON: 3
+    SPIDER: 2
+    CREEPER: 2
+    IRON_GOLEM: 1
+    ARMADILLO: 9
+    SILVERFISH: 9
+  shield:
+    DAMAGE: 6
+    BLOCKED: 4
+  potion:
+    minecraft:infested: 11
+items:
+  plot7x7: 1
+  default: 1
+  archer: 1
+  plot11x11: 1

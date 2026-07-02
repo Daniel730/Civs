@@ -1,0 +1,189 @@
+locale: pt_br
+hardship: 0.0
+mana: 0
+days-since-hardship-depreciation: 0
+tutorial-index: 4
+tutorial-path: default
+tutorial-progress: 0
+use-announcements: true
+kills: 0
+kill-streak: 0
+deaths: 0
+highest-kill-streak: 0
+points: 0.0
+karma: 0
+classes: []
+last-karma-depreciation: 0
+skills:
+  exploration:
+    SUNFLOWER_PLAINS: 1
+    PLAINS: 1
+    COLD_OCEAN: 1
+    FOREST: 1
+    TAIGA: 1
+    BEACH: 1
+    CHERRY_GROVE: 1
+    DEEP_DARK: 1
+    FLOWER_FOREST: 1
+    DRIPSTONE_CAVES: 1
+    SNOWY_TAIGA: 1
+    SNOWY_BEACH: 1
+    SNOWY_PLAINS: 1
+    ICE_SPIKES: 1
+    MEADOW: 1
+    FROZEN_RIVER: 1
+    NETHER_WASTES: 1
+    BASALT_DELTAS: 1
+    WARPED_FOREST: 1
+    LUSH_CAVES: 1
+    THE_END: 1
+    SMALL_END_ISLANDS: 1
+    END_MIDLANDS: 1
+    END_HIGHLANDS: 1
+    END_BARRENS: 1
+    RIVER: 1
+  building:
+    coal_shop: 1
+    flower_shop: 2
+  crafting:
+    OAK_PLANKS: 5
+    CRAFTING_TABLE: 5
+    IRON_BLOCK: 5
+    CHERRY_PLANKS: 2
+    CHERRY_DOOR: 1
+    OAK_PRESSURE_PLATE: 1
+    CHERRY_PRESSURE_PLATE: 2
+    STICK: 5
+    TORCH: 5
+    BUCKET: 3
+    CHERRY_TRAPDOOR: 1
+    SPRUCE_PLANKS: 5
+    WOODEN_AXE: 1
+    WOODEN_PICKAXE: 2
+    STONE_AXE: 2
+    BLACK_BED: 1
+    STONE_PICKAXE: 1
+    FURNACE: 2
+    IRON_INGOT: 3
+    IRON_PICKAXE: 3
+    SHIELD: 3
+    SPRUCE_DOOR: 1
+    DIAMOND_PICKAXE: 4
+    IRON_CHESTPLATE: 1
+    IRON_BOOTS: 1
+    IRON_LEGGINGS: 1
+    IRON_HELMET: 1
+    CHEST: 5
+    WHITE_BED: 1
+    GOLDEN_BOOTS: 1
+    ENDER_EYE: 1
+    SMOKER: 2
+    PISTON: 1
+    SPRUCE_BUTTON: 1
+    SPRUCE_SLAB: 1
+    SPRUCE_TRAPDOOR: 1
+    BOOKSHELF: 1
+    BLAZE_POWDER: 1
+    DIAMOND_CHESTPLATE: 1
+    DIAMOND_LEGGINGS: 1
+    DIAMOND_HELMET: 1
+    DIAMOND_BOOTS: 1
+    ENCHANTING_TABLE: 1
+    WARPED_PLANKS: 1
+    IRON_SHOVEL: 5
+    GLASS_BOTTLE: 1
+    SHEARS: 2
+    CAMPFIRE: 2
+    SPRUCE_SIGN: 1
+    DIAMOND_AXE: 1
+    OAK_FENCE: 1
+    OAK_STAIRS: 1
+    OAK_FENCE_GATE: 1
+    OAK_DOOR: 1
+    OAK_TRAPDOOR: 2
+    WHEAT: 1
+    BREAD: 2
+    IRON_HOE: 1
+    BONE_MEAL: 1
+    HAY_BLOCK: 1
+  food:
+    APPLE: 2
+    COOKED_CHICKEN: 7
+    ROTTEN_FLESH: 7
+    COOKED_MUTTON: 7
+    MUTTON: 7
+    COOKED_PORKCHOP: 7
+    COOKED_BEEF: 7
+    BAKED_POTATO: 5
+    BREAD: 6
+    CHORUS_FRUIT: 7
+    COOKED_SALMON: 2
+  armor:
+    DIAMOND_HELMET: 7
+    DIAMOND_CHESTPLATE: 6
+    DIAMOND_BOOTS: 6
+    DIAMOND_LEGGINGS: 6
+    IRON_HELMET: 30
+    IRON_CHESTPLATE: 30
+    IRON_LEGGINGS: 30
+    IRON_BOOTS: 30
+    GOLDEN_BOOTS: 30
+  axe:
+    SPIDER: 1
+    SHEEP: 9
+    ZOMBIE: 5
+    SKELETON: 5
+    CHICKEN: 3
+    COW: 7
+    PIG: 2
+    MAGMA_CUBE: 9
+    PIGLIN_BRUTE: 1
+    HOGLIN: 2
+    PIGLIN: 2
+    BLAZE: 15
+    CREEPER: 1
+    ENDERMAN: 9
+    SHULKER: 3
+    ZOMBIE_VILLAGER: 1
+  mining:
+    COAL_ORE: 60
+    IRON_ORE: 40
+    LAPIS_ORE: 6
+    DEEPSLATE_GOLD_ORE: 40
+    DEEPSLATE_REDSTONE_ORE: 40
+    DEEPSLATE_DIAMOND_ORE: 79
+    COPPER_ORE: 14
+    DEEPSLATE_LAPIS_ORE: 14
+    NETHER_QUARTZ_ORE: 55
+    GLOWSTONE: 40
+    DEEPSLATE_COAL_ORE: 8
+    DEEPSLATE_COPPER_ORE: 2
+    REDSTONE_ORE: 1
+  shield:
+    DAMAGE: 56
+    BLOCKED: 21
+  sword:
+    CHICKEN: 3
+    PIG: 1
+    SHEEP: 2
+    COW: 2
+  enchant:
+    protection1: 3
+    blast_protection1: 1
+    unbreaking1: 2
+    efficiency1: 1
+    fortune1: 1
+    density1: 1
+    sharpness1: 1
+    fire_aspect1: 1
+    feather_falling1: 1
+    power1: 1
+    projectile_protection1: 1
+    silk_touch1: 1
+items:
+  elemental: 1
+  default: 1
+  plot7x7: 1
+  shelter: 1
+  archer: 1
+  plot11x11: 1

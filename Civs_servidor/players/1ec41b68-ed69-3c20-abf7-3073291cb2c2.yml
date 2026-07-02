@@ -1,0 +1,134 @@
+locale: pt_br
+hardship: 0.0
+mana: 0
+days-since-hardship-depreciation: 0
+tutorial-index: 2
+tutorial-path: default
+tutorial-progress: 0
+use-announcements: true
+kills: 0
+kill-streak: 0
+deaths: 0
+highest-kill-streak: 0
+points: 0.0
+karma: 0
+classes: []
+last-karma-depreciation: 0
+skills:
+  exploration:
+    SUNFLOWER_PLAINS: 1
+    CHERRY_GROVE: 1
+    PLAINS: 1
+    RIVER: 1
+    FOREST: 1
+    BIRCH_FOREST: 1
+    OLD_GROWTH_BIRCH_FOREST: 1
+    JUNGLE: 1
+    BAMBOO_JUNGLE: 1
+    DARK_FOREST: 1
+    SPARSE_JUNGLE: 1
+    DRIPSTONE_CAVES: 1
+    SNOWY_TAIGA: 1
+    SNOWY_PLAINS: 1
+    NETHER_WASTES: 1
+    WARPED_FOREST: 1
+    BASALT_DELTAS: 1
+    TAIGA: 1
+    MEADOW: 1
+    OLD_GROWTH_PINE_TAIGA: 1
+    WINDSWEPT_FOREST: 1
+    FROZEN_RIVER: 1
+    LUSH_CAVES: 1
+    THE_END: 1
+    SMALL_END_ISLANDS: 1
+    END_MIDLANDS: 1
+    END_HIGHLANDS: 1
+    END_BARRENS: 1
+  armor:
+    IRON_HELMET: 30
+    IRON_CHESTPLATE: 30
+    IRON_LEGGINGS: 30
+    IRON_BOOTS: 30
+    GOLDEN_BOOTS: 30
+  sword:
+    WITCH: 1
+    MAGMA_CUBE: 7
+    ENDERMAN: 5
+    PIGLIN: 5
+    PIGLIN_BRUTE: 1
+    GHAST: 1
+    BLAZE: 8
+    CHICKEN: 9
+    COW: 8
+    SALMON: 6
+    PIG: 9
+    ZOMBIE: 3
+    SKELETON: 2
+    SHEEP: 9
+  food:
+    COOKED_CHICKEN: 7
+    COOKED_BEEF: 7
+    COOKED_PORKCHOP: 7
+    COOKED_MUTTON: 7
+    SWEET_BERRIES: 7
+    COOKED_SALMON: 3
+    GLOW_BERRIES: 3
+    BREAD: 6
+    BAKED_POTATO: 4
+    APPLE: 1
+    CHORUS_FRUIT: 7
+  crafting:
+    OAK_PLANKS: 1
+    CRAFTING_TABLE: 3
+    OAK_BOAT: 1
+    IRON_CHESTPLATE: 2
+    IRON_HELMET: 2
+    IRON_LEGGINGS: 3
+    IRON_BOOTS: 2
+    SPRUCE_PLANKS: 2
+    STICK: 3
+    IRON_PICKAXE: 2
+    GOLDEN_BOOTS: 2
+    GOLD_INGOT: 4
+    BLAZE_POWDER: 4
+    PAPER: 4
+    BOOK: 2
+    ENCHANTING_TABLE: 1
+    DIAMOND_SWORD: 1
+    IRON_AXE: 1
+    ENDER_EYE: 5
+    SPRUCE_SLAB: 2
+    COMPOSTER: 2
+    BREAD: 1
+    BUCKET: 1
+  mining:
+    COPPER_ORE: 4
+    NETHER_QUARTZ_ORE: 44
+    IRON_ORE: 1
+    COAL_ORE: 4
+    DEEPSLATE_LAPIS_ORE: 3
+  axe:
+    ENDERMAN: 9
+    PIGLIN: 1
+    HOGLIN: 1
+    PIGLIN_BRUTE: 3
+    ZOMBIFIED_PIGLIN: 5
+    BLAZE: 5
+    CHICKEN: 3
+    SHEEP: 1
+    SKELETON: 1
+  shield:
+    DAMAGE: 48
+    BLOCKED: 11
+  enchant:
+    protection1: 3
+    power1: 1
+    sharpness1: 2
+    efficiency1: 2
+    unbreaking1: 1
+  bow:
+    SHEEP: 2
+items:
+  default: 1
+  shelter: 1
+  archer: 1
