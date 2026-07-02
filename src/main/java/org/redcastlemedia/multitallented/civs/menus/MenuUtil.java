@@ -26,6 +26,8 @@ public final class MenuUtil {
             item.setType(Material.REDSTONE);
         } else if (mat == Material.WATER) {
             item.setType(Material.WATER_BUCKET);
+        } else if (mat == Material.CAULDRON || mat == Enums.getIfPresent(Material.class, "WATER_CAULDRON").orNull()) {
+            item.setType(Material.WATER_BUCKET);
         } else if (mat == Material.LAVA) {
             item.setType(Material.LAVA_BUCKET);
         } else if (mat == Material.POTATOES) {

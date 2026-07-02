@@ -4,7 +4,9 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 import org.bukkit.Bukkit;
+import org.bukkit.Material;
 import org.bukkit.inventory.Inventory;
+import org.bukkit.inventory.ItemStack;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.redcastlemedia.multitallented.civs.TestUtil;
@@ -22,6 +24,13 @@ public class MenuTests extends TestUtil {
         assertEquals(54, MenuUtil.getInventorySize(56));
         assertEquals(18, MenuUtil.getInventorySize(10));
         assertEquals(9, MenuUtil.getInventorySize(1));
+    }
+
+    @Test
+    public void cauldronReqShowsWaterBucketIcon() {
+        ItemStack item = new ItemStack(Material.CAULDRON, 1);
+        MenuUtil.sanitizeItem(item);
+        assertEquals(Material.WATER_BUCKET, item.getType());
     }
 
     @Test
