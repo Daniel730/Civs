@@ -540,7 +540,7 @@ public class TownManager {
         }
     }
 
-    private int parseEffectCount(HashMap<String, String> effects, String key) {
+    private int parseEffectCount(Map<String, String> effects, String key) {
         String value = effects.get(key);
         if (value == null || value.isEmpty()) {
             return 1;
