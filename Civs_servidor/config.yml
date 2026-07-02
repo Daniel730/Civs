@@ -331,7 +331,7 @@ player-residencies-count-override:
 #If enabled civs will prevent any WorldEdit actions within regions
 #This has been tested only with "THE" original WorldEdit made by EngineHub
 #May, or may not cause issues with various WE forks such as FAWE
-safe-worldedit: false
+safe-worldedit: true
 
 pl3xmap-town-desc: >
   <h3>%town%</h3>
