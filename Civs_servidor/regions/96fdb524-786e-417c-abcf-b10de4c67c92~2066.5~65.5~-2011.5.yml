@@ -1,0 +1,16 @@
+location: 96fdb524-786e-417c-abcf-b10de4c67c92~2066.5~65.5~-2011.5
+xn-radius: 3
+xp-radius: 3
+yn-radius: 3
+yp-radius: 3
+zn-radius: 3
+zp-radius: 3
+people:
+  aa803bc0-f38b-3216-bf76-f1d7537b155c: owner
+effects:
+- conveyor:SAND
+- block_break
+- block_build
+type: sand_pit
+exp: 0.0
+warehouse-enabled: true

@@ -1,0 +1,19 @@
+location: 96fdb524-786e-417c-abcf-b10de4c67c92~2036.5~66.5~-2019.5
+xn-radius: 4
+xp-radius: 4
+yn-radius: 4
+yp-radius: 4
+zn-radius: 4
+zp-radius: 4
+people:
+  aa803bc0-f38b-3216-bf76-f1d7537b155c: owner
+effects:
+- block_fire
+- conveyor:POTATO
+- evolve:potato_farm1.288
+- block_break
+- block_build
+- block_liquid
+type: potato_farm
+exp: 131.0
+warehouse-enabled: true

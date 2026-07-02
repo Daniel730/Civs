@@ -1,0 +1,17 @@
+location: 96fdb524-786e-417c-abcf-b10de4c67c92~2004.5~91.5~-2033.5
+xn-radius: 5
+xp-radius: 5
+yn-radius: 5
+yp-radius: 5
+zn-radius: 5
+zp-radius: 5
+people:
+  712d8552-bfde-39ec-8839-93b272f345a0: owner
+effects:
+- buyable
+- plot
+- block_break
+- block_build
+type: plot11x11
+exp: 0.0
+warehouse-enabled: true

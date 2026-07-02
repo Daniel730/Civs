@@ -1,0 +1,19 @@
+location: 96fdb524-786e-417c-abcf-b10de4c67c92~2069.5~65.5~-1985.5
+xn-radius: 6
+xp-radius: 2
+yn-radius: 4
+yp-radius: 4
+zn-radius: 3
+zp-radius: 5
+people:
+  aa803bc0-f38b-3216-bf76-f1d7537b155c: owner
+effects:
+- block_fire
+- conveyor:BEEF
+- spawn:COW
+- block_break
+- block_build
+- block_liquid
+type: ranch
+exp: 0.0
+warehouse-enabled: true
