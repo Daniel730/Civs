@@ -1,0 +1,781 @@
+96fdb524-786e-417c-abcf-b10de4c67c92~2073^5~65^5~-1979^5:
+  mat: CHEST
+  name: Ranch
+  lore:
+  - aa803bc0-f38b-3216-bf76-f1d7537b155c
+  - Ranch
+  - §rAutomatic cow farm. Place a storage
+  - §rminecart in the chest. Build rails
+  - §rfrom the Ranch to a destination
+  - §rregion. Place a sloped powered rail at
+  - §rthe start.
+f9fe32d6-e1db-4399-b2e7-f6f1d5fda2e7~-198^5~69^5~330^5:
+  mat: CRAFTING_TABLE
+  name: NPC Hovel
+  lore:
+  - aa803bc0-f38b-3216-bf76-f1d7537b155c
+  - NPC Hovel
+  - §rA house for 2 villagers. Counts
+  - §rtowards town population.
+f9fe32d6-e1db-4399-b2e7-f6f1d5fda2e7~-210^5~69^5~329^5:
+  mat: CHEST
+  name: Coal Shop
+  lore:
+  - aa803bc0-f38b-3216-bf76-f1d7537b155c
+  - Coal Shop
+  - §rSells 144 coal to the server for $432
+  - §rper day
+f9fe32d6-e1db-4399-b2e7-f6f1d5fda2e7~-187^5~69^5~324^5:
+  mat: CHEST
+  name: Shelter
+  lore:
+  - aa803bc0-f38b-3216-bf76-f1d7537b155c
+  - Shelter
+  - §rA safe place to store your items, and
+  - §rearn some money from bread, beef,
+  - §rcarrots, or potatoes every 30 minutes.
+f9fe32d6-e1db-4399-b2e7-f6f1d5fda2e7~-200^5~73^5~329^5:
+  mat: OBSIDIAN
+  name: Council Room
+  lore:
+  - aa803bc0-f38b-3216-bf76-f1d7537b155c
+  - Council Room
+  - §rThe central structure for a town.
+  - §rProduces 192 power per day. Also acts
+  - §ras a home port.
+96fdb524-786e-417c-abcf-b10de4c67c92~2060^5~64^5~-2013^5:
+  mat: CHEST
+  name: Coal Mine
+  lore:
+  - aa803bc0-f38b-3216-bf76-f1d7537b155c
+  - Coal Mine
+  - §rCreates coal by using pickaxes. Place
+  - §ra storage minecart in the chest. Build
+  - §rrails from the Coal Mine to a
+  - §rdestination region. Place a sloped
+  - §rpowered rail at the start.
+96fdb524-786e-417c-abcf-b10de4c67c92~2067^5~64^5~-1992^5:
+  mat: CHEST
+  name: Greenhouse
+  lore:
+  - aa803bc0-f38b-3216-bf76-f1d7537b155c
+  - Greenhouse
+  - §rAutomatic flower nursery.
+f9fe32d6-e1db-4399-b2e7-f6f1d5fda2e7~-181^5~67^5~347^5:
+  mat: GLASS
+  name: Plot11x11
+  lore:
+  - aa803bc0-f38b-3216-bf76-f1d7537b155c
+  - Plot11x11
+  - §rA placeholder for regions 11x11 and
+  - §rsmaller
+96fdb524-786e-417c-abcf-b10de4c67c92~2004^5~91^5~-2023^5:
+  mat: GLASS
+  name: Plot11x11
+  lore:
+  - aa803bc0-f38b-3216-bf76-f1d7537b155c
+  - Plot11x11
+  - §rA placeholder for regions 11x11 and
+  - §rsmaller
+96fdb524-786e-417c-abcf-b10de4c67c92~2051^5~71^5~-1998^5:
+  mat: CHEST
+  name: Hovel
+  lore:
+  - aa803bc0-f38b-3216-bf76-f1d7537b155c
+  - Hovel
+  - §r2nd level of house. Earns $182.88 per
+  - §rday by selling potatoes and apples.
+96fdb524-786e-417c-abcf-b10de4c67c92~2051^5~66^5~-1998^5:
+  mat: CRAFTING_TABLE
+  name: NPC Hovel
+  lore:
+  - aa803bc0-f38b-3216-bf76-f1d7537b155c
+  - NPC Hovel
+  - §rA house for 2 villagers. Counts
+  - §rtowards town population.
+96fdb524-786e-417c-abcf-b10de4c67c92~597^5~55^5~276^5:
+  mat: CHEST
+  name: Shelter
+  lore:
+  - 712d8552-bfde-39ec-8839-93b272f345a0
+  - Shelter
+  - §rUm lugar seguro para guardar seus
+  - §ritens e ganhar algum dinheiro com
+  - §rpães, bifes, cenouras ou batatas a
+  - §rcada 30 minutos.
+96fdb524-786e-417c-abcf-b10de4c67c92~2048^5~66^5~-1984^5:
+  mat: CHEST
+  name: Purifier
+  lore:
+  - aa803bc0-f38b-3216-bf76-f1d7537b155c
+  - Purifier
+  - §rTransforms rotten flesh into leather
+  - §rand removes poison from potatoes every
+  - §r15 minutes.
+f9fe32d6-e1db-4399-b2e7-f6f1d5fda2e7~3035^5~89^5~702^5:
+  mat: CHEST
+  name: Flower Shop
+  lore:
+  - 712d8552-bfde-39ec-8839-93b272f345a0
+  - Flower Shop
+  - §rVende flores para o servidor por $288
+  - §rpor dia.
+96fdb524-786e-417c-abcf-b10de4c67c92~2067^5~65^5~-1982^5:
+  mat: CHEST
+  name: Ranch
+  lore:
+  - aa803bc0-f38b-3216-bf76-f1d7537b155c
+  - Ranch
+  - §rAutomatic cow farm. Place a storage
+  - §rminecart in the chest. Build rails
+  - §rfrom the Ranch to a destination
+  - §rregion. Place a sloped powered rail at
+  - §rthe start.
+96fdb524-786e-417c-abcf-b10de4c67c92~2037^5~67^5~-2016^5:
+  mat: CHEST
+  name: Potato Farm
+  lore:
+  - aa803bc0-f38b-3216-bf76-f1d7537b155c
+  - Potato Farm
+  - §rProduces potatoes and poisonous
+  - §rpotatoes every 5 minutes.
+f9fe32d6-e1db-4399-b2e7-f6f1d5fda2e7~-202^5~69^5~325^5:
+  mat: CRAFTING_TABLE
+  name: NPC Hovel
+  lore:
+  - aa803bc0-f38b-3216-bf76-f1d7537b155c
+  - NPC Hovel
+  - §rA house for 2 villagers. Counts
+  - §rtowards town population.
+f9fe32d6-e1db-4399-b2e7-f6f1d5fda2e7~-199^5~69^5~328^5:
+  mat: CRAFTING_TABLE
+  name: NPC Hovel
+  lore:
+  - aa803bc0-f38b-3216-bf76-f1d7537b155c
+  - NPC Hovel
+  - §rA house for 2 villagers. Counts
+  - §rtowards town population.
+f9fe32d6-e1db-4399-b2e7-f6f1d5fda2e7~-198^5~69^5~329^5:
+  mat: CRAFTING_TABLE
+  name: NPC Hovel
+  lore:
+  - aa803bc0-f38b-3216-bf76-f1d7537b155c
+  - NPC Hovel
+  - §rA house for 2 villagers. Counts
+  - §rtowards town population.
+f9fe32d6-e1db-4399-b2e7-f6f1d5fda2e7~-198^5~68^5~324^5:
+  mat: CRAFTING_TABLE
+  name: NPC Hovel
+  lore:
+  - aa803bc0-f38b-3216-bf76-f1d7537b155c
+  - NPC Hovel
+  - §rA house for 2 villagers. Counts
+  - §rtowards town population.
+96fdb524-786e-417c-abcf-b10de4c67c92~2059^5~64^5~-2013^5:
+  mat: CHEST
+  name: Coal Mine
+  lore:
+  - aa803bc0-f38b-3216-bf76-f1d7537b155c
+  - Coal Mine
+  - §rCreates coal by using pickaxes. Place
+  - §ra storage minecart in the chest. Build
+  - §rrails from the Coal Mine to a
+  - §rdestination region. Place a sloped
+  - §rpowered rail at the start.
+f9fe32d6-e1db-4399-b2e7-f6f1d5fda2e7~-198^5~69^5~325^5:
+  mat: CRAFTING_TABLE
+  name: NPC Hovel
+  lore:
+  - aa803bc0-f38b-3216-bf76-f1d7537b155c
+  - NPC Hovel
+  - §rA house for 2 villagers. Counts
+  - §rtowards town population.
+f9fe32d6-e1db-4399-b2e7-f6f1d5fda2e7~-204^5~69^5~325^5:
+  mat: CRAFTING_TABLE
+  name: NPC Hovel
+  lore:
+  - aa803bc0-f38b-3216-bf76-f1d7537b155c
+  - NPC Hovel
+  - §rA house for 2 villagers. Counts
+  - §rtowards town population.
+f9fe32d6-e1db-4399-b2e7-f6f1d5fda2e7~-206^5~69^5~328^5:
+  mat: CRAFTING_TABLE
+  name: NPC Hovel
+  lore:
+  - aa803bc0-f38b-3216-bf76-f1d7537b155c
+  - NPC Hovel
+  - §rA house for 2 villagers. Counts
+  - §rtowards town population.
+f9fe32d6-e1db-4399-b2e7-f6f1d5fda2e7~490^5~65^5~-101^5:
+  mat: CHEST
+  name: Coal Shop
+  lore:
+  - 712d8552-bfde-39ec-8839-93b272f345a0
+  - Coal Shop
+  - §rVende 144 carvões para o servidor por
+  - §r$432 por dia
+f9fe32d6-e1db-4399-b2e7-f6f1d5fda2e7~-197^5~69^5~325^5:
+  mat: CRAFTING_TABLE
+  name: NPC Hovel
+  lore:
+  - aa803bc0-f38b-3216-bf76-f1d7537b155c
+  - NPC Hovel
+  - §rA house for 2 villagers. Counts
+  - §rtowards town population.
+f9fe32d6-e1db-4399-b2e7-f6f1d5fda2e7~-202^5~69^5~329^5:
+  mat: CRAFTING_TABLE
+  name: NPC Hovel
+  lore:
+  - aa803bc0-f38b-3216-bf76-f1d7537b155c
+  - NPC Hovel
+  - §rA house for 2 villagers. Counts
+  - §rtowards town population.
+f9fe32d6-e1db-4399-b2e7-f6f1d5fda2e7~-197^5~69^5~327^5:
+  mat: CRAFTING_TABLE
+  name: NPC Hovel
+  lore:
+  - aa803bc0-f38b-3216-bf76-f1d7537b155c
+  - NPC Hovel
+  - §rA house for 2 villagers. Counts
+  - §rtowards town population.
+96fdb524-786e-417c-abcf-b10de4c67c92~2051^5~69^5~-1998^5:
+  mat: CHEST
+  name: Hovel
+  lore:
+  - aa803bc0-f38b-3216-bf76-f1d7537b155c
+  - Hovel
+  - §r2nd level of house. Earns $182.88 per
+  - §rday by selling potatoes and apples.
+96fdb524-786e-417c-abcf-b10de4c67c92~2050^5~69^5~-1998^5:
+  mat: CHEST
+  name: Hovel
+  lore:
+  - aa803bc0-f38b-3216-bf76-f1d7537b155c
+  - Hovel
+  - §r2nd level of house. Earns $182.88 per
+  - §rday by selling potatoes and apples.
+f9fe32d6-e1db-4399-b2e7-f6f1d5fda2e7~-200^5~69^5~327^5:
+  mat: CRAFTING_TABLE
+  name: NPC Hovel
+  lore:
+  - aa803bc0-f38b-3216-bf76-f1d7537b155c
+  - NPC Hovel
+  - §rA house for 2 villagers. Counts
+  - §rtowards town population.
+f9fe32d6-e1db-4399-b2e7-f6f1d5fda2e7~-200^5~69^5~325^5:
+  mat: CRAFTING_TABLE
+  name: NPC Hovel
+  lore:
+  - aa803bc0-f38b-3216-bf76-f1d7537b155c
+  - NPC Hovel
+  - §rA house for 2 villagers. Counts
+  - §rtowards town population.
+f9fe32d6-e1db-4399-b2e7-f6f1d5fda2e7~-195^5~69^5~329^5:
+  mat: CRAFTING_TABLE
+  name: NPC Hovel
+  lore:
+  - aa803bc0-f38b-3216-bf76-f1d7537b155c
+  - NPC Hovel
+  - §rA house for 2 villagers. Counts
+  - §rtowards town population.
+96fdb524-786e-417c-abcf-b10de4c67c92~582^5~55^5~277^5:
+  mat: CHEST
+  name: Shelter
+  lore:
+  - 712d8552-bfde-39ec-8839-93b272f345a0
+  - Shelter
+  - §rUm lugar seguro para guardar seus
+  - §ritens e ganhar algum dinheiro com
+  - §rpães, bifes, cenouras ou batatas a
+  - §rcada 30 minutos.
+96fdb524-786e-417c-abcf-b10de4c67c92~2059^5~65^5~-1990^5:
+  mat: CHEST
+  name: Flower Shop
+  lore:
+  - 712d8552-bfde-39ec-8839-93b272f345a0
+  - Flower Shop
+  - §rVende flores para o servidor por $288
+  - §rpor dia.
+96fdb524-786e-417c-abcf-b10de4c67c92~2050^5~61^5~-2030^5:
+  mat: CHEST
+  name: Shelter
+  lore:
+  - aa803bc0-f38b-3216-bf76-f1d7537b155c
+  - Shelter
+  - §rA safe place to store your items, and
+  - §rearn some money from bread, beef,
+  - §rcarrots, or potatoes every 30 minutes.
+96fdb524-786e-417c-abcf-b10de4c67c92~2004^5~91^5~-2032^5:
+  mat: GLASS
+  name: Plot11x11
+  lore:
+  - aa803bc0-f38b-3216-bf76-f1d7537b155c
+  - Plot11x11
+  - §rA placeholder for regions 11x11 and
+  - §rsmaller
+f9fe32d6-e1db-4399-b2e7-f6f1d5fda2e7~3024^5~88^5~702^5:
+  mat: CHEST
+  name: Shelter
+  lore:
+  - 712d8552-bfde-39ec-8839-93b272f345a0
+  - Shelter
+  - §rUm lugar seguro para guardar seus
+  - §ritens e ganhar algum dinheiro com
+  - §rpães, bifes, cenouras ou batatas a
+  - §rcada 30 minutos.
+96fdb524-786e-417c-abcf-b10de4c67c92~2036^5~66^5~-2019^5:
+  mat: CHEST
+  name: Potato Farm
+  lore:
+  - §0aa803bc0-f38b-3216-bf76-f1d7537b155c
+  - Civs potato_farm
+  - Produces potatoes and poisonous
+  - potatoes every 5 minutes.
+96fdb524-786e-417c-abcf-b10de4c67c92~2051^5~70^5~-1997^5:
+  mat: CHEST
+  name: Hovel
+  lore:
+  - aa803bc0-f38b-3216-bf76-f1d7537b155c
+  - Hovel
+  - §r2nd level of house. Earns $182.88 per
+  - §rday by selling potatoes and apples.
+f9fe32d6-e1db-4399-b2e7-f6f1d5fda2e7~-191^5~71^5~309^5:
+  mat: CHEST
+  name: Council Room
+  lore:
+  - aa803bc0-f38b-3216-bf76-f1d7537b155c
+  - Council Room
+  - §rThe central structure for a town.
+  - §rProduces 192 power per day. Also acts
+  - §ras a home port.
+96fdb524-786e-417c-abcf-b10de4c67c92~2066^5~65^5~-2005^5:
+  mat: CHEST
+  name: Coal Shop
+  lore:
+  - aa803bc0-f38b-3216-bf76-f1d7537b155c
+  - Coal Shop
+  - §rSells 144 coal to the server for $432
+  - §rper day
+96fdb524-786e-417c-abcf-b10de4c67c92~2035^5~68^5~-2005^5:
+  mat: OBSIDIAN
+  name: Council Room
+  lore:
+  - aa803bc0-f38b-3216-bf76-f1d7537b155c
+  - Council Room
+  - §rThe central structure for a town.
+  - §rProduces 192 power per day. Also acts
+  - §ras a home port.
+96fdb524-786e-417c-abcf-b10de4c67c92~2014^5~91^5~-2033^5:
+  mat: GLASS
+  name: Plot11x11
+  lore:
+  - aa803bc0-f38b-3216-bf76-f1d7537b155c
+  - Plot11x11
+  - §rA placeholder for regions 11x11 and
+  - §rsmaller
+96fdb524-786e-417c-abcf-b10de4c67c92~2069^5~65^5~-1985^5:
+  mat: CHEST
+  name: Ranch
+  lore:
+  - aa803bc0-f38b-3216-bf76-f1d7537b155c
+  - Ranch
+  - §rAutomatic cow farm. Place a storage
+  - §rminecart in the chest. Build rails
+  - §rfrom the Ranch to a destination
+  - §rregion. Place a sloped powered rail at
+  - §rthe start.
+96fdb524-786e-417c-abcf-b10de4c67c92~2073^5~65^5~-1981^5:
+  mat: CHEST
+  name: Ranch
+  lore:
+  - aa803bc0-f38b-3216-bf76-f1d7537b155c
+  - Ranch
+  - §rAutomatic cow farm. Place a storage
+  - §rminecart in the chest. Build rails
+  - §rfrom the Ranch to a destination
+  - §rregion. Place a sloped powered rail at
+  - §rthe start.
+f9fe32d6-e1db-4399-b2e7-f6f1d5fda2e7~-198^5~69^5~331^5:
+  mat: CRAFTING_TABLE
+  name: NPC Hovel
+  lore:
+  - aa803bc0-f38b-3216-bf76-f1d7537b155c
+  - NPC Hovel
+  - §rA house for 2 villagers. Counts
+  - §rtowards town population.
+96fdb524-786e-417c-abcf-b10de4c67c92~2033^5~67^5~-2018^5:
+  mat: CHEST
+  name: Potato Farm
+  lore:
+  - Produces potatoes and poisonous
+  - potatoes every 5 minutes.
+f9fe32d6-e1db-4399-b2e7-f6f1d5fda2e7~-199^5~69^5~330^5:
+  mat: CRAFTING_TABLE
+  name: NPC Hovel
+  lore:
+  - aa803bc0-f38b-3216-bf76-f1d7537b155c
+  - NPC Hovel
+  - §rA house for 2 villagers. Counts
+  - §rtowards town population.
+f9fe32d6-e1db-4399-b2e7-f6f1d5fda2e7~-200^5~69^5~324^5:
+  mat: OBSIDIAN
+  name: Council Room
+  lore:
+  - aa803bc0-f38b-3216-bf76-f1d7537b155c
+  - Council Room
+  - §rThe central structure for a town.
+  - §rProduces 192 power per day. Also acts
+  - §ras a home port.
+f9fe32d6-e1db-4399-b2e7-f6f1d5fda2e7~-199^5~68^5~326^5:
+  mat: CRAFTING_TABLE
+  name: NPC Hovel
+  lore:
+  - aa803bc0-f38b-3216-bf76-f1d7537b155c
+  - NPC Hovel
+  - §rA house for 2 villagers. Counts
+  - §rtowards town population.
+f9fe32d6-e1db-4399-b2e7-f6f1d5fda2e7~-201^5~69^5~325^5:
+  mat: CRAFTING_TABLE
+  name: NPC Hovel
+  lore:
+  - aa803bc0-f38b-3216-bf76-f1d7537b155c
+  - NPC Hovel
+  - §rA house for 2 villagers. Counts
+  - §rtowards town population.
+96fdb524-786e-417c-abcf-b10de4c67c92~2066^5~65^5~-2011^5:
+  mat: CHEST
+  name: Sand Pit
+  lore:
+  - aa803bc0-f38b-3216-bf76-f1d7537b155c
+  - Sand Pit
+  - §rCreates sand every 30 seconds.
+f9fe32d6-e1db-4399-b2e7-f6f1d5fda2e7~-198^5~68^5~325^5:
+  mat: CRAFTING_TABLE
+  name: NPC Hovel
+  lore:
+  - aa803bc0-f38b-3216-bf76-f1d7537b155c
+  - NPC Hovel
+  - §rA house for 2 villagers. Counts
+  - §rtowards town population.
+96fdb524-786e-417c-abcf-b10de4c67c92~2067^5~65^5~-1985^5:
+  mat: CHEST
+  name: Ranch
+  lore:
+  - aa803bc0-f38b-3216-bf76-f1d7537b155c
+  - Ranch
+  - §rAutomatic cow farm. Place a storage
+  - §rminecart in the chest. Build rails
+  - §rfrom the Ranch to a destination
+  - §rregion. Place a sloped powered rail at
+  - §rthe start.
+f9fe32d6-e1db-4399-b2e7-f6f1d5fda2e7~-203^5~69^5~325^5:
+  mat: CRAFTING_TABLE
+  name: NPC Hovel
+  lore:
+  - aa803bc0-f38b-3216-bf76-f1d7537b155c
+  - NPC Hovel
+  - §rA house for 2 villagers. Counts
+  - §rtowards town population.
+96fdb524-786e-417c-abcf-b10de4c67c92~2067^5~65^5~-1983^5:
+  mat: CHEST
+  name: Ranch
+  lore:
+  - aa803bc0-f38b-3216-bf76-f1d7537b155c
+  - Ranch
+  - §rAutomatic cow farm. Place a storage
+  - §rminecart in the chest. Build rails
+  - §rfrom the Ranch to a destination
+  - §rregion. Place a sloped powered rail at
+  - §rthe start.
+f9fe32d6-e1db-4399-b2e7-f6f1d5fda2e7~-205^5~69^5~325^5:
+  mat: CRAFTING_TABLE
+  name: NPC Hovel
+  lore:
+  - aa803bc0-f38b-3216-bf76-f1d7537b155c
+  - NPC Hovel
+  - §rA house for 2 villagers. Counts
+  - §rtowards town population.
+f9fe32d6-e1db-4399-b2e7-f6f1d5fda2e7~-198^5~69^5~328^5:
+  mat: CRAFTING_TABLE
+  name: NPC Hovel
+  lore:
+  - aa803bc0-f38b-3216-bf76-f1d7537b155c
+  - NPC Hovel
+  - §rA house for 2 villagers. Counts
+  - §rtowards town population.
+f9fe32d6-e1db-4399-b2e7-f6f1d5fda2e7~-201^5~68^5~326^5:
+  mat: CRAFTING_TABLE
+  name: NPC Hovel
+  lore:
+  - aa803bc0-f38b-3216-bf76-f1d7537b155c
+  - NPC Hovel
+  - §rA house for 2 villagers. Counts
+  - §rtowards town population.
+96fdb524-786e-417c-abcf-b10de4c67c92~2014^5~91^5~-2023^5:
+  mat: GLASS
+  name: Plot11x11
+  lore:
+  - aa803bc0-f38b-3216-bf76-f1d7537b155c
+  - Plot11x11
+  - §rA placeholder for regions 11x11 and
+  - §rsmaller
+f9fe32d6-e1db-4399-b2e7-f6f1d5fda2e7~-199^5~69^5~325^5:
+  mat: CRAFTING_TABLE
+  name: NPC Hovel
+  lore:
+  - aa803bc0-f38b-3216-bf76-f1d7537b155c
+  - NPC Hovel
+  - §rA house for 2 villagers. Counts
+  - §rtowards town population.
+f9fe32d6-e1db-4399-b2e7-f6f1d5fda2e7~-198^5~69^5~326^5:
+  mat: CRAFTING_TABLE
+  name: NPC Hovel
+  lore:
+  - aa803bc0-f38b-3216-bf76-f1d7537b155c
+  - NPC Hovel
+  - §rA house for 2 villagers. Counts
+  - §rtowards town population.
+f9fe32d6-e1db-4399-b2e7-f6f1d5fda2e7~-202^5~69^5~322^5:
+  mat: CRAFTING_TABLE
+  name: NPC Hovel
+  lore:
+  - aa803bc0-f38b-3216-bf76-f1d7537b155c
+  - NPC Hovel
+  - §rA house for 2 villagers. Counts
+  - §rtowards town population.
+f9fe32d6-e1db-4399-b2e7-f6f1d5fda2e7~3014^5~88^5~702^5:
+  mat: CHEST
+  name: Flower Shop
+  lore:
+  - 712d8552-bfde-39ec-8839-93b272f345a0
+  - Flower Shop
+  - §rVende flores para o servidor por $288
+  - §rpor dia.
+f9fe32d6-e1db-4399-b2e7-f6f1d5fda2e7~-188^5~69^5~310^5:
+  mat: OBSIDIAN
+  name: Council Room
+  lore:
+  - aa803bc0-f38b-3216-bf76-f1d7537b155c
+  - Council Room
+  - §rThe central structure for a town.
+  - §rProduces 192 power per day. Also acts
+  - §ras a home port.
+f9fe32d6-e1db-4399-b2e7-f6f1d5fda2e7~-199^5~69^5~327^5:
+  mat: CRAFTING_TABLE
+  name: NPC Hovel
+  lore:
+  - aa803bc0-f38b-3216-bf76-f1d7537b155c
+  - NPC Hovel
+  - §rA house for 2 villagers. Counts
+  - §rtowards town population.
+f9fe32d6-e1db-4399-b2e7-f6f1d5fda2e7~-198^5~69^5~324^5:
+  mat: CRAFTING_TABLE
+  name: NPC Hovel
+  lore:
+  - aa803bc0-f38b-3216-bf76-f1d7537b155c
+  - NPC Hovel
+  - §rA house for 2 villagers. Counts
+  - §rtowards town population.
+f9fe32d6-e1db-4399-b2e7-f6f1d5fda2e7~-197^5~69^5~326^5:
+  mat: CRAFTING_TABLE
+  name: NPC Hovel
+  lore:
+  - aa803bc0-f38b-3216-bf76-f1d7537b155c
+  - NPC Hovel
+  - §rA house for 2 villagers. Counts
+  - §rtowards town population.
+f9fe32d6-e1db-4399-b2e7-f6f1d5fda2e7~-191^5~68^5~308^5:
+  mat: CRAFTING_TABLE
+  name: NPC Hovel
+  lore:
+  - aa803bc0-f38b-3216-bf76-f1d7537b155c
+  - NPC Hovel
+  - §rA house for 2 villagers. Counts
+  - §rtowards town population.
+f9fe32d6-e1db-4399-b2e7-f6f1d5fda2e7~-197^5~69^5~328^5:
+  mat: CRAFTING_TABLE
+  name: NPC Hovel
+  lore:
+  - aa803bc0-f38b-3216-bf76-f1d7537b155c
+  - NPC Hovel
+  - §rA house for 2 villagers. Counts
+  - §rtowards town population.
+96fdb524-786e-417c-abcf-b10de4c67c92~2071^5~65^5~-1979^5:
+  mat: CHEST
+  name: Ranch
+  lore:
+  - aa803bc0-f38b-3216-bf76-f1d7537b155c
+  - Ranch
+  - §rAutomatic cow farm. Place a storage
+  - §rminecart in the chest. Build rails
+  - §rfrom the Ranch to a destination
+  - §rregion. Place a sloped powered rail at
+  - §rthe start.
+f9fe32d6-e1db-4399-b2e7-f6f1d5fda2e7~-202^5~69^5~328^5:
+  mat: CRAFTING_TABLE
+  name: NPC Hovel
+  lore:
+  - aa803bc0-f38b-3216-bf76-f1d7537b155c
+  - NPC Hovel
+  - §rA house for 2 villagers. Counts
+  - §rtowards town population.
+96fdb524-786e-417c-abcf-b10de4c67c92~2036^5~72^5~-2002^5:
+  mat: OBSIDIAN
+  name: Council Room
+  lore:
+  - aa803bc0-f38b-3216-bf76-f1d7537b155c
+  - Council Room
+  - §rThe central structure for a town.
+  - §rProduces 192 power per day. Also acts
+  - §ras a home port.
+f9fe32d6-e1db-4399-b2e7-f6f1d5fda2e7~-201^5~69^5~326^5:
+  mat: CRAFTING_TABLE
+  name: NPC Hovel
+  lore:
+  - aa803bc0-f38b-3216-bf76-f1d7537b155c
+  - NPC Hovel
+  - §rA house for 2 villagers. Counts
+  - §rtowards town population.
+96fdb524-786e-417c-abcf-b10de4c67c92~2028^5~70^5~-1994^5:
+  mat: CRAFTING_TABLE
+  name: NPC Hovel
+  lore:
+  - aa803bc0-f38b-3216-bf76-f1d7537b155c
+  - NPC Hovel
+  - §rA house for 2 villagers. Counts
+  - §rtowards town population.
+f9fe32d6-e1db-4399-b2e7-f6f1d5fda2e7~-201^5~69^5~328^5:
+  mat: CRAFTING_TABLE
+  name: NPC Hovel
+  lore:
+  - aa803bc0-f38b-3216-bf76-f1d7537b155c
+  - NPC Hovel
+  - §rA house for 2 villagers. Counts
+  - §rtowards town population.
+96fdb524-786e-417c-abcf-b10de4c67c92~2049^5~67^5~-1984^5:
+  mat: CHEST
+  name: Purifier
+  lore:
+  - aa803bc0-f38b-3216-bf76-f1d7537b155c
+  - Purifier
+  - §rTransforms rotten flesh into leather
+  - §rand removes poison from potatoes every
+  - §r15 minutes.
+96fdb524-786e-417c-abcf-b10de4c67c92~2004^5~91^5~-2033^5:
+  mat: GLASS
+  name: Plot11x11
+  lore:
+  - aa803bc0-f38b-3216-bf76-f1d7537b155c
+  - Plot11x11
+  - §rA placeholder for regions 11x11 and
+  - §rsmaller
+96fdb524-786e-417c-abcf-b10de4c67c92~1993^5~91^5~-2023^5:
+  mat: GLASS
+  name: Plot11x11
+  lore:
+  - aa803bc0-f38b-3216-bf76-f1d7537b155c
+  - Plot11x11
+  - §rA placeholder for regions 11x11 and
+  - §rsmaller
+96fdb524-786e-417c-abcf-b10de4c67c92~2048^5~67^5~-1984^5:
+  mat: CHEST
+  name: Purifier
+  lore:
+  - aa803bc0-f38b-3216-bf76-f1d7537b155c
+  - Purifier
+  - §rTransforms rotten flesh into leather
+  - §rand removes poison from potatoes every
+  - §r15 minutes.
+96fdb524-786e-417c-abcf-b10de4c67c92~2061^5~64^5~-2010^5:
+  mat: CHEST
+  name: Coal Mine
+  lore:
+  - aa803bc0-f38b-3216-bf76-f1d7537b155c
+  - Coal Mine
+  - §rCreates coal by using pickaxes. Place
+  - §ra storage minecart in the chest. Build
+  - §rrails from the Coal Mine to a
+  - §rdestination region. Place a sloped
+  - §rpowered rail at the start.
+96fdb524-786e-417c-abcf-b10de4c67c92~2059^5~66^5~-1982^5:
+  mat: CHEST
+  name: Leather Shop
+  lore:
+  - aa803bc0-f38b-3216-bf76-f1d7537b155c
+  - Leather Shop
+  - §rSells leather to the server for $360
+  - §rper day.
+96fdb524-786e-417c-abcf-b10de4c67c92~2036^5~67^5~-2005^5:
+  mat: OBSIDIAN
+  name: Council Room
+  lore:
+  - aa803bc0-f38b-3216-bf76-f1d7537b155c
+  - Council Room
+  - §rThe central structure for a town.
+  - §rProduces 192 power per day. Also acts
+  - §ras a home port.
+f9fe32d6-e1db-4399-b2e7-f6f1d5fda2e7~-208^5~66^5~301^5:
+  mat: CHEST
+  name: Flower Shop
+  lore:
+  - aa803bc0-f38b-3216-bf76-f1d7537b155c
+  - Flower Shop
+  - §rSells flowers to the server for $288
+  - §rper day.
+96fdb524-786e-417c-abcf-b10de4c67c92~58^5~63^5~-34^5:
+  mat: CHEST
+  name: Coal Shop
+  lore:
+  - aa803bc0-f38b-3216-bf76-f1d7537b155c
+  - Coal Shop
+  - §rSells 144 coal to the server for $432
+  - §rper day
+96fdb524-786e-417c-abcf-b10de4c67c92~2059^5~65^5~-2014^5:
+  mat: CHEST
+  name: Coal Mine
+  lore:
+  - aa803bc0-f38b-3216-bf76-f1d7537b155c
+  - Coal Mine
+  - §rCreates coal by using pickaxes. Place
+  - §ra storage minecart in the chest. Build
+  - §rrails from the Coal Mine to a
+  - §rdestination region. Place a sloped
+  - §rpowered rail at the start.
+96fdb524-786e-417c-abcf-b10de4c67c92~2059^5~65^5~-2012^5:
+  mat: CHEST
+  name: Coal Mine
+  lore:
+  - aa803bc0-f38b-3216-bf76-f1d7537b155c
+  - Coal Mine
+  - §rCreates coal by using pickaxes. Place
+  - §ra storage minecart in the chest. Build
+  - §rrails from the Coal Mine to a
+  - §rdestination region. Place a sloped
+  - §rpowered rail at the start.
+96fdb524-786e-417c-abcf-b10de4c67c92~2073^5~65^5~-1980^5:
+  mat: CHEST
+  name: Ranch
+  lore:
+  - aa803bc0-f38b-3216-bf76-f1d7537b155c
+  - Ranch
+  - §rAutomatic cow farm. Place a storage
+  - §rminecart in the chest. Build rails
+  - §rfrom the Ranch to a destination
+  - §rregion. Place a sloped powered rail at
+  - §rthe start.
+f9fe32d6-e1db-4399-b2e7-f6f1d5fda2e7~-192^5~65^5~337^5:
+  mat: GLASS
+  name: Plot7x7
+  lore:
+  - aa803bc0-f38b-3216-bf76-f1d7537b155c
+  - Plot7x7
+  - §rA placeholder for regions 7x7 and
+  - §rsmaller
+96fdb524-786e-417c-abcf-b10de4c67c92~1994^5~91^5~-2023^5:
+  mat: GLASS
+  name: Plot11x11
+  lore:
+  - aa803bc0-f38b-3216-bf76-f1d7537b155c
+  - Plot11x11
+  - §rA placeholder for regions 11x11 and
+  - §rsmaller
