@@ -95,14 +95,14 @@ public class UtilTests extends TestUtil {
     public void addItemsShouldAddProperItems() {
         TestUtil.world.setChunkLoaded(false);
         List<CVItem> tempList = new ArrayList<>();
-        tempList.add(CVItem.createCVItemFromString("GRASS"));
+        tempList.add(CVItem.createCVItemFromString("SHORT_GRASS"));
         List<List<CVItem>> returnList = new ArrayList<>();
         returnList.add(tempList);
         CVInventory cvInventory = UnloadedInventoryHandler.getInstance().getChestInventory(new Location(TestUtil.world, 0, 0, 0));
         Util.addItems(returnList, cvInventory);
         for (ItemStack itemStack : cvInventory.getContents()) {
             System.out.println(itemStack.getType().name());
-            if (itemStack.getType() == Material.GRASS) {
+            if (itemStack.getType() == Material.SHORT_GRASS) {
                 return;
             }
         }

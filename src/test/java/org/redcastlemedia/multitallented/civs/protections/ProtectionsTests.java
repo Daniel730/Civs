@@ -238,7 +238,8 @@ public class ProtectionsTests extends TestUtil {
         EntityExplodeEvent event = new EntityExplodeEvent(tntPrimed,
                 regionLocation.add(0, 1,0),
                 blockList,
-                (float) 2);
+                (float) 2,
+                org.bukkit.ExplosionResult.DESTROY);
         if (throwException) {
             ProtectionHandler protectionHandler = new ProtectionHandler();
             protectionHandler.onEntityExplode(event);
@@ -315,7 +316,8 @@ public class ProtectionsTests extends TestUtil {
         EntityExplodeEvent event = new EntityExplodeEvent(tntPrimed,
                 regionLocation.add(0, 1,0),
                 blockList,
-                (float) 2);
+                (float) 2,
+                org.bukkit.ExplosionResult.DESTROY);
         ProtectionHandler protectionHandler = new ProtectionHandler();
         protectionHandler.onEntityExplode(event);
     }

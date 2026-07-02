@@ -7,7 +7,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
-import org.mockito.Matchers;
+import org.mockito.ArgumentMatchers;
 import org.redcastlemedia.multitallented.civs.SuccessException;
 import org.redcastlemedia.multitallented.civs.TestUtil;
 import org.redcastlemedia.multitallented.civs.civilians.Civilian;
@@ -76,8 +76,8 @@ public class SchedulerTests extends TestUtil {
         UUID uuid = new UUID(1, 8);
         when(player.getUniqueId()).thenReturn(uuid);
         when(player.getLocation()).thenReturn(new Location(world, 1000,0,0));
-        doThrow(new SuccessException()).when(player).sendTitle(Matchers.anyString(), Matchers.anyString(),
-                Matchers.anyInt(), Matchers.anyInt(), Matchers.anyInt());
+        doThrow(new SuccessException()).when(player).sendTitle(ArgumentMatchers.anyString(), ArgumentMatchers.anyString(),
+                ArgumentMatchers.anyInt(), ArgumentMatchers.anyInt(), ArgumentMatchers.anyInt());
         commonScheduler.playerInTown(player);
 
         when(player.getLocation()).thenReturn(new Location(world, 0,0,0));
@@ -99,7 +99,7 @@ public class SchedulerTests extends TestUtil {
         when(player.getLocation()).thenReturn(new Location(world, 0,0,0));
         commonScheduler.playerInTown(player);
 
-        doThrow(new SuccessException()).when(player).sendMessage(Matchers.anyString());
+        doThrow(new SuccessException()).when(player).sendMessage(ArgumentMatchers.anyString());
         commonScheduler.playerInTown(player);
     }
 }

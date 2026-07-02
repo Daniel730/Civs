@@ -22,7 +22,7 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.ArgumentCaptor;
-import org.mockito.Matchers;
+import org.mockito.ArgumentMatchers;
 import org.redcastlemedia.multitallented.civs.SuccessException;
 import org.redcastlemedia.multitallented.civs.TestUtil;
 import org.redcastlemedia.multitallented.civs.civclass.CivClass;
@@ -149,7 +149,7 @@ public class SpellsTests extends TestUtil {
         vars.put("cooldown", System.currentTimeMillis() + 40000);
         civilian.getStates().put("hunger.cooldown^1", new CivState(spell2, "cooldown^1", -1, -1, vars));
         when(player.getFoodLevel()).thenReturn(20);
-        doThrow(new SuccessException()).when(player).setFoodLevel(Matchers.anyInt());
+        doThrow(new SuccessException()).when(player).setFoodLevel(ArgumentMatchers.anyInt());
         Spell spell = new Spell("hunger", player, 1);
         spell.useAbility();
     }
