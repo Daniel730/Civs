@@ -42,10 +42,37 @@ import org.redcastlemedia.multitallented.civs.util.DebugLogger;
 import org.redcastlemedia.multitallented.civs.util.OwnershipUtil;
 import org.redcastlemedia.multitallented.civs.util.Util;
 
+import com.google.common.base.Enums;
+
 import lombok.Getter;
 import lombok.Setter;
 
 public class Region {
+
+    private static final Material WATER_CAULDRON =
+            Enums.getIfPresent(Material.class, "WATER_CAULDRON").orNull();
+
+    static boolean matchesBuildReqMaterial(Material blockMat, Material reqMat) {
+        if (blockMat == reqMat) {
+            return true;
+        }
+        if (reqMat == Material.CAULDRON) {
+            return blockMat == Material.WATER || blockMat == WATER_CAULDRON;
+        }
+        if (reqMat == Material.WATER) {
+            return blockMat == WATER_CAULDRON;
+        }
+        return false;
+    }
+
+    private static Material findMatchingReqMaterial(Material blockMat, Map<Material, Integer> reqMap) {
+        for (Material reqMat : reqMap.keySet()) {
+            if (matchesBuildReqMaterial(blockMat, reqMat)) {
+                return reqMat;
+            }
+        }
+        return null;
+    }
 
     private String type;
     private final Map<UUID, String> people;
@@ -319,19 +346,21 @@ public class Region {
                         continue;
                     }
                     Material mat = currentBlock.getType();
-                    if (maxCheck.containsKey(mat)) {
-                        maxCheck.put(mat, maxCheck.get(mat) - 1);
+                    Material matchedReq = findMatchingReqMaterial(mat, maxCheck);
+                    if (matchedReq != null && maxCheck.get(matchedReq) > 0) {
+                        maxCheck.put(matchedReq, maxCheck.get(matchedReq) - 1);
                     }
                     boolean destroyIndex = false;
                     int i=0;
                     for (HashMap<Material, Integer> tempMap : itemCheck) {
-                        if (tempMap.containsKey(mat)) {
+                        Material groupReq = findMatchingReqMaterial(mat, tempMap);
+                        if (groupReq != null) {
 
-                            if (tempMap.get(mat) < 2) {
+                            if (tempMap.get(groupReq) < 2) {
                                 destroyIndex = true;
                             } else {
                                 for (Material currentMat : tempMap.keySet()) {
-                                    tempMap.put(currentMat, tempMap.get(mat) - 1);
+                                    tempMap.put(currentMat, tempMap.get(groupReq) - 1);
                                 }
                             }
                             break;
@@ -379,20 +408,22 @@ public class Region {
                         continue;
                     }
                     Material mat = currentBlock.getType();
-                    if (maxCheck.containsKey(mat)) {
-                        maxCheck.put(mat, maxCheck.get(mat) - 1);
+                    Material matchedReq = findMatchingReqMaterial(mat, maxCheck);
+                    if (matchedReq != null && maxCheck.get(matchedReq) > 0) {
+                        maxCheck.put(matchedReq, maxCheck.get(matchedReq) - 1);
                     }
                     boolean destroyIndex = false;
                     int i=0;
                     outer1: for (HashMap<Material, Integer> tempMap : itemCheck) {
-                        if (tempMap.containsKey(mat)) {
+                        Material groupReq = findMatchingReqMaterial(mat, tempMap);
+                        if (groupReq != null) {
                             blocksFound.add(currentBlock);
 
-                            if (tempMap.get(mat) < 2) {
+                            if (tempMap.get(groupReq) < 2) {
                                 destroyIndex = true;
                             } else {
                                 for (Material currentMat : tempMap.keySet()) {
-                                    tempMap.put(currentMat, tempMap.get(mat) - 1);
+                                    tempMap.put(currentMat, tempMap.get(groupReq) - 1);
                                 }
                             }
                             RegionManager.getInstance().adjustRadii(radii, location, x,y,z);
@@ -438,21 +469,23 @@ public class Region {
         RegionPoints returnRadii;
         do {
             Block block = blocksFound.remove(0);
-            if (maxCheck.containsKey(block.getType())) {
-                maxCheck.put(block.getType(), maxCheck.get(block.getType()) + 1);
-                if (maxCheck.get(block.getType()) > 0) {
+            Material matchedReq = findMatchingReqMaterial(block.getType(), maxCheck);
+            if (matchedReq != null) {
+                maxCheck.put(matchedReq, maxCheck.get(matchedReq) + 1);
+                if (maxCheck.get(matchedReq) > 0) {
                     boolean foundMat = false;
                     for (HashMap<Material, Integer> tempMap : itemCheck) {
-                        if (tempMap.containsKey(block.getType())) {
+                        Material groupReq = findMatchingReqMaterial(block.getType(), tempMap);
+                        if (groupReq != null) {
                             foundMat = true;
-                            tempMap.put(block.getType(), tempMap.get(block.getType()) + 1);
+                            tempMap.put(groupReq, tempMap.get(groupReq) + 1);
                         }
                     }
                     if (!foundMat) {
                         boolean unfullFilled = true;
                         itemLoop: for (List<CVItem> tempList : regionType.getReqs()) {
                             for (CVItem item : tempList) {
-                                if (item.getMat() != block.getType() &&
+                                if (!matchesBuildReqMaterial(block.getType(), item.getMat()) &&
                                         maxCheck.get(item.getMat()) < 1) {
                                     unfullFilled = false;
                                     break itemLoop;
@@ -461,7 +494,7 @@ public class Region {
                         }
                         if (unfullFilled) {
                             HashMap<Material, Integer> tempMap = new HashMap<>();
-                            tempMap.put(block.getType(), 1);
+                            tempMap.put(matchedReq, 1);
                             itemCheck.add(tempMap);
                         }
                     }
@@ -551,12 +584,13 @@ public class Region {
                     Material mat = currentBlock.getType();
                     for (Iterator<HashMap<Material, Integer>> it = itemCheck.iterator(); it.hasNext(); ) {
                         HashMap<Material, Integer> tempMap = it.next();
-                        if (tempMap.containsKey(mat)) {
-                            if (tempMap.get(mat) < 2) {
+                        Material groupReq = findMatchingReqMaterial(mat, tempMap);
+                        if (groupReq != null) {
+                            if (tempMap.get(groupReq) < 2) {
                                 it.remove();
                             } else {
                                 for (Material currentMat : tempMap.keySet()) {
-                                    tempMap.put(currentMat, tempMap.get(mat) - 1);
+                                    tempMap.put(currentMat, tempMap.get(groupReq) - 1);
                                 }
                             }
                             break;
