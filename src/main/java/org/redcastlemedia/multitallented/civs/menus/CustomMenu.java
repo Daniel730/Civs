@@ -2,6 +2,8 @@ package org.redcastlemedia.multitallented.civs.menus;
 
 import java.util.*;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -28,8 +30,9 @@ import org.redcastlemedia.multitallented.civs.tutorials.TutorialManager;
 import org.redcastlemedia.multitallented.civs.util.CommandUtil;
 import org.redcastlemedia.multitallented.civs.util.PermissionUtil;
 
-import net.md_5.bungee.api.chat.ClickEvent;
-import net.md_5.bungee.api.chat.TextComponent;
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.event.ClickEvent;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
 
 public class CustomMenu {
     // LinkedHashSet (not HashSet): MenuIcon has no equals()/hashCode() override, so a
@@ -138,8 +141,8 @@ public class CustomMenu {
         } else {
             for (String action : menuIcon.getActions()) {
                 String newAction = action.replace("$count$", "" + count);
-                newAction = newAction.replace("$itemName$",
-                        ChatColor.stripColor(itemStack.getItemMeta().getDisplayName()));
+                newAction = newAction.replace("$itemName$", getItemDisplayName(itemStack));
+                newAction = replaceVariables(civilian, itemStack, newAction);
                 currentActions.add(newAction);
             }
         }
@@ -163,6 +166,7 @@ public class CustomMenu {
                 } else {
                     newAction = newAction.replace("$itemName$", "");
                 }
+                newAction = replaceVariables(civilian, itemStack, newAction);
                 currentRightClickActions.add(newAction);
             }
         }
@@ -277,19 +281,21 @@ public class CustomMenu {
             CommandUtil.performCommand(offlinePlayer, actionString
                     .replace("command:", ""));
         } else if (actionString.startsWith("permission:")) {
-            actionString = replaceVariables(civilian, itemStack, actionString);
-            OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(civilian.getUuid());
-            PermissionUtil.applyPermission(offlinePlayer, actionString
-                    .replace("permission:", ""));
+            if (Civs.perm != null) {
+                actionString = replaceVariables(civilian, itemStack, actionString);
+                OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(civilian.getUuid());
+                PermissionUtil.applyPermission(offlinePlayer, actionString
+                        .replace("permission:", ""));
+            }
         } else if (actionString.startsWith("typing:")) {
             actionString = replaceVariables(civilian, itemStack, actionString);
             actionString = actionString.replace("typing:", "");
             String[] actionStringSplit = actionString.split(":");
             String linkText = LocaleManager.getInstance().getTranslation(player, actionStringSplit[0]);
             String typingText = LocaleManager.getInstance().getTranslation(player, actionStringSplit[1]);
-            TextComponent textComponent = new TextComponent(linkText);
-            textComponent.setClickEvent(new ClickEvent(ClickEvent.Action.SUGGEST_COMMAND, typingText));
-            player.spigot().sendMessage(textComponent);
+            Component textComponent = LegacyComponentSerializer.legacySection().deserialize(linkText)
+                    .clickEvent(ClickEvent.suggestCommand(typingText));
+            player.sendMessage(textComponent);
         }
         return true;
     }
@@ -310,8 +316,11 @@ public class CustomMenu {
         } else if (key.equals("townType")) {
             TownType townType = (TownType) data;
             return townType.getProcessedName();
-        } else if (key.equals("uuid") && data instanceof UUID) {
-            return ((UUID) data).toString();
+        } else if (key.equals("uuid")) {
+            if (data instanceof UUID) {
+                return data.toString();
+            }
+            return (String) data;
         } else if (data instanceof String) {
             return (String) data;
         } else if (data instanceof CivClass) {
@@ -322,8 +331,8 @@ public class CustomMenu {
     }
 
     public static String replaceVariables(Civilian civilian, ItemStack clickedItem, String actionString) {
-        if (clickedItem.getItemMeta() != null) {
-            actionString = actionString.replaceAll("\\$itemName\\$",
+        if (clickedItem != null && clickedItem.getItemMeta() != null) {
+            actionString = replacePlaceholder(actionString, "itemName",
                     clickedItem.getItemMeta().getDisplayName());
         }
         return replaceVariables(civilian, actionString);
@@ -336,9 +345,17 @@ public class CustomMenu {
                 continue;
             }
             String replaceString = stringifyData(key, data.get(key));
-            actionString = actionString.replaceAll("\\$" + key + "\\$", replaceString);
+            actionString = replacePlaceholder(actionString, key, replaceString);
         }
         return actionString;
+    }
+
+    private static String replacePlaceholder(String actionString, String key, String replaceString) {
+        if (replaceString == null) {
+            replaceString = "";
+        }
+        return actionString.replaceAll("\\$" + Pattern.quote(key) + "\\$",
+                Matcher.quoteReplacement(replaceString));
     }
 
     public void onCloseMenu(Civilian civilian, Inventory inventory) {
