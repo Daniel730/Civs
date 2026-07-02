@@ -340,14 +340,17 @@ public class MenuManager implements Listener {
     }
 
     public static Inventory openMenuFromString(Civilian civilian, String menuString) {
-        String[] menuSplit = menuString.split("\\?");
+        menuString = CustomMenu.replaceVariables(civilian, menuString);
+        String[] menuSplit = menuString.split("\\?", 2);
         Player player = Bukkit.getPlayer(civilian.getUuid());
         Map<String, String> params = new HashMap<>();
         if (menuSplit.length > 1) {
             String[] queryString = menuSplit[1].split("&");
             for (String queryParams : queryString) {
-                String[] splitParams = queryParams.split("=");
-                params.put(splitParams[0], splitParams[1]);
+                String[] splitParams = queryParams.split("=", 2);
+                String value = splitParams.length > 1 ? splitParams[1] : "";
+                value = CustomMenu.replaceVariables(civilian, value);
+                params.put(splitParams[0], value);
             }
         }
         return MenuManager.getInstance().openMenu(player, menuSplit[0], params);

@@ -160,12 +160,7 @@ public class CustomMenu {
         } else {
             for (String action : menuIcon.getRightClickActions()) {
                 String newAction = action.replace("$count$", "" + count);
-                if (itemStack.getItemMeta() != null) {
-                    newAction = newAction.replace("$itemName$",
-                            ChatColor.stripColor(itemStack.getItemMeta().getDisplayName()));
-                } else {
-                    newAction = newAction.replace("$itemName$", "");
-                }
+                newAction = newAction.replace("$itemName$", getItemDisplayName(itemStack));
                 newAction = replaceVariables(civilian, itemStack, newAction);
                 currentRightClickActions.add(newAction);
             }
@@ -301,6 +296,9 @@ public class CustomMenu {
     }
 
     public static String stringifyData(String key, Object data) {
+        if (data == null) {
+            return "";
+        }
         if (key.equals("town")) {
             Town town = (Town) data;
             return town.getName();
@@ -331,9 +329,8 @@ public class CustomMenu {
     }
 
     public static String replaceVariables(Civilian civilian, ItemStack clickedItem, String actionString) {
-        if (clickedItem != null && clickedItem.getItemMeta() != null) {
-            actionString = replacePlaceholder(actionString, "itemName",
-                    clickedItem.getItemMeta().getDisplayName());
+        if (clickedItem != null) {
+            actionString = replacePlaceholder(actionString, "itemName", getItemDisplayName(clickedItem));
         }
         return replaceVariables(civilian, actionString);
     }
@@ -356,6 +353,14 @@ public class CustomMenu {
         }
         return actionString.replaceAll("\\$" + Pattern.quote(key) + "\\$",
                 Matcher.quoteReplacement(replaceString));
+    }
+
+    private static String getItemDisplayName(ItemStack itemStack) {
+        if (itemStack == null || itemStack.getItemMeta() == null ||
+                itemStack.getItemMeta().getDisplayName() == null) {
+            return "";
+        }
+        return ChatColor.stripColor(itemStack.getItemMeta().getDisplayName());
     }
 
     public void onCloseMenu(Civilian civilian, Inventory inventory) {
