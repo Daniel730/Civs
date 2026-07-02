@@ -20,6 +20,8 @@ softdepend:
 - WitherAC
 - Reflex
 - Pl3xMap
+- dynmap
+- WorldEdit
 commands:
   cv:
     aliases: ['township', 'townships', 'towns', 'town', 'to', 'hs', 'towny', 'fa', 'f', 'faction']
@@ -56,4 +58,4 @@ permissions:
   civs.streaming:
     description: Hides coords and other identifying info for streamers
     default: false
-loadafter: [Vault, PlaceholderAPI, MMOItems]
+loadafter: [Vault, PlaceholderAPI, MMOItems, dynmap, WorldEdit]
