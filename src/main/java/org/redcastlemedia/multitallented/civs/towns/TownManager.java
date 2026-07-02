@@ -448,12 +448,28 @@ public class TownManager {
     public Town getInviteTown(UUID uuid) {
         return invites.get(uuid);
     }
+    public boolean hasAvailableHousing(Town town, UUID uuid) {
+        TownType townType = (TownType) ItemManager.getInstance().getItemType(town.getType());
+        if (townType.getEffects().containsKey(HousingEffect.HOUSING_EXCEPT)) {
+            return true;
+        }
+        Player player = Bukkit.getPlayer(uuid);
+        if (player != null && Civs.perm != null && Civs.perm.has(player, Constants.ADMIN_PERMISSION)) {
+            return true;
+        }
+        return town.getPopulation() < town.getHousing();
+    }
+
     public boolean acceptInvite(UUID uuid) {
         if (!invites.containsKey(uuid)) {
             return false;
         }
 
         Town town = invites.get(uuid);
+
+        if (!hasAvailableHousing(town, uuid)) {
+            return false;
+        }
 
         PlayerAcceptsTownInviteEvent event = new PlayerAcceptsTownInviteEvent(uuid, town);
         Bukkit.getPluginManager().callEvent(event);

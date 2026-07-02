@@ -7,8 +7,11 @@ import org.bukkit.entity.Player;
 import org.redcastlemedia.multitallented.civs.Civs;
 import org.redcastlemedia.multitallented.civs.ConfigManager;
 import org.redcastlemedia.multitallented.civs.localization.LocaleManager;
+import org.redcastlemedia.multitallented.civs.items.ItemManager;
+import org.redcastlemedia.multitallented.civs.regions.effects.HousingEffect;
 import org.redcastlemedia.multitallented.civs.towns.Town;
 import org.redcastlemedia.multitallented.civs.towns.TownManager;
+import org.redcastlemedia.multitallented.civs.towns.TownType;
 import org.redcastlemedia.multitallented.civs.util.Util;
 
 import java.util.UUID;
@@ -46,6 +49,9 @@ public class AcceptInviteCommand extends CivCommand {
                             ).replace("$1", player.getDisplayName()).replace("$2", town.getName()));
                         }
                     }
+                } else if (!townManager.hasAvailableHousing(town, player.getUniqueId())) {
+                    player.sendMessage(Civs.getPrefix() + localeManager.getTranslation(player,
+                            "not-enough-housing"));
                 } else {
                     player.sendMessage(Civs.getPrefix() + localeManager.getTranslation(player,
                             "no-invite"));
