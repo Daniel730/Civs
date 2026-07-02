@@ -32,7 +32,7 @@ public class HousingEffect implements RegionCreatedListener, DestroyRegionListen
         }
         if (town != null && town.getHousing() > amount) {
             town.setHousing(town.getHousing() - amount);
-            TownManager.getInstance().saveTown(town);
+            TownManager.getInstance().saveTownUrgent(town);
         }
     }
 
@@ -48,7 +48,7 @@ public class HousingEffect implements RegionCreatedListener, DestroyRegionListen
         }
         if (town != null) {
             town.setHousing(town.getHousing() + amount);
-            TownManager.getInstance().saveTown(town);
+            TownManager.getInstance().saveTownUrgent(town);
         }
     }
 }

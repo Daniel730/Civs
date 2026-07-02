@@ -509,6 +509,11 @@ public class TownManager {
         needsSaving.add(town);
     }
 
+    public void saveTownUrgent(Town town) {
+        needsSaving.removeIf(t -> t.equals(town));
+        saveTownNow(town);
+    }
+
     public boolean recalculateHousingAndVillagers(Town town) {
         int housingCount = 0;
         int villagerCount = 0;
