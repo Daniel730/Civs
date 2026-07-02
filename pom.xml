@@ -102,7 +102,11 @@
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
-            <version>5.14.2</version>
+            <!-- 5.14.2 bundled Byte Buddy 1.15.x, which does not recognize the Java 25
+                 class file version and throws "Java 25 (69) is not supported by the
+                 current version of Byte Buddy". 5.23.0 bundles Byte Buddy 1.17.7, which
+                 officially supports Java 25. -->
+            <version>5.23.0</version>
             <scope>test</scope>
         </dependency>
 
@@ -314,12 +318,12 @@
                 <artifactId>maven-surefire-plugin</artifactId>
                 <version>3.2.5</version>
                 <configuration>
-                    <!-- PHASE 0: legacy Bukkit-mock test sources (WorldImpl, etc.) are not yet
-                         updated for the paper-api 26.1.2 interfaces, so tests are skipped for now.
-                         Use -Dmaven.test.skip=true to also skip test *compilation*, since
-                         -DskipTests alone only skips running them. Migrating to MockBukkit is
-                         tracked for Phase 1. -->
-                    <skipTests>true</skipTests>
+                    <!-- Legacy Bukkit-mock test sources (WorldImpl, etc.) have been updated to
+                         implement the paper-api 26.1.2 interfaces, so tests run by default again.
+                         Use -DskipTests=true (or -Dmaven.test.skip=true to also skip compilation)
+                         to skip them locally if needed. MockBukkit was considered as a replacement
+                         for the manual mocks, but mockbukkit-v26.1 is not yet published to Maven
+                         Central (only WIP/unreleased as of this migration), so it was not adopted. -->
                     <argLine>--add-opens java.base/java.lang=ALL-UNNAMED --add-opens java.logging/java.util.logging=ALL-UNNAMED</argLine>
                 </configuration>
             </plugin>
