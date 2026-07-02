@@ -79,8 +79,12 @@ vcs.xml
 ide.general.xml
 /dependency-reduced-pom.xml
 
-# Cursor / local build artifacts
-.cursor/
+# Cursor IDE state (project skills/rules are tracked)
+.cursor/*
+!.cursor/skills/
+!.cursor/skills/**
+!.cursor/rules/
+!.cursor/rules/**
 compile-errors.txt
 lib/
 pom-fix.patch

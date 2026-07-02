@@ -1,0 +1,16 @@
+---
+description: YAML config rules for Civs server packs and item-types
+globs: Civs_servidor/**/*.yml,**/item-types/**
+alwaysApply: false
+---
+
+# Civs YAML rules
+
+- **Preserve user values** in `Civs_servidor/` — do not overwrite custom prices, names, or enabled flags without reason.
+- Deploy edits to **`Civs_servidor/`** first; sync to `src/main/java/resources/hybrid/` only when changing bundled defaults.
+- Farm build requirements: use **`WATER`** in YAML (not `CAULDRON`) unless item-type aliases exist; code maps both for scans.
+- Verify **`groups`** includes `farm` (or correct group) for farm item-types.
+- Keep **`enabled: true`** on active server item-types; commented blocks in `Civs/` bundle are not authoritative.
+- Menu actions: use `$region$`, `$town$`, `$uuid$` placeholders; they must resolve via `replaceVariables` before `UUID.fromString`.
+- Plot item-types: `effects` must include `plot` for rename/sell plot workflows.
+- Do not commit corrupted YAML (full-line `#` comment damage); fix encoding when copying packs.

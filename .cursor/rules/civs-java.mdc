@@ -1,0 +1,19 @@
+---
+description: Java conventions for Civs plugin source (Paper 26.1.2)
+globs: src/main/java/**/*.java
+alwaysApply: false
+---
+
+# Civs Java rules
+
+- Match existing style: Lombok where used, same naming, minimal diff.
+- **No NMS** — Paper API only; hooks via optional plugin APIs.
+- **Clone shared maps** when copying RegionType effects or other templates into instances.
+- **Main thread** for all Bukkit API (world, entities, inventory, events).
+- **Async only** for file I/O (`AsyncFileWriter`); sync save when data must be consistent before next tick.
+- **Adventure / Paper native** for chat and action bar — not bungee `adventure-platform-bukkit`.
+- Dynamic menu collections: prefer **TreeMap** (sorted keys) or **LinkedHashSet** (stable order), not HashMap/HashSet iteration for slot assignment.
+- Call `CustomMenu.replaceVariables` when building menu actions and submenu URLs.
+- Region display: use `Region.getDisplayName(player)` in menus, not raw type name, when showing a placed region.
+- Commands: `@CivsCommand(keys = { "..." })` extending `CivCommand`; no manual `plugin.yml` subcommand entries needed.
+- Do not add dependencies without noting Phase 1 risks in `pom.xml` comments.

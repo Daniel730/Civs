@@ -1,0 +1,14 @@
+---
+description: Git and build workflow for Civs Paper migration
+alwaysApply: true
+---
+
+# Civs build & git
+
+- Branch: **`paper-26.1.2-migration`** → `origin` https://github.com/Daniel730/Civs
+- Maven: `C:\Users\Danie\tools\apache-maven-3.9.10\bin\mvn.cmd`
+- **Separate commits** per logical fix/feature; imperative message, match repo style.
+- Run **`mvn test`** before push when changing Java or tests.
+- Commit **`.cursor/skills/`** and **`.cursor/rules/`** (project brain); do not commit other `.cursor/` IDE state.
+- Server configs: edit **`Civs_servidor/`**, not `Civs/` bundle, for live server work.
+- Push after tests pass; user validates on Linux server.
