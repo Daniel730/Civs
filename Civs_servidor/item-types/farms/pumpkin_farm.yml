@@ -16,7 +16,7 @@ pre-reqs:
 build-reqs:
   - g:fencegate*1
   - g:fence*16
-  - CAULDRON*1
+  - WATER*1
   - PUMPKIN*10
 
 towns:

@@ -15,7 +15,7 @@ pre-reqs:
 
 build-reqs:
   - g:fence*9
-  - CAULDRON*25
+  - WATER*25
   - g:primary*25
 
 towns:

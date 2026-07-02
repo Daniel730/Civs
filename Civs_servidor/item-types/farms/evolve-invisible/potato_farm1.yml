@@ -17,7 +17,7 @@ pre-reqs:
 build-reqs:
   - g:fencegate*1
   - g:fence*16
-  - CAULDRON*1
+  - WATER*1
   - FARMLAND*24
 
 towns:

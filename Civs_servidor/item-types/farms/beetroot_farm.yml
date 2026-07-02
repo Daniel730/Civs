@@ -15,7 +15,7 @@ pre-reqs:
 build-reqs:
   - g:fencegate*1
   - g:fence*16
-  - CAULDRON*1
+  - WATER*1
   - BEETROOTS*10
 
 towns:

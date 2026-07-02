@@ -14,7 +14,7 @@ build-reqs:
  - g:fencegate*1
  - g:fence*43
  - g:roof*42
- - CAULDRON*1
+ - WATER*1
  - CHEST*2
  - HAY_BLOCK*2
 

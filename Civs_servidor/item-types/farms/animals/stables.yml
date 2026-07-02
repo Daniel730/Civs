@@ -22,7 +22,7 @@ towns:
 build-reqs:
   - g:fencegate*1
   - g:fence*22
-  - CAULDRON*1
+  - WATER*1
   - CHEST*2
   - HAY_BLOCK*4
 
