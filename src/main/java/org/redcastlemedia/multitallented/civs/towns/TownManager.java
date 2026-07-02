@@ -771,7 +771,13 @@ public class TownManager {
 
 
         String townTypeLocalName = townType.getDisplayName(player);
-        if (handleTownRequirementRegions(player, townType, townTypeLocalName)) {
+        Location scanLocation = player.getLocation();
+        if (town != null) {
+            scanLocation = town.getLocation();
+        } else if (!intersectTowns.isEmpty()) {
+            scanLocation = intersectTowns.get(0).getLocation();
+        }
+        if (handleTownRequirementRegions(player, townType, townTypeLocalName, scanLocation)) {
             return;
         }
 
@@ -916,11 +922,12 @@ public class TownManager {
     }
 
     @SuppressWarnings("unchecked")
-    private boolean handleTownRequirementRegions(Player player, TownType townType, String townTypeLocalName) {
+    private boolean handleTownRequirementRegions(Player player, TownType townType, String townTypeLocalName,
+                                                   Location scanLocation) {
         LocaleManager localeManager = LocaleManager.getInstance();
         if (!townType.getReqs().isEmpty()) {
             HashMap<String, Integer> checkList = (HashMap<String, Integer>) townType.getReqs().clone();
-            Set<Region> regions = RegionManager.getInstance().getRegionsXYZ(player.getLocation(), townType.getBuildRadius(),
+            Set<Region> regions = RegionManager.getInstance().getRegionsXYZ(scanLocation, townType.getBuildRadius(),
                     townType.getBuildRadiusY(), townType.getBuildRadius(), false);
             for (Region region : regions) {
                 RegionType regionType = (RegionType) ItemManager.getInstance().getItemType(region.getType());
@@ -936,7 +943,9 @@ public class TownManager {
                 for (Map.Entry<String, Integer> entry : checkList.entrySet()) {
                     regionString.append(entry.getKey()).append(":").append(entry.getValue()).append(",");
                 }
-                regionString.substring(0, regionString.length() - 1);
+                if (regionString.length() > 0) {
+                    regionString.setLength(regionString.length() - 1);
+                }
                 params.put("regionList", regionString.toString());
                 MenuManager.clearHistory(player.getUniqueId());
                 MenuManager.getInstance().openMenu(player, "region-type-list", params);

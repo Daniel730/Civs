@@ -481,6 +481,31 @@ public class TownTests extends TestUtil {
     }
 
     @Test
+    public void townUpgradeShouldDetectFarmRequirementFromTownCenter() {
+        loadTownTypeHamlet2();
+        loadTownTypeTribeWithFarmRequirement();
+        loadRegionTypeFarmGroup();
+        Location townCenter = new Location(world, 0.5, 0.5, 0.5);
+        Town town = loadTown("test", "hamlet2", townCenter);
+        town.getRawPeople().put(TestUtil.player.getUniqueId(), Constants.OWNER);
+        town.setPower(500);
+        Government government = new Government("DICTATORSHIP", GovernmentType.DICTATORSHIP,
+                new HashSet<>(), null, new ArrayList<>(), true);
+        addGovernmentType(government);
+        town.setGovernmentType("DICTATORSHIP");
+
+        RegionsTests.createNewRegion("wheat_farm", TestUtil.player.getUniqueId(),
+                new Location(world, -30.5, 0.5, 30.5));
+
+        Location playerLocation = new Location(world, 70.5, 0.5, 70.5);
+        when(TestUtil.player.getLocation()).thenReturn(playerLocation);
+
+        TownManager.getInstance().placeTown(TestUtil.player, "test", town);
+
+        assertEquals("tribe", TownManager.getInstance().getTown("test").getType());
+    }
+
+    @Test
     public void townMaxPowerShouldBeAdjustedOnCreation() {
         loadTownTypeTribe();
         RegionsTests.loadRegionTypeCobble();
@@ -538,6 +563,33 @@ public class TownTests extends TestUtil {
         config.set("max-power", 500);
         ItemManager.getInstance().loadTownType(config, "tribe");
     }
+    public static void loadTownTypeTribeWithFarmRequirement() {
+        FileConfiguration config = new YamlConfiguration();
+        config.set("name", "Tribe");
+        config.set("type", "town");
+        config.set("child", "hamlet2");
+        config.set("build-radius", 80);
+        ArrayList<String> buildReqs = new ArrayList<>();
+        buildReqs.add("farm:1");
+        config.set("build-reqs", buildReqs);
+        config.set("power", 100);
+        config.set("max-power", 500);
+        ItemManager.getInstance().loadTownType(config, "tribe");
+    }
+
+    public static void loadRegionTypeFarmGroup() {
+        FileConfiguration config = new YamlConfiguration();
+        config.set("max", 1);
+        ArrayList<String> groups = new ArrayList<>();
+        groups.add("farm");
+        config.set("groups", groups);
+        ArrayList<String> effects = new ArrayList<>();
+        effects.add("block_build");
+        config.set("build-radius", 5);
+        config.set("effects", effects);
+        ItemManager.getInstance().loadRegionType(config, "wheat_farm");
+    }
+
     public static void loadTownTypeTribe2() {
         FileConfiguration config = new YamlConfiguration();
         config.set("name", "Tribe");
