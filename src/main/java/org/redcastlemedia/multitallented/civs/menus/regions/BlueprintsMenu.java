@@ -2,6 +2,7 @@ package org.redcastlemedia.multitallented.civs.menus.regions;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.TreeMap;
 import java.util.logging.Level;
 
 import org.bukkit.Bukkit;
@@ -44,7 +45,7 @@ public class BlueprintsMenu extends CustomMenu {
         ItemManager.getInstance().enforceMaxItemLimits(civilian);
         CivilianManager.getInstance().saveCivilian(civilian);
         data.put(Constants.ITEMS_IN_VIEW, new HashMap<String, Integer>());
-        Map<String, Integer> modifiedStashMap = new HashMap<>();
+        Map<String, Integer> modifiedStashMap = new TreeMap<>();
         for (Map.Entry<String, Integer> entry : stashItems.entrySet()) {
             CivItem civItem = ItemManager.getInstance().getItemType(entry.getKey());
             if (civItem != null && (civItem.getItemType() == CivItem.ItemType.REGION
@@ -54,7 +55,7 @@ public class BlueprintsMenu extends CustomMenu {
         }
 
         data.put("stashItems", modifiedStashMap);
-        int maxPage = (int) Math.ceil((double) stashItems.keySet().size() / (double) itemsPerPage.get("blueprints"));
+        int maxPage = (int) Math.ceil((double) modifiedStashMap.size() / (double) itemsPerPage.get("blueprints"));
         maxPage = maxPage > 0 ? maxPage - 1 : 0;
         data.put(Constants.MAX_PAGE, maxPage);
 
