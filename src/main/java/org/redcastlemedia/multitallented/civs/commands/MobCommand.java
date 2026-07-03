@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
+import org.bukkit.Location;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.redcastlemedia.multitallented.civs.Civs;
@@ -58,8 +59,13 @@ public class MobCommand extends CivCommand {
                 return true;
             }
             String display = CustomMobManager.getInstance().getMob(mobId).getDisplay();
+            Location loc = spawned.getLocation();
             player.sendMessage(Civs.getPrefix() + LocaleManager.getInstance().getTranslation(player, "custom-mob-spawned")
-                    .replace("$1", LocaleManager.getInstance().getTranslation(player, display)));
+                    .replace("$1", LocaleManager.getInstance().getTranslation(player, display))
+                    .replace("$2", loc.getWorld().getName())
+                    .replace("$3", String.valueOf(loc.getBlockX()))
+                    .replace("$4", String.valueOf(loc.getBlockY()))
+                    .replace("$5", String.valueOf(loc.getBlockZ())));
             return true;
         }
         player.sendMessage(Civs.getPrefix() + LocaleManager.getInstance().getTranslation(player, "custom-mob-usage"));

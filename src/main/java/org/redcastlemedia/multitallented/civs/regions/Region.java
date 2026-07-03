@@ -741,13 +741,16 @@ public class Region {
             return true;
         }
         Location location = getLocation();
-        CVInventory cvInventory = UnloadedInventoryHandler.getInstance().getChestInventory(location);
+        CVInventory cvInventory = RegionChestUtil.getInputChest(this);
         for (RegionUpkeep regionUpkeep : regionType.getUpkeeps()) {
+            List<List<CVItem>> consumableReagents = Util.consumableReagents(regionUpkeep.getReagents());
+            List<List<CVItem>> toolRequirements = Util.mergeToolRequirements(
+                    regionUpkeep.getReagents(), regionUpkeep.getTools());
             if (
                     (ignoreReagentsAndTools ||
-                    (Util.containsItems(regionUpkeep.getReagents(), cvInventory)) &&
-                            Util.containsTools(regionUpkeep.getTools(), cvInventory) ) &&
-                    Util.containsTools(regionUpkeep.getInputs(), cvInventory)
+                    (Util.containsItems(consumableReagents, cvInventory)) &&
+                            Util.containsTools(toolRequirements, cvInventory) ) &&
+                    Util.containsItems(regionUpkeep.getInputs(), cvInventory)
             ) {
                 if ((!ignoreReagentsAndTools && regionUpkeep.getPowerReagent() > 0) || regionUpkeep.getPowerInput() > 0) {
                     Town town = TownManager.getInstance().getTownAt(location);
@@ -773,12 +776,15 @@ public class Region {
             return false;
         }
         RegionUpkeep regionUpkeep = regionType.getUpkeeps().get(upkeepIndex);
-        CVInventory cvInventory = UnloadedInventoryHandler.getInstance().getChestInventory(getLocation());
+        CVInventory cvInventory = RegionChestUtil.getInputChest(this);
+        List<List<CVItem>> consumableReagents = Util.consumableReagents(regionUpkeep.getReagents());
+        List<List<CVItem>> toolRequirements = Util.mergeToolRequirements(
+                regionUpkeep.getReagents(), regionUpkeep.getTools());
 
         if (
                 (ignoreReagentsAndTools ||
-                        (Util.containsItems(regionUpkeep.getReagents(), cvInventory)) &&
-                                Util.containsTools(regionUpkeep.getTools(), cvInventory) ) &&
+                        (Util.containsItems(consumableReagents, cvInventory)) &&
+                                Util.containsTools(toolRequirements, cvInventory) ) &&
                         Util.containsItems(regionUpkeep.getInputs(), cvInventory)
         ) {
             return true;
@@ -828,41 +834,45 @@ public class Region {
 
         Location location = getLocation();
         boolean hadUpkeep = false;
-        CVInventory chestInventory = null;
+        CVInventory inputChest = null;
         boolean hasItemUpkeep = false;
         int i=0;
         for (RegionUpkeep regionUpkeep : regionType.getUpkeeps()) {
-            boolean emptyUpkeep = regionUpkeep.getInputs().isEmpty() && regionUpkeep.getReagents().isEmpty() &&
-                    regionUpkeep.getTools().isEmpty() && regionUpkeep.getOutputs().isEmpty() &&
+            List<List<CVItem>> consumableReagents = Util.consumableReagents(regionUpkeep.getReagents());
+            List<List<CVItem>> toolRequirements = Util.mergeToolRequirements(
+                    regionUpkeep.getReagents(), regionUpkeep.getTools());
+            boolean emptyUpkeep = consumableReagents.isEmpty() && toolRequirements.isEmpty() &&
+                    regionUpkeep.getInputs().isEmpty() && regionUpkeep.getOutputs().isEmpty() &&
                     regionUpkeep.getPowerOutput() == 0 && regionUpkeep.getPowerInput() == 0 &&
-                    regionUpkeep.getPayout() == 0 &&
+                    regionUpkeep.getPowerReagent() == 0 &&
+                    regionUpkeep.getPayout() == 0 && regionUpkeep.getBankPayout() == 0 &&
                     (regionUpkeep.getCommand() == null || regionUpkeep.getCommand().isEmpty());
             if (emptyUpkeep || !hasUpkeepPerm(regionUpkeep)) {
                 continue;
             }
 
-            boolean needsItems = !regionUpkeep.getReagents().isEmpty() || !regionUpkeep.getTools().isEmpty() ||
+            boolean needsItems = !consumableReagents.isEmpty() || !toolRequirements.isEmpty() ||
                     !regionUpkeep.getInputs().isEmpty();
 
             if (needsItems) {
                 failingUpkeeps.add(i);
             }
 
-            if (chestInventory == null && (needsItems || !regionUpkeep.getOutputs().isEmpty()) &&
+            if (inputChest == null && (needsItems || !regionUpkeep.getOutputs().isEmpty()) &&
                     RegionManager.getInstance().hasRegionChestChanged(this)) {
-                chestInventory = UnloadedInventoryHandler.getInstance().getChestInventory(getLocation());
+                inputChest = RegionChestUtil.getInputChest(this);
                 RegionManager.getInstance().addCheckedRegion(this);
             }
-            if (needsItems && (chestInventory == null || !chestInventory.isValid())) {
+            if (needsItems && (inputChest == null || !inputChest.isValid())) {
                 if (ConfigManager.getInstance().isWarningLogger()) {
-                    Civs.logger.log(Level.WARNING, "{0} has an invalid chestInventory {1}x {2}y {3}z",
+                    Civs.logger.log(Level.WARNING, "{0} has an invalid input chest {1}x {2}y {3}z",
                             new Object[] {type, x, y, z});
                 }
                 continue;
             }
-            boolean containsReagents = !needsItems || Util.containsItems(regionUpkeep.getReagents(), chestInventory);
-            boolean containsTools = !needsItems || Util.containsTools(regionUpkeep.getTools(), chestInventory);
-            boolean containsInputs = !needsItems || Util.containsItems(regionUpkeep.getInputs(), chestInventory);
+            boolean containsReagents = !needsItems || Util.containsItems(consumableReagents, inputChest);
+            boolean containsTools = !needsItems || Util.containsTools(toolRequirements, inputChest);
+            boolean containsInputs = !needsItems || Util.containsItems(regionUpkeep.getInputs(), inputChest);
             boolean hasReagents = !needsItems || (containsReagents && containsTools && containsInputs);
             if (!hasReagents) {
                 i++;
@@ -871,8 +881,9 @@ public class Region {
 
             boolean emptyOutput = regionUpkeep.getOutputs().isEmpty();
             ItemStack[] output = Util.getItems(regionUpkeep.getOutputs());
-            boolean fullChest = chestInventory == null ||
-                    !chestInventory.checkAddItems(output).isEmpty();
+            CVInventory outputChest = RegionChestUtil.findOutputChest(this, output);
+            boolean fullChest = outputChest == null ||
+                    (!emptyOutput && !outputChest.checkAddItems(output).isEmpty());
             if (fullChest) {
                 failingUpkeeps.remove(i);
             }
@@ -914,26 +925,30 @@ public class Region {
                 }
             }
             hasItemUpkeep = true;
-            if (chestInventory != null) {
+            if (inputChest != null) {
                 if (ConfigManager.getInstance().isDebugLog()) {
                     DebugLogger.incrementRegion(this);
                     DebugLogger.inventoryModifications++;
                 }
-                Util.removeItems(regionUpkeep.getInputs(), chestInventory);
-                Util.damageItems(regionUpkeep.getTools(), chestInventory);
-                chestInventory.addItem(output);
+                Util.removeItems(regionUpkeep.getInputs(), inputChest);
+                Util.removeItems(consumableReagents, inputChest);
+                Util.damageItems(toolRequirements, inputChest);
 
-                containsReagents = Util.containsItems(regionUpkeep.getReagents(), chestInventory);
-                containsTools = Util.containsTools(regionUpkeep.getTools(), chestInventory);
-                containsInputs = Util.containsItems(regionUpkeep.getInputs(), chestInventory);
+                containsReagents = Util.containsItems(consumableReagents, inputChest);
+                containsTools = Util.containsTools(toolRequirements, inputChest);
+                containsInputs = Util.containsItems(regionUpkeep.getInputs(), inputChest);
                 if (containsReagents && containsTools && containsInputs) {
                     failingUpkeeps.remove(i);
                 }
             }
+            if (outputChest != null && output.length > 0) {
+                outputChest.addItem(output);
+            }
             if (regionUpkeep.getExp() > 0) {
                 exp += regionUpkeep.getExp();
             }
-            if (regionUpkeep.getPayout() != 0 || regionUpkeep.getPowerInput() != 0 ||
+            if (regionUpkeep.getPayout() != 0 || regionUpkeep.getBankPayout() != 0 ||
+                    regionUpkeep.getPowerInput() != 0 ||
                     regionUpkeep.getPowerOutput() != 0) {
                 upkeepHistory.put(System.currentTimeMillis(), i);
             }
@@ -983,6 +998,16 @@ public class Region {
     }
 
     private boolean runRegionUpkeepPayout(RegionUpkeep regionUpkeep) {
+        if (regionUpkeep.getBankPayout() != 0) {
+            Town town = TownManager.getInstance().getTownAt(getLocation());
+            if (town == null) {
+                return false;
+            }
+            double bankPayout = applyTownPayoutBuff(regionUpkeep.getBankPayout(), town);
+            town.setBankAccount(town.getBankAccount() + bankPayout);
+            TownManager.getInstance().saveTown(town);
+            return true;
+        }
         if (regionUpkeep.getPayout() != 0 && Civs.econ != null) {
             double payout = regionUpkeep.getPayout();
             Town town = TownManager.getInstance().getTownAt(getLocation());

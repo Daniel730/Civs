@@ -969,6 +969,9 @@ public class ProtectionHandler implements Listener {
 
     @EventHandler(ignoreCancelled = true, priority = EventPriority.LOW)
     public void onMobSpawn(CreatureSpawnEvent event) {
+        if (org.redcastlemedia.multitallented.civs.mobs.CustomMobManager.isPluginSpawning()) {
+            return;
+        }
         if ((!(event.getEntity() instanceof Monster) && !(event.getEntity() instanceof Phantom) && !(event.getEntity() instanceof Slime)) ||
                 event.getSpawnReason() == CreatureSpawnEvent.SpawnReason.INFECTION ||
                 event.getSpawnReason() == CreatureSpawnEvent.SpawnReason.SPAWNER ||

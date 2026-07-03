@@ -35,8 +35,8 @@ effects:
 period: 300 #5 minutes
 upkeep:
   0:
-    reagents:
-    - STONE_HOE
+    tools:
+    - g:hoe
     output:
     - WHEAT*20
     - DEAD_BUSH%50,WHEAT%50

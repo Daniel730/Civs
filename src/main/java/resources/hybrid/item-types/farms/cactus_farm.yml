@@ -23,7 +23,7 @@ effects:
 period: 30
 upkeep:
   0:
-    reagents:
-      - SHEARS
+    tools:
+    - SHEARS
     output:
       - CACTUS*3

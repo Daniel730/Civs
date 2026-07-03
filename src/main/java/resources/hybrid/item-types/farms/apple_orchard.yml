@@ -34,7 +34,7 @@ effects:
 period: 300 #5 minutes
 upkeep:
   0:
-    reagents:
+    tools:
     - SHEARS
     output:
     - APPLE*3

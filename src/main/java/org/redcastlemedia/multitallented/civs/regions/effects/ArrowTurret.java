@@ -23,6 +23,7 @@ import org.redcastlemedia.multitallented.civs.items.CVInventory;
 import org.redcastlemedia.multitallented.civs.items.UnloadedInventoryHandler;
 import org.redcastlemedia.multitallented.civs.regions.Region;
 import org.redcastlemedia.multitallented.civs.regions.RegionType;
+import org.redcastlemedia.multitallented.civs.mobs.CustomMobKeys;
 import org.redcastlemedia.multitallented.civs.spells.effects.DamageEffect;
 import org.redcastlemedia.multitallented.civs.util.Util;
 
@@ -233,6 +234,9 @@ public class ArrowTurret implements Listener {
     }
 
     private static boolean isHostileMob(Entity entity) {
+        if (entity instanceof LivingEntity living && CustomMobKeys.readMobId(living) != null) {
+            return false;
+        }
         return entity instanceof Monster || entity instanceof Phantom || entity instanceof Slime;
     }
 

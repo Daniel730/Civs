@@ -585,6 +585,41 @@ public final class Util {
         return true;
     }
 
+    /** Consumable reagents only (non-durable materials). */
+    public static List<List<CVItem>> consumableReagents(List<List<CVItem>> reagents) {
+        List<List<CVItem>> consumables = new ArrayList<>();
+        for (List<CVItem> orGroup : reagents) {
+            List<CVItem> consumableOr = new ArrayList<>();
+            for (CVItem item : orGroup) {
+                if (item.getMat().getMaxDurability() == 0) {
+                    consumableOr.add(item);
+                }
+            }
+            if (!consumableOr.isEmpty()) {
+                consumables.add(consumableOr);
+            }
+        }
+        return consumables;
+    }
+
+    /** Tools plus durable items listed under reagents (hoes, shears, etc.). */
+    public static List<List<CVItem>> mergeToolRequirements(List<List<CVItem>> reagents,
+            List<List<CVItem>> tools) {
+        List<List<CVItem>> merged = new ArrayList<>(tools);
+        for (List<CVItem> orGroup : reagents) {
+            List<CVItem> durableOr = new ArrayList<>();
+            for (CVItem item : orGroup) {
+                if (item.getMat().getMaxDurability() > 0) {
+                    durableOr.add(item);
+                }
+            }
+            if (!durableOr.isEmpty()) {
+                merged.add(durableOr);
+            }
+        }
+        return merged;
+    }
+
     public static boolean containsTools(List<List<CVItem>> req, CVInventory inv) {
         if (req.isEmpty()) {
             return true;

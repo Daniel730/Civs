@@ -15,6 +15,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.attribute.Attribute;
+import org.bukkit.block.Block;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Entity;
@@ -32,8 +33,14 @@ import org.reflections.scanners.ResourcesScanner;
 @CivsSingleton(priority = CivsSingleton.SingletonLoadPriority.HIGH)
 public class CustomMobManager {
     private static CustomMobManager instance;
+    private static final ThreadLocal<Boolean> PLUGIN_SPAWN = ThreadLocal.withInitial(() -> false);
     private final Map<String, CustomMobDefinition> mobs = new HashMap<>();
     private final Random random = new Random();
+
+    /** True while Civs is spawning a custom mob (bypasses deny_mob_spawn protection). */
+    public static boolean isPluginSpawning() {
+        return Boolean.TRUE.equals(PLUGIN_SPAWN.get());
+    }
 
     public static CustomMobManager getInstance() {
         if (instance == null) {
@@ -76,13 +83,44 @@ public class CustomMobManager {
         if (definition == null) {
             return null;
         }
-        Entity entity = location.getWorld().spawnEntity(location, definition.getEntityType());
+        Location spawnLocation = findSafeSpawn(location);
+        PLUGIN_SPAWN.set(true);
+        Entity entity;
+        try {
+            entity = spawnLocation.getWorld().spawnEntity(spawnLocation, definition.getEntityType());
+        } finally {
+            PLUGIN_SPAWN.set(false);
+        }
         if (!(entity instanceof LivingEntity living)) {
             entity.remove();
             return null;
         }
         applyDefinition(living, definition);
+        living.setRemoveWhenFarAway(false);
+        living.setPersistent(true);
         return living;
+    }
+
+    private Location findSafeSpawn(Location origin) {
+        Location base = origin.clone();
+        base.setX(Math.floor(base.getX()) + 0.5);
+        base.setZ(Math.floor(base.getZ()) + 0.5);
+        for (int yOffset = 0; yOffset <= 2; yOffset++) {
+            Location candidate = base.clone().add(0, yOffset, 0);
+            if (isSpawnable(candidate)) {
+                return candidate;
+            }
+        }
+        return base.clone().add(0, 1, 0);
+    }
+
+    private static boolean isSpawnable(Location location) {
+        if (location.getWorld() == null) {
+            return false;
+        }
+        Block feet = location.getBlock();
+        Block head = feet.getRelative(0, 1, 0);
+        return !feet.getType().isSolid() && !head.getType().isSolid();
     }
 
     void applyDefinition(LivingEntity living, CustomMobDefinition definition) {

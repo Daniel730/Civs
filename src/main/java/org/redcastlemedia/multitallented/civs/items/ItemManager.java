@@ -699,9 +699,10 @@ public class ItemManager {
                     outputs.add(CVItem.createListFromString(output));
                 }
                 double payout = config.getDouble("upkeep." + key + ".payout", 0);
+                double bankPayout = config.getDouble("upkeep." + key + ".bank-payout", 0);
                 double exp = config.getDouble("upkeep." + key + ".exp", 0);
                 String perm = config.getString("upkeep." + key + ".perm", "");
-                RegionUpkeep regionUpkeep = new RegionUpkeep(reagents, tools, inputs, outputs, payout, exp, perm);
+                RegionUpkeep regionUpkeep = new RegionUpkeep(reagents, tools, inputs, outputs, payout, bankPayout, exp, perm);
                 regionUpkeep.setPowerReagent(config.getInt("upkeep." + key + ".power-reagent", 0));
                 regionUpkeep.setPowerInput(config.getInt("upkeep." + key + ".power-input", 0));
                 regionUpkeep.setPowerOutput(config.getInt("upkeep." + key + ".power-output", 0));
