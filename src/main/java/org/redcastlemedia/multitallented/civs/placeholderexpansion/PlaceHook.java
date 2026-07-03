@@ -13,6 +13,7 @@ import org.redcastlemedia.multitallented.civs.civilians.Bounty;
 import org.redcastlemedia.multitallented.civs.civilians.ChatChannel;
 import org.redcastlemedia.multitallented.civs.civilians.Civilian;
 import org.redcastlemedia.multitallented.civs.civilians.CivilianManager;
+import org.redcastlemedia.multitallented.civs.skills.Skill;
 import org.redcastlemedia.multitallented.civs.towns.Town;
 import org.redcastlemedia.multitallented.civs.towns.TownManager;
 import org.redcastlemedia.multitallented.civs.util.Util;
@@ -152,10 +153,41 @@ public class PlaceHook extends PlaceholderExpansion {
                 return TownManager.getInstance().getBiggestTown(civilian);
             }
             return nation;
+        } else if (identifier.startsWith("skill_")) {
+            return resolveSkillPlaceholder(civilian, identifier);
         } else {
             return "-";
         }
     }
 
+    private String resolveSkillPlaceholder(Civilian civilian, String identifier) {
+        if (identifier.endsWith("_level")) {
+            String skillKey = identifier.substring("skill_".length(), identifier.length() - "_level".length());
+            Skill skill = findSkill(civilian, skillKey);
+            return skill == null ? "0" : String.valueOf(skill.getLevel());
+        }
+        if (identifier.endsWith("_xp")) {
+            String skillKey = identifier.substring("skill_".length(), identifier.length() - "_xp".length());
+            Skill skill = findSkill(civilian, skillKey);
+            return skill == null ? "0" : String.valueOf((int) skill.getTotalExp());
+        }
+        return "0";
+    }
+
+    private Skill findSkill(Civilian civilian, String name) {
+        if (name == null || name.isEmpty()) {
+            return null;
+        }
+        Skill skill = civilian.getSkills().get(name.toLowerCase());
+        if (skill != null) {
+            return skill;
+        }
+        for (Skill current : civilian.getSkills().values()) {
+            if (current.getType().equalsIgnoreCase(name)) {
+                return current;
+            }
+        }
+        return null;
+    }
 
 }
