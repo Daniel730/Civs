@@ -1,0 +1,39 @@
+type: region
+name: Town_Shield
+shop-icon: SHIELD
+icon: SHIELD
+price: 450
+groups:
+- defense
+- shield
+level: 2
+
+pre-reqs:
+- member=hamlet:village:town:city:metropolis
+
+build-reqs:
+- g:fence*4
+- IRON_BLOCK*4
+- BEACON*1
+
+build-radius: 2
+effect-radius: 20
+
+towns:
+- hamlet
+- village
+- town
+- city
+- metropolis
+
+effects:
+- block_break
+- block_build
+- block_liquid
+- block_fire
+- power_shield:25
+
+period: 600
+upkeep:
+  0:
+    iron_ingot: 4

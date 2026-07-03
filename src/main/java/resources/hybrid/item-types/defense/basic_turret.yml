@@ -1,0 +1,35 @@
+type: region
+name: Basic_Turret
+shop-icon: DISPENSER
+icon: DISPENSER
+price: 250
+groups:
+- defense
+- turret
+level: 1
+
+pre-reqs:
+- member=settlement:hamlet:village:town:city:metropolis:outpost
+
+build-reqs:
+- g:fence*4
+- DISPENSER*1
+
+build-radius: 1
+effect-radius: 12
+
+towns:
+- settlement
+- hamlet
+- village
+- town
+- city
+- metropolis
+- outpost
+
+effects:
+- block_break
+- block_build
+- block_liquid
+- block_fire
+- damage_turret:12

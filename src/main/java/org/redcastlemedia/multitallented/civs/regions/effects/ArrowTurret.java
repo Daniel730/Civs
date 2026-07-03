@@ -32,38 +32,46 @@ import static org.redcastlemedia.multitallented.civs.util.Util.isLocationWithinS
 
 @CivsSingleton
 public class ArrowTurret implements Listener {
-    public static String KEY = "arrow_turret";
-    public static HashMap<Arrow, Integer> arrowDamages = new HashMap<>();
+    public static final String KEY = "arrow_turret";
+    public static final String DAMAGE_KEY = "damage_turret";
+    public static final HashMap<Arrow, Integer> arrowDamages = new HashMap<>();
 
     public static void getInstance() {
         Bukkit.getPluginManager().registerEvents(new ArrowTurret(), Civs.getInstance());
     }
 
-    //Shoot arrows at mobs
+    private static boolean turretsEnabled() {
+        return ConfigManager.getInstance().isUseTurrets();
+    }
+
     @EventHandler
     public void onRegionTickEvent(RegionTickEvent event) {
-        if (ConfigManager.getInstance().getDenyArrowTurretShootAtMobs() ||
-                !isLocationWithinSightOfPlayer(event.getRegion().getLocation())) {
+        if (!turretsEnabled()) {
             return;
         }
         Region region = event.getRegion();
-        if (!region.getEffects().containsKey(ArrowTurret.KEY)) {
+        RegionType regionType = event.getRegionType();
+        if (!isLocationWithinSightOfPlayer(region.getLocation())) {
             return;
         }
-        RegionType regionType = event.getRegionType();
-        Location location = region.getLocation();
 
-        for (Entity e : location.getWorld().getNearbyEntities(location, regionType.getEffectRadius(),
-                regionType.getEffectRadius(), regionType.getEffectRadius())) {
-            if ((!(e instanceof Monster) && !(e instanceof Phantom))) {
-                continue;
+        String damageVars = region.getEffects().get(DAMAGE_KEY);
+        if (damageVars != null) {
+            LivingEntity target = findHostileTarget(region, regionType);
+            if (target != null) {
+                applyDirectDamage(region, target, damageVars, false);
             }
-            LivingEntity monster = (LivingEntity) e;
-            if (monster.getLocation().distance(location) > regionType.getEffectRadius()) {
-                continue;
-            }
-            ArrowTurret.shootArrow(region, monster, region.getEffects().get(ArrowTurret.KEY), false);
-            break;
+            return;
+        }
+
+        if (ConfigManager.getInstance().getDenyArrowTurretShootAtMobs()
+                || !region.getEffects().containsKey(KEY)) {
+            return;
+        }
+
+        LivingEntity target = findHostileTarget(region, regionType);
+        if (target != null) {
+            shootArrow(region, target, region.getEffects().get(KEY), false);
         }
     }
 
@@ -72,54 +80,29 @@ public class ArrowTurret implements Listener {
     }
 
     public static void shootArrow(Region r, LivingEntity livingEntity, String vars, boolean runUpkeep) {
+        if (!turretsEnabled() || livingEntity == null) {
+            return;
+        }
         Location l = r.getLocation();
         if (!Util.isChunkLoadedAt(r.getLocation()) || !Util.isChunkLoadedAt(livingEntity.getLocation())) {
             return;
         }
-        //Check if the region has the shoot arrow effect and return arrow velocity
-        int damage = 1;
-        double speed = 0.5;
-        int spread = 12;
-        String[] parts = vars.split("\\.");
-        try {
-            damage = Integer.parseInt(parts[0]);
-        } catch (Exception e) {
+
+        TurretParams params = TurretParams.parse(vars);
+        if (params == null) {
             return;
         }
-        if (parts.length > 1) {
-            try {
-                speed = Double.parseDouble(parts[1]) / 10;
-            } catch (Exception e) {
-                return;
-            }
-        }
-        if (parts.length > 2) {
-            try {
-                spread = Integer.parseInt(parts[2]);
-            } catch (Exception e) {
-                return;
-            }
-        }
+        int damage = params.getDamagePercent();
+        double speed = params.getSpeed();
+        int spread = params.getSpread();
 
-        if (l.getBlock().getRelative(BlockFace.UP).getType() != Material.AIR ||
-                l.getBlock().getRelative(BlockFace.UP, 2).getType() != Material.AIR) {
+        if (l.getBlock().getRelative(BlockFace.UP).getType() != Material.AIR
+                || l.getBlock().getRelative(BlockFace.UP, 2).getType() != Material.AIR) {
             return;
         }
 
-        HashSet<Arrow> removeMe = new HashSet<>();
-        //clean up arrows
-        for (Arrow arrow : arrowDamages.keySet()) {
-            if (arrow.isDead() || !arrow.isValid()) {
-                removeMe.add(arrow);
-            }
-        }
-        for (Arrow arrow : removeMe) {
-            arrow.remove();
-            arrowDamages.remove(arrow);
-        }
+        purgeDeadArrows();
 
-
-        //Check if the player is invincible
         if (livingEntity instanceof Player) {
             Player player = (Player) livingEntity;
             if (player.getGameMode() != GameMode.SURVIVAL && player.getGameMode() != GameMode.ADVENTURE) {
@@ -127,19 +110,10 @@ public class ArrowTurret implements Listener {
             }
         }
 
-//            EntityDamageEvent damageEvent = new EntityDamageEvent(null, DamageCause.CUSTOM, 0);
-//            Bukkit.getPluginManager().callEvent(damageEvent);
-//            if (damageEvent.isCancelled()) {
-//                System.out.println("damage cancelled");
-//                return;
-//            }
-
-        //Check if the player owns or is a member of the region
         if (r.getPeople().containsKey(livingEntity.getUniqueId())) {
             return;
         }
 
-        //Check to see if the region has enough reagents
         if (runUpkeep && !r.runUpkeep(false)) {
             return;
         }
@@ -147,46 +121,35 @@ public class ArrowTurret implements Listener {
         CVInventory cvInventory = UnloadedInventoryHandler.getInstance().getChestInventory(l);
         cvInventory.removeItem(new ItemStack(Material.ARROW));
 
-        HashSet<Arrow> arrows = new HashSet<>();
-        for (Arrow arrow : arrowDamages.keySet()) {
-            if (arrow.isDead() || arrow.isOnGround() || !arrow.isValid()) {
-                arrows.add(arrow);
-            }
-        }
-        for (Arrow arrow : arrows) {
-            arrowDamages.remove(arrow);
-        }
+        purgeGroundedArrows();
 
-
-        //Calculate trajectory of the arrow
         Location loc = l.getBlock().getRelative(BlockFace.UP, 2).getLocation();
-        Location playerLoc = livingEntity.getEyeLocation();
+        Location targetLoc = livingEntity.getEyeLocation();
+        Vector vel = new Vector(
+                targetLoc.getX() - loc.getX(),
+                targetLoc.getY() - loc.getY(),
+                targetLoc.getZ() - loc.getZ());
 
-        Vector vel = new Vector(playerLoc.getX() - loc.getX(), playerLoc.getY() - loc.getY(), playerLoc.getZ() - loc.getZ());
-
-        //Make sure the target is not hiding behind something
-//            if (!hasCleanShot(loc, playerLoc)) {
-//                System.out.println("line of sight failed");
-//                return;
-//            }
-
-
-
-        //Location playerLoc = player.getLocation().getBlock().getRelative(BlockFace.UP).getLocation();
-        //playerLoc.setX(Math.floor(playerLoc.getX()) + 0.5);
-        //playerLoc.setY(Math.floor(playerLoc.getY()) + 0.5);
-        //playerLoc.setZ(Math.floor(playerLoc.getZ()) + 0.5);
-
-
-        //Spawn and set velocity of the arrow
-        Arrow arrow = l.getWorld().spawnArrow(loc, vel, (float) (speed), spread);
+        Arrow arrow = l.getWorld().spawnArrow(loc, vel, (float) speed, spread);
         arrowDamages.put(arrow, damage);
     }
 
     @EventHandler
     public void onPlayerInRegion(PlayerInRegionEvent event) {
-        if (event.getRegion().getEffects().containsKey(KEY)) {
-            ArrowTurret.shootArrow(event.getRegion(), event.getUuid(), event.getRegion().getEffects().get(KEY), true);
+        if (!turretsEnabled()) {
+            return;
+        }
+        Region region = event.getRegion();
+        String damageVars = region.getEffects().get(DAMAGE_KEY);
+        if (damageVars != null) {
+            Player player = Bukkit.getPlayer(event.getUuid());
+            if (player != null) {
+                applyDirectDamage(region, player, damageVars, true);
+            }
+            return;
+        }
+        if (region.getEffects().containsKey(KEY)) {
+            shootArrow(region, event.getUuid(), region.getEffects().get(KEY), true);
         }
     }
 
@@ -196,61 +159,121 @@ public class ArrowTurret implements Listener {
             return;
         }
         Entity projectile = event.getDamager();
-        if (!(projectile instanceof Arrow) || !(event.getEntity() instanceof Player)) {
+        if (!(projectile instanceof Arrow) || !(event.getEntity() instanceof LivingEntity)) {
             return;
         }
         Arrow arrow = (Arrow) projectile;
-        Player damagee = (Player) event.getEntity();
-        double maxHP = damagee.getAttribute(Attribute.MAX_HEALTH).getValue(); //TODO check to make sure this works
-        if (arrowDamages.get(arrow) == null) {
+        Integer storedDamage = arrowDamages.get(arrow);
+        if (storedDamage == null) {
             return;
         }
 
-        //String ownerName = arrowOwners.get(arrow);
-        //Player player = null;
-        //if (ownerName != null) {
-        //    player = Bukkit.getPlayer(ownerName);
-        //}
-
-        int damage = (int) ((double) arrowDamages.get(arrow) / 100.0 * maxHP);
+        LivingEntity damagee = (LivingEntity) event.getEntity();
+        double maxHp = damagee.getAttribute(Attribute.MAX_HEALTH).getValue();
+        int damage = (int) ((double) storedDamage / 100.0 * maxHp);
         arrowDamages.remove(arrow);
-        //arrowOwners.remove(arrow);
-
-        //if (player != null) {
-        //    damagee.damage(damage, player);
-        //} else {
-//                damagee.damage(damage);
-        //damagee.damage(damage);
-        //}
-//            event.setCancelled(true);
-        damage = DamageEffect.adjustForArmor(damage, damagee);
+        if (damagee instanceof Player) {
+            damage = DamageEffect.adjustForArmor(damage, (Player) damagee);
+        }
         event.setDamage(damage);
-
     }
 
+    private static void applyDirectDamage(Region region, LivingEntity target, String vars, boolean runUpkeep) {
+        if (!turretsEnabled() || target == null) {
+            return;
+        }
+        if (!Util.isChunkLoadedAt(region.getLocation()) || !Util.isChunkLoadedAt(target.getLocation())) {
+            return;
+        }
+        if (target instanceof Player) {
+            Player player = (Player) target;
+            if (player.getGameMode() != GameMode.SURVIVAL && player.getGameMode() != GameMode.ADVENTURE) {
+                return;
+            }
+        }
+        if (region.getPeople().containsKey(target.getUniqueId())) {
+            return;
+        }
+        if (runUpkeep && !region.runUpkeep(false)) {
+            return;
+        }
+
+        int damagePercent = TurretParams.parseDamagePercent(vars);
+        if (damagePercent <= 0) {
+            return;
+        }
+
+        double maxHp = target.getAttribute(Attribute.MAX_HEALTH).getValue();
+        double damage = (double) damagePercent / 100.0 * maxHp;
+        if (target instanceof Player) {
+            damage = DamageEffect.adjustForArmor((int) damage, (Player) target);
+        }
+        if (damage > 0) {
+            target.damage(damage);
+        }
+    }
+
+    private static LivingEntity findHostileTarget(Region region, RegionType regionType) {
+        Location location = region.getLocation();
+        double radius = regionType.getEffectRadius();
+        for (Entity entity : location.getWorld().getNearbyEntities(location, radius, radius, radius)) {
+            if (!(entity instanceof LivingEntity) || !isHostileMob(entity)) {
+                continue;
+            }
+            LivingEntity living = (LivingEntity) entity;
+            if (living.getLocation().distance(location) > radius) {
+                continue;
+            }
+            if (region.getPeople().containsKey(living.getUniqueId())) {
+                continue;
+            }
+            return living;
+        }
+        return null;
+    }
+
+    private static boolean isHostileMob(Entity entity) {
+        return entity instanceof Monster || entity instanceof Phantom || entity instanceof Slime;
+    }
+
+    private static void purgeDeadArrows() {
+        HashSet<Arrow> removeMe = new HashSet<>();
+        for (Arrow arrow : arrowDamages.keySet()) {
+            if (arrow.isDead() || !arrow.isValid()) {
+                removeMe.add(arrow);
+            }
+        }
+        for (Arrow arrow : removeMe) {
+            arrow.remove();
+            arrowDamages.remove(arrow);
+        }
+    }
+
+    private static void purgeGroundedArrows() {
+        HashSet<Arrow> arrows = new HashSet<>();
+        for (Arrow arrow : arrowDamages.keySet()) {
+            if (arrow.isDead() || arrow.isOnGround() || !arrow.isValid()) {
+                arrows.add(arrow);
+            }
+        }
+        for (Arrow arrow : arrows) {
+            arrowDamages.remove(arrow);
+        }
+    }
+
+    @SuppressWarnings("unused")
     private boolean hasCleanShot(Location shootHere, Location targetHere) {
-        double x = shootHere.getX();
-        double y = shootHere.getY();
-        double z = shootHere.getZ();
+        Vector start = new Vector(shootHere.getX(), shootHere.getY(), shootHere.getZ());
+        Vector end = new Vector(targetHere.getX(), targetHere.getY(), targetHere.getZ());
 
-        double x1 = targetHere.getX();
-        double y1 = targetHere.getY();
-        double z1 = targetHere.getZ();
-
-        Vector start = new Vector(x, y, z);
-        Vector end = new Vector (x1, y1, z1);
-
-        BlockIterator bi = new BlockIterator(shootHere.getWorld(), start, end, 0, (int) shootHere.distance(targetHere));
+        BlockIterator bi = new BlockIterator(shootHere.getWorld(), start, end, 0,
+                (int) shootHere.distance(targetHere));
         while (bi.hasNext()) {
             Block block = bi.next();
-//            System.out.println(Civs.getPrefix() + ((int) block.getLocation().getX()) +
-//                    ":" + ((int) block.getLocation().getY()) + ":" +
-//                    ((int) block.getLocation().getZ()) + " " + !Util.isSolidBlock(block.getType()));
             if (!Util.isSolidBlock(block.getType())) {
                 return false;
             }
         }
-
         return true;
     }
 }
