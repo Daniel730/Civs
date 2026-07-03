@@ -42,6 +42,7 @@ import org.redcastlemedia.multitallented.civs.towns.TownManager;
 import org.redcastlemedia.multitallented.civs.towns.TownType;
 import org.redcastlemedia.multitallented.civs.tutorials.AnnouncementUtil;
 import org.redcastlemedia.multitallented.civs.util.Constants;
+import org.redcastlemedia.multitallented.civs.util.Util;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -331,7 +332,14 @@ public class CommonScheduler implements Runnable {
 
                 if (playerEnterRegionEvent.isNotify() && ConfigManager.getInstance().isEnterExitMessagesUseTitles()) {
                     String localRegionName = r.getDisplayName(player);
-                    player.sendTitle(" ", ChatColor.BLUE + localRegionName, 5, 40, 5);
+                    boolean owned = r.getPeople().containsKey(player.getUniqueId())
+                            && r.getPeople().get(player.getUniqueId()).contains(Constants.OWNER);
+                    if (owned && regionType != null) {
+                        String typeName = regionType.getDisplayName(player);
+                        player.sendTitle(ChatColor.BLUE + localRegionName, ChatColor.GRAY + typeName, 5, 40, 5);
+                    } else {
+                        player.sendTitle(" ", ChatColor.BLUE + localRegionName, 5, 40, 5);
+                    }
                 }
 
                 Bukkit.getPluginManager().callEvent(playerEnterRegionEvent);

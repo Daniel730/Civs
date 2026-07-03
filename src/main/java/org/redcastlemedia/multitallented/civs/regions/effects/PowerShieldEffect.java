@@ -57,8 +57,13 @@ public class PowerShieldEffect implements Listener {
             return;
         }
 
-        double scaled = event.getDamage() * (100 - reduction) / 100.0;
+        double original = event.getDamage();
+        double scaled = original * (100 - reduction) / 100.0;
+        double absorbed = original - scaled;
         event.setDamage(Math.max(0, scaled));
+        if (absorbed > 0.01) {
+            ShieldFeedback.notify(player, absorbed);
+        }
     }
 
     static int findBestReductionPercent(Player player) {

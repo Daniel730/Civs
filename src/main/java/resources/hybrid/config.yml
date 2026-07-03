@@ -98,6 +98,24 @@ disable-arrow-turret-shooting-at-mobs: false
 use-shields: true
 ##default % damage reduction for towns with power_shield and no explicit value (requires town power or grace)
 default-town-shield-reduction: 15
+##player feedback when a shield absorbs damage (chat throttled per player, seconds)
+shield-feedback-cooldown-seconds: 2
+shield-feedback-particles: true
+shield-feedback-sound: true
+##batch hovel bank-payout into one action-bar message for the town owner per upkeep tick
+hovel-bank-action-bar: true
+##minimum seconds between NPC hovel bank-income chat messages per town
+hovel-bank-income-notify-cooldown-seconds: 300
+##lightweight muzzle flash when arrow turrets fire
+turret-fire-particles: true
+##dramatic spawn burst for custom mobs; boss-bar HP preview for bandit_chief (seconds)
+custom-mob-spawn-particles: true
+custom-mob-boss-bar-preview: true
+custom-mob-boss-bar-preview-seconds: 5
+##optional happy-villager puff above farm output chests (off by default for performance)
+farm-output-particles: false
+##green purchase title + cha-ching for buyer; chat notice to online seller
+auction-purchase-feedback: true
 
 ##YAML-defined custom mobs (civs-mobs/ or plugins/Civs/mobs/) — /civs mob spawn, custom_mob region effect
 use-custom-mobs: true

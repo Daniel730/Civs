@@ -92,6 +92,10 @@ auction-listed: "Item anunciado por $1"
 auction-cancelled: "Anúncio cancelado"
 auction-claimed: "Itens devolvidos do leilão recebidos"
 auction-purchased: "Compra realizada"
+auction-purchase-title: "Compra realizada!"
+auction-item-sold: "Seu anúncio vendeu: $1 por $2"
+power-shield-absorbed: "O escudo absorveu $1% do dano ($2 bloqueados)."
+hovel-bank-income: "O casebre NPC rendeu $1 para o banco da cidade $2."
 auction-no-item: "Segure um item na mão principal para anunciar"
 auction-invalid-price: "Preço fora dos limites do leilão"
 auction-max-listings: "Você tem anúncios demais ativos"
@@ -114,7 +118,6 @@ auction-sell-command: "/civs auction sell "
 custom-mob-bandit-chief: Chefe Bandido
 custom-mob-usage: "Uso: /civs mob spawn <id> | /civs mob list"
 custom-mob-spawned: "Invocado $1 em $2 $3 $4 $5"
-hovel-bank-income: "O casebre NPC rendeu $1 para o banco da cidade $2."
 custom-mob-not-found: "Mob personalizado desconhecido: $1"
 custom-mob-none: "Nenhum mob personalizado carregado"
 custom-mob-list: "Mobs personalizados: $1"
@@ -129,6 +132,15 @@ auction-filter-hint: "Segure um item e clique para filtrar"
 auction-filter-active: "Filtrando: $1 (clique para limpar)"
 auction-filter-no-item: "Segure o material que deseja filtrar"
 auction-clear-filter: "Limpar filtro"
+auction-empty: "Nenhum anúncio corresponde aos filtros. Limpe o filtro ou anuncie um item."
+auction-confirm-hint: "Shift+clique em um anúncio para confirmar a compra."
+auction-shift-to-buy: "Shift+clique para comprar"
+defense-upkeep-warning: "&cDefesa inativa — forneça o custo ou esta estrutura não protegerá você."
+tools-title: Ferramentas
+tools: "Todas as ferramentas necessárias no baú de $1"
+custom-mob-wild-boar: Javali Selvagem
+custom-mob-bandit-scout: Batedor Bandido
+custom-mob-region-spawn: "$1 apareceu perto de $2 $3 $4 $5"
 buy-item: A venda
 price: Preço $1
 buy: Comprar $1

@@ -16,7 +16,10 @@ import org.redcastlemedia.multitallented.civs.Civs;
 import org.redcastlemedia.multitallented.civs.auction.AuctionListing;
 import org.redcastlemedia.multitallented.civs.auction.AuctionManager;
 import org.redcastlemedia.multitallented.civs.auction.AuctionResult;
+import org.bukkit.event.inventory.InventoryClickEvent;
 import org.redcastlemedia.multitallented.civs.civilians.Civilian;
+import org.redcastlemedia.multitallented.civs.civilians.Civilian;
+import org.redcastlemedia.multitallented.civs.civilians.CivilianManager;
 import org.redcastlemedia.multitallented.civs.items.CVItem;
 import org.redcastlemedia.multitallented.civs.localization.LocaleManager;
 import org.redcastlemedia.multitallented.civs.menus.CivsMenu;
@@ -56,6 +59,16 @@ public class AuctionBrowseMenu extends CustomMenu {
         LocaleManager localeManager = LocaleManager.getInstance();
         String sort = (String) MenuManager.getData(civilian.getUuid(), "sort");
         String filter = (String) MenuManager.getData(civilian.getUuid(), "filter");
+        if ("title".equals(menuIcon.getKey())) {
+            CVItem cvItem = menuIcon.createCVItem(player, count);
+            List<AuctionListing> listings = (List<AuctionListing>) MenuManager.getData(civilian.getUuid(), "listings");
+            if (listings == null || listings.isEmpty()) {
+                cvItem.setLore(List.of(localeManager.getTranslation(player, "auction-empty")));
+            }
+            ItemStack itemStack = cvItem.createItemStack();
+            putActions(civilian, menuIcon, itemStack, count);
+            return itemStack;
+        }
         if ("sort-price".equals(menuIcon.getKey())) {
             CVItem cvItem = menuIcon.createCVItem(player, count);
             String loreKey = "price_desc".equals(sort) ? "auction-sort-price-desc" : "auction-sort-price-asc";
@@ -116,12 +129,33 @@ public class AuctionBrowseMenu extends CustomMenu {
                     .replace("$1", listing.getSellerName()));
             lore.add(ChatColor.GRAY + localeManager.getTranslation(player, "auction-expires")
                     .replace("$1", formatDuration(listing.getExpiresAt() - System.currentTimeMillis())));
+            lore.add(ChatColor.YELLOW + localeManager.getTranslation(player, "auction-shift-to-buy"));
             lore.add(ChatColor.DARK_GRAY + listing.getId());
             meta.setLore(lore);
             display.setItemMeta(meta);
         }
         putActions(civilian, menuIcon, display, count);
         return display;
+    }
+
+    @Override
+    public void onInventoryClick(InventoryClickEvent event) {
+        if (event.getWhoClicked() instanceof Player player && event.getCurrentItem() != null
+                && event.getCurrentItem().getItemMeta() != null) {
+            Civilian civilian = CivilianManager.getInstance().getCivilian(player.getUniqueId());
+            if (actions.containsKey(civilian.getUuid())) {
+                String key = event.getCurrentItem().getType().name() + ":"
+                        + event.getCurrentItem().getItemMeta().getDisplayName();
+                List<String> actionStrings = actions.get(civilian.getUuid()).get(key);
+                if (actionStrings != null && actionStrings.contains("buy-listing") && !event.getClick().isShiftClick()) {
+                    event.setCancelled(true);
+                    player.sendMessage(Civs.getPrefix() + LocaleManager.getInstance()
+                            .getTranslation(player, "auction-confirm-hint"));
+                    return;
+                }
+            }
+        }
+        super.onInventoryClick(event);
     }
 
     @Override

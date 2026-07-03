@@ -98,7 +98,21 @@ public class CustomMobManager {
         applyDefinition(living, definition);
         living.setRemoveWhenFarAway(false);
         living.setPersistent(true);
+        MobSpawnFeedback.onSpawn(living, definition);
+        scheduleDespawn(living, definition);
         return living;
+    }
+
+    private void scheduleDespawn(LivingEntity living, CustomMobDefinition definition) {
+        int seconds = definition.getDespawnSeconds();
+        if (seconds <= 0) {
+            return;
+        }
+        Bukkit.getScheduler().runTaskLater(Civs.getInstance(), () -> {
+            if (living.isValid() && !living.isDead()) {
+                living.remove();
+            }
+        }, seconds * 20L);
     }
 
     private Location findSafeSpawn(Location origin) {

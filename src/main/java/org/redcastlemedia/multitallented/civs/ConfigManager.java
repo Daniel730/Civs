@@ -74,6 +74,26 @@ public class ConfigManager {
     boolean useCustomMobs;
     @Getter
     int defaultTownShieldReduction;
+    @Getter
+    int shieldFeedbackCooldownSeconds;
+    @Getter
+    boolean shieldFeedbackParticles;
+    @Getter
+    boolean shieldFeedbackSound;
+    @Getter
+    boolean hovelBankActionBar;
+    @Getter
+    boolean turretFireParticles;
+    @Getter
+    boolean customMobSpawnParticles;
+    @Getter
+    boolean customMobBossBarPreview;
+    @Getter
+    int customMobBossBarPreviewSeconds;
+    @Getter
+    boolean farmOutputParticles;
+    @Getter
+    boolean auctionPurchaseFeedback;
     int portMana;
     int portWarmup;
     int portCooldown;
@@ -399,6 +419,18 @@ public class ConfigManager {
             useCustomMobs = config.getBoolean("use-custom-mobs", true);
             defaultTownShieldReduction = ShieldParams.clampPercent(
                     config.getInt("default-town-shield-reduction", 15));
+            shieldFeedbackCooldownSeconds = Math.max(0,
+                    config.getInt("shield-feedback-cooldown-seconds", 2));
+            shieldFeedbackParticles = config.getBoolean("shield-feedback-particles", true);
+            shieldFeedbackSound = config.getBoolean("shield-feedback-sound", true);
+            hovelBankActionBar = config.getBoolean("hovel-bank-action-bar", true);
+            turretFireParticles = config.getBoolean("turret-fire-particles", true);
+            customMobSpawnParticles = config.getBoolean("custom-mob-spawn-particles", true);
+            customMobBossBarPreview = config.getBoolean("custom-mob-boss-bar-preview", true);
+            customMobBossBarPreviewSeconds = Math.max(1,
+                    config.getInt("custom-mob-boss-bar-preview-seconds", 5));
+            farmOutputParticles = config.getBoolean("farm-output-particles", false);
+            auctionPurchaseFeedback = config.getBoolean("auction-purchase-feedback", true);
             denyArrowTurretShootAtMobs = config.getBoolean("disable-arrow-turret-shooting-at-mobs", false);
             portMana = config.getInt("port.mana", 0);
             portWarmup = config.getInt("port.warmup", 5);
@@ -679,6 +711,16 @@ public class ConfigManager {
         useShields = true;
         useCustomMobs = true;
         defaultTownShieldReduction = 15;
+        shieldFeedbackCooldownSeconds = 2;
+        shieldFeedbackParticles = true;
+        shieldFeedbackSound = true;
+        hovelBankActionBar = true;
+        turretFireParticles = true;
+        customMobSpawnParticles = true;
+        customMobBossBarPreview = true;
+        customMobBossBarPreviewSeconds = 5;
+        farmOutputParticles = false;
+        auctionPurchaseFeedback = true;
         denyArrowTurretShootAtMobs = false;
         portMana = 0;
         portWarmup = 5;

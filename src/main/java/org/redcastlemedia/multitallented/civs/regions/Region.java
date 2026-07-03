@@ -943,6 +943,7 @@ public class Region {
             }
             if (outputChest != null && output.length > 0) {
                 outputChest.addItem(output);
+                FarmOutputFeedback.onDeposit(this, outputChest.getLocation());
             }
             if (regionUpkeep.getExp() > 0) {
                 exp += regionUpkeep.getExp();
@@ -1006,6 +1007,7 @@ public class Region {
             double bankPayout = applyTownPayoutBuff(regionUpkeep.getBankPayout(), town);
             town.setBankAccount(town.getBankAccount() + bankPayout);
             TownManager.getInstance().saveTown(town);
+            HovelBankNotifier.accumulateTownIncome(town, bankPayout);
             return true;
         }
         if (regionUpkeep.getPayout() != 0 && Civs.econ != null) {

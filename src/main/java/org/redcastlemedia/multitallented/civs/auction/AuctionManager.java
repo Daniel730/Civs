@@ -231,6 +231,7 @@ public class AuctionManager implements Listener {
             return AuctionResult.INVENTORY_FULL;
         }
 
+        AuctionFeedback.onPurchaseSuccess(buyer, listing);
         removeListingFile(listing);
         listings.remove(listing.getId());
         return AuctionResult.SUCCESS;

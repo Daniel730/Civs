@@ -7,6 +7,7 @@ import org.bukkit.Bukkit;
 import org.redcastlemedia.multitallented.civs.civilians.CivilianListener;
 import org.redcastlemedia.multitallented.civs.events.RegionTickEvent;
 import org.redcastlemedia.multitallented.civs.items.ItemManager;
+import org.redcastlemedia.multitallented.civs.regions.HovelBankNotifier;
 import org.redcastlemedia.multitallented.civs.regions.Region;
 import org.redcastlemedia.multitallented.civs.regions.RegionManager;
 import org.redcastlemedia.multitallented.civs.regions.RegionType;
@@ -45,6 +46,7 @@ public final class RegionTickUtil {
                 e.printStackTrace();
             }
         }
+        HovelBankNotifier.flushPending();
         if (i == MAX_TPCycle - 1) {
             i = 0;
         } else {

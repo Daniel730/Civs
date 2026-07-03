@@ -25,6 +25,8 @@ import org.redcastlemedia.multitallented.civs.regions.Region;
 import org.redcastlemedia.multitallented.civs.regions.RegionType;
 import org.redcastlemedia.multitallented.civs.mobs.CustomMobKeys;
 import org.redcastlemedia.multitallented.civs.spells.effects.DamageEffect;
+import org.redcastlemedia.multitallented.civs.towns.Town;
+import org.redcastlemedia.multitallented.civs.towns.TownManager;
 import org.redcastlemedia.multitallented.civs.util.Util;
 
 import java.util.*;
@@ -111,7 +113,7 @@ public class ArrowTurret implements Listener {
             }
         }
 
-        if (r.getPeople().containsKey(livingEntity.getUniqueId())) {
+        if (isProtectedFromTurret(r, livingEntity)) {
             return;
         }
 
@@ -192,7 +194,7 @@ public class ArrowTurret implements Listener {
                 return;
             }
         }
-        if (region.getPeople().containsKey(target.getUniqueId())) {
+        if (isProtectedFromTurret(region, target)) {
             return;
         }
         if (runUpkeep && !region.runUpkeep(false)) {
@@ -225,12 +227,23 @@ public class ArrowTurret implements Listener {
             if (living.getLocation().distance(location) > radius) {
                 continue;
             }
-            if (region.getPeople().containsKey(living.getUniqueId())) {
+            if (isProtectedFromTurret(region, living)) {
                 continue;
             }
             return living;
         }
         return null;
+    }
+
+    private static boolean isProtectedFromTurret(Region region, LivingEntity entity) {
+        if (!(entity instanceof Player player)) {
+            return false;
+        }
+        if (region.getPeople().containsKey(player.getUniqueId())) {
+            return true;
+        }
+        Town town = TownManager.getInstance().getTownAt(region.getLocation());
+        return town != null && town.getPeople().containsKey(player.getUniqueId());
     }
 
     private static boolean isHostileMob(Entity entity) {

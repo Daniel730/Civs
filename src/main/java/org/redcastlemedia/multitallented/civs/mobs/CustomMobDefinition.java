@@ -19,15 +19,17 @@ public class CustomMobDefinition {
     private final EntityType entityType;
     private final double health;
     private final double damage;
+    private final int despawnSeconds;
     private final List<CustomMobDrop> drops;
 
     public CustomMobDefinition(String id, String display, EntityType entityType,
-            double health, double damage, List<CustomMobDrop> drops) {
+            double health, double damage, int despawnSeconds, List<CustomMobDrop> drops) {
         this.id = id;
         this.display = display;
         this.entityType = entityType;
         this.health = health;
         this.damage = damage;
+        this.despawnSeconds = despawnSeconds;
         this.drops = Collections.unmodifiableList(new ArrayList<>(drops));
     }
 
@@ -40,7 +42,8 @@ public class CustomMobDefinition {
         EntityType entityType = EntityType.valueOf(config.getString("type", "ZOMBIE").toUpperCase());
         double health = config.getDouble("health", 20.0);
         double damage = config.getDouble("damage", 2.0);
-        return new CustomMobDefinition(id, display, entityType, health, damage, parseDrops(config));
+        int despawnSeconds = config.getInt("despawn-seconds", 0);
+        return new CustomMobDefinition(id, display, entityType, health, damage, despawnSeconds, parseDrops(config));
     }
 
     static List<CustomMobDrop> parseDrops(FileConfiguration config) {
