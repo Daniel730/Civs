@@ -1,0 +1,24 @@
+size: 54
+name: My Auction Listings
+items:
+  title:
+    index: 4
+    icon: CHEST
+    name: auction-my-listings
+    actions: []
+  browse:
+    index: 0
+    icon: GOLD_INGOT
+    name: auction-house
+    actions:
+      - open-browse
+  prev:
+    index: 3
+  next:
+    index: 5
+  back:
+    index: 8
+  items:
+    index: 9-53
+    actions:
+      - cancel-listing

@@ -1,0 +1,17 @@
+size: 27
+name: Sell on Auction
+items:
+  hand-item:
+    index: 13
+    actions:
+      - typing:click-me:auction-sell-command
+  help:
+    index: 4
+  browse:
+    index: 0
+    icon: GOLD_INGOT
+    name: auction-house
+    actions:
+      - open-browse
+  back:
+    index: 8

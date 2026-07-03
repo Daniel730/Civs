@@ -1,0 +1,54 @@
+size: 54
+name: Auction House
+items:
+  title:
+    index: 4
+    icon: GOLD_INGOT
+    name: auction-house
+    actions: []
+  my-listings:
+    index: 0
+    icon: CHEST
+    name: auction-my-listings
+    actions:
+      - open-my-listings
+  sell:
+    index: 1
+    icon: EMERALD
+    name: auction-sell
+    actions:
+      - menu:auction-sell
+  sort-price:
+    index: 6
+    icon: GOLD_NUGGET
+    name: auction-sort-price
+    actions:
+      - sort-price
+  sort-name:
+    index: 7
+    icon: NAME_TAG
+    name: auction-sort-name
+    actions:
+      - sort-name
+  filter-material:
+    index: 2
+    icon: HOPPER
+    name: auction-filter
+    actions:
+      - filter-material
+  clear-filter:
+    index: 2
+    icon: BARRIER
+    name: auction-clear-filter
+    actions:
+      - clear-filter
+  prev:
+    index: 3
+  next:
+    index: 5
+  back:
+    index: 8
+  items:
+    index: 9-53
+    actions:
+      - buy-listing
