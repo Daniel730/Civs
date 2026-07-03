@@ -1,6 +1,8 @@
 package org.redcastlemedia.multitallented.civs.menus.regions;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
@@ -25,7 +27,9 @@ import org.redcastlemedia.multitallented.civs.regions.RegionManager;
 import org.redcastlemedia.multitallented.civs.regions.RegionType;
 import org.redcastlemedia.multitallented.civs.regions.RegionUpkeep;
 import org.redcastlemedia.multitallented.civs.regions.StructureUtil;
+import org.redcastlemedia.multitallented.civs.regions.effects.ArrowTurret;
 import org.redcastlemedia.multitallented.civs.regions.effects.ForSaleEffect;
+import org.redcastlemedia.multitallented.civs.regions.effects.PowerShieldEffect;
 import org.redcastlemedia.multitallented.civs.towns.Town;
 import org.redcastlemedia.multitallented.civs.towns.TownManager;
 import org.redcastlemedia.multitallented.civs.util.Constants;
@@ -107,7 +111,11 @@ public class RegionMenu extends CustomMenu {
         if ("icon".equals(menuIcon.getKey())) {
             CVItem cvItem = regionType.getShopIcon(player);
             cvItem.setDisplayName(region.getDisplayName(player));
-            cvItem.setLore(regionType.getLore(player, false));
+            List<String> lore = new ArrayList<>(regionType.getLore(player, false));
+            if (hasDefenseEffect(region) && !region.getFailingUpkeeps().isEmpty()) {
+                lore.add(LocaleManager.getInstance().getTranslation(player, "defense-upkeep-warning"));
+            }
+            cvItem.setLore(lore);
             ItemStack itemStack = cvItem.createItemStack();
             putActions(civilian, menuIcon, itemStack, count);
             return itemStack;
@@ -260,6 +268,12 @@ public class RegionMenu extends CustomMenu {
             return itemStack;
         }
         return super.createItemStack(civilian, menuIcon, count);
+    }
+
+    private static boolean hasDefenseEffect(Region region) {
+        return region.getEffects().containsKey(ArrowTurret.KEY)
+                || region.getEffects().containsKey(ArrowTurret.DAMAGE_KEY)
+                || region.getEffects().containsKey(PowerShieldEffect.KEY);
     }
 
     @Override

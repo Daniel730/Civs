@@ -1,0 +1,16 @@
+id: wild_boar
+enabled: true
+display: custom-mob-wild-boar
+type: ZOGLIN
+health: 40
+damage: 5
+# despawn-seconds omitted — mob stays until killed
+drops:
+  - material: PORKCHOP
+    min-amount: 2
+    max-amount: 4
+    chance: 1.0
+  - material: LEATHER
+    min-amount: 0
+    max-amount: 2
+    chance: 0.5

@@ -1,0 +1,15 @@
+id: bandit_scout
+enabled: true
+display: custom-mob-bandit-scout
+type: PILLAGER
+health: 35
+damage: 5
+drops:
+  - material: ARROW
+    min-amount: 4
+    max-amount: 12
+    chance: 1.0
+  - material: EMERALD
+    min-amount: 1
+    max-amount: 2
+    chance: 0.4

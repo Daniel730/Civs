@@ -18,6 +18,7 @@ import org.redcastlemedia.multitallented.civs.menus.CivsMenu;
 import org.redcastlemedia.multitallented.civs.menus.CustomMenu;
 import org.redcastlemedia.multitallented.civs.menus.MenuIcon;
 import org.redcastlemedia.multitallented.civs.menus.MenuManager;
+import org.redcastlemedia.multitallented.civs.menus.MenuUtil;
 import org.redcastlemedia.multitallented.civs.regions.Region;
 import org.redcastlemedia.multitallented.civs.regions.RegionManager;
 import org.redcastlemedia.multitallented.civs.regions.RegionType;
@@ -35,6 +36,7 @@ import java.util.Map;
 public class RegionTypeMenu extends CustomMenu {
     @Override
     public Map<String, Object> createData(Civilian civilian, Map<String, String> params) {
+        super.cycleItems.remove(civilian.getUuid());
         HashMap<String, Object> data = new HashMap<>();
         if (params.containsKey(Constants.REGION_TYPE)) {
             RegionType regionType = (RegionType) ItemManager.getInstance().getItemType(params.get(Constants.REGION_TYPE));
@@ -359,48 +361,20 @@ public class RegionTypeMenu extends CustomMenu {
 
         switch (type) {
             case "reagent":
-                if (regionType.getUpkeeps().size() > count &&
-                        regionType.getUpkeeps().get(count).getReagents().size() == 1 &&
-                        regionType.getUpkeeps().get(count).getReagents().get(0).size() == 1) {
-                    CVItem item = regionType.getUpkeeps().get(count).getReagents().get(0).get(0);
-                    cvItem.setMat(item.getMat());
-                    if (item.getQty() <= item.getMat().getMaxStackSize()) {
-                        cvItem.setQty(item.getQty());
-                    }
-                }
+                applyOrGroupPreview(civilian, menuIcon, count,
+                        regionType.getUpkeeps().get(count).getReagents(), cvItem);
                 break;
             case "tool":
-                if (regionType.getUpkeeps().size() > count &&
-                        regionType.getUpkeeps().get(count).getTools().size() == 1 &&
-                        regionType.getUpkeeps().get(count).getTools().get(0).size() == 1) {
-                    CVItem item = regionType.getUpkeeps().get(count).getTools().get(0).get(0);
-                    cvItem.setMat(item.getMat());
-                    if (item.getQty() <= item.getMat().getMaxStackSize()) {
-                        cvItem.setQty(item.getQty());
-                    }
-                }
+                applyOrGroupPreview(civilian, menuIcon, count,
+                        regionType.getUpkeeps().get(count).getTools(), cvItem);
                 break;
             case "input":
-                if (regionType.getUpkeeps().size() > count &&
-                        regionType.getUpkeeps().get(count).getInputs().size() == 1 &&
-                        regionType.getUpkeeps().get(count).getInputs().get(0).size() == 1) {
-                    CVItem item = regionType.getUpkeeps().get(count).getInputs().get(0).get(0);
-                    cvItem.setMat(item.getMat());
-                    if (item.getQty() <= item.getMat().getMaxStackSize()) {
-                        cvItem.setQty(item.getQty());
-                    }
-                }
+                applyOrGroupPreview(civilian, menuIcon, count,
+                        regionType.getUpkeeps().get(count).getInputs(), cvItem);
                 break;
             case "output":
-                if (regionType.getUpkeeps().size() > count &&
-                        regionType.getUpkeeps().get(count).getOutputs().size() == 1 &&
-                        regionType.getUpkeeps().get(count).getOutputs().get(0).size() == 1) {
-                    CVItem item = regionType.getUpkeeps().get(count).getOutputs().get(0).get(0);
-                    cvItem.setMat(item.getMat());
-                    if (item.getQty() <= item.getMat().getMaxStackSize()) {
-                        cvItem.setQty(item.getQty());
-                    }
-                }
+                applyOrGroupPreview(civilian, menuIcon, count,
+                        regionType.getUpkeeps().get(count).getOutputs(), cvItem);
                 break;
             default:
                 break;
@@ -409,7 +383,30 @@ public class RegionTypeMenu extends CustomMenu {
         cvItem.setLore(Util.textWrap(civilian, LocaleManager.getInstance().getTranslation(player,
                 menuIcon.getDesc()).replace("$1", localizedRegionTypeName)));
         ItemStack itemStack = cvItem.createItemStack();
+        MenuUtil.sanitizeItem(itemStack);
         putActions(civilian, menuIcon, itemStack, count);
         return itemStack;
+    }
+
+    private void applyOrGroupPreview(Civilian civilian, MenuIcon menuIcon, int count,
+            List<List<CVItem>> orGroups, CVItem cvItem) {
+        if (orGroups == null || orGroups.isEmpty() || orGroups.get(0).isEmpty()) {
+            return;
+        }
+        List<CVItem> alternatives = orGroups.get(0);
+        CVItem first = alternatives.get(0);
+        cvItem.setMat(MenuUtil.toItemMaterial(first.getMat()));
+        if (first.getQty() <= first.getMat().getMaxStackSize()) {
+            cvItem.setQty(Math.max(1, first.getQty()));
+        }
+        if (menuIcon.getIndex().size() > count) {
+            int guiSlot = menuIcon.getIndex().get(count);
+            for (CVItem alt : alternatives) {
+                ItemStack altStack = alt.createItemStack();
+                MenuUtil.sanitizeItem(altStack);
+                putActions(civilian, menuIcon, altStack, count);
+                super.addCycleItem(civilian.getUuid(), guiSlot, altStack);
+            }
+        }
     }
 }

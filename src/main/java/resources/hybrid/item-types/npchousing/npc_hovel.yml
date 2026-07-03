@@ -46,8 +46,8 @@ towns:
 - city
 - metropolis
 
-period: 3600 #1 hour
+period: 3600 #1 hour — bank-payout $4/tick ≈ $96/day per hovel to town bank (not player wallet)
 upkeep:
   0:
     power-input: 1
-    bank-payout: 4
+    bank-payout: 4 # scales with town payout government buffs only

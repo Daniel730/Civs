@@ -38,6 +38,14 @@ public final class MenuUtil {
             return Enums.getIfPresent(Material.class, "CHERRY_SIGN").or(Material.ACACIA_SIGN);
         } else if (mat == Material.COCOA) {
             return Material.COCOA_BEANS;
+        } else if (mat == Material.BEETROOTS) {
+            return Material.BEETROOT;
+        } else if (mat == Material.MELON_STEM || mat == Enums.getIfPresent(Material.class, "ATTACHED_MELON_STEM").orNull()) {
+            return Material.MELON_SLICE;
+        } else if (mat == Material.PUMPKIN_STEM || mat == Enums.getIfPresent(Material.class, "ATTACHED_PUMPKIN_STEM").orNull()) {
+            return Material.PUMPKIN;
+        } else if (mat == Material.SWEET_BERRY_BUSH) {
+            return Material.SWEET_BERRIES;
         }
         return mat;
     }
