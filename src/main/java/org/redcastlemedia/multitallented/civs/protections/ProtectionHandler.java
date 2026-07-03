@@ -1149,7 +1149,32 @@ public class ProtectionHandler implements Listener {
         if (pRole != null && role.contains(pRole)) {
             return false;
         }
+        if (townLeadershipMayUseRegionChest(player, region, town, type)) {
+            return false;
+        }
         return true;
+    }
+
+    /**
+     * Town members appear in {@link Region#getPeople()} as synthetic {@code ally}, which bypasses
+     * the null-role owner check. Kingdom owners and recruiters need chest access in member shops.
+     */
+    private static boolean townLeadershipMayUseRegionChest(Player player, Region region, Town town, String type) {
+        if (player == null || town == null || region == null || !RegionEffectConstants.CHEST_USE.equals(type)) {
+            return false;
+        }
+        String townRole = town.getPeople().get(player.getUniqueId());
+        if (townRole == null) {
+            return false;
+        }
+        if (townRole.contains(Constants.OWNER)) {
+            return true;
+        }
+        if (!townRole.contains(Constants.RECRUITER)) {
+            return false;
+        }
+        RegionType regionType = (RegionType) ItemManager.getInstance().getItemType(region.getType());
+        return regionType != null && regionType.getGroups().contains("shop");
     }
 
     private boolean shouldBlockActionInferFromOrigin(Location location, String type, Town town, Region region) {

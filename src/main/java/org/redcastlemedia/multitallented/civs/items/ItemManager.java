@@ -20,6 +20,7 @@ import org.redcastlemedia.multitallented.civs.localization.LocaleManager;
 import org.redcastlemedia.multitallented.civs.regions.RegionType;
 import org.redcastlemedia.multitallented.civs.regions.RegionUpkeep;
 import org.redcastlemedia.multitallented.civs.skills.Skill;
+import org.redcastlemedia.multitallented.civs.skills.SkillManager;
 import org.redcastlemedia.multitallented.civs.spells.SpellType;
 import org.redcastlemedia.multitallented.civs.towns.Town;
 import org.redcastlemedia.multitallented.civs.towns.TownManager;
@@ -339,7 +340,8 @@ public class ItemManager {
         checkList.clear();
         for (CivItem item : returnList) {
             if (!hasItemUnlocked(civilian, item) ||
-                    (isShop && !item.getInShop())) {
+                    (isShop && !item.getInShop()) ||
+                    (isShop && !SkillManager.getInstance().isShopItemAvailable(civilian, item))) {
                 checkList.add(item);
             }
         }

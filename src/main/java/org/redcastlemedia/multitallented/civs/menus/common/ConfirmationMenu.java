@@ -149,6 +149,11 @@ public class ConfirmationMenu extends CustomMenu {
 
     private void buyItem(CivItem civItem, Player player, Civilian civilian) {
         LocaleManager localeManager = LocaleManager.getInstance();
+        if (!SkillManager.getInstance().isShopItemAvailable(civilian, civItem)) {
+            player.sendMessage(Civs.getPrefix() + localeManager.getTranslation(player, "no-permission"));
+            player.closeInventory();
+            return;
+        }
         double price = SkillManager.getInstance().getSkillDiscountedPrice(civilian, civItem);
 
         if (price > 0 && Civs.econ == null) {

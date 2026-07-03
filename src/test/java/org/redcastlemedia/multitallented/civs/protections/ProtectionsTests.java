@@ -18,7 +18,10 @@ import org.junit.Test;
 import org.redcastlemedia.multitallented.civs.PlayerInventoryImpl;
 import org.redcastlemedia.multitallented.civs.SuccessException;
 import org.redcastlemedia.multitallented.civs.TestUtil;
+import org.bukkit.configuration.file.FileConfiguration;
+import org.bukkit.configuration.file.YamlConfiguration;
 import org.redcastlemedia.multitallented.civs.items.CVItem;
+import org.redcastlemedia.multitallented.civs.items.ItemManager;
 import org.redcastlemedia.multitallented.civs.regions.Region;
 import org.redcastlemedia.multitallented.civs.regions.RegionManager;
 import org.redcastlemedia.multitallented.civs.regions.RegionsTests;
@@ -364,5 +367,35 @@ public class ProtectionsTests extends TestUtil {
         assertTrue(ProtectionHandler.shouldBlockAction(location2,null, "chest_use"));
         assertTrue(ProtectionHandler.shouldBlockAction(location3,null, "chest_use"));
         assertTrue(ProtectionHandler.shouldBlockAction(location4,null, "chest_use"));
+    }
+
+    @Test
+    public void townOwnerShouldUseMemberShopChestDespiteAllyRole() {
+        FileConfiguration config = new YamlConfiguration();
+        config.set("groups", List.of("shop"));
+        config.set("build-radius", 2);
+        config.set("effects", List.of("chest_use", "block_build", "block_break"));
+        ItemManager.getInstance().loadRegionType(config, "flower_shop");
+        TownTests.loadTownTypeHamlet2();
+
+        Location townCenter = new Location(Bukkit.getWorld("world"), 0, 0, 0);
+        TownTests.loadTown("Kingdomshow", "hamlet2", townCenter);
+
+        UUID shopOwner = new UUID(1, 4);
+        HashMap<UUID, String> regionPeople = new HashMap<>();
+        regionPeople.put(shopOwner, Constants.OWNER);
+        Location shopLocation = new Location(Bukkit.getWorld("world"), 5, 0, 5);
+        HashMap<String, String> effects = new HashMap<>();
+        effects.put("chest_use", null);
+        effects.put("block_build", null);
+        effects.put("block_break", null);
+        RegionManager.getInstance().addRegion(new Region("flower_shop", regionPeople, shopLocation,
+                RegionsTests.getRadii(), effects, 0));
+
+        Player townOwnerPlayer = mock(Player.class);
+        when(townOwnerPlayer.getUniqueId()).thenReturn(new UUID(1, 2));
+        when(townOwnerPlayer.getGameMode()).thenReturn(GameMode.SURVIVAL);
+
+        assertFalse(ProtectionHandler.shouldBlockAction(shopLocation, townOwnerPlayer, "chest_use"));
     }
 }

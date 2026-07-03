@@ -28,7 +28,7 @@ import org.redcastlemedia.multitallented.civs.menus.CivsMenu;
 import org.redcastlemedia.multitallented.civs.menus.CustomMenu;
 import org.redcastlemedia.multitallented.civs.menus.MenuIcon;
 import org.redcastlemedia.multitallented.civs.menus.MenuManager;
-import org.redcastlemedia.multitallented.civs.util.Util;
+import org.redcastlemedia.multitallented.civs.skills.SkillManager;
 
 @CivsMenu(name = "shop") @SuppressWarnings("unused")
 public class ShopMenu extends CustomMenu {
@@ -63,9 +63,13 @@ public class ShopMenu extends CustomMenu {
         List<CivItem> shopItems = null;
         ArrayList<CVItem> levelList = new ArrayList<>();
         if (sortType.equals("level")) {
+            int shopTierCap = SkillManager.getInstance().getShopTierCap(civilian);
             if (level < 0) {
                 int currentLevel = 1;
                 for (String matString : ConfigManager.getInstance().getLevelList()) {
+                    if (currentLevel > shopTierCap) {
+                        break;
+                    }
                     CVItem cvItem = CVItem.createCVItemFromString(matString);
                     cvItem.setDisplayName(LocaleManager.getInstance().getTranslation(player,
                             "level").replace("$1", "" + currentLevel));
@@ -77,7 +81,11 @@ public class ShopMenu extends CustomMenu {
                 }
 
             } else {
-                shopItems = createLevelList(civilian, level);
+                if (level > shopTierCap) {
+                    shopItems = new ArrayList<>();
+                } else {
+                    shopItems = createLevelList(civilian, level);
+                }
             }
         } else {
             shopItems = ItemManager.getInstance().getShopItems(civilian, parent);
@@ -225,6 +233,9 @@ public class ShopMenu extends CustomMenu {
         for (CivItem civItem : ItemManager.getInstance().getItemsByLevel(level)) {
             if (civItem.getItemType() == CivItem.ItemType.FOLDER ||
                     !civItem.getInShop()) {
+                continue;
+            }
+            if (!SkillManager.getInstance().isShopItemAvailable(civilian, civItem)) {
                 continue;
             }
             if (civilian.isAtMax(civItem) != null) {

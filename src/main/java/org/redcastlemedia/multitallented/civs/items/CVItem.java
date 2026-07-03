@@ -22,6 +22,7 @@ import org.redcastlemedia.multitallented.civs.ConfigManager;
 import org.redcastlemedia.multitallented.civs.civilians.Civilian;
 import org.redcastlemedia.multitallented.civs.localization.LocaleConstants;
 import org.redcastlemedia.multitallented.civs.localization.LocaleManager;
+import org.redcastlemedia.multitallented.civs.menus.MenuUtil;
 import org.redcastlemedia.multitallented.civs.util.Util;
 
 import java.util.ArrayList;
@@ -375,7 +376,8 @@ public class CVItem {
             return itemStack;
         }
 
-        ItemStack is = new ItemStack(mat, qty);
+        Material itemMaterial = MenuUtil.toItemMaterial(mat);
+        ItemStack is = new ItemStack(itemMaterial, qty);
         if (displayName != null || (lore != null && !lore.isEmpty()) || customModelData != null) {
             ItemMeta im = null;
             if (!is.hasItemMeta()) {

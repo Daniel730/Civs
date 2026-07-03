@@ -9,6 +9,39 @@ public final class MenuUtil {
     private MenuUtil() {
 
     }
+    public static Material toItemMaterial(Material mat) {
+        if (mat == Material.REDSTONE_WIRE) {
+            return Material.REDSTONE;
+        } else if (mat == Material.WATER) {
+            return Material.WATER_BUCKET;
+        } else if (mat == Material.CAULDRON || mat == Enums.getIfPresent(Material.class, "WATER_CAULDRON").orNull()) {
+            return Material.WATER_BUCKET;
+        } else if (mat == Material.LAVA) {
+            return Material.LAVA_BUCKET;
+        } else if (mat == Material.POTATOES) {
+            return Material.POTATO;
+        } else if (mat == Material.CARROTS) {
+            return Material.CARROT;
+        } else if (mat == Material.OAK_WALL_SIGN) {
+            return Material.OAK_SIGN;
+        } else if (mat == Material.BIRCH_WALL_SIGN) {
+            return Material.BIRCH_SIGN;
+        } else if (mat == Material.DARK_OAK_WALL_SIGN) {
+            return Material.DARK_OAK_SIGN;
+        } else if (mat == Material.SPRUCE_WALL_SIGN) {
+            return Material.SPRUCE_SIGN;
+        } else if (mat == Material.JUNGLE_WALL_SIGN) {
+            return Material.JUNGLE_SIGN;
+        } else if (mat == Material.ACACIA_WALL_SIGN) {
+            return Material.ACACIA_SIGN;
+        } else if (mat == Enums.getIfPresent(Material.class, "CHERRY_WALL_SIGN").orNull()) {
+            return Enums.getIfPresent(Material.class, "CHERRY_SIGN").or(Material.ACACIA_SIGN);
+        } else if (mat == Material.COCOA) {
+            return Material.COCOA_BEANS;
+        }
+        return mat;
+    }
+
     public static void sanitizeItem(ItemStack item) {
         Material mat = item.getType();
         if (mat == Material.RED_BED || mat == Material.BLACK_BED || mat == Material.BLUE_BED
@@ -22,34 +55,11 @@ public final class MenuUtil {
                 || mat == Material.BIRCH_DOOR || mat == Material.ACACIA_DOOR || mat == Material.SPRUCE_DOOR
                 || mat == Material.JUNGLE_DOOR || mat == Enums.getIfPresent(Material.class, "CHERRY_DOOR").orNull()) {
             divideByTwo(item);
-        } else if (mat == Material.REDSTONE_WIRE) {
-            item.setType(Material.REDSTONE);
-        } else if (mat == Material.WATER) {
-            item.setType(Material.WATER_BUCKET);
-        } else if (mat == Material.CAULDRON || mat == Enums.getIfPresent(Material.class, "WATER_CAULDRON").orNull()) {
-            item.setType(Material.WATER_BUCKET);
-        } else if (mat == Material.LAVA) {
-            item.setType(Material.LAVA_BUCKET);
-        } else if (mat == Material.POTATOES) {
-            item.setType(Material.POTATO);
-        } else if (mat == Material.CARROTS) {
-            item.setType(Material.CARROT);
-        } else if (mat == Material.OAK_WALL_SIGN) {
-            item.setType(Material.OAK_SIGN);
-        } else if (mat == Material.BIRCH_WALL_SIGN) {
-            item.setType(Material.BIRCH_SIGN);
-        } else if (mat == Material.DARK_OAK_WALL_SIGN) {
-            item.setType(Material.DARK_OAK_SIGN);
-        } else if (mat == Material.SPRUCE_WALL_SIGN) {
-            item.setType(Material.SPRUCE_SIGN);
-        } else if (mat == Material.JUNGLE_WALL_SIGN) {
-            item.setType(Material.JUNGLE_SIGN);
-        } else if (mat == Material.ACACIA_WALL_SIGN) {
-            item.setType(Material.ACACIA_SIGN);
-        } else if (mat == Enums.getIfPresent(Material.class, "CHERRY_WALL_SIGN").orNull()) {
-            item.setType(Enums.getIfPresent(Material.class, "CHERRY_SIGN").or(Material.ACACIA_SIGN));
-        } else if (mat == Material.COCOA) {
-            item.setType(Material.COCOA_BEANS);
+        } else {
+            Material itemMat = toItemMaterial(mat);
+            if (itemMat != mat) {
+                item.setType(itemMat);
+            }
         }
     }
     private static void divideByTwo(ItemStack item) {
