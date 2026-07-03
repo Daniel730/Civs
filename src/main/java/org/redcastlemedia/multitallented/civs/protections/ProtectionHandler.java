@@ -233,7 +233,6 @@ public class ProtectionHandler implements Listener {
             event.getPlayer().sendMessage(Civs.getPrefix() +
                     LocaleManager.getInstance().getTranslation(event.getPlayer(), LocaleConstants.REGION_PROTECTED));
         } else {
-            checkMiningSkill(civilian, event.getBlock().getType());
             Region region = regionManager.getRegionAt(location);
             if (region == null) {
                 return;
@@ -265,46 +264,6 @@ public class ProtectionHandler implements Listener {
             } else {
                 setMissingBlocks(event, region, player, isNotMember, regionBlockCheckResponse.getMissingItems());
             }
-        }
-    }
-
-    private void checkMiningSkill(Civilian civilian, Material type) {
-        if (!ConfigManager.getInstance().isUseSkills()) {
-            return;
-        }
-        if (type == null || !blockIsOre(type)) {
-            return;
-        }
-        Player player = Bukkit.getPlayer(civilian.getUuid());
-        ItemStack mainItem = player.getInventory().getItemInMainHand();
-        if (mainItem.containsEnchantment(Enchantment.SILK_TOUCH)) {
-            return;
-        }
-        civilian.awardSkill(player, type.name(), CivSkills.MINING.name());
-    }
-
-    private boolean blockIsOre(Material type) {
-        switch (type) {
-            case COPPER_ORE:
-            case COAL_ORE:
-            case IRON_ORE:
-            case DIAMOND_ORE:
-            case GOLD_ORE:
-            case REDSTONE_ORE:
-            case EMERALD_ORE:
-            case LAPIS_ORE:
-            case NETHER_QUARTZ_ORE:
-            case GLOWSTONE:
-            case DEEPSLATE_COAL_ORE:
-            case DEEPSLATE_COPPER_ORE:
-            case DEEPSLATE_DIAMOND_ORE:
-            case DEEPSLATE_GOLD_ORE:
-            case DEEPSLATE_LAPIS_ORE:
-            case DEEPSLATE_EMERALD_ORE:
-            case DEEPSLATE_REDSTONE_ORE:
-                return true;
-            default:
-                return false;
         }
     }
 

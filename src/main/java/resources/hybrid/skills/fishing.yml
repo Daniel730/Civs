@@ -1,0 +1,12 @@
+enabled: true
+icon: COD
+exp-per-new-item: 40
+exp-repeat-decay: 5
+max-exp: 3000
+shop-rewards:
+  fishing_hut: 0.5
+exceptions:
+  COD: 35
+  SALMON: 40
+  TROPICAL_FISH: 50
+  PUFFERFISH: 45

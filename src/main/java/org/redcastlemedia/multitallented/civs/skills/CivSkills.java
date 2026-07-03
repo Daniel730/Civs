@@ -6,7 +6,7 @@ public enum CivSkills {
     EXPLORATION,
     FOOD,
     MINING,
-    FISHING, // TODO
+    FISHING,
     SHIELD,
     SWORD,
     AXE,

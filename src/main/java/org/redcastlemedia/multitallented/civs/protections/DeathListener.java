@@ -478,18 +478,6 @@ public class DeathListener implements Listener {
         ItemStack mainHand = player.getInventory().getItemInMainHand();
         Civilian civilian = CivilianManager.getInstance().getCivilian(player.getUniqueId());
         TutorialManager.getInstance().completeStep(civilian, TutorialManager.TutorialType.KILL, event.getEntity().getType().name().toLowerCase());
-
-        if (RepairEffect.isSword(mainHand.getType())) {
-            civilian.awardSkill(player, event.getEntity().getType().name(), CivSkills.SWORD.name());
-        } else if (RepairEffect.isAxe(mainHand.getType())) {
-            civilian.awardSkill(player, event.getEntity().getType().name(), CivSkills.AXE.name());
-        } else if (mainHand.getType() == Material.TRIDENT) {
-            civilian.awardSkill(player, event.getEntity().getType().name(), CivSkills.TRIDENT.name());
-        } else if (mainHand.getType() == Material.BOW) {
-            civilian.awardSkill(player, event.getEntity().getType().name(), CivSkills.BOW.name());
-        } else if (mainHand.getType() == Material.CROSSBOW) {
-            civilian.awardSkill(player, event.getEntity().getType().name(), CivSkills.CROSSBOW.name());
-        }
     }
 
     @EventHandler @SuppressWarnings("unused")

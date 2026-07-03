@@ -1075,6 +1075,9 @@ exploration-skill-desc: "Nível: $1 ($2/$3) Explore biomas diferentes para ganha
 food-skill: Comida
 food-skill-desc: "Nível: $1 ($2/$3) Coma diferentes tipos de comida para ganhar exp. Concede
   desconto em fazendas"
+fishing-skill: Pesca
+fishing-skill-desc: "Nível: $1 ($2/$3) Pesque diferentes peixes para ganhar exp. Concede desconto
+  em construções de pesca."
 shield-skill: Escudos
 shield-skill-desc: "Nível: $1 ($2/$3) Bloqueie flechas e dano para ganhar exp. Concede descontos
   em defesas e utilidades."
