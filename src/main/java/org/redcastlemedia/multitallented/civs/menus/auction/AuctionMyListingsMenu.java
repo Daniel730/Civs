@@ -17,6 +17,7 @@ import org.redcastlemedia.multitallented.civs.auction.AuctionListing;
 import org.redcastlemedia.multitallented.civs.auction.AuctionManager;
 import org.redcastlemedia.multitallented.civs.auction.AuctionResult;
 import org.redcastlemedia.multitallented.civs.civilians.Civilian;
+import org.redcastlemedia.multitallented.civs.items.CVItem;
 import org.redcastlemedia.multitallented.civs.localization.LocaleManager;
 import org.redcastlemedia.multitallented.civs.menus.CivsMenu;
 import org.redcastlemedia.multitallented.civs.menus.CustomMenu;
@@ -44,6 +45,17 @@ public class AuctionMyListingsMenu extends CustomMenu {
     @Override
     @SuppressWarnings("unchecked")
     protected ItemStack createItemStack(Civilian civilian, MenuIcon menuIcon, int count) {
+        Player player = Bukkit.getPlayer(civilian.getUuid());
+        if ("title".equals(menuIcon.getKey()) && player != null) {
+            CVItem cvItem = menuIcon.createCVItem(player, count);
+            List<AuctionListing> listings = (List<AuctionListing>) MenuManager.getData(civilian.getUuid(), "listings");
+            if (listings == null || listings.isEmpty()) {
+                cvItem.setLore(List.of(LocaleManager.getInstance().getTranslation(player, "auction-my-empty")));
+            }
+            ItemStack itemStack = cvItem.createItemStack();
+            putActions(civilian, menuIcon, itemStack, count);
+            return itemStack;
+        }
         if (!"items".equals(menuIcon.getKey())) {
             return super.createItemStack(civilian, menuIcon, count);
         }
@@ -61,7 +73,6 @@ public class AuctionMyListingsMenu extends CustomMenu {
         ItemMeta meta = display.getItemMeta();
         if (meta != null) {
             List<String> lore = meta.hasLore() ? new ArrayList<>(meta.getLore()) : new ArrayList<>();
-            Player player = Bukkit.getPlayer(civilian.getUuid());
             LocaleManager localeManager = LocaleManager.getInstance();
             lore.add(ChatColor.GRAY + localeManager.getTranslation(player, "auction-price")
                     .replace("$1", Util.getNumberFormat(listing.getPrice(), civilian.getLocale())));
