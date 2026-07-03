@@ -26,6 +26,8 @@ towns:
 - city
 - metropolis
 
+shield-percent: 25
+
 effects:
 - block_break
 - block_build

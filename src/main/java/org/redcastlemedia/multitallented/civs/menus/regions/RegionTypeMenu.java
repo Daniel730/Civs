@@ -382,6 +382,11 @@ public class RegionTypeMenu extends CustomMenu {
 
         cvItem.setLore(Util.textWrap(civilian, LocaleManager.getInstance().getTranslation(player,
                 menuIcon.getDesc()).replace("$1", localizedRegionTypeName)));
+        if ("tool".equals(type) && regionType.getGroups().contains("farm")) {
+            List<String> lore = new ArrayList<>(cvItem.getLore());
+            lore.add(LocaleManager.getInstance().getTranslation(player, "farm-tool-tip"));
+            cvItem.setLore(lore);
+        }
         ItemStack itemStack = cvItem.createItemStack();
         MenuUtil.sanitizeItem(itemStack);
         putActions(civilian, menuIcon, itemStack, count);

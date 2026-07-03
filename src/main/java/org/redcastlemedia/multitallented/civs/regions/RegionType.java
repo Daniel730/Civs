@@ -47,6 +47,9 @@ public class RegionType extends CivItem {
     private Set<String> govTypes = new HashSet<>();
     @Getter @Setter
     private boolean isWarEnabled = false;
+    /** Optional YAML {@code shield-percent} (0–100); overrides {@code power_shield} effect vars when set. */
+    @Getter @Setter
+    private int shieldPercent = -1;
 
     public RegionType(String key, String name,
                       CVItem icon,

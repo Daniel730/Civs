@@ -1,0 +1,41 @@
+# Example region: spawns bandit_scout from plugins/Civs/mobs/bandit_scout.yml on upkeep.
+# Effect syntax: custom_mob:<mob_id>
+type: region
+name: Bandit_Camp
+shop-icon: IRON_SWORD
+icon: CAMPFIRE
+price: 200
+groups:
+- defense
+- mob-spawn
+level: 2
+
+pre-reqs:
+- member=hamlet:village:town:city:metropolis
+
+build-reqs:
+- g:fence*4
+- CAMPFIRE*1
+
+build-radius: 3
+effect-radius: 16
+
+towns:
+- hamlet
+- village
+- town
+- city
+- metropolis
+
+effects:
+- block_break
+- block_build
+- block_liquid
+- block_fire
+- custom_mob:bandit_scout
+
+period: 900
+upkeep:
+  0:
+    reagents:
+    - BREAD*2

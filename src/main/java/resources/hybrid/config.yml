@@ -112,6 +112,8 @@ turret-fire-particles: true
 custom-mob-spawn-particles: true
 custom-mob-boss-bar-preview: true
 custom-mob-boss-bar-preview-seconds: 5
+# Minimum seconds between custom_mob region spawns per region
+custom-mob-region-spawn-cooldown-seconds: 300
 ##optional happy-villager puff above farm output chests (off by default for performance)
 farm-output-particles: false
 ##green purchase title + cha-ching for buyer; chat notice to online seller

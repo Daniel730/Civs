@@ -33,3 +33,12 @@ effects:
 - block_liquid
 - block_fire
 - damage_turret:12
+
+period: 600
+upkeep:
+  0:
+    reagents:
+    - ARROW*2
+    - IRON_INGOT*1
+    input:
+    - ARROW*1

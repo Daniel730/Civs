@@ -1,5 +1,8 @@
 package org.redcastlemedia.multitallented.civs.regions.effects;
 
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.entity.LivingEntity;
@@ -8,6 +11,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.redcastlemedia.multitallented.civs.Civs;
 import org.redcastlemedia.multitallented.civs.CivsSingleton;
+import org.redcastlemedia.multitallented.civs.ConfigManager;
 import org.redcastlemedia.multitallented.civs.events.RegionUpkeepEvent;
 import org.redcastlemedia.multitallented.civs.items.ItemManager;
 import org.redcastlemedia.multitallented.civs.localization.LocaleManager;
@@ -16,13 +20,17 @@ import org.redcastlemedia.multitallented.civs.regions.RegionType;
 import org.redcastlemedia.multitallented.civs.util.Util;
 
 /**
- * Region effect: {@code custom_mob:bandit_chief} spawns a YAML mob on upkeep when few entities nearby.
+ * Region effect: {@code custom_mob:bandit_scout} spawns a YAML mob on upkeep when few entities nearby.
  * Vars = mob id from {@code plugins/Civs/mobs/*.yml}. Omit {@code despawn-seconds} in mob YAML to keep until killed.
+ * Per-region cooldown: {@code custom-mob-region-spawn-cooldown-seconds} in config.yml.
+ * Example region: {@code item-types/defense/bandit_camp.yml}.
  */
 @CivsSingleton
 public class CustomMobSpawnEffect implements Listener {
 
     public static final String KEY = "custom_mob";
+
+    private static final Map<String, Long> lastSpawnByRegion = new ConcurrentHashMap<>();
 
     public static void getInstance() {
         Bukkit.getPluginManager().registerEvents(new CustomMobSpawnEffect(), Civs.getInstance());
@@ -41,6 +49,12 @@ public class CustomMobSpawnEffect implements Listener {
             return;
         }
         String mobId = event.getRegion().getEffects().get(KEY);
+        long cooldownMs = ConfigManager.getInstance().getCustomMobRegionSpawnCooldownSeconds() * 1000L;
+        String regionKey = event.getRegion().getId();
+        Long lastSpawn = lastSpawnByRegion.get(regionKey);
+        if (lastSpawn != null && System.currentTimeMillis() - lastSpawn < cooldownMs) {
+            return;
+        }
         RegionType regionType = (RegionType) ItemManager.getInstance().getItemType(event.getRegion().getType());
         int radius = Math.max(regionType.getEffectRadius(), regionType.getBuildRadius());
         if (location.getWorld().getNearbyEntities(location, radius, radius, radius).size() > 5) {
@@ -53,6 +67,7 @@ public class CustomMobSpawnEffect implements Listener {
                     + event.getRegion().getType());
             return;
         }
+        lastSpawnByRegion.put(regionKey, System.currentTimeMillis());
         announceSpawn(mobId, spawned.getLocation());
     }
 

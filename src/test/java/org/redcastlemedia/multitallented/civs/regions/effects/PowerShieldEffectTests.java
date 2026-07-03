@@ -25,5 +25,7 @@ public class PowerShieldEffectTests {
         assertEquals(100, ShieldParams.clampPercent(150));
         assertEquals(0, ShieldParams.clampPercent(-5));
         assertEquals(40, ShieldParams.clampPercent(40));
+        assertEquals(15, ShieldParams.clampPercent(15));
+        assertEquals(25, ShieldParams.clampPercent(25));
     }
 }

@@ -23,6 +23,7 @@ import org.redcastlemedia.multitallented.civs.menus.CustomMenu;
 import org.redcastlemedia.multitallented.civs.menus.MenuIcon;
 import org.redcastlemedia.multitallented.civs.menus.MenuManager;
 import org.redcastlemedia.multitallented.civs.regions.Region;
+import org.redcastlemedia.multitallented.civs.regions.RegionChestUtil;
 import org.redcastlemedia.multitallented.civs.regions.RegionManager;
 import org.redcastlemedia.multitallented.civs.regions.RegionType;
 import org.redcastlemedia.multitallented.civs.regions.RegionUpkeep;
@@ -112,8 +113,21 @@ public class RegionMenu extends CustomMenu {
             CVItem cvItem = regionType.getShopIcon(player);
             cvItem.setDisplayName(region.getDisplayName(player));
             List<String> lore = new ArrayList<>(regionType.getLore(player, false));
+            LocaleManager localeManager = LocaleManager.getInstance();
             if (hasDefenseEffect(region) && !region.getFailingUpkeeps().isEmpty()) {
-                lore.add(LocaleManager.getInstance().getTranslation(player, "defense-upkeep-warning"));
+                lore.add(localeManager.getTranslation(player, "defense-upkeep-warning"));
+                List<String> missing = RegionChestUtil.summarizeMissingUpkeepMaterials(region, regionType);
+                if (!missing.isEmpty()) {
+                    lore.add(localeManager.getTranslation(player, "turret-repair-warning")
+                            .replace("$1", String.join(", ", missing)));
+                }
+            }
+            if (RegionChestUtil.isFarmRegion(region)) {
+                int toolDurability = RegionChestUtil.getLowestToolDurabilityPercent(region);
+                if (toolDurability >= 0) {
+                    lore.add(localeManager.getTranslation(player, "farm-tool-durability")
+                            .replace("$1", toolDurability + "%"));
+                }
             }
             cvItem.setLore(lore);
             ItemStack itemStack = cvItem.createItemStack();

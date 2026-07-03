@@ -9,9 +9,12 @@ import org.bukkit.Material;
 import org.bukkit.World;
 import org.bukkit.block.Block;
 import org.bukkit.inventory.ItemStack;
+import org.bukkit.inventory.meta.Damageable;
 import org.redcastlemedia.multitallented.civs.items.CVInventory;
+import org.redcastlemedia.multitallented.civs.items.CVItem;
 import org.redcastlemedia.multitallented.civs.items.ItemManager;
 import org.redcastlemedia.multitallented.civs.items.UnloadedInventoryHandler;
+import org.redcastlemedia.multitallented.civs.util.Util;
 
 /**
  * Farm regions use the icon (center) chest for tools/reagents/inputs and a separate
@@ -131,5 +134,87 @@ public final class RegionChestUtil {
                 && a.getBlockX() == b.getBlockX()
                 && a.getBlockY() == b.getBlockY()
                 && a.getBlockZ() == b.getBlockZ();
+    }
+
+    /** Lowest remaining durability % among required tools in the input chest (-1 if none required). */
+    public static int getLowestToolDurabilityPercent(Region region) {
+        if (!isFarmRegion(region)) {
+            return -1;
+        }
+        RegionType regionType = (RegionType) ItemManager.getInstance().getItemType(region.getType());
+        if (regionType == null) {
+            return -1;
+        }
+        CVInventory chest = getInputChest(region);
+        if (chest == null || !chest.isValid()) {
+            return -1;
+        }
+        int lowestPercent = 100;
+        boolean found = false;
+        for (RegionUpkeep upkeep : regionType.getUpkeeps()) {
+            List<List<CVItem>> toolReqs = Util.mergeToolRequirements(upkeep.getReagents(), upkeep.getTools());
+            for (List<CVItem> orGroup : toolReqs) {
+                for (CVItem req : orGroup) {
+                    int maxDurability = req.getMat().getMaxDurability();
+                    if (maxDurability <= 0) {
+                        continue;
+                    }
+                    int bestRemaining = 0;
+                    for (ItemStack stack : chest.getContents()) {
+                        if (stack == null || !(stack.getItemMeta() instanceof Damageable damageable)) {
+                            continue;
+                        }
+                        if (req.equivalentItem(stack, req.getDisplayName() != null, !req.getLore().isEmpty())) {
+                            bestRemaining = Math.max(bestRemaining, maxDurability - damageable.getDamage());
+                        }
+                    }
+                    if (bestRemaining == 0) {
+                        return 0;
+                    }
+                    found = true;
+                    int percent = (int) Math.round(100.0 * bestRemaining / maxDurability);
+                    lowestPercent = Math.min(lowestPercent, percent);
+                }
+            }
+        }
+        return found ? lowestPercent : -1;
+    }
+
+    /** Material names still missing from the input chest for failing upkeep cycles. */
+    public static List<String> summarizeMissingUpkeepMaterials(Region region, RegionType regionType) {
+        List<String> missing = new ArrayList<>();
+        if (region == null || regionType == null || region.getFailingUpkeeps().isEmpty()) {
+            return missing;
+        }
+        CVInventory chest = getInputChest(region);
+        if (chest == null || !chest.isValid()) {
+            missing.add("CHEST");
+            return missing;
+        }
+        for (Integer index : region.getFailingUpkeeps()) {
+            if (index >= regionType.getUpkeeps().size()) {
+                continue;
+            }
+            RegionUpkeep upkeep = regionType.getUpkeeps().get(index);
+            List<List<CVItem>> consumables = Util.consumableReagents(upkeep.getReagents());
+            if (!consumables.isEmpty() && !Util.containsItems(consumables, chest)) {
+                missing.add(labelFirstMaterial(consumables));
+            }
+            List<List<CVItem>> tools = Util.mergeToolRequirements(upkeep.getReagents(), upkeep.getTools());
+            if (!tools.isEmpty() && !Util.containsTools(tools, chest)) {
+                missing.add(labelFirstMaterial(tools));
+            }
+            if (!upkeep.getInputs().isEmpty() && !Util.containsItems(upkeep.getInputs(), chest)) {
+                missing.add(labelFirstMaterial(upkeep.getInputs()));
+            }
+        }
+        return missing;
+    }
+
+    private static String labelFirstMaterial(List<List<CVItem>> groups) {
+        if (groups == null || groups.isEmpty() || groups.get(0).isEmpty()) {
+            return "?";
+        }
+        return groups.get(0).get(0).getMat().name();
     }
 }

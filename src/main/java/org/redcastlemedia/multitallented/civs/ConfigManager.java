@@ -91,6 +91,8 @@ public class ConfigManager {
     @Getter
     int customMobBossBarPreviewSeconds;
     @Getter
+    int customMobRegionSpawnCooldownSeconds;
+    @Getter
     boolean farmOutputParticles;
     @Getter
     boolean auctionPurchaseFeedback;
@@ -719,6 +721,7 @@ public class ConfigManager {
         customMobSpawnParticles = true;
         customMobBossBarPreview = true;
         customMobBossBarPreviewSeconds = 5;
+        customMobRegionSpawnCooldownSeconds = 300;
         farmOutputParticles = false;
         auctionPurchaseFeedback = true;
         denyArrowTurretShootAtMobs = false;

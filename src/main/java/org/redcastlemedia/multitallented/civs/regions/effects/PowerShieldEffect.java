@@ -84,14 +84,16 @@ public class PowerShieldEffect implements Listener {
     }
 
     private static int reductionFromRegion(Region region) {
-        if (!region.getEffects().containsKey(KEY)) {
-            return 0;
+        RegionType regionType = (RegionType) ItemManager.getInstance().getItemType(region.getType());
+        int reduction = 0;
+        if (regionType != null && regionType.getShieldPercent() >= 0) {
+            reduction = regionType.getShieldPercent();
+        } else if (region.getEffects().containsKey(KEY)) {
+            reduction = ShieldParams.parseReductionPercent(region.getEffects().get(KEY));
         }
-        int reduction = ShieldParams.parseReductionPercent(region.getEffects().get(KEY));
         if (reduction <= 0) {
             return 0;
         }
-        RegionType regionType = (RegionType) ItemManager.getInstance().getItemType(region.getType());
         if (regionType != null && !regionType.getUpkeeps().isEmpty() && !region.runUpkeep(false)) {
             return 0;
         }

@@ -137,8 +137,13 @@ auction-my-empty: "Você não tem anúncios ativos. Segure um item e use /civs a
 auction-confirm-hint: "Shift+clique em um anúncio para confirmar a compra."
 auction-shift-to-buy: "Shift+clique para comprar"
 defense-upkeep-warning: "&cDefesa inativa — forneça o custo ou esta estrutura não protegerá você."
+turret-repair-warning: "&eReabasteça o baú: $1"
+custom-mob-list-header: "Mobs personalizados:"
+custom-mob-list-entry: "  $1 — $2 ($3, $4 HP, $5 dmg)"
 tools-title: Ferramentas
 tools: "Todas as ferramentas necessárias no baú de $1"
+farm-tool-tip: "&7Ferramentas desgastam a cada ciclo — mantenha enxadas/machados/tesouras extras no baú central."
+farm-tool-durability: "&7Durabilidade das ferramentas: $1"
 custom-mob-wild-boar: Javali Selvagem
 custom-mob-bandit-scout: Batedor Bandido
 custom-mob-region-spawn: "$1 apareceu perto de $2 $3 $4 $5"

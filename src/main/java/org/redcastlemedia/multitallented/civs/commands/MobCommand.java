@@ -37,8 +37,21 @@ public class MobCommand extends CivCommand {
             if (ids.isEmpty()) {
                 player.sendMessage(Civs.getPrefix() + LocaleManager.getInstance().getTranslation(player, "custom-mob-none"));
             } else {
-                player.sendMessage(Civs.getPrefix() + LocaleManager.getInstance().getTranslation(player, "custom-mob-list")
-                        .replace("$1", String.join(", ", ids)));
+                player.sendMessage(Civs.getPrefix() + LocaleManager.getInstance().getTranslation(player, "custom-mob-list-header"));
+                ids.sort(String::compareToIgnoreCase);
+                for (String mobId : ids) {
+                    var definition = CustomMobManager.getInstance().getMob(mobId);
+                    if (definition == null) {
+                        continue;
+                    }
+                    String display = LocaleManager.getInstance().getTranslation(player, definition.getDisplay());
+                    player.sendMessage(LocaleManager.getInstance().getTranslation(player, "custom-mob-list-entry")
+                            .replace("$1", mobId)
+                            .replace("$2", display)
+                            .replace("$3", definition.getEntityType().name())
+                            .replace("$4", String.valueOf((int) definition.getHealth()))
+                            .replace("$5", String.valueOf((int) definition.getDamage())));
+                }
             }
             return true;
         }
