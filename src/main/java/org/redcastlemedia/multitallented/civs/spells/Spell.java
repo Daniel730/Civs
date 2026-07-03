@@ -12,6 +12,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.entity.Projectile;
 import org.bukkit.util.Vector;
 import org.redcastlemedia.multitallented.civs.Civs;
+import org.redcastlemedia.multitallented.civs.events.SpellPreCastEvent;
 import org.redcastlemedia.multitallented.civs.civilians.Civilian;
 import org.redcastlemedia.multitallented.civs.civilians.CivilianManager;
 import org.redcastlemedia.multitallented.civs.items.CivItem;
@@ -147,6 +148,16 @@ public class Spell {
         if (isFailingOrMapTargets(abilitySection, mappedTargets)) {
             return false;
         }
+
+        if (!delayed && caster != null) {
+            SpellPreCastEvent preCastEvent = new SpellPreCastEvent(
+                    caster.getUniqueId(), this, resolveManaCost(abilitySection));
+            Bukkit.getPluginManager().callEvent(preCastEvent);
+            if (preCastEvent.isCancelled()) {
+                return false;
+            }
+        }
+
         ConfigurationSection componentSection = abilitySection.getConfigurationSection("components");
         if (componentSection == null) {
             return false;
@@ -667,5 +678,58 @@ public class Spell {
         Set<Object> targetSet = new HashSet<>();
         targetSet.add(self);
         mappedTargets.put(SpellConstants.SELF, targetSet);
+    }
+
+    private int resolveManaCost(ConfigurationSection abilitySection) {
+        int cost = parseManaCost(abilitySection.getConfigurationSection("conditions"), true);
+        if (cost > 0) {
+            return cost;
+        }
+        ConfigurationSection components = abilitySection.getConfigurationSection("components");
+        if (components == null) {
+            return 0;
+        }
+        for (String componentKey : components.getKeys(false)) {
+            ConfigurationSection component = components.getConfigurationSection(componentKey);
+            if (component == null) {
+                continue;
+            }
+            cost = parseManaCost(component.getConfigurationSection("costs"), true);
+            if (cost > 0) {
+                return cost;
+            }
+            cost = parseManaCost(component.getConfigurationSection("yield"), false);
+            if (cost > 0) {
+                return cost;
+            }
+        }
+        return 0;
+    }
+
+    private int parseManaCost(ConfigurationSection section, boolean positiveOnly) {
+        if (section == null) {
+            return 0;
+        }
+        for (String key : section.getKeys(false)) {
+            String costName = key.contains("^") ? key.split("\\^")[0] : key;
+            if (!"mana".equals(costName)) {
+                continue;
+            }
+            String value = section.getString(key);
+            if (value == null && section.isConfigurationSection(key)) {
+                value = section.getConfigurationSection(key).getString("mana");
+            }
+            if (value == null) {
+                continue;
+            }
+            int mana = (int) Math.round(getLevelAdjustedValue(value, level, caster, this));
+            if (positiveOnly && mana > 0) {
+                return mana;
+            }
+            if (!positiveOnly && mana < 0) {
+                return Math.abs(mana);
+            }
+        }
+        return 0;
     }
 }

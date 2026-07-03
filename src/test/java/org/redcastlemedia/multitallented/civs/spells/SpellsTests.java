@@ -1,6 +1,8 @@
 package org.redcastlemedia.multitallented.civs.spells;
 
 import static org.junit.Assert.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -30,6 +32,7 @@ import org.redcastlemedia.multitallented.civs.civclass.ClassManager;
 import org.redcastlemedia.multitallented.civs.civclass.ClassType;
 import org.redcastlemedia.multitallented.civs.civilians.Civilian;
 import org.redcastlemedia.multitallented.civs.civilians.CivilianManager;
+import org.redcastlemedia.multitallented.civs.events.SpellPreCastEvent;
 import org.redcastlemedia.multitallented.civs.items.ItemManager;
 import org.redcastlemedia.multitallented.civs.spells.civstate.CivState;
 
@@ -105,6 +108,21 @@ public class SpellsTests extends TestUtil {
         Spell spell = new Spell("empathy", TestUtil.player, 1);
         boolean costsMet = spell.isCostsMet(mappedTargets, fulfilledRequirements, componentName, config);
         assertTrue(costsMet);
+        assertEquals(60, civilian.getMana());
+    }
+
+    @Test
+    public void spellPreCastEventShouldCancelCastBeforeManaUse() {
+        civilian.setMana(60);
+        doAnswer(invocation -> {
+            Object event = invocation.getArgument(0);
+            if (event instanceof SpellPreCastEvent preCastEvent) {
+                preCastEvent.setCancelled(true);
+            }
+            return null;
+        }).when(TestUtil.pluginManager).callEvent(any());
+        Spell spell = new Spell("hunger", TestUtil.player, 1);
+        assertFalse(spell.useAbility());
         assertEquals(60, civilian.getMana());
     }
 

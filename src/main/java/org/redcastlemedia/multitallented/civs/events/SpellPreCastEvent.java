@@ -8,21 +8,22 @@ import org.redcastlemedia.multitallented.civs.spells.Spell;
 import java.util.UUID;
 
 /**
- *
- * @author Multitallented
+ * Fired after a Civs spell passes condition and target checks, immediately before
+ * component costs (including mana) are evaluated or consumed.
  */
 public class SpellPreCastEvent extends Event implements Cancellable {
     private static final HandlerList hList = new HandlerList();
-    private UUID uuid;
-    private Spell spell;
+    private final UUID uuid;
+    private final Spell spell;
+    private final int manaCost;
     private boolean cancelled = false;
-    public SpellPreCastEvent(UUID uuid, Spell skill) {
+
+    public SpellPreCastEvent(UUID uuid, Spell spell, int manaCost) {
         this.uuid = uuid;
-        this.spell = skill;
+        this.spell = spell;
+        this.manaCost = manaCost;
     }
-    public void setUuid(UUID uuid) {
-        this.uuid = uuid;
-    }
+
     public UUID getUuid() {
         return uuid;
     }
@@ -30,8 +31,13 @@ public class SpellPreCastEvent extends Event implements Cancellable {
     public Spell getSpell() {
         return spell;
     }
-    public void setSpell(Spell skill) {
-        this.spell = skill;
+
+    public String getSpellId() {
+        return spell != null ? spell.getType() : null;
+    }
+
+    public int getManaCost() {
+        return manaCost;
     }
 
     @Override
@@ -43,6 +49,7 @@ public class SpellPreCastEvent extends Event implements Cancellable {
     public boolean isCancelled() {
         return cancelled;
     }
+
     public static HandlerList getHandlerList() {
         return hList;
     }
