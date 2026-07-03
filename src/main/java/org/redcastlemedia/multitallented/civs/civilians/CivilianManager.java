@@ -197,6 +197,10 @@ public class CivilianManager {
                     }
                     Skill skill = new Skill(skillName);
                     for (String accomplishment : civConfig.getConfigurationSection("skills." + skillName).getKeys(false)) {
+                        if (Skill.getBonusExpKey().equals(accomplishment)) {
+                            skill.setBonusExp(civConfig.getDouble("skills." + skillName + "." + accomplishment, 0));
+                            continue;
+                        }
                         int level = civConfig.getInt("skills." + skillName + "." + accomplishment);
                         skill.getAccomplishments().put(accomplishment, level);
                     }
@@ -320,6 +324,9 @@ public class CivilianManager {
                 for (Map.Entry<String, Integer> accomplishment : skill.getAccomplishments().entrySet()) {
                     civConfig.set("skills." + skill.getType() + "." + accomplishment.getKey(), accomplishment.getValue());
                 }
+                if (skill.getBonusExp() > 0) {
+                    civConfig.set("skills." + skill.getType() + "." + Skill.getBonusExpKey(), skill.getBonusExp());
+                }
             }
             civConfig.set("kills", civilian.getKills());
             civConfig.set("kill-streak", civilian.getKillStreak());
@@ -332,6 +339,9 @@ public class CivilianManager {
             for (Skill skill : civilian.getSkills().values()) {
                 for (Map.Entry<String, Integer> entry : skill.getAccomplishments().entrySet()) {
                     civConfig.set("skills." + skill.getType() + "." + entry.getKey(), entry.getValue());
+                }
+                if (skill.getBonusExp() > 0) {
+                    civConfig.set("skills." + skill.getType() + "." + Skill.getBonusExpKey(), skill.getBonusExp());
                 }
             }
 

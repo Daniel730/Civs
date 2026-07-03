@@ -19,6 +19,7 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.redcastlemedia.multitallented.civs.Civs;
 import org.redcastlemedia.multitallented.civs.ConfigManager;
+import org.redcastlemedia.multitallented.civs.events.GainExpEvent;
 import org.redcastlemedia.multitallented.civs.anticheat.ExemptionType;
 import org.redcastlemedia.multitallented.civs.civclass.CivClass;
 import org.redcastlemedia.multitallented.civs.civclass.ClassManager;
@@ -29,6 +30,7 @@ import org.redcastlemedia.multitallented.civs.items.ItemManager;
 import org.redcastlemedia.multitallented.civs.regions.Region;
 import org.redcastlemedia.multitallented.civs.regions.RegionManager;
 import org.redcastlemedia.multitallented.civs.regions.RegionType;
+import org.redcastlemedia.multitallented.civs.events.GainExpEvent;
 import org.redcastlemedia.multitallented.civs.skills.Skill;
 import org.redcastlemedia.multitallented.civs.spells.civstate.BuiltInCivState;
 import org.redcastlemedia.multitallented.civs.spells.civstate.CivState;
@@ -451,27 +453,85 @@ public class Civilian {
         if (!ConfigManager.getInstance().isUseSkills()) {
             return;
         }
-        for (Skill skill : skills.values()) {
-            if (skill.getType().equalsIgnoreCase(skillName)) {
-                double currentExp = 0;
-                for (String potionName : skillTypes) {
-                    currentExp += skill.addAccomplishment(potionName);
-                }
-                MessageUtil.saveCivilianAndSendExpNotification(player, this, skill, currentExp);
-            }
+        Skill skill = findSkill(skillName);
+        if (skill == null) {
+            return;
         }
+        double proposedExp = 0;
+        for (String accomplishmentKey : skillTypes) {
+            proposedExp += skill.previewAccomplishmentExp(accomplishmentKey);
+        }
+        if (!shouldApplySkillXp(skill, proposedExp)) {
+            return;
+        }
+        double appliedExp = 0;
+        for (String accomplishmentKey : skillTypes) {
+            appliedExp += skill.addAccomplishment(accomplishmentKey);
+        }
+        MessageUtil.saveCivilianAndSendExpNotification(player, this, skill, appliedExp);
     }
 
     public void awardSkill(Player player, String skillType, String skillName) {
         if (!ConfigManager.getInstance().isUseSkills()) {
             return;
         }
-        for (Skill skill : skills.values()) {
-            if (skill.getType().equalsIgnoreCase(skillName)) {
-                double currentExp = 0;
-                currentExp += skill.addAccomplishment(skillType);
-                MessageUtil.saveCivilianAndSendExpNotification(player, this, skill, currentExp);
+        Skill skill = findSkill(skillName);
+        if (skill == null) {
+            return;
+        }
+        double proposedExp = skill.previewAccomplishmentExp(skillType);
+        if (!shouldApplySkillXp(skill, proposedExp)) {
+            return;
+        }
+        double appliedExp = skill.addAccomplishment(skillType);
+        MessageUtil.saveCivilianAndSendExpNotification(player, this, skill, appliedExp);
+    }
+
+    public double addSkillXp(String skillKey, double amount) {
+        return addSkillXp(Bukkit.getPlayer(uuid), skillKey, amount);
+    }
+
+    public double addSkillXp(Player player, String skillName, double amount) {
+        if (!ConfigManager.getInstance().isUseSkills() || amount <= 0) {
+            return 0;
+        }
+        Skill skill = findSkill(skillName);
+        if (skill == null) {
+            return 0;
+        }
+        double proposedExp = skill.previewRawExp(amount);
+        double grantAmount = resolveSkillXpGrant(skill, proposedExp);
+        if (grantAmount <= 0) {
+            return 0;
+        }
+        double appliedExp = skill.addRawExp(grantAmount);
+        MessageUtil.saveCivilianAndSendExpNotification(player, this, skill, appliedExp);
+        return appliedExp;
+    }
+
+    private Skill findSkill(String skillName) {
+        for (Map.Entry<String, Skill> entry : skills.entrySet()) {
+            if (entry.getKey().equalsIgnoreCase(skillName)
+                    || entry.getValue().getType().equalsIgnoreCase(skillName)) {
+                return entry.getValue();
             }
         }
+        return null;
+    }
+
+    private boolean shouldApplySkillXp(Skill skill, double proposedExp) {
+        return resolveSkillXpGrant(skill, proposedExp) > 0;
+    }
+
+    private double resolveSkillXpGrant(Skill skill, double proposedExp) {
+        if (proposedExp <= 0) {
+            return 0;
+        }
+        GainExpEvent event = new GainExpEvent(uuid, skill.getType(), proposedExp);
+        Bukkit.getPluginManager().callEvent(event);
+        if (event.isCancelled()) {
+            return 0;
+        }
+        return Math.max(0, event.getExp());
     }
 }

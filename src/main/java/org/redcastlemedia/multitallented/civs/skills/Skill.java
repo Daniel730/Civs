@@ -12,7 +12,10 @@ import lombok.Setter;
 
 @Getter @Setter
 public class Skill {
+    private static final String BONUS_EXP_KEY = "_bonus-exp";
+
     private Map<String, Integer> accomplishments = new HashMap<>();
+    private double bonusExp;
     private final String type;
 
     public Skill(String type) {
@@ -20,7 +23,7 @@ public class Skill {
     }
 
     public double getTotalExp() {
-        double exp = 0;
+        double exp = bonusExp;
         for (Map.Entry<String, Integer> accomplishment : accomplishments.entrySet()) {
             exp += getExpInCategory(accomplishment.getKey(), accomplishment.getValue());
         }
@@ -75,6 +78,28 @@ public class Skill {
         return Math.min(10, (int) Math.floor(10 * getTotalExp() / skillType.getMaxExp()));
     }
 
+    public double previewAccomplishmentExp(String key) {
+        SkillType skillType = SkillManager.getInstance().getSkillType(type);
+        if (skillType == null || getTotalExp() >= skillType.getMaxExp()) {
+            return 0;
+        }
+        if (!accomplishments.containsKey(key)) {
+            return skillType.getExp(key, 1);
+        }
+        return skillType.getExp(key, accomplishments.get(key) + 1.0);
+    }
+
+    public double previewRawExp(double amount) {
+        if (amount <= 0) {
+            return 0;
+        }
+        SkillType skillType = SkillManager.getInstance().getSkillType(type);
+        if (skillType == null || getTotalExp() >= skillType.getMaxExp()) {
+            return 0;
+        }
+        return Math.min(amount, skillType.getMaxExp() - getTotalExp());
+    }
+
     public double addAccomplishment(String key) {
         SkillType skillType = SkillManager.getInstance().getSkillType(type);
         if (getTotalExp() >= skillType.getMaxExp()) {
@@ -91,6 +116,23 @@ public class Skill {
             accomplishments.put(key, count + 1);
         }
         return exp;
+    }
+
+    public double addRawExp(double amount) {
+        double applicable = previewRawExp(amount);
+        if (applicable <= 0) {
+            return 0;
+        }
+        bonusExp += applicable;
+        return applicable;
+    }
+
+    public static String getBonusExpKey() {
+        return BONUS_EXP_KEY;
+    }
+
+    public static boolean isBonusExpKey(String key) {
+        return BONUS_EXP_KEY.equals(key);
     }
 
     private double getExpInCategory(String category, int count) {
