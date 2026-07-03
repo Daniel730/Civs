@@ -23,6 +23,14 @@ show-player-skins-in-menus: true
 ##Allows players to set bounties on each other and on towns
 use-bounties: true
 
+## Native BIN auction house (Vault economy)
+use-auction-house: true
+auction-listing-tax-percent: 5.0
+auction-max-listings-per-player: 10
+auction-listing-duration-hours: 48
+auction-min-price: 1.0
+auction-max-price: 1000000.0
+
 #allows players to earn exp in skills
 allow-skills: true
 #turns off exp chat notifications for skills
@@ -81,8 +89,18 @@ villager-cooldown: 300
 ##Allow people to hunt other players in other worlds
 allow-hunt-cross-world: false
 
+##region turrets (arrow_trap, basic_turret) — set false to disable all turret effects
+use-turrets: true
 ##stops arrow turrets from shooting at monsters
 disable-arrow-turret-shooting-at-mobs: false
+
+##town/region power shields (town_shield, town power_shield) — set false to disable player damage reduction
+use-shields: true
+##default % damage reduction for towns with power_shield and no explicit value (requires town power or grace)
+default-town-shield-reduction: 15
+
+##YAML-defined custom mobs (civs-mobs/ or plugins/Civs/mobs/) — /civs mob spawn, custom_mob region effect
+use-custom-mobs: true
 
 ##mobs killed in safe zones will not drop items
 stop-mobs-from-dropping-items-in-safe-zones: false

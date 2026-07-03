@@ -330,8 +330,8 @@ public class CommonScheduler implements Runnable {
                         r, regionType);
 
                 if (playerEnterRegionEvent.isNotify() && ConfigManager.getInstance().isEnterExitMessagesUseTitles()) {
-                    String localRegionTypeName = regionType.getDisplayName(player);
-                    player.sendTitle(" ", ChatColor.BLUE + localRegionTypeName, 5, 40, 5);
+                    String localRegionName = r.getDisplayName(player);
+                    player.sendTitle(" ", ChatColor.BLUE + localRegionName, 5, 40, 5);
                 }
 
                 Bukkit.getPluginManager().callEvent(playerEnterRegionEvent);

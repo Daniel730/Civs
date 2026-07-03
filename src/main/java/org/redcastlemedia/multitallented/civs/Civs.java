@@ -14,6 +14,7 @@ import org.bukkit.plugin.java.JavaPlugin;
 import org.dynmap.DynmapCommonAPI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.redcastlemedia.multitallented.civs.auction.AuctionManager;
 import org.redcastlemedia.multitallented.civs.chat.ChatManager;
 import org.redcastlemedia.multitallented.civs.civilians.allowedactions.AllowedActionsListener;
 import org.redcastlemedia.multitallented.civs.commands.CivCommand;
@@ -93,6 +94,7 @@ public class Civs extends JavaPlugin {
         Bukkit.getScheduler().cancelTasks(this);
         AllowedActionsListener.getInstance().onDisable();
         ChatManager.getInstance().onDisable();
+        AuctionManager.getInstance().saveAll();
     }
 
 

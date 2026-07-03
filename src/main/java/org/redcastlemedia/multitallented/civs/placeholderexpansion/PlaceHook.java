@@ -8,12 +8,15 @@ import org.bukkit.entity.Player;
 import org.redcastlemedia.multitallented.civs.Civs;
 import org.redcastlemedia.multitallented.civs.alliances.Alliance;
 import org.redcastlemedia.multitallented.civs.alliances.AllianceManager;
+import org.redcastlemedia.multitallented.civs.auction.AuctionManager;
 import org.redcastlemedia.multitallented.civs.chat.ChatManager;
 import org.redcastlemedia.multitallented.civs.civilians.Bounty;
 import org.redcastlemedia.multitallented.civs.civilians.ChatChannel;
 import org.redcastlemedia.multitallented.civs.civilians.Civilian;
 import org.redcastlemedia.multitallented.civs.civilians.CivilianManager;
 import org.redcastlemedia.multitallented.civs.skills.Skill;
+import org.redcastlemedia.multitallented.civs.stats.StatManager;
+import org.redcastlemedia.multitallented.civs.stats.TerritorialStat;
 import org.redcastlemedia.multitallented.civs.towns.Town;
 import org.redcastlemedia.multitallented.civs.towns.TownManager;
 import org.redcastlemedia.multitallented.civs.util.Util;
@@ -38,6 +41,8 @@ public class PlaceHook extends PlaceholderExpansion {
     private static final String HOUSING = "housing";
     private static final String CHAT_CHANNEL_NAME = "chatchannel";
     private static final String TOWN_BANK = "townbank";
+    private static final String AUCTION_LISTINGS = "auction_listings";
+    private static final String AUCTION_MY_LISTINGS = "auction_my_listings";
 
     @Override
     public boolean canRegister() {
@@ -155,6 +160,12 @@ public class PlaceHook extends PlaceholderExpansion {
             return nation;
         } else if (identifier.startsWith("skill_")) {
             return resolveSkillPlaceholder(civilian, identifier);
+        } else if (identifier.startsWith("stat_")) {
+            return resolveStatPlaceholder(civilian, identifier);
+        } else if (AUCTION_LISTINGS.equals(identifier)) {
+            return String.valueOf(AuctionManager.getInstance().getActiveListingCount());
+        } else if (AUCTION_MY_LISTINGS.equals(identifier)) {
+            return String.valueOf(AuctionManager.getInstance().getListingCountForSeller(civilian.getUuid()));
         } else {
             return "-";
         }
@@ -188,6 +199,15 @@ public class PlaceHook extends PlaceholderExpansion {
             }
         }
         return null;
+    }
+
+    private String resolveStatPlaceholder(Civilian civilian, String identifier) {
+        String statKey = identifier.substring("stat_".length());
+        TerritorialStat stat = TerritorialStat.fromKey(statKey);
+        if (stat == null) {
+            return "0";
+        }
+        return String.valueOf(StatManager.getInstance().getStatValue(civilian.getUuid(), stat));
     }
 
 }

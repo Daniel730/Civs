@@ -81,8 +81,16 @@ villager-cooldown: 300
 ##Allow people to hunt other players in other worlds
 allow-hunt-cross-world: false
 
+##region turrets (arrow_trap, basic_turret) — set false to disable all turret effects
+use-turrets: true
 ##stops arrow turrets from shooting at monsters
 disable-arrow-turret-shooting-at-mobs: false
+
+##town/region power shields (town_shield, town power_shield) — set false to disable player damage reduction
+use-shields: true
+use-custom-mobs: true
+##default % damage reduction for towns with power_shield and no explicit value (requires town power or grace)
+default-town-shield-reduction: 15
 
 ##mobs killed in safe zones will not drop items
 stop-mobs-from-dropping-items-in-safe-zones: false

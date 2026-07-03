@@ -19,6 +19,12 @@ items:
     name: shop
     actions:
       - menu:shop?sort=category
+  auction:
+    index: 14
+    icon: GOLD_INGOT
+    name: auction-house
+    actions:
+      - menu:auction-browse
   blueprints:
     index: 12
     icon: MAP

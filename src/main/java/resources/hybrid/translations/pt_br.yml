@@ -85,6 +85,49 @@ power-buff-desc: $1% de aumento do poder diário
 max_power-buff-desc: $1% aumento na capacidade máxima de poder
 cost-buff-desc: $1% valor de reembolso de todas $2
 shop: Loja
+auction-house: Casa de Leilões
+auction-my-listings: Meus Anúncios
+auction-sell: Vender Item
+auction-listed: "Item anunciado por $1"
+auction-cancelled: "Anúncio cancelado"
+auction-claimed: "Itens devolvidos do leilão recebidos"
+auction-purchased: "Compra realizada"
+auction-no-item: "Segure um item na mão principal para anunciar"
+auction-invalid-price: "Preço fora dos limites do leilão"
+auction-max-listings: "Você tem anúncios demais ativos"
+auction-not-found: "Anúncio não encontrado"
+auction-cannot-buy-own: "Você não pode comprar seu próprio anúncio"
+auction-expired: "Esse anúncio expirou"
+auction-inventory-full: "Seu inventário está cheio"
+auction-cancelled-event: "Essa ação de leilão foi bloqueada"
+auction-failed: "Falha na ação do leilão"
+auction-price: "Preço: $1"
+auction-seller: "Vendedor: $1"
+auction-expires: "Expira em: $1"
+auction-click-cancel: "Clique para cancelar"
+auction-sell-help-title: "Como vender"
+auction-sell-help-command: "Use /civs auction sell <preço>"
+auction-sell-help-tax: "Taxa de anúncio: $1% do preço"
+auction-sell-help-duration: "Duração: $1 horas"
+auction-sell-help-limits: "Faixa de preço: $1 - $2"
+auction-sell-command: "/civs auction sell "
+custom-mob-bandit-chief: Chefe Bandido
+custom-mob-usage: "Uso: /civs mob spawn <id> | /civs mob list"
+custom-mob-spawned: "Invocado $1"
+custom-mob-not-found: "Mob personalizado desconhecido: $1"
+custom-mob-none: "Nenhum mob personalizado carregado"
+custom-mob-list: "Mobs personalizados: $1"
+auction-sort-price: "Ordenar por preço"
+auction-sort-price-asc: "Preço: menor para maior (clique para inverter)"
+auction-sort-price-desc: "Preço: maior para menor (clique para inverter)"
+auction-sort-name: "Ordenar por nome"
+auction-sort-name-asc: "Nome: A-Z (clique para inverter)"
+auction-sort-name-desc: "Nome: Z-A (clique para inverter)"
+auction-filter: "Filtrar por material"
+auction-filter-hint: "Segure um item e clique para filtrar"
+auction-filter-active: "Filtrando: $1 (clique para limpar)"
+auction-filter-no-item: "Segure o material que deseja filtrar"
+auction-clear-filter: "Limpar filtro"
 buy-item: A venda
 price: Preço $1
 buy: Comprar $1
@@ -534,6 +577,10 @@ admin_graveyard-desc: Um lugar para todos os jogadores renascerem. Também previ
 shelter-name: Abrigo
 shelter-desc: Um lugar seguro para guardar seus itens e ganhar algum dinheiro com pães,
   bifes, cenouras ou batatas a cada 30 minutos.
+basic_turret-name: Torre básica
+basic_turret-desc: Nível 1 | Alcance 12 | Dano 12% | Causa dano a mobs hostis e intrusos no intervalo. Sem custo de flechas.
+town_shield-name: Escudo da cidade
+town_shield-desc: Nível 2 | Alcance 20 | Reduz dano recebido em 25% enquanto o custo de ferro for fornecido.
 arrow_trap-name: Armadilha de flechas
 arrow_trap-desc: Nível 1 | Alcance 17 | Dano 30 | Velocidade 38 | Dispersão 3 | Atira flechas
   em jogadores não-membros próximos e monstros.

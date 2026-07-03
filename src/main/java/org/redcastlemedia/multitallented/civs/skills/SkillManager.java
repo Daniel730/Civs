@@ -6,13 +6,19 @@ import java.util.Map;
 import java.util.logging.Level;
 import java.util.regex.Pattern;
 
+import org.bukkit.Bukkit;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.entity.Player;
 import org.redcastlemedia.multitallented.civs.Civs;
 import org.redcastlemedia.multitallented.civs.CivsSingleton;
 import org.redcastlemedia.multitallented.civs.ConfigManager;
 import org.redcastlemedia.multitallented.civs.civilians.Civilian;
 import org.redcastlemedia.multitallented.civs.items.CivItem;
+import org.redcastlemedia.multitallented.civs.stats.StatListener;
+import org.redcastlemedia.multitallented.civs.stats.StatManager;
+import org.redcastlemedia.multitallented.civs.stats.StatTotals;
+import org.redcastlemedia.multitallented.civs.stats.TerritorialStat;
 import org.redcastlemedia.multitallented.civs.util.FallbackConfigUtil;
 import org.reflections.Reflections;
 import org.reflections.ReflectionsException;
@@ -104,6 +110,38 @@ public class SkillManager {
         return skills.get(name.toLowerCase());
     }
 
+    public int getShopTierCap(Civilian civilian) {
+        Skill building = civilian.getSkills().get(CivSkills.BUILDING.name().toLowerCase());
+        if (building == null) {
+            return 1;
+        }
+        int tier = building.getLevel();
+        if (tier < 1) {
+            return 1;
+        }
+        int maxLevels = ConfigManager.getInstance().getLevelList().size();
+        return maxLevels > 0 ? Math.min(tier, maxLevels) : tier;
+    }
+
+    public boolean isShopItemAvailable(Civilian civilian, CivItem civItem) {
+        if (!civItem.getInShop()) {
+            return true;
+        }
+        if (civItem.getItemType() == CivItem.ItemType.FOLDER
+                || civItem.getItemType() == CivItem.ItemType.TOWN
+                || !civItem.getGroups().contains("shop")) {
+            return true;
+        }
+        int shopTier = getShopTierCap(civilian);
+        if (civItem.getLevel() > shopTier) {
+            return false;
+        }
+        if (civItem.getLevel() < shopTier) {
+            return false;
+        }
+        return true;
+    }
+
     public double getSkillDiscountedPrice(Civilian civilian, CivItem civItem) {
         double discount = 0;
         for (Skill skill : civilian.getSkills().values()) {
@@ -117,6 +155,14 @@ public class SkillManager {
                 }
             }
         }
-        return (1.0 - discount) * civItem.getRawPrice();
+        double priceMultiplier = 1.0 - discount;
+        Player player = Bukkit.getPlayer(civilian.getUuid());
+        if (player != null && player.getLocation().getWorld() != null
+                && StatListener.isInFriendlyTerritory(player, player.getLocation())) {
+            StatTotals shopTotals = StatManager.getInstance()
+                    .getStatTotals(civilian.getUuid(), TerritorialStat.SHOP_DISCOUNT);
+            priceMultiplier = (priceMultiplier - shopTotals.getAddTotal()) * shopTotals.getMultiplyTotal();
+        }
+        return Math.max(0, priceMultiplier * civItem.getRawPrice());
     }
 }

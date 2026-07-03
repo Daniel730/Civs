@@ -820,7 +820,7 @@ public class TownManager {
             bank = intersectTown.getBankAccount();
             governmentType = intersectTown.getGovernmentType();
             childTownType = (TownType) ItemManager.getInstance().getItemType(intersectTown.getType());
-            TownManager.getInstance().removeTown(intersectTown, false, false);
+            TownManager.getInstance().removeTown(intersectTown, false, true);
             villagerCount = intersectTown.getVillagers();
         }
 

@@ -18,6 +18,7 @@ import org.redcastlemedia.multitallented.civs.chat.ChatChannelConfig;
 import org.redcastlemedia.multitallented.civs.civilians.ChatChannel;
 import org.redcastlemedia.multitallented.civs.items.CVItem;
 import org.redcastlemedia.multitallented.civs.towns.GovernmentType;
+import org.redcastlemedia.multitallented.civs.regions.effects.ShieldParams;
 import org.redcastlemedia.multitallented.civs.util.FallbackConfigUtil;
 import org.redcastlemedia.multitallented.civs.util.Util;
 
@@ -65,6 +66,14 @@ public class ConfigManager {
     int powerPerNPCKill;
     long villagerCooldown;
     boolean denyArrowTurretShootAtMobs;
+    @Getter
+    boolean useTurrets;
+    @Getter
+    boolean useShields;
+    @Getter
+    boolean useCustomMobs;
+    @Getter
+    int defaultTownShieldReduction;
     int portMana;
     int portWarmup;
     int portCooldown;
@@ -176,6 +185,12 @@ public class ConfigManager {
     @Getter boolean deleteInvalidRegions;
     @Getter boolean skinsInMenu;
     @Getter boolean useBounties;
+    @Getter boolean useAuctionHouse;
+    @Getter double auctionListingTaxPercent;
+    @Getter int auctionMaxListingsPerPlayer;
+    @Getter long auctionListingDurationHours;
+    @Getter double auctionMinPrice;
+    @Getter double auctionMaxPrice;
     @Getter boolean warningLogger;
     @Getter double percentPowerForUpgrade;
     @Getter boolean showKillStreakMessages;
@@ -379,6 +394,11 @@ public class ConfigManager {
             powerPerKill = config.getInt("power-per-kill", 30);
             powerPerNPCKill = config.getInt("power-per-npc-kill", 5);
             villagerCooldown = config.getLong("villager-cooldown", 300);
+            useTurrets = config.getBoolean("use-turrets", true);
+            useShields = config.getBoolean("use-shields", true);
+            useCustomMobs = config.getBoolean("use-custom-mobs", true);
+            defaultTownShieldReduction = ShieldParams.clampPercent(
+                    config.getInt("default-town-shield-reduction", 15));
             denyArrowTurretShootAtMobs = config.getBoolean("disable-arrow-turret-shooting-at-mobs", false);
             portMana = config.getInt("port.mana", 0);
             portWarmup = config.getInt("port.warmup", 5);
@@ -451,6 +471,12 @@ public class ConfigManager {
             deleteInvalidRegions = config.getBoolean("delete-invalid-regions", false);
             lineLengthMap = new HashMap<>();
             useBounties = config.getBoolean("use-bounties", true);
+            useAuctionHouse = config.getBoolean("use-auction-house", true);
+            auctionListingTaxPercent = config.getDouble("auction-listing-tax-percent", 5.0);
+            auctionMaxListingsPerPlayer = config.getInt("auction-max-listings-per-player", 10);
+            auctionListingDurationHours = config.getLong("auction-listing-duration-hours", 48);
+            auctionMinPrice = config.getDouble("auction-min-price", 1.0);
+            auctionMaxPrice = config.getDouble("auction-max-price", 1000000.0);
             useSkills = config.getBoolean("allow-skills", true);
             warningLogger = config.getBoolean("show-warning-logs", false);
             useBossBar = config.getBoolean("show-civs-boss-bar", true);
@@ -572,6 +598,12 @@ public class ConfigManager {
         huntCrossWorld = false;
         skinsInMenu = true;
         useBounties = true;
+        useAuctionHouse = true;
+        auctionListingTaxPercent = 5.0;
+        auctionMaxListingsPerPlayer = 10;
+        auctionListingDurationHours = 48;
+        auctionMinPrice = 1.0;
+        auctionMaxPrice = 1000000.0;
         deleteInvalidRegions = false;
         defaultGovernmentType = GovernmentType.DICTATORSHIP.name();
         silentExp = false;
@@ -643,6 +675,10 @@ public class ConfigManager {
         powerPerKill = 30;
         powerPerNPCKill = 5;
         villagerCooldown = 300;
+        useTurrets = true;
+        useShields = true;
+        useCustomMobs = true;
+        defaultTownShieldReduction = 15;
         denyArrowTurretShootAtMobs = false;
         portMana = 0;
         portWarmup = 5;

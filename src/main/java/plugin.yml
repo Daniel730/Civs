@@ -49,6 +49,9 @@ permissions:
   civs.shop:
     description: Allows players to use the shop
     default: true
+  civs.auction:
+    description: Allows players to use the native auction house
+    default: true
   civs.admin:
     description: Lets you use admin commands and bypass protections
     default: op
