@@ -30,6 +30,7 @@ effects:
   - port:town
   - cant_override
   - housing:2
+  - custom_mob:guild_thief
 
 period: 900 #15 minutes
 upkeep:

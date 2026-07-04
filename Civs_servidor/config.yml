@@ -106,6 +106,9 @@ disable-arrow-turret-shooting-at-mobs: false
 ##mobs killed in safe zones will not drop items
 stop-mobs-from-dropping-items-in-safe-zones: false
 
+##YAML-defined custom mobs (civs-mobs/ or plugins/Civs/mobs/)
+use-custom-mobs: true
+
 ##cooldown in seconds before killing the same player reduces the town power
 death-grace-period-seconds: 60
 

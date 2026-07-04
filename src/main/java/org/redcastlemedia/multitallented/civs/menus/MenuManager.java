@@ -390,6 +390,12 @@ public class MenuManager implements Listener {
         history.get(uuid).remove(history.get(uuid).size() - 1);
         return menuHistoryState;
     }
+    public static int getHistorySize(UUID uuid) {
+        if (!history.containsKey(uuid)) {
+            return 0;
+        }
+        return history.get(uuid).size();
+    }
     public static void clearHistory(UUID uuid) {
         history.remove(uuid);
     }
