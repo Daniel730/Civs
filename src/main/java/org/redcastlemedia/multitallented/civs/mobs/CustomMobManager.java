@@ -106,12 +106,14 @@ public class CustomMobManager {
 
     /**
      * Spawns a quest-owned custom mob near {@code location} for {@code questOwner}.
-     * {@code partyRadius} is reserved for future party-shared quest credit (currently unused).
+     * When {@code partyRadius} is positive, allies within that distance of the owner
+     * receive quest kill credit via {@link org.redcastlemedia.multitallented.civs.events.CustomMobKillEvent}.
      */
     public LivingEntity spawnForQuest(String mobId, Location location, UUID questOwner, double partyRadius) {
         LivingEntity living = spawn(mobId, location);
         if (living != null && questOwner != null) {
             CustomMobKeys.writeQuestOwner(living, questOwner);
+            CustomMobKeys.writePartyRadius(living, partyRadius);
         }
         return living;
     }

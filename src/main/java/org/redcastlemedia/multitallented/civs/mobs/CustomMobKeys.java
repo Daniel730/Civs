@@ -10,6 +10,7 @@ import java.util.UUID;
 public final class CustomMobKeys {
     private static NamespacedKey mobIdKey;
     private static NamespacedKey questOwnerKey;
+    private static NamespacedKey partyRadiusKey;
 
     private CustomMobKeys() {
     }
@@ -17,6 +18,7 @@ public final class CustomMobKeys {
     public static void init(Civs plugin) {
         mobIdKey = new NamespacedKey(plugin, "custom_mob_id");
         questOwnerKey = new NamespacedKey(plugin, "quest_owner");
+        partyRadiusKey = new NamespacedKey(plugin, "quest_party_radius");
     }
 
     public static NamespacedKey mobId() {
@@ -25,6 +27,10 @@ public final class CustomMobKeys {
 
     public static NamespacedKey questOwner() {
         return questOwnerKey;
+    }
+
+    public static NamespacedKey partyRadius() {
+        return partyRadiusKey;
     }
 
     public static String readMobId(LivingEntity entity) {
@@ -61,5 +67,20 @@ public final class CustomMobKeys {
         } catch (IllegalArgumentException ex) {
             return null;
         }
+    }
+
+    public static void writePartyRadius(LivingEntity entity, double partyRadius) {
+        if (partyRadiusKey == null || entity == null || partyRadius <= 0) {
+            return;
+        }
+        entity.getPersistentDataContainer().set(partyRadiusKey, PersistentDataType.DOUBLE, partyRadius);
+    }
+
+    public static double readPartyRadius(LivingEntity entity) {
+        if (partyRadiusKey == null || entity == null) {
+            return 0;
+        }
+        Double radius = entity.getPersistentDataContainer().get(partyRadiusKey, PersistentDataType.DOUBLE);
+        return radius == null ? 0 : radius;
     }
 }

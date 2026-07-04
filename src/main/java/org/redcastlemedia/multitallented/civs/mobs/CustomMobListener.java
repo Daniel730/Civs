@@ -1,5 +1,7 @@
 package org.redcastlemedia.multitallented.civs.mobs;
 
+import java.util.UUID;
+
 import org.bukkit.Bukkit;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
@@ -35,8 +37,11 @@ public class CustomMobListener implements Listener {
             }
         }
         Player killer = living.getKiller();
+        UUID questOwner = CustomMobKeys.readQuestOwner(living);
+        double partyRadius = CustomMobKeys.readPartyRadius(living);
+        Player creditedPlayer = QuestMobKillCredit.resolve(killer, questOwner, partyRadius);
         CustomMobKillEvent killEvent = new CustomMobKillEvent(
-                mobId, killer, living.getLocation(), CustomMobKeys.readQuestOwner(living));
+                mobId, killer, living.getLocation(), questOwner, creditedPlayer);
         Bukkit.getPluginManager().callEvent(killEvent);
     }
 }
