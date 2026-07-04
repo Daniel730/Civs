@@ -50,4 +50,28 @@ public class CustomMobDefinitionTests {
                 """));
         assertNull(CustomMobDefinition.fromConfig(config, "disabled_mob"));
     }
+
+    @Test
+    public void parsesQuestHuntMobYaml() {
+        YamlConfiguration config = YamlConfiguration.loadConfiguration(new java.io.StringReader("""
+                id: frost_wraith
+                enabled: true
+                display: custom-mob-frost-wraith
+                type: STRAY
+                health: 60
+                damage: 6
+                despawn-seconds: 600
+                drops:
+                  - material: ICE
+                    min-amount: 2
+                    max-amount: 5
+                    chance: 1.0
+                """));
+
+        CustomMobDefinition definition = CustomMobDefinition.fromConfig(config, "frost_wraith");
+        assertNotNull(definition);
+        assertEquals("frost_wraith", definition.getId());
+        assertEquals(org.bukkit.entity.EntityType.STRAY, definition.getEntityType());
+        assertEquals(600, definition.getDespawnSeconds());
+    }
 }

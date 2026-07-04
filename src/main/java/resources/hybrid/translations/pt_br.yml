@@ -146,6 +146,10 @@ farm-tool-tip: "&7Ferramentas desgastam a cada ciclo — mantenha enxadas/machad
 farm-tool-durability: "&7Durabilidade das ferramentas: $1"
 custom-mob-wild-boar: Javali Selvagem
 custom-mob-bandit-scout: Batedor Bandido
+custom-mob-frost-wraith: Espectro Gelado
+custom-mob-sand-raider: Saqueador das Areias
+custom-mob-stone-golem: Golem de Pedra
+custom-mob-guild-thief: Ladrão da Guilda
 custom-mob-region-spawn: "$1 apareceu perto de $2 $3 $4 $5"
 buy-item: A venda
 price: Preço $1

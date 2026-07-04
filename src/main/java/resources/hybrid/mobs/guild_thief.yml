@@ -1,0 +1,16 @@
+id: guild_thief
+enabled: true
+display: custom-mob-guild-thief
+type: VINDICATOR
+health: 45
+damage: 5
+despawn-seconds: 600
+drops:
+  - material: EMERALD
+    min-amount: 1
+    max-amount: 3
+    chance: 0.8
+  - material: GOLD_INGOT
+    min-amount: 1
+    max-amount: 2
+    chance: 0.5

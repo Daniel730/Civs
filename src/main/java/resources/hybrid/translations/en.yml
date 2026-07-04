@@ -126,6 +126,10 @@ farm-tool-durability: "&7Tool durability remaining: $1"
 farm-tool-tip: "&7Tools wear each cycle — keep spare hoes/axes/shears in the icon chest."
 custom-mob-wild-boar: Wild Boar
 custom-mob-bandit-scout: Bandit Scout
+custom-mob-frost-wraith: Frost Wraith
+custom-mob-sand-raider: Sand Raider
+custom-mob-stone-golem: Stone Golem
+custom-mob-guild-thief: Guild Thief
 custom-mob-region-spawn: "$1 appeared near $2 $3 $4 $5"
 buy-item: For Sale
 price: "Price: $1"

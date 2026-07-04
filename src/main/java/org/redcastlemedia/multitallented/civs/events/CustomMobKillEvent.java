@@ -1,5 +1,7 @@
 package org.redcastlemedia.multitallented.civs.events;
 
+import java.util.UUID;
+
 import org.bukkit.Location;
 import org.bukkit.entity.Player;
 import org.bukkit.event.Event;
@@ -19,11 +21,15 @@ public class CustomMobKillEvent extends Event {
     private final Player killer;
     @Getter
     private final Location location;
+    /** Quest owner from PDC when mob was spawned via {@code spawnForQuest}; null otherwise. */
+    @Getter
+    private final UUID questOwner;
 
-    public CustomMobKillEvent(String mobId, Player killer, Location location) {
+    public CustomMobKillEvent(String mobId, Player killer, Location location, UUID questOwner) {
         this.mobId = mobId;
         this.killer = killer;
         this.location = location == null ? null : location.clone();
+        this.questOwner = questOwner;
     }
 
     @Override
