@@ -57,11 +57,14 @@ public class CustomMobSpawnEffect implements Listener {
         }
         RegionType regionType = (RegionType) ItemManager.getInstance().getItemType(event.getRegion().getType());
         int radius = Math.max(regionType.getEffectRadius(), regionType.getBuildRadius());
-        if (location.getWorld().getNearbyEntities(location, radius, radius, radius).size() > 5) {
+        // Count only living non-player mobs — players/villagers must not block council_room spawns.
+        long nearbyMobs = location.getWorld().getNearbyEntities(location, radius, radius, radius).stream()
+                .filter(entity -> entity instanceof LivingEntity && !(entity instanceof Player))
+                .count();
+        if (nearbyMobs > 5) {
             return;
         }
-        Location spawnLocation = new Location(location.getWorld(), location.getX(), location.getY() + 1, location.getZ());
-        LivingEntity spawned = CustomMobManager.getInstance().spawn(mobId, spawnLocation);
+        LivingEntity spawned = CustomMobManager.getInstance().spawn(mobId, location.clone());
         if (spawned == null) {
             Civs.logger.warning("custom_mob region effect could not spawn mob '" + mobId + "' for "
                     + event.getRegion().getType());
