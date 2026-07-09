@@ -5,6 +5,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.logging.Level;
 
@@ -164,11 +165,15 @@ public final class BlueprintGenerator {
         if (getRemaining(targets, mat) <= 0) {
             return;
         }
-        var blockType = BlockTypes.get(mat.name());
+        var blockType = blockTypeForMaterial(mat);
         if (blockType != null) {
             clipboard.setBlock(pos, blockType.getDefaultState().toBaseBlock());
             targets.put(mat, targets.get(mat) - 1);
         }
+    }
+
+    private static com.sk89q.worldedit.world.block.BlockType blockTypeForMaterial(Material mat) {
+        return BlockTypes.get(mat.name().toLowerCase(Locale.ROOT));
     }
 
     private static void decrementAnyPrimary(Map<Material, Integer> targets) {
@@ -236,7 +241,7 @@ public final class BlueprintGenerator {
             } else if (y == 2 && !perimeter) {
                 Material crop = pickCropMaterial(targets);
                 if (crop != null) {
-                    var blockType = BlockTypes.get(crop.name());
+                    var blockType = blockTypeForMaterial(crop);
                     if (blockType != null) {
                         clipboard.setBlock(pos, blockType.getDefaultState().toBaseBlock());
                         targets.put(crop, targets.get(crop) - 1);
