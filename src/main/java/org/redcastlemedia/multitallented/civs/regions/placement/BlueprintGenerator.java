@@ -44,8 +44,6 @@ public final class BlueprintGenerator {
             Civs.logger.info("Generated fallback blueprint: " + dest.getName());
         } catch (IOException | RuntimeException e) {
             Civs.logger.log(Level.WARNING, "Failed to generate blueprint for " + regionTypeName, e);
-        } catch (RuntimeException e) {
-            Civs.logger.log(Level.WARNING, "Failed to generate blueprint for " + regionTypeName + ": " + e.getMessage());
         }
     }
 
@@ -175,7 +173,11 @@ public final class BlueprintGenerator {
     }
 
     private static com.sk89q.worldedit.world.block.BlockType blockTypeForMaterial(Material mat) {
-        return BlockTypes.get(mat.name().toLowerCase(Locale.ROOT));
+        String key = mat.getKey().toString();
+        if (!key.contains(":")) {
+            key = "minecraft:" + mat.name().toLowerCase(Locale.ROOT);
+        }
+        return BlockTypes.get(key);
     }
 
     private static void decrementAnyPrimary(Map<Material, Integer> targets) {
