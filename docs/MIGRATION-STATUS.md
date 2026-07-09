@@ -6,7 +6,7 @@
 
 ## Current status
 
-Core migration **compiles and tests pass** on Windows dev machine. Server pack in `Civs_servidor/` is the authoritative deploy set. Runtime fixes through Phase 3 are merged (Adventure API, async saves, housing recalc, GUI ordering, water/cauldron farms, safe-worldedit).
+Core migration **compiles and tests pass** on Windows dev machine (377 tests, 6 skipped). Server pack in `Civs_servidor/` is the authoritative deploy set. Runtime fixes through Phase 3 are merged (Adventure API, async saves, housing recalc, GUI ordering, water/cauldron farms, safe-worldedit). Recent batches: placement mode menu, CVItem Adventure read/write helpers, instant-build housing-only server fix, auction menus synced to `Civs_servidor/`.
 
 ## Done
 
@@ -16,14 +16,16 @@ Core migration **compiles and tests pass** on Windows dev machine. Server pack i
 - [x] Phase 3: Async YAML, housing/villager recalc, invite validation, effects clone
 - [x] Bug fixes: menu ordering, placeholder substitution, town center scans, port/town scope
 - [x] Plot rename: `displayName` on Region, `/cv rename-plot`, region menu, en/pt_br
+- [x] Placement mode menu + instant-build housing-only config fix
+- [x] Auction house menus synced to `Civs_servidor/`; CVItem Adventure lore/display writes (auction menus)
+- [x] Batch 14: skull menu meta via `CVItem.applySkullOwner`, plot rename map marker refresh (Dynmap/Pl3xMap), `AuctionSellMenu` tests
 - [x] Cursor project brain: `.cursor/skills/`, `.cursor/rules/`, this doc
 
 ## Backlog
 
-- [ ] ItemMeta → Adventure `Component` for item display names and lore
+- [ ] ItemMeta → Adventure `Component` for remaining item display names and lore (skull menus migrated; TNTCannon wand uses CVItem helpers)
 - [ ] Folia-compatible scheduling (if targeting Folia servers)
 - [ ] MMOItems / MythicLib versions tested on Paper 26.1.2 (optional)
-- [ ] Pl3xMap / Dynmap marker updates for custom plot display names (optional)
 
 ## Deploy checklist
 
@@ -41,4 +43,4 @@ Core migration **compiles and tests pass** on Windows dev machine. Server pack i
 & "C:\Users\Danie\tools\apache-maven-3.9.10\bin\mvn.cmd" test
 ```
 
-Expect ~260 tests. Mockito 5.23.0 required for Java 25.
+Expect ~377 tests (6 skipped). Mockito 5.23.0 required for Java 25.
