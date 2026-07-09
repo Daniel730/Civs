@@ -6,7 +6,7 @@
 
 ## Current status
 
-Core migration **compiles and tests pass** on Windows dev machine (377 tests, 6 skipped). Server pack in `Civs_servidor/` is the authoritative deploy set. Runtime fixes through Phase 3 are merged (Adventure API, async saves, housing recalc, GUI ordering, water/cauldron farms, safe-worldedit). Recent batches: placement mode menu, CVItem Adventure read/write helpers, instant-build housing-only server fix, auction menus synced to `Civs_servidor/`.
+Core migration **compiles and tests pass** on Windows dev machine (386 tests, 6 skipped). Server pack in `Civs_servidor/` is the authoritative deploy set. Runtime fixes through Phase 3 are merged (Adventure API, async saves, housing recalc, GUI ordering, water/cauldron farms, safe-worldedit). Recent batches: placement mode menu, CVItem Adventure read/write helpers, instant-build housing-only server fix, auction menus synced to `Civs_servidor/`, Nashorn-free spell arithmetic fallback (Java 25), RPG CivsHook reload lifecycle listener, `/cv sell` feedback fixes (batch 17), guide NPC dialog system + tutorial/quest-mob event bridge for the RPG plugin, auction browse hardening (batch 18).
 
 ## Done
 
@@ -19,6 +19,9 @@ Core migration **compiles and tests pass** on Windows dev machine (377 tests, 6 
 - [x] Placement mode menu + instant-build housing-only config fix
 - [x] Auction house menus synced to `Civs_servidor/`; CVItem Adventure lore/display writes (auction menus)
 - [x] Batch 14: skull menu meta via `CVItem.applySkullOwner`, plot rename map marker refresh (Dynmap/Pl3xMap), `AuctionSellMenu` tests
+- [x] Batch 15: spell `getLevelAdjustedValue` arithmetic fallback (no Nashorn on Java 25), `TownManager.safeWorld` for unloaded-world lookups, `Government.getIcon` null guard, RPG `CivsIntegrationLifecycleListener` + `CivsHook.withCivs` hardening
+- [x] Batch 17: `/cv sell` invalid-price and cancel-sale player feedback; `region-sale-cancelled` locale; hybrid `auction-purchase-feedback` config drift fix; `SellRegionCommandTest` + `ServerPackSyncTests` hybrid auction config guard
+- [x] Batch 18: guide NPC dialog system (`GuideNpcManager`/`GuideNpcListener`, `npc/guides.yml`) firing `GuideNpcInteractEvent`; `TutorialChooseCompleteEvent` on path selection; quest-owner PDC on `spawnForQuest` custom mobs surfaced via `CustomMobKillEvent`; auction browse/my-listings page-param clamping and null/AIR listing-item skip; `RegionMenu`/`TownManager`/`Government`/`VillagerEffect` null/unloaded-world guards; bank command and `/cv recalc` player feedback
 - [x] Cursor project brain: `.cursor/skills/`, `.cursor/rules/`, this doc
 
 ## Backlog
@@ -43,4 +46,4 @@ Core migration **compiles and tests pass** on Windows dev machine (377 tests, 6 
 & "C:\Users\Danie\tools\apache-maven-3.9.10\bin\mvn.cmd" test
 ```
 
-Expect ~377 tests (6 skipped). Mockito 5.23.0 required for Java 25.
+Expect ~386 tests (6 skipped). Mockito 5.23.0 required for Java 25.
