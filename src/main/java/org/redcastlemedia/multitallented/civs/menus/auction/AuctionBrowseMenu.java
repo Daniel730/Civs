@@ -10,13 +10,14 @@ import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
+import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
 import org.redcastlemedia.multitallented.civs.Civs;
 import org.redcastlemedia.multitallented.civs.auction.AuctionListing;
 import org.redcastlemedia.multitallented.civs.auction.AuctionManager;
 import org.redcastlemedia.multitallented.civs.auction.AuctionResult;
 import org.redcastlemedia.multitallented.civs.civilians.Civilian;
+import org.redcastlemedia.multitallented.civs.civilians.CivilianManager;
 import org.redcastlemedia.multitallented.civs.items.CVItem;
 import org.redcastlemedia.multitallented.civs.localization.LocaleManager;
 import org.redcastlemedia.multitallented.civs.menus.CivsMenu;
@@ -106,22 +107,43 @@ public class AuctionBrowseMenu extends CustomMenu {
             return new ItemStack(Material.AIR);
         }
         AuctionListing listing = listings.get(index);
-        ItemStack display = listing.getItem().clone();
-        ItemMeta meta = display.getItemMeta();
-        if (meta != null) {
-            List<String> lore = meta.hasLore() ? new ArrayList<>(meta.getLore()) : new ArrayList<>();
-            lore.add(ChatColor.GRAY + localeManager.getTranslation(player, "auction-price")
-                    .replace("$1", Util.getNumberFormat(listing.getPrice(), civilian.getLocale())));
-            lore.add(ChatColor.GRAY + localeManager.getTranslation(player, "auction-seller")
-                    .replace("$1", listing.getSellerName()));
-            lore.add(ChatColor.GRAY + localeManager.getTranslation(player, "auction-expires")
-                    .replace("$1", formatDuration(listing.getExpiresAt() - System.currentTimeMillis())));
-            lore.add(ChatColor.DARK_GRAY + listing.getId());
-            meta.setLore(lore);
-            display.setItemMeta(meta);
+        ItemStack listingItem = listing.getItem();
+        if (listingItem == null || listingItem.getType() == Material.AIR) {
+            return new ItemStack(Material.AIR);
         }
+        ItemStack display = listingItem.clone();
+        List<String> existingLore = CVItem.legacyLore(display);
+        List<String> lore = existingLore != null ? new ArrayList<>(existingLore) : new ArrayList<>();
+        lore.add(ChatColor.GRAY + localeManager.getTranslation(player, "auction-price")
+                .replace("$1", Util.getNumberFormat(listing.getPrice(), civilian.getLocale())));
+        lore.add(ChatColor.GRAY + localeManager.getTranslation(player, "auction-seller")
+                .replace("$1", listing.getSellerName()));
+        lore.add(ChatColor.GRAY + localeManager.getTranslation(player, "auction-expires")
+                .replace("$1", formatDuration(listing.getExpiresAt() - System.currentTimeMillis())));
+        lore.add(ChatColor.YELLOW + localeManager.getTranslation(player, "auction-shift-to-buy"));
+        lore.add(ChatColor.DARK_GRAY + listing.getId());
+        CVItem.applyLore(display, lore);
         putActions(civilian, menuIcon, display, count);
         return display;
+    }
+
+    @Override
+    public void onInventoryClick(InventoryClickEvent event) {
+        if (event.getWhoClicked() instanceof Player player && event.getCurrentItem() != null
+                && event.getCurrentItem().getItemMeta() != null) {
+            Civilian civilian = CivilianManager.getInstance().getCivilian(player.getUniqueId());
+            if (actions.containsKey(civilian.getUuid())) {
+                String key = CustomMenu.getActionKey(event.getCurrentItem());
+                List<String> actionStrings = actions.get(civilian.getUuid()).get(key);
+                if (actionStrings != null && actionStrings.contains("buy-listing") && !event.getClick().isShiftClick()) {
+                    event.setCancelled(true);
+                    player.sendMessage(Civs.getPrefix() + LocaleManager.getInstance()
+                            .getTranslation(player, "auction-confirm-hint"));
+                    return;
+                }
+            }
+        }
+        super.onInventoryClick(event);
     }
 
     @Override
@@ -178,7 +200,7 @@ public class AuctionBrowseMenu extends CustomMenu {
             return true;
         }
         ItemStack hand = player.getInventory().getItemInMainHand();
-        if (hand.getType().isAir()) {
+        if (hand == null || hand.getType() == Material.AIR) {
             player.sendMessage(Civs.getPrefix() + LocaleManager.getInstance()
                     .getTranslation(player, "auction-filter-no-item"));
             return true;
@@ -224,10 +246,10 @@ public class AuctionBrowseMenu extends CustomMenu {
     }
 
     private String getListingId(ItemStack clickedItem) {
-        if (clickedItem == null || !clickedItem.hasItemMeta() || !clickedItem.getItemMeta().hasLore()) {
+        if (clickedItem == null || !clickedItem.hasItemMeta()) {
             return null;
         }
-        List<String> lore = clickedItem.getItemMeta().getLore();
+        List<String> lore = CVItem.legacyLore(clickedItem);
         if (lore == null || lore.isEmpty()) {
             return null;
         }

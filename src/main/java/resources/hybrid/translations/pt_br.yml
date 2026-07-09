@@ -191,6 +191,23 @@ too-close-town: Sua $1 esta próxima de mais de uma outra vila
 town-created: $1 foi construída
 town-destroyed: $1 foi destruída
 region-built: Você construiu com sucesso uma $1
+placement-mode-title: "Colocar $1"
+placement-mode-desc: "Escolha como colocar a sua $1"
+placement-mode-manual: "Construir manualmente"
+placement-mode-manual-desc: "Coloque os blocos no mundo e confirme"
+placement-mode-instant: "Estrutura pronta"
+placement-mode-instant-desc: "Gasta materiais do inventário e cola o blueprint"
+placement-mode-instant-unavailable: "Construção instantânea indisponível (WorldEdit ou blueprint em falta)"
+placement-mode-confirm: "Confirmar colocação"
+placement-mode-confirm-desc: "Colocar estrutura no local selecionado"
+placement-mode-selected-manual: "Modo manual selecionado. Confirme quando estiver pronto."
+placement-mode-selected-instant: "Modo instantâneo selecionado. Pré-visualização ativa."
+placement-mode-not-selected: "Selecione manual ou instantâneo primeiro."
+placement-mode-cancelled: "Colocação cancelada."
+placement-mode-no-token: "Já não tem o token da região no inventário."
+instant-build-missing-materials: "Materiais em falta para construir $1"
+instant-build-paste-failed: "Falha ao colar blueprint de $1"
+instant-build-validation-failed: "Estrutura colada não passou validação para $1"
 wonder-built: "@{RED}$1 construiu a maravilha: $2"
 wonder-destroyed: "@{RED}A maravilha $1 foi destruída!"
 cant-build-wonder: "$1 já construiu essa maravilha. Você precisa destrui-la primeiro "

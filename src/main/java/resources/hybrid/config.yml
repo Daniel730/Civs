@@ -74,6 +74,13 @@ use-region-bounding-box: true
 ##should region dimensions be shown with particles instead of glass?
 use-particle-bounding-boxes: false
 
+## Instant structure placement (paste .schem blueprints)
+instant-build:
+  enabled: true
+  foundation-block: DIRT
+  fill-holes: true
+  flatten-foundation: true
+
 price-multiplier: 1.0 #multiplier for prices before adding base price
 price-base: 0.0 #added to all item prices
 refund-percentage: 0.5 #how much money you get from destroying your own regions

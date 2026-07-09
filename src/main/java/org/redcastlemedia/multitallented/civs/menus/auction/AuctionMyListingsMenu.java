@@ -11,12 +11,12 @@ import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
 import org.redcastlemedia.multitallented.civs.Civs;
 import org.redcastlemedia.multitallented.civs.auction.AuctionListing;
 import org.redcastlemedia.multitallented.civs.auction.AuctionManager;
 import org.redcastlemedia.multitallented.civs.auction.AuctionResult;
 import org.redcastlemedia.multitallented.civs.civilians.Civilian;
+import org.redcastlemedia.multitallented.civs.items.CVItem;
 import org.redcastlemedia.multitallented.civs.localization.LocaleManager;
 import org.redcastlemedia.multitallented.civs.menus.CivsMenu;
 import org.redcastlemedia.multitallented.civs.menus.CustomMenu;
@@ -47,6 +47,10 @@ public class AuctionMyListingsMenu extends CustomMenu {
         if (!"items".equals(menuIcon.getKey())) {
             return super.createItemStack(civilian, menuIcon, count);
         }
+        Player player = Bukkit.getPlayer(civilian.getUuid());
+        if (player == null) {
+            return new ItemStack(Material.AIR);
+        }
         List<AuctionListing> listings = (List<AuctionListing>) MenuManager.getData(civilian.getUuid(), "listings");
         if (listings == null) {
             return new ItemStack(Material.AIR);
@@ -57,21 +61,21 @@ public class AuctionMyListingsMenu extends CustomMenu {
             return new ItemStack(Material.AIR);
         }
         AuctionListing listing = listings.get(index);
-        ItemStack display = listing.getItem().clone();
-        ItemMeta meta = display.getItemMeta();
-        if (meta != null) {
-            List<String> lore = meta.hasLore() ? new ArrayList<>(meta.getLore()) : new ArrayList<>();
-            Player player = Bukkit.getPlayer(civilian.getUuid());
-            LocaleManager localeManager = LocaleManager.getInstance();
-            lore.add(ChatColor.GRAY + localeManager.getTranslation(player, "auction-price")
-                    .replace("$1", Util.getNumberFormat(listing.getPrice(), civilian.getLocale())));
-            lore.add(ChatColor.GRAY + localeManager.getTranslation(player, "auction-expires")
-                    .replace("$1", formatDuration(listing.getExpiresAt() - System.currentTimeMillis())));
-            lore.add(ChatColor.DARK_GRAY + localeManager.getTranslation(player, "auction-click-cancel"));
-            lore.add(ChatColor.DARK_GRAY + listing.getId());
-            meta.setLore(lore);
-            display.setItemMeta(meta);
+        ItemStack listingItem = listing.getItem();
+        if (listingItem == null || listingItem.getType() == Material.AIR) {
+            return new ItemStack(Material.AIR);
         }
+        ItemStack display = listingItem.clone();
+        List<String> existingLore = CVItem.legacyLore(display);
+        List<String> lore = existingLore != null ? new ArrayList<>(existingLore) : new ArrayList<>();
+        LocaleManager localeManager = LocaleManager.getInstance();
+        lore.add(ChatColor.GRAY + localeManager.getTranslation(player, "auction-price")
+                .replace("$1", Util.getNumberFormat(listing.getPrice(), civilian.getLocale())));
+        lore.add(ChatColor.GRAY + localeManager.getTranslation(player, "auction-expires")
+                .replace("$1", formatDuration(listing.getExpiresAt() - System.currentTimeMillis())));
+        lore.add(ChatColor.DARK_GRAY + localeManager.getTranslation(player, "auction-click-cancel"));
+        lore.add(ChatColor.DARK_GRAY + listing.getId());
+        CVItem.applyLore(display, lore);
         putActions(civilian, menuIcon, display, count);
         return display;
     }
@@ -80,22 +84,16 @@ public class AuctionMyListingsMenu extends CustomMenu {
     public boolean doActionAndCancel(Civilian civilian, String actionString, ItemStack clickedItem) {
         if ("cancel-listing".equals(actionString)) {
             Player player = Bukkit.getPlayer(civilian.getUuid());
-            if (player == null || clickedItem == null || !clickedItem.hasItemMeta() || !clickedItem.getItemMeta().hasLore()) {
+            if (player == null || clickedItem == null || !clickedItem.hasItemMeta()) {
                 return true;
             }
-            List<String> lore = clickedItem.getItemMeta().getLore();
+            List<String> lore = CVItem.legacyLore(clickedItem);
             if (lore == null || lore.isEmpty()) {
                 return true;
             }
             String listingId = ChatColor.stripColor(lore.get(lore.size() - 1));
             AuctionResult result = AuctionManager.getInstance().cancelListing(player, listingId);
-            LocaleManager localeManager = LocaleManager.getInstance();
-            if (result == AuctionResult.SUCCESS) {
-                player.sendMessage(Civs.getPrefix() + localeManager.getTranslation(player, "auction-cancelled"));
-                MenuManager.getInstance().refreshMenu(civilian);
-            } else {
-                player.sendMessage(Civs.getPrefix() + localeManager.getTranslation(player, "auction-not-found"));
-            }
+            sendCancelResult(player, civilian, result);
             return true;
         } else if ("open-browse".equals(actionString)) {
             Player player = Bukkit.getPlayer(civilian.getUuid());
@@ -105,6 +103,24 @@ public class AuctionMyListingsMenu extends CustomMenu {
             return true;
         }
         return super.doActionAndCancel(civilian, actionString, clickedItem);
+    }
+
+    private void sendCancelResult(Player player, Civilian civilian, AuctionResult result) {
+        LocaleManager localeManager = LocaleManager.getInstance();
+        switch (result) {
+            case SUCCESS -> {
+                player.sendMessage(Civs.getPrefix() + localeManager.getTranslation(player, "auction-cancelled"));
+                MenuManager.getInstance().refreshMenu(civilian);
+            }
+            case NOT_FOUND, EXPIRED -> {
+                player.sendMessage(Civs.getPrefix() + localeManager.getTranslation(player, "auction-not-found"));
+                MenuManager.getInstance().refreshMenu(civilian);
+            }
+            case NOT_OWNER -> player.sendMessage(Civs.getPrefix()
+                    + localeManager.getTranslation(player, "auction-cannot-buy-own"));
+            default -> player.sendMessage(Civs.getPrefix()
+                    + localeManager.getTranslation(player, "auction-failed"));
+        }
     }
 
     private String formatDuration(long millis) {

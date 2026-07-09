@@ -10,6 +10,7 @@ import java.util.UUID;
 import java.util.logging.Level;
 
 import org.bukkit.Bukkit;
+import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -18,6 +19,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.inventory.ItemStack;
+import org.redcastlemedia.multitallented.civs.items.CVItem;
 import org.redcastlemedia.multitallented.civs.Civs;
 import org.redcastlemedia.multitallented.civs.CivsSingleton;
 import org.redcastlemedia.multitallented.civs.ConfigManager;
@@ -94,11 +96,9 @@ public class AuctionManager implements Listener {
     }
 
     private String displayName(ItemStack item) {
-        if (item.hasItemMeta() && item.getItemMeta().hasDisplayName()) {
-            String custom = item.getItemMeta().getDisplayName();
-            if (custom != null) {
-                return custom;
-            }
+        String custom = CVItem.legacyDisplayName(item);
+        if (custom != null && !custom.isEmpty()) {
+            return custom;
         }
         return item.getType().name();
     }
@@ -190,6 +190,9 @@ public class AuctionManager implements Listener {
         if (!isEnabled()) {
             return AuctionResult.DISABLED;
         }
+        if (listingId == null || listingId.isEmpty()) {
+            return AuctionResult.NOT_FOUND;
+        }
         AuctionListing listing = listings.get(listingId);
         if (listing == null) {
             return AuctionResult.NOT_FOUND;
@@ -205,7 +208,13 @@ public class AuctionManager implements Listener {
             return AuctionResult.INSUFFICIENT_FUNDS;
         }
 
-        ItemStack purchasedItem = listing.getItem().clone();
+        ItemStack purchasedItem = listing.getItem();
+        if (purchasedItem == null || purchasedItem.getType() == Material.AIR || purchasedItem.getAmount() < 1) {
+            listings.remove(listing.getId());
+            removeListingFile(listing);
+            return AuctionResult.NOT_FOUND;
+        }
+        purchasedItem = purchasedItem.clone();
         AuctionPurchaseEvent purchaseEvent = new AuctionPurchaseEvent(
                 buyer.getUniqueId(),
                 listing.getSellerId(),
@@ -239,6 +248,9 @@ public class AuctionManager implements Listener {
     public AuctionResult cancelListing(Player seller, String listingId) {
         if (!isEnabled()) {
             return AuctionResult.DISABLED;
+        }
+        if (listingId == null || listingId.isEmpty()) {
+            return AuctionResult.NOT_FOUND;
         }
         AuctionListing listing = listings.get(listingId);
         if (listing == null) {

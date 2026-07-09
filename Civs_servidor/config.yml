@@ -31,6 +31,15 @@ show-player-skins-in-menus: false
 
 ##Allows players to set bounties on each other and on towns
 use-bounties: true
+
+## Native BIN auction house (Vault economy)
+use-auction-house: true
+auction-listing-tax-percent: 5.0
+auction-max-listings-per-player: 10
+auction-listing-duration-hours: 48
+auction-min-price: 1.0
+auction-max-price: 1000000.0
+
 ##Disables PvP and war between towns and players that have no war capabilities
 use-war-enabled: true
 
@@ -80,6 +89,13 @@ use-region-bounding-box: true
 ##should region dimensions be shown with particles instead of glass?
 use-particle-bounding-boxes: false
 
+## Instant structure placement (paste .schem blueprints)
+instant-build:
+  enabled: true
+  foundation-block: DIRT
+  fill-holes: true
+  flatten-foundation: true
+
 price-multiplier: 1.0 #multiplier for prices before adding base price
 price-base: 0.0 #added to all item prices
 refund-percentage: 0.5 #how much money you get from destroying your own regions
@@ -105,6 +121,12 @@ disable-arrow-turret-shooting-at-mobs: false
 
 ##mobs killed in safe zones will not drop items
 stop-mobs-from-dropping-items-in-safe-zones: false
+
+##green purchase title + cha-ching for buyer; chat notice to online seller
+auction-purchase-feedback: true
+
+##YAML-defined custom mobs (civs-mobs/ or plugins/Civs/mobs/)
+use-custom-mobs: true
 
 ##cooldown in seconds before killing the same player reduces the town power
 death-grace-period-seconds: 60

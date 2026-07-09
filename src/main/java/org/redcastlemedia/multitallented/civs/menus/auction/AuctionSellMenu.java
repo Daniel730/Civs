@@ -7,9 +7,9 @@ import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
 import org.redcastlemedia.multitallented.civs.ConfigManager;
 import org.redcastlemedia.multitallented.civs.civilians.Civilian;
+import org.redcastlemedia.multitallented.civs.items.CVItem;
 import org.redcastlemedia.multitallented.civs.localization.LocaleManager;
 import org.redcastlemedia.multitallented.civs.menus.CivsMenu;
 import org.redcastlemedia.multitallented.civs.menus.CustomMenu;
@@ -34,39 +34,32 @@ public class AuctionSellMenu extends CustomMenu {
         }
         if ("hand-item".equals(menuIcon.getKey())) {
             ItemStack hand = player.getInventory().getItemInMainHand();
-            if (hand.getType().isAir()) {
-                ItemStack barrier = new ItemStack(Material.BARRIER);
-                ItemMeta barrierMeta = barrier.getItemMeta();
-                if (barrierMeta != null) {
-                    barrierMeta.setDisplayName(LocaleManager.getInstance()
-                            .getTranslation(player, "auction-no-item"));
-                    barrier.setItemMeta(barrierMeta);
-                }
-                return barrier;
+            if (hand == null || hand.getType() == Material.AIR || hand.getAmount() <= 0) {
+                CVItem cvItem = CVItem.createCVItemFromString("BARRIER");
+                cvItem.setDisplayName(LocaleManager.getInstance()
+                        .getTranslation(player, "auction-no-item"));
+                return cvItem.createItemStack();
             }
             ItemStack display = hand.clone();
             putActions(civilian, menuIcon, display, count);
             return display;
         }
         if ("help".equals(menuIcon.getKey())) {
-            ItemStack help = new ItemStack(Material.PAPER);
-            ItemMeta meta = help.getItemMeta();
-            if (meta != null) {
-                LocaleManager localeManager = LocaleManager.getInstance();
-                ConfigManager config = ConfigManager.getInstance();
-                meta.setDisplayName(localeManager.getTranslation(player, "auction-sell-help-title"));
-                meta.setLore(java.util.List.of(
-                        localeManager.getTranslation(player, "auction-sell-help-command"),
-                        localeManager.getTranslation(player, "auction-sell-help-tax")
-                                .replace("$1", String.valueOf(config.getAuctionListingTaxPercent())),
-                        localeManager.getTranslation(player, "auction-sell-help-duration")
-                                .replace("$1", String.valueOf(config.getAuctionListingDurationHours())),
-                        localeManager.getTranslation(player, "auction-sell-help-limits")
-                                .replace("$1", Util.getNumberFormat(config.getAuctionMinPrice(), civilian.getLocale()))
-                                .replace("$2", Util.getNumberFormat(config.getAuctionMaxPrice(), civilian.getLocale()))
-                ));
-                help.setItemMeta(meta);
-            }
+            LocaleManager localeManager = LocaleManager.getInstance();
+            ConfigManager config = ConfigManager.getInstance();
+            CVItem cvItem = CVItem.createCVItemFromString("PAPER");
+            cvItem.setDisplayName(localeManager.getTranslation(player, "auction-sell-help-title"));
+            cvItem.setLore(java.util.List.of(
+                    localeManager.getTranslation(player, "auction-sell-help-command"),
+                    localeManager.getTranslation(player, "auction-sell-help-tax")
+                            .replace("$1", String.valueOf(config.getAuctionListingTaxPercent())),
+                    localeManager.getTranslation(player, "auction-sell-help-duration")
+                            .replace("$1", String.valueOf(config.getAuctionListingDurationHours())),
+                    localeManager.getTranslation(player, "auction-sell-help-limits")
+                            .replace("$1", Util.getNumberFormat(config.getAuctionMinPrice(), civilian.getLocale()))
+                            .replace("$2", Util.getNumberFormat(config.getAuctionMaxPrice(), civilian.getLocale()))
+            ));
+            ItemStack help = cvItem.createItemStack();
             putActions(civilian, menuIcon, help, count);
             return help;
         }
