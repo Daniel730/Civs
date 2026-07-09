@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.UUID;
 import java.util.logging.Level;
 import java.util.regex.Pattern;
 
@@ -98,6 +99,18 @@ public class CustomMobManager {
         applyDefinition(living, definition);
         living.setRemoveWhenFarAway(false);
         living.setPersistent(true);
+        return living;
+    }
+
+    /**
+     * Spawns a quest-owned custom mob near {@code location} for {@code questOwner}.
+     * {@code partyRadius} is reserved for future party-shared quest credit.
+     */
+    public LivingEntity spawnForQuest(String mobId, Location location, UUID questOwner, double partyRadius) {
+        LivingEntity living = spawn(mobId, location);
+        if (living != null && questOwner != null) {
+            CustomMobKeys.writeQuestOwner(living, questOwner);
+        }
         return living;
     }
 

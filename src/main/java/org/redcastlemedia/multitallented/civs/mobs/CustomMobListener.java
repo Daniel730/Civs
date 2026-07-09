@@ -35,7 +35,8 @@ public class CustomMobListener implements Listener {
             }
         }
         Player killer = living.getKiller();
-        CustomMobKillEvent killEvent = new CustomMobKillEvent(mobId, killer, living.getLocation());
+        CustomMobKillEvent killEvent = new CustomMobKillEvent(
+                mobId, killer, living.getLocation(), CustomMobKeys.readQuestOwner(living));
         Bukkit.getPluginManager().callEvent(killEvent);
     }
 }
