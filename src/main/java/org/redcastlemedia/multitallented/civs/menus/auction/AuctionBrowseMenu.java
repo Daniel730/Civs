@@ -33,17 +33,18 @@ public class AuctionBrowseMenu extends CustomMenu {
     @Override
     public Map<String, Object> createData(Civilian civilian, Map<String, String> params) {
         Map<String, Object> data = new HashMap<>();
-        int page = params.containsKey("page") ? Integer.parseInt(params.get("page")) : 0;
+        int page = parsePageParam(params.get("page"));
         String sort = params.getOrDefault("sort", "price_asc");
         String filter = params.getOrDefault("filter", "");
-        data.put("page", page);
         data.put("sort", sort);
         data.put("filter", filter);
         List<AuctionListing> listings = AuctionManager.getInstance().getBrowseListings(sort, filter);
         data.put("listings", listings);
         int perPage = itemsPerPage.getOrDefault("items", 45);
         int maxPage = (int) Math.ceil((double) listings.size() / perPage);
-        data.put("maxPage", Math.max(0, maxPage - 1));
+        int safeMaxPage = Math.max(0, maxPage - 1);
+        data.put("maxPage", safeMaxPage);
+        data.put("page", Math.min(Math.max(0, page), safeMaxPage));
         return data;
     }
 
@@ -78,12 +79,7 @@ public class AuctionBrowseMenu extends CustomMenu {
                 return new ItemStack(Material.AIR);
             }
             CVItem cvItem = menuIcon.createCVItem(player, count);
-            if (filter != null && !filter.isEmpty()) {
-                cvItem.setLore(List.of(localeManager.getTranslation(player, "auction-filter-active")
-                        .replace("$1", filter)));
-            } else {
-                cvItem.setLore(List.of(localeManager.getTranslation(player, "auction-filter-hint")));
-            }
+            cvItem.setLore(List.of(localeManager.getTranslation(player, "auction-filter-hint")));
             ItemStack itemStack = cvItem.createItemStack();
             putActions(civilian, menuIcon, itemStack, count);
             return itemStack;
@@ -154,7 +150,9 @@ public class AuctionBrowseMenu extends CustomMenu {
                 return true;
             }
             String listingId = getListingId(clickedItem);
-            if (listingId == null) {
+            if (listingId == null || listingId.isEmpty()) {
+                player.sendMessage(Civs.getPrefix() + LocaleManager.getInstance()
+                        .getTranslation(player, "auction-not-found"));
                 return true;
             }
             AuctionResult result = AuctionManager.getInstance().purchaseListing(player, listingId);
@@ -296,5 +294,16 @@ public class AuctionBrowseMenu extends CustomMenu {
             return hours + "h " + minutes + "m";
         }
         return minutes + "m";
+    }
+
+    private static int parsePageParam(String pageValue) {
+        if (pageValue == null || pageValue.isEmpty()) {
+            return 0;
+        }
+        try {
+            return Integer.parseInt(pageValue);
+        } catch (NumberFormatException ignored) {
+            return 0;
+        }
     }
 }

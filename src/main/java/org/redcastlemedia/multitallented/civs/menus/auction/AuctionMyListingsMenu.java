@@ -31,13 +31,14 @@ public class AuctionMyListingsMenu extends CustomMenu {
     @Override
     public Map<String, Object> createData(Civilian civilian, Map<String, String> params) {
         Map<String, Object> data = new HashMap<>();
-        int page = params.containsKey("page") ? Integer.parseInt(params.get("page")) : 0;
-        data.put("page", page);
+        int page = parsePageParam(params.get("page"));
         List<AuctionListing> listings = AuctionManager.getInstance().getListingsForSeller(civilian.getUuid());
         data.put("listings", listings);
         int perPage = itemsPerPage.getOrDefault("items", 45);
         int maxPage = (int) Math.ceil((double) listings.size() / perPage);
-        data.put("maxPage", Math.max(0, maxPage - 1));
+        int safeMaxPage = Math.max(0, maxPage - 1);
+        data.put("maxPage", safeMaxPage);
+        data.put("page", Math.min(Math.max(0, page), safeMaxPage));
         return data;
     }
 
@@ -117,7 +118,7 @@ public class AuctionMyListingsMenu extends CustomMenu {
                 MenuManager.getInstance().refreshMenu(civilian);
             }
             case NOT_OWNER -> player.sendMessage(Civs.getPrefix()
-                    + localeManager.getTranslation(player, "auction-cannot-buy-own"));
+                    + localeManager.getTranslation(player, "no-permission"));
             default -> player.sendMessage(Civs.getPrefix()
                     + localeManager.getTranslation(player, "auction-failed"));
         }
@@ -133,5 +134,16 @@ public class AuctionMyListingsMenu extends CustomMenu {
             return hours + "h " + minutes + "m";
         }
         return minutes + "m";
+    }
+
+    private static int parsePageParam(String pageValue) {
+        if (pageValue == null || pageValue.isEmpty()) {
+            return 0;
+        }
+        try {
+            return Integer.parseInt(pageValue);
+        } catch (NumberFormatException ignored) {
+            return 0;
+        }
     }
 }

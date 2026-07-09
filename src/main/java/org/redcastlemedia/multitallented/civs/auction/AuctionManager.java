@@ -68,12 +68,19 @@ public class AuctionManager implements Listener {
 
     public List<AuctionListing> getBrowseListings(String sort, String materialFilter) {
         purgeExpiredListings();
-        List<AuctionListing> active = new ArrayList<>(listings.values());
-        if (materialFilter != null && !materialFilter.isEmpty()) {
-            active.removeIf(listing -> !listing.getItem().getType().name().equalsIgnoreCase(materialFilter));
+        List<AuctionListing> active = new ArrayList<>();
+        for (AuctionListing listing : listings.values()) {
+            ItemStack item = listing.getItem();
+            if (item == null || item.getType() == Material.AIR) {
+                continue;
+            }
+            if (materialFilter != null && !materialFilter.isEmpty()
+                    && !item.getType().name().equalsIgnoreCase(materialFilter)) {
+                continue;
+            }
+            active.add(listing);
         }
-        Comparator<AuctionListing> comparator = browseComparator(sort);
-        active.sort(comparator);
+        active.sort(browseComparator(sort));
         return active;
     }
 
@@ -96,6 +103,9 @@ public class AuctionManager implements Listener {
     }
 
     private String displayName(ItemStack item) {
+        if (item == null || item.getType() == Material.AIR) {
+            return "";
+        }
         String custom = CVItem.legacyDisplayName(item);
         if (custom != null && !custom.isEmpty()) {
             return custom;
@@ -259,7 +269,10 @@ public class AuctionManager implements Listener {
         if (!seller.getUniqueId().equals(listing.getSellerId())) {
             return AuctionResult.NOT_OWNER;
         }
-        returnItemToPlayer(seller, listing.getItem().clone());
+        ItemStack item = listing.getItem();
+        if (item != null && item.getType() != Material.AIR) {
+            returnItemToPlayer(seller, item.clone());
+        }
         removeListingFile(listing);
         listings.remove(listing.getId());
         return AuctionResult.SUCCESS;
@@ -324,7 +337,10 @@ public class AuctionManager implements Listener {
     }
 
     private void expireListing(AuctionListing listing) {
-        queueReturn(listing.getSellerId(), listing.getItem().clone());
+        ItemStack item = listing.getItem();
+        if (item != null && item.getType() != Material.AIR) {
+            queueReturn(listing.getSellerId(), item.clone());
+        }
         removeListingFile(listing);
         listings.remove(listing.getId());
 

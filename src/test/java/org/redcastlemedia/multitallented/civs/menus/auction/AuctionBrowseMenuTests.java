@@ -132,6 +132,29 @@ public class AuctionBrowseMenuTests extends TestUtil {
         assertEquals("", MenuManager.getData(player.getUniqueId(), "filter"));
     }
 
+    @Test
+    public void invalidPageParamShouldDefaultToZero() throws Exception {
+        AuctionManager.getInstance().reload();
+        AuctionBrowseMenu menu = new AuctionBrowseMenu();
+        Map<String, String> params = new HashMap<>();
+        params.put("page", "not-a-page");
+
+        Map<String, Object> data = menu.createData(civilian, params);
+
+        assertEquals(0, data.get("page"));
+    }
+
+    @Test
+    public void buyListingWithoutIdShouldNotPurchase() {
+        ItemStack clickedItem = new ItemStackImpl(Material.STONE, 1);
+        AuctionBrowseMenu menu = new AuctionBrowseMenu();
+
+        boolean cancelled = menu.doActionAndCancel(civilian, "buy-listing", clickedItem);
+
+        assertTrue(cancelled);
+        assertTrue(AuctionManager.getInstance().getListing(LISTING_ID) != null);
+    }
+
     private void seedBrowseMenuData(String sort, String filter) {
         HashMap<String, Object> data = new HashMap<>();
         data.put("sort", sort);
