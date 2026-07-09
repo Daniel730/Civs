@@ -9,13 +9,11 @@ import java.util.UUID;
 import org.bukkit.Material;
 import org.bukkit.entity.Item;
 import org.bukkit.entity.Player;
-import org.bukkit.event.inventory.InventoryClickEvent;
+import org.bukkit.event.inventory.InventoryMoveItemEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
-import org.junit.Ignore;
 import org.junit.Test;
-import org.redcastlemedia.multitallented.civs.SuccessException;
 import org.redcastlemedia.multitallented.civs.TestUtil;
 import org.redcastlemedia.multitallented.civs.items.CivItem;
 import org.redcastlemedia.multitallented.civs.items.ItemManager;
@@ -24,23 +22,27 @@ import org.redcastlemedia.multitallented.civs.regions.RegionsTests;
 
 public class CivilianTests extends TestUtil {
 
-    @Test(expected = SuccessException.class)
-    @Ignore
+    @Test
     public void inventoryClickOnUnownedCivItemShouldBeCancelled() {
-        InventoryClickEvent event = mock(InventoryClickEvent.class);
-        ItemStack is = TestUtil.createUniqueItemStack(Material.CHEST, "Civs Cobble");
-        when(event.getCurrentItem()).thenReturn(is);
-        Inventory inventory = mock(Inventory.class);
-        when(event.getClickedInventory()).thenReturn(inventory);
-        Player player = mock(Player.class);
-        UUID uuid = new UUID(1,8);
-        when(player.getUniqueId()).thenReturn(uuid);
-        when(event.getWhoClicked()).thenReturn(player);
-        doThrow(new SuccessException()).when(event).setCancelled(true);
+        RegionsTests.loadRegionTypeCobble();
 
-        CivilianListener civilianListener = new CivilianListener();
-//        civilianListener.onInventoryMoveEvent(event);
-        fail("set cancelled not called");
+        ItemStack civItem = TestUtil.createUniqueItemStack(Material.CHEST, "Civs Cobble");
+        ArrayList<String> lore = new ArrayList<>();
+        lore.add(new UUID(9, 9).toString());
+        lore.add("cobble");
+        civItem.getItemMeta().setLore(lore);
+
+        Inventory source = mock(Inventory.class);
+        when(source.getViewers()).thenReturn(new ArrayList<>());
+        Inventory destination = mock(Inventory.class);
+        InventoryMoveItemEvent event = mock(InventoryMoveItemEvent.class);
+        when(event.getItem()).thenReturn(civItem);
+        when(event.getSource()).thenReturn(source);
+        when(event.getDestination()).thenReturn(destination);
+
+        new CivilianListener().onInventoryMoveEvent(event);
+
+        verify(event).setCancelled(true);
     }
 
     @Test

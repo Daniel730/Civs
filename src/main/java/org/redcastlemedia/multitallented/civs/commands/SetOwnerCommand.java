@@ -123,9 +123,9 @@ public class SetOwnerCommand extends CivCommand {
 
             boolean colonialOverride = town.getColonialTown() != null;
             if (colonialOverride) {
-                Town colonialTown = TownManager.getInstance().getTown(town.getColonialTown());
-                if (civilian != null && (!colonialTown.getRawPeople().containsKey(civilian.getUuid()) ||
-                        !colonialTown.getRawPeople().get(civilian.getUuid()).contains(Constants.OWNER))) {
+                Town colonialTown = TownManager.getInstance().getTownIgnoreCase(town.getColonialTown());
+                if (colonialTown == null || (civilian != null && (!colonialTown.getRawPeople().containsKey(civilian.getUuid()) ||
+                        !colonialTown.getRawPeople().get(civilian.getUuid()).contains(Constants.OWNER)))) {
                     colonialOverride = false;
                 }
             }

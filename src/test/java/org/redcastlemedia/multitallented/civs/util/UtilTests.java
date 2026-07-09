@@ -43,6 +43,9 @@ public class UtilTests extends TestUtil {
         CVItem cvItem = new CVItem(Material.COBBLESTONE,1, 100, "CustomCobble");
         ItemStack is = cvItem.createItemStack();
         assertEquals(Material.COBBLESTONE, is.getType());
+        assertTrue(is.hasItemMeta());
+        assertNotNull(is.getItemMeta());
+        assertTrue(is.getItemMeta().hasDisplayName());
     }
 
     @Test
@@ -180,7 +183,7 @@ public class UtilTests extends TestUtil {
         assertEquals(ChatColor.BLUE, component.getExtra().get(0).getColor());
     }
 
-    @Test @Ignore
+    @Test
     public void formatTimeShouldReturnCorrectFormat() {
         assertEquals("54s", Util.formatTime(player, 54));
         assertEquals("1m 22s", Util.formatTime(player, 82));

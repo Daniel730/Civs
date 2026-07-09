@@ -9,7 +9,6 @@ import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.PotionMeta;
-import org.bukkit.potion.PotionData;
 import org.bukkit.potion.PotionType;
 import org.redcastlemedia.multitallented.civs.items.CVItem;
 import org.redcastlemedia.multitallented.civs.spells.Spell;
@@ -82,8 +81,8 @@ public class ItemEffect extends Effect {
         ItemMeta itemMeta = itemStack.getItemMeta();
         if (itemMeta instanceof PotionMeta && potionType != null) {
             PotionMeta potionMeta = (PotionMeta) itemStack.getItemMeta();
-            PotionType potionEffectType = PotionType.valueOf(potionType);
-            potionMeta.setBasePotionData(new PotionData(potionEffectType, this.potionExtended, this.potionUpgraded));
+            PotionType baseType = PotionType.valueOf(potionType);
+            potionMeta.setBasePotionType(resolvePotionType(baseType, potionExtended, potionUpgraded));
             itemStack.setItemMeta(potionMeta);
         }
         if (this.transformHeldItem) {
@@ -94,6 +93,37 @@ public class ItemEffect extends Effect {
             } else {
                 player.getWorld().dropItemNaturally(player.getLocation(), itemStack);
             }
+        }
+    }
+
+    private static PotionType resolvePotionType(PotionType baseType, boolean extended, boolean upgraded) {
+        if (baseType == null) {
+            return PotionType.WATER;
+        }
+        String baseName = baseType.name();
+        if (baseName.startsWith("LONG_")) {
+            baseName = baseName.substring(5);
+        } else if (baseName.startsWith("STRONG_")) {
+            baseName = baseName.substring(7);
+        }
+        if (upgraded) {
+            try {
+                return PotionType.valueOf("STRONG_" + baseName);
+            } catch (IllegalArgumentException ignored) {
+                return baseType;
+            }
+        }
+        if (extended) {
+            try {
+                return PotionType.valueOf("LONG_" + baseName);
+            } catch (IllegalArgumentException ignored) {
+                return baseType;
+            }
+        }
+        try {
+            return PotionType.valueOf(baseName);
+        } catch (IllegalArgumentException ignored) {
+            return baseType;
         }
     }
 }

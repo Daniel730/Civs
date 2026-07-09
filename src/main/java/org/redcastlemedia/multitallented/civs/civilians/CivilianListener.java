@@ -45,6 +45,7 @@ import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
 import org.bukkit.inventory.meta.PotionMeta;
 import org.bukkit.potion.PotionEffect;
+import org.bukkit.potion.PotionEffectType;
 import org.redcastlemedia.multitallented.civs.BlockLogger;
 import org.redcastlemedia.multitallented.civs.Civs;
 import org.redcastlemedia.multitallented.civs.CivsSingleton;
@@ -66,6 +67,7 @@ import org.redcastlemedia.multitallented.civs.regions.RegionType;
 import org.redcastlemedia.multitallented.civs.regions.StructureUtil;
 import org.redcastlemedia.multitallented.civs.scheduler.CommonScheduler;
 import org.redcastlemedia.multitallented.civs.skills.CivSkills;
+import org.redcastlemedia.multitallented.civs.spells.effects.CivPotionEffect;
 import org.redcastlemedia.multitallented.civs.spells.SpellUtil;
 import org.redcastlemedia.multitallented.civs.towns.Government;
 import org.redcastlemedia.multitallented.civs.towns.GovernmentManager;
@@ -209,8 +211,11 @@ public class CivilianListener implements Listener {
             for (PotionEffect potionEffect : potionMeta.getCustomEffects()) {
                 potionNames.add(potionEffect.getType().getName());
             }
-            if (potionMeta.getBasePotionData().getType().getEffectType() != null) {
-                potionNames.add(potionMeta.getBasePotionData().getType().getEffectType().getName());
+            if (potionMeta.getBasePotionType() != null) {
+                PotionEffectType baseType = CivPotionEffect.getPrimaryEffectType(potionMeta);
+                if (baseType != null) {
+                    potionNames.add(baseType.getName());
+                }
             }
             civilian.awardSkill(player, potionNames, CivSkills.POTION.name());
         } else {

@@ -2,6 +2,7 @@ package org.redcastlemedia.multitallented.civs.regions.effects;
 
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.entity.Entity;
 import org.bukkit.entity.EntityType;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -38,20 +39,15 @@ public class SpawnEffect implements Listener {
         }
 
         RegionType regionType = (RegionType) ItemManager.getInstance().getItemType(event.getRegion().getType());
-//        int entityCount = 0;
-        //TODO fix this so that it detects the correct type of entity
         int radius = Math.max(regionType.getEffectRadius(), regionType.getBuildRadius());
-//        for (Entity e : location.getWorld().getNearbyEntities(location,
-//                radius, radius, radius)) {
-//            if (entityType.getEntityClass().isAssignableFrom(e.getClass())) {
-//                entityCount++;
-//                if (entityCount > 5) {
-//                    return;
-//                }
-//            }
-//        }
-        if (location.getWorld().getNearbyEntities(location, radius, radius, radius).size() > 5) {
-            return;
+        int entityCount = 0;
+        for (Entity entity : location.getWorld().getNearbyEntities(location, radius, radius, radius)) {
+            if (entity.getType() == entityType) {
+                entityCount++;
+                if (entityCount >= 5) {
+                    return;
+                }
+            }
         }
 
         Location spawnLocation = new Location(location.getWorld(), location.getX(), location.getY() + 1, location.getZ());

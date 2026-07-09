@@ -7,7 +7,6 @@ import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.SkullMeta;
 import org.redcastlemedia.multitallented.civs.Civs;
 import org.redcastlemedia.multitallented.civs.ConfigManager;
 import org.redcastlemedia.multitallented.civs.alliances.AllianceManager;
@@ -127,17 +126,14 @@ public class MainMenu extends CustomMenu {
             putActions(civilian, menuIcon, itemStack, count);
             return itemStack;
         } else if ("player".equals(menuIcon.getKey())) {
-            ItemStack itemStack = new ItemStack(Material.PLAYER_HEAD, 1);
-            SkullMeta skullMeta = (SkullMeta) itemStack.getItemMeta();
-            if (ConfigManager.getInstance().isSkinsInMenu()) {
-                skullMeta.setOwningPlayer(Bukkit.getOfflinePlayer(civilian.getUuid()));
-            }
-            skullMeta.setDisplayName(player.getDisplayName());
+            CVItem cvItem = new CVItem(Material.PLAYER_HEAD, 1);
+            cvItem.setDisplayName(player.getDisplayName());
             if (ConfigManager.getInstance().getUseClassesAndSpells()) {
                 CivItem civItem = ItemManager.getInstance().getItemType(civilian.getCurrentClass().getType());
-                skullMeta.setLore(Util.textWrap(civilian, civItem.getDisplayName(player)));
+                cvItem.setLore(Util.textWrap(civilian, civItem.getDisplayName(player)));
             }
-            itemStack.setItemMeta(skullMeta);
+            ItemStack itemStack = cvItem.createItemStack();
+            CVItem.applySkullOwner(itemStack, Bukkit.getOfflinePlayer(civilian.getUuid()));
             putActions(civilian, menuIcon, itemStack, count);
             return itemStack;
         } else if ("class".equals(menuIcon.getKey())) {

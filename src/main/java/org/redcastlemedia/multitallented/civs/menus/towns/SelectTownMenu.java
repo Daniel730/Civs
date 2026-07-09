@@ -14,6 +14,7 @@ import org.redcastlemedia.multitallented.civs.items.ItemManager;
 import org.redcastlemedia.multitallented.civs.menus.CivsMenu;
 import org.redcastlemedia.multitallented.civs.menus.CustomMenu;
 import org.redcastlemedia.multitallented.civs.menus.MenuIcon;
+import org.redcastlemedia.multitallented.civs.menus.MenuParams;
 import org.redcastlemedia.multitallented.civs.menus.MenuManager;
 import org.redcastlemedia.multitallented.civs.towns.Town;
 import org.redcastlemedia.multitallented.civs.towns.TownManager;
@@ -31,7 +32,7 @@ public class SelectTownMenu extends CustomMenu {
         }
         Set<Town> towns = new HashSet<>();
         if (params.containsKey("uuid")) {
-            UUID uuid = UUID.fromString(params.get("uuid"));
+            UUID uuid = MenuParams.resolveUuid(civilian, params, "uuid");
             for (Town town : TownManager.getInstance().getTowns()) {
                 if (town.getRawPeople().containsKey(uuid)) {
                     towns.add(town);
@@ -90,7 +91,7 @@ public class SelectTownMenu extends CustomMenu {
                 } else {
                     currentActions.add("unally");
                 }
-                actions.get(civilian.getUuid()).put(itemStack.getType().name() + ":" + itemStack.getItemMeta().getDisplayName(), currentActions);
+                actions.get(civilian.getUuid()).put(CustomMenu.getActionKey(itemStack), currentActions);
             } else {
                 putActions(civilian, menuIcon, itemStack, count);
             }
@@ -109,7 +110,7 @@ public class SelectTownMenu extends CustomMenu {
         if (isColony) {
             Town colonyTown = TownManager.getInstance().getTown((String) MenuManager.getData(civilian.getUuid(), "colony"));
             if (colonyTown != null) {
-                String townName = ChatColor.stripColor(itemStack.getItemMeta().getDisplayName());
+                String townName = ChatColor.stripColor(CVItem.legacyDisplayName(itemStack));
                 Town town = TownManager.getInstance().getTown(townName);
                 colonyTown.setColonialTown(townName);
                 Map<String, String> data = new HashMap<>();
@@ -120,7 +121,7 @@ public class SelectTownMenu extends CustomMenu {
         }
         boolean isAllianceSelect = MenuManager.getAllData(civilian.getUuid()).containsKey("ally");
         if (isAllianceSelect) {
-            String townName = ChatColor.stripColor(itemStack.getItemMeta().getDisplayName());
+            String townName = ChatColor.stripColor(CVItem.legacyDisplayName(itemStack));
             Town fromTown = TownManager.getInstance().getTown(townName);
             String allianceTown = (String) MenuManager.getData(civilian.getUuid(), "allyTown");
             Town toTown = TownManager.getInstance().getTown(allianceTown);

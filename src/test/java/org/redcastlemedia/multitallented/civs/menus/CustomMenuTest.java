@@ -42,7 +42,7 @@ public class CustomMenuTest extends TestUtil {
         CustomMenu customMenu = new CustomMenu();
         customMenu.actions.put(civilian.getUuid(), new HashMap<>());
         customMenu.actions.get(civilian.getUuid()).put(
-                itemStack.getType().name() + ":" + itemStack.getItemMeta().getDisplayName(),
+                CustomMenu.getActionKey(itemStack),
                 Arrays.asList("view-type", "close"));
 
         List<String> actions = customMenu.getActions(civilian, itemStack);

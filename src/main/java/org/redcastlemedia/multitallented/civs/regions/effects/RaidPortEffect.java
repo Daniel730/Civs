@@ -407,7 +407,7 @@ public class RaidPortEffect implements Listener, CreateRegionListener {
         if (itemInHand.getType() != Material.STICK || !itemInHand.hasItemMeta()) {
             return;
         }
-        List<String> lore = itemInHand.getItemMeta().getLore();
+        List<String> lore = CVItem.legacyLore(itemInHand.getItemMeta());
         if (lore == null || lore.isEmpty()) {
             return;
         }

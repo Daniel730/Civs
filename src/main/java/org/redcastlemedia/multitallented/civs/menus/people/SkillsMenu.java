@@ -11,8 +11,6 @@ import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.SkullMeta;
-import org.redcastlemedia.multitallented.civs.ConfigManager;
 import org.redcastlemedia.multitallented.civs.civilians.Civilian;
 import org.redcastlemedia.multitallented.civs.civilians.CivilianManager;
 import org.redcastlemedia.multitallented.civs.items.CVItem;
@@ -21,6 +19,7 @@ import org.redcastlemedia.multitallented.civs.localization.LocaleManager;
 import org.redcastlemedia.multitallented.civs.menus.CivsMenu;
 import org.redcastlemedia.multitallented.civs.menus.CustomMenu;
 import org.redcastlemedia.multitallented.civs.menus.MenuIcon;
+import org.redcastlemedia.multitallented.civs.menus.MenuParams;
 import org.redcastlemedia.multitallented.civs.menus.MenuManager;
 import org.redcastlemedia.multitallented.civs.skills.Skill;
 import org.redcastlemedia.multitallented.civs.skills.SkillManager;
@@ -33,10 +32,7 @@ public class SkillsMenu extends CustomMenu {
     @Override
     public Map<String, Object> createData(Civilian civilian, Map<String, String> params) {
         Map<String, Object> data = new HashMap<>();
-        UUID uuid = civilian.getUuid();
-        if (params.containsKey("uuid")) {
-            uuid =  UUID.fromString(params.get("uuid"));
-        }
+        UUID uuid = MenuParams.resolveUuid(civilian, params, "uuid");
         data.put("uuid", uuid);
         List<Skill> skills = new ArrayList<>(CivilianManager.getInstance().getCivilian(uuid).getSkills().values());
         data.put("skills", skills);
@@ -87,14 +83,11 @@ public class SkillsMenu extends CustomMenu {
             return itemStack;
         } else if ("parent".equals(menuIcon.getKey())) {
             UUID uuid = (UUID) MenuManager.getData(civilian.getUuid(), "uuid");
-            ItemStack itemStack = new ItemStack(Material.PLAYER_HEAD);
-            SkullMeta skullMeta = (SkullMeta) itemStack.getItemMeta();
             OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(uuid);
-            if (ConfigManager.getInstance().isSkinsInMenu()) {
-                skullMeta.setOwningPlayer(offlinePlayer);
-            }
-            skullMeta.setDisplayName(offlinePlayer.getName());
-            itemStack.setItemMeta(skullMeta);
+            CVItem cvItem = new CVItem(Material.PLAYER_HEAD, 1);
+            cvItem.setDisplayName(offlinePlayer.getName());
+            ItemStack itemStack = cvItem.createItemStack();
+            CVItem.applySkullOwner(itemStack, offlinePlayer);
             putActions(civilian, menuIcon, itemStack, count);
             return itemStack;
         }

@@ -69,7 +69,7 @@ public class RegionListMenu extends CustomMenu {
     @Override @SuppressWarnings("unchecked")
     public boolean doActionAndCancel(Civilian civilian, String actionString, ItemStack clickedItem) {
         if ("view-region".equals(actionString)) {
-            Region region = ((HashMap<ItemStack, Region>) MenuManager.getData(civilian.getUuid(), "regionMap")).get(clickedItem);
+            Region region = lookupRegion(civilian, clickedItem);
             if (region != null) {
                 MenuManager.putData(civilian.getUuid(), "region", region);
                 MenuManager.openMenuFromString(civilian, "region?region=" + region.getId() + "&preserveData=true");
@@ -77,6 +77,40 @@ public class RegionListMenu extends CustomMenu {
             }
         }
         return super.doActionAndCancel(civilian, actionString, clickedItem);
+    }
+
+    @SuppressWarnings("unchecked")
+    private Region lookupRegion(Civilian civilian, ItemStack clickedItem) {
+        if (clickedItem == null) {
+            return null;
+        }
+        HashMap<ItemStack, Region> regionMap =
+                (HashMap<ItemStack, Region>) MenuManager.getData(civilian.getUuid(), "regionMap");
+        if (regionMap != null) {
+            Region region = regionMap.get(clickedItem);
+            if (region != null) {
+                return region;
+            }
+            for (Map.Entry<ItemStack, Region> entry : regionMap.entrySet()) {
+                if (clickedItem.isSimilar(entry.getKey())) {
+                    return entry.getValue();
+                }
+            }
+        }
+        String displayName = CVItem.legacyDisplayName(clickedItem);
+        if (displayName != null) {
+            List<Region> regions = (List<Region>) MenuManager.getData(civilian.getUuid(), "regions");
+            if (regions != null) {
+                Player player = Bukkit.getPlayer(civilian.getUuid());
+                for (Region region : regions) {
+                    if (displayName.equals(region.getDisplayName(player))
+                            || displayName.equals(region.getDisplayName())) {
+                        return region;
+                    }
+                }
+            }
+        }
+        return null;
     }
 
     @Override @SuppressWarnings("unchecked")
@@ -114,7 +148,14 @@ public class RegionListMenu extends CustomMenu {
                 cvItem.getLore().add(town.getName());
             }
             ItemStack itemStack = cvItem.createItemStack();
-            ((HashMap<ItemStack, Region>) MenuManager.getData(civilian.getUuid(), "regionMap")).put(itemStack, region);
+            @SuppressWarnings("unchecked")
+            HashMap<ItemStack, Region> regionMap =
+                    (HashMap<ItemStack, Region>) MenuManager.getData(civilian.getUuid(), "regionMap");
+            if (regionMap == null) {
+                regionMap = new HashMap<>();
+                MenuManager.putData(civilian.getUuid(), "regionMap", regionMap);
+            }
+            regionMap.put(itemStack, region);
             List<String> actionList = getActions(civilian, itemStack);
             putActions(civilian, menuIcon, itemStack, count);
 

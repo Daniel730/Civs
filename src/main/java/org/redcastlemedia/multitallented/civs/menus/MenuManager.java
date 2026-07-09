@@ -357,15 +357,41 @@ public class MenuManager implements Listener {
     }
 
     public void refreshMenu(Civilian civilian) {
-        if (!openMenus.containsKey(civilian.getUuid())) {
+        if (civilian == null || !openMenus.containsKey(civilian.getUuid())) {
+            return;
+        }
+        String menuName = openMenus.get(civilian.getUuid());
+        if (menuName == null) {
+            openMenus.remove(civilian.getUuid());
+            return;
+        }
+        CustomMenu customMenu = menus.get(menuName);
+        if (customMenu == null) {
+            openMenus.remove(civilian.getUuid());
             return;
         }
         Player player = Bukkit.getPlayer(civilian.getUuid());
-        String menuName = openMenus.get(civilian.getUuid());
+        if (player == null) {
+            return;
+        }
 
-        menus.get(menuName).onCloseMenu(civilian, player.getOpenInventory().getTopInventory());
+        customMenu.onCloseMenu(civilian, player.getOpenInventory().getTopInventory());
         openMenus.remove(civilian.getUuid());
-        Inventory menu = menus.get(menuName).createMenu(civilian);
+        Map<String, Object> existingData = getAllData(civilian.getUuid());
+        Map<String, String> params = new HashMap<>();
+        for (Map.Entry<String, Object> entry : existingData.entrySet()) {
+            Object value = entry.getValue();
+            if (value instanceof String) {
+                params.put(entry.getKey(), (String) value);
+            } else if (value instanceof Number) {
+                params.put(entry.getKey(), value.toString());
+            }
+        }
+        params.put("preserveData", "true");
+        existingData.putAll(customMenu.createData(civilian, params));
+        setNewData(civilian.getUuid(), existingData);
+        putData(civilian.getUuid(), "menuName", menuName);
+        Inventory menu = customMenu.createMenu(civilian);
         if (menu == null) {
             return;
         }
@@ -404,6 +430,9 @@ public class MenuManager implements Listener {
         return dataMap.get(key);
     }
     public static void putData(UUID uuid, String key, Object value) {
+        if (!data.containsKey(uuid)) {
+            data.put(uuid, new HashMap<>());
+        }
         data.get(uuid).put(key, value);
     }
     public static void setNewData(UUID uuid, Map<String, Object> newData) {

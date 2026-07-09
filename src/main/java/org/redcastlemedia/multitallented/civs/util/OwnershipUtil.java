@@ -77,8 +77,9 @@ public final class OwnershipUtil {
                 town.getColonialTown() != null;
         colonial: if (colonialOverride) {
             for (Town cTown : TownManager.getInstance().getOwnedTowns(civilian)) {
-                cTown.getName().equalsIgnoreCase(town.getColonialTown());
-                break colonial;
+                if (cTown.getName().equalsIgnoreCase(town.getColonialTown())) {
+                    break colonial;
+                }
             }
             colonialOverride = false;
         }
@@ -100,8 +101,7 @@ public final class OwnershipUtil {
             return 0;
         }
 
-        // TODO possibly make this case insensitive?
-        Town town = TownManager.getInstance().getTown(args[1]);
+        Town town = TownManager.getInstance().getTownIgnoreCase(args[1]);
         if (town == null) {
             player.sendMessage(Civs.getPrefix() + LocaleManager.getInstance().getTranslation(civilian.getLocale(),
                     "invalid-target"));

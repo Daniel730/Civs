@@ -25,10 +25,17 @@ import org.jetbrains.annotations.Nullable;
 
 import com.google.common.collect.Multimap;
 
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer;
+
 public class ItemMetaImpl implements ItemMeta, Damageable, SkullMeta {
 
+    private static final LegacyComponentSerializer LEGACY_SECTION = LegacyComponentSerializer.legacySection();
+
     private String displayName = null;
+    private Component displayNameComponent = null;
     private List<String> lore = new ArrayList<>();
+    private List<Component> loreComponents = new ArrayList<>();
     private int customModelData = 0;
     public ItemMetaImpl() {
 
@@ -40,7 +47,7 @@ public class ItemMetaImpl implements ItemMeta, Damageable, SkullMeta {
 
     @Override
     public boolean hasDisplayName() {
-        return displayName == null;
+        return displayName != null || displayNameComponent != null;
     }
 
     @Override
@@ -51,6 +58,24 @@ public class ItemMetaImpl implements ItemMeta, Damageable, SkullMeta {
     @Override
     public void setDisplayName(String s) {
         this.displayName = s;
+        this.displayNameComponent = s != null ? LEGACY_SECTION.deserialize(s) : null;
+    }
+
+    @Override
+    public Component displayName() {
+        if (displayNameComponent != null) {
+            return displayNameComponent;
+        }
+        if (displayName != null) {
+            return LEGACY_SECTION.deserialize(displayName);
+        }
+        return null;
+    }
+
+    @Override
+    public void displayName(Component component) {
+        this.displayNameComponent = component;
+        this.displayName = component != null ? LEGACY_SECTION.serialize(component) : null;
     }
 
     @Override
@@ -80,7 +105,11 @@ public class ItemMetaImpl implements ItemMeta, Damageable, SkullMeta {
 
     @Override
     public void setLore(List<String> list) {
-        this.lore = list;
+        this.lore = list != null ? list : new ArrayList<>();
+        this.loreComponents = new ArrayList<>();
+        for (String line : this.lore) {
+            loreComponents.add(LEGACY_SECTION.deserialize(line));
+        }
     }
 
     @Override
@@ -574,12 +603,31 @@ public class ItemMetaImpl implements ItemMeta, Damageable, SkullMeta {
 
     @Override
     public List<net.kyori.adventure.text.Component> lore() {
-        return null;
+        if (!loreComponents.isEmpty()) {
+            return loreComponents;
+        }
+        if (lore.isEmpty()) {
+            return null;
+        }
+        List<Component> components = new ArrayList<>(lore.size());
+        for (String line : lore) {
+            components.add(LEGACY_SECTION.deserialize(line));
+        }
+        return components;
     }
 
     @Override
     public void lore(List<? extends net.kyori.adventure.text.Component> list) {
-
+        if (list == null || list.isEmpty()) {
+            this.loreComponents = new ArrayList<>();
+            this.lore = new ArrayList<>();
+            return;
+        }
+        this.loreComponents = new ArrayList<>(list);
+        this.lore = new ArrayList<>(list.size());
+        for (Component line : list) {
+            this.lore.add(LEGACY_SECTION.serialize(line));
+        }
     }
 
     @Override

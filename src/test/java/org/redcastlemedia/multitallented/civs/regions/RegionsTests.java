@@ -721,7 +721,6 @@ public class RegionsTests extends TestUtil {
         assertFalse(region.hasUpkeepItems());
     }
     @Test
-    @Ignore // TODO fix this
     public void regionShouldHaveReagents() {
         loadRegionTypeCobble4();
         HashMap<UUID, String> owners = new HashMap<>();
@@ -733,7 +732,6 @@ public class RegionsTests extends TestUtil {
     }
 
     @Test
-    @Ignore // TODO fix this
     public void regionShouldRunUpkeep() {
         loadRegionTypeCobble4();
         HashMap<UUID, String> owners = new HashMap<>();

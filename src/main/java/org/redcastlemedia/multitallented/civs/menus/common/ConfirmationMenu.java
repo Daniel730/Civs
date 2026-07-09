@@ -19,6 +19,7 @@ import org.redcastlemedia.multitallented.civs.items.ItemManager;
 import org.redcastlemedia.multitallented.civs.localization.LocaleManager;
 import org.redcastlemedia.multitallented.civs.menus.CivsMenu;
 import org.redcastlemedia.multitallented.civs.menus.CustomMenu;
+import org.redcastlemedia.multitallented.civs.menus.MenuParams;
 import org.redcastlemedia.multitallented.civs.menus.MenuManager;
 import org.redcastlemedia.multitallented.civs.regions.Region;
 import org.redcastlemedia.multitallented.civs.regions.RegionManager;
@@ -50,11 +51,9 @@ public class ConfirmationMenu extends CustomMenu {
             data.put(Constants.TOWN, TownManager.getInstance().getTown(params.get(Constants.TOWN)));
         }
         if (params.containsKey(Constants.CLASS)) {
-            for (CivClass civClass : civilian.getCivClasses()) {
-                if (civClass.getId().equals(UUID.fromString(params.get(Constants.CLASS)))) {
-                    data.put(Constants.CLASS, civClass);
-                    break;
-                }
+            CivClass civClass = MenuParams.resolveClass(civilian, params);
+            if (civClass != null) {
+                data.put(Constants.CLASS, civClass);
             }
         }
         return data;

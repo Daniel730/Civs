@@ -209,7 +209,11 @@ public class ShopMenu extends CustomMenu {
             } else if (clickedItem.getType() == Material.BARRIER) {
                 return true;
             }
-            String key = clickedItem.getItemMeta().getLore().get(0);
+            List<String> lore = CVItem.legacyLore(clickedItem.getItemMeta());
+            if (lore == null || lore.isEmpty()) {
+                return true;
+            }
+            String key = lore.get(0);
             String name = ChatColor.stripColor(key).toLowerCase();
             if ("level".equals(sortType)) {
                 int level = Integer.parseInt(name);

@@ -1,6 +1,7 @@
 package org.redcastlemedia.multitallented.civs.menus.towns;
 
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -82,7 +83,7 @@ public class TownInvitesMenu extends CustomMenu {
             return true;
         }
         if ("accept-invite".equals(actionString)) {
-            String townName = itemStack.getItemMeta().getDisplayName();
+            String townName = ChatColor.stripColor(CVItem.legacyDisplayName(itemStack));
             Town inviteTown = TownManager.getInstance().getTown(townName);
             town.getAllyInvites().remove(townName);
             AllianceManager.getInstance().allyTheseTowns(town, inviteTown);

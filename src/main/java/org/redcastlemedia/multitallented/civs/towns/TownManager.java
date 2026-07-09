@@ -99,6 +99,22 @@ public class TownManager {
         return towns.get(name);
     }
 
+    public Town getTownIgnoreCase(String name) {
+        if (name == null) {
+            return null;
+        }
+        Town exact = towns.get(name);
+        if (exact != null) {
+            return exact;
+        }
+        for (Town town : sortedTowns) {
+            if (town.getName().equalsIgnoreCase(name)) {
+                return town;
+            }
+        }
+        return null;
+    }
+
     public Town getTownAt(Location location) {
         ItemManager itemManager = ItemManager.getInstance();
         for (Town town : sortedTowns) {

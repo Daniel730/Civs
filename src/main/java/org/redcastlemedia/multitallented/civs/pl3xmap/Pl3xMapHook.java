@@ -123,6 +123,7 @@ public class Pl3xMapHook implements Listener {
         String iconName = regionType.getDisplayName();
         Location location = region.getLocation();
         World world = location.getWorld();
+        String mapLabel = region.getMapDisplayName();
 
         if (pl3xMap != null &&
                 world != null &&
@@ -145,7 +146,7 @@ public class Pl3xMapHook implements Listener {
                         .fillColor(Color.getHSBColor(204, 153, 255).getRGB())
                         .strokeColor(Color.getHSBColor(153, 102, 255).getRGB())
                         .fill(true)
-                        .tooltipContent(regionType.getDisplayName())
+                        .tooltipContent(mapLabel)
                         .build());
                 regionLayer.addMarker(rectangle);
             } catch (NullPointerException npe) {
@@ -154,12 +155,25 @@ public class Pl3xMapHook implements Listener {
         }
     }
 
+    public static void refreshRegionMarker(Region region) {
+        if (region == null) {
+            return;
+        }
+        RegionType regionType = (RegionType) ItemManager.getInstance().getItemType(region.getType());
+        if (regionType == null || "".equals(regionType.getDynmapMarkerKey())) {
+            return;
+        }
+        deleteRegionMarker(region.getLocation());
+        createMarker(region);
+    }
+
     private static void deleteRegionMarker(Location location) {
-        Town townAt = TownManager.getInstance().getTownAt(location);
-        World world = townAt.getLocation().getWorld();
+        World world = location.getWorld();
+        if (world == null) {
+            return;
+        }
 
         if (pl3xMap != null &&
-                world != null &&
                 pl3xMap.getWorldRegistry().has(world.getName()) &&
                 pl3xMap.getWorldRegistry().get(world.getName()).getLayerRegistry().has(CIVS_REGIONS)) {
             WorldLayer worldLayer = (WorldLayer) pl3xMap.getWorldRegistry().get(world.getName()).getLayerRegistry().get(CIVS_REGIONS);

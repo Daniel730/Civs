@@ -343,7 +343,7 @@ public class Civilian {
             if (is == null || !is.hasItemMeta()) {
                 continue;
             }
-            String displayName = is.getItemMeta().getDisplayName();
+            String displayName = CVItem.legacyDisplayName(is);
             if (displayName == null) {
                 continue;
             }

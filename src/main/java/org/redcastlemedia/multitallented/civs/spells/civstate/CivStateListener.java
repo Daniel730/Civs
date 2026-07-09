@@ -58,8 +58,8 @@ public class CivStateListener implements Listener {
             }
             boolean drankPotion = false;
             PotionEffect potionEffect = CivPotionEffect.getPotionEffect(pm);
-            if (potionEffect != null && pm.getBasePotionData().getType().getEffectType() != null) {
-                PotionEffectType potionEffectType = pm.getBasePotionData().getType().getEffectType();
+            if (potionEffect != null) {
+                PotionEffectType potionEffectType = potionEffect.getType();
                 player.removePotionEffect(potionEffectType);
 
                 player.addPotionEffect(potionEffect);
