@@ -45,6 +45,12 @@ public class Government {
 
     public CVItem getIcon(Civilian civilian, boolean isUseBuffs) {
         Player player = Bukkit.getPlayer(civilian.getUuid());
+        if (icon == null) {
+            CVItem fallback = CVItem.createCVItemFromString("PAPER");
+            fallback.setDisplayName(LocaleManager.getInstance().getTranslation(player,
+                    name.toLowerCase() + LocaleConstants.NAME_SUFFIX));
+            return fallback;
+        }
         CVItem cvItem = icon.clone();
         cvItem.setDisplayName(LocaleManager.getInstance().getTranslation(player,
                 name.toLowerCase() + LocaleConstants.NAME_SUFFIX));

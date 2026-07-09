@@ -116,6 +116,13 @@ public class TownManager {
     }
 
     public Town getTownAt(Location location) {
+        if (location == null) {
+            return null;
+        }
+        org.bukkit.World queryWorld = safeWorld(location);
+        if (queryWorld == null) {
+            return null;
+        }
         ItemManager itemManager = ItemManager.getInstance();
         for (Town town : sortedTowns) {
             TownType townType = (TownType) itemManager.getItemType(town.getType());
@@ -123,10 +130,11 @@ public class TownManager {
             int radiusY = townType.getBuildRadiusY();
             Location townLocation = town.getLocation();
 
-            if (townLocation.getWorld() == null) {
+            org.bukkit.World townWorld = safeWorld(townLocation);
+            if (townWorld == null) {
                 continue;
             }
-            if (!townLocation.getWorld().equals(location.getWorld())) {
+            if (!townWorld.equals(queryWorld)) {
                 continue;
             }
 
@@ -1215,5 +1223,16 @@ public class TownManager {
         cTown.setWarEnabledToday(true);
         cTown.setHasWarBuildings(true);
         TownManager.getInstance().saveTown(cTown);
+    }
+
+    private static org.bukkit.World safeWorld(Location location) {
+        if (location == null) {
+            return null;
+        }
+        try {
+            return location.getWorld();
+        } catch (IllegalArgumentException ex) {
+            return null;
+        }
     }
 }
