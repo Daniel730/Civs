@@ -39,7 +39,31 @@ public class BlueprintManager {
             blueprintsDir.mkdirs();
         }
         copyBundledBlueprints();
-        ensureGeneratedBlueprints();
+    }
+
+    /**
+     * Generates missing fallback schematics once WorldEdit/FAWE registries are ready.
+     * Safe to call from onEnable (deferred) or when WorldEdit loads after Civs.
+     */
+    public void ensureGeneratedBlueprintsWhenReady() {
+        if (!isWorldEditRuntimeReady()) {
+            return;
+        }
+        for (CivItem item : ItemManager.getInstance().getAllItemTypes().values()) {
+            if (!(item instanceof RegionType regionType) || !regionType.isInstantBuild()
+                    || regionType.getGroups() == null || !regionType.getGroups().contains("housing")) {
+                continue;
+            }
+            File dest = getBlueprintFile(regionType.getResolvedBlueprintFile());
+            if (!dest.exists()) {
+                try {
+                    BlueprintGenerator.generateIfMissing(regionType.getProcessedName(), dest);
+                } catch (RuntimeException e) {
+                    Civs.logger.log(Level.WARNING,
+                            "Skipping blueprint generation for " + regionType.getProcessedName(), e);
+                }
+            }
+        }
     }
 
     public boolean isWorldEditAvailable() {
@@ -121,25 +145,12 @@ public class BlueprintManager {
         }
     }
 
-    private void ensureGeneratedBlueprints() {
-        if (!isWorldEditRuntimeReady()) {
-            return;
-        }
-        for (CivItem item : ItemManager.getInstance().getAllItemTypes().values()) {
-            if (!(item instanceof RegionType regionType) || !regionType.isInstantBuild()
-                    || regionType.getGroups() == null || !regionType.getGroups().contains("housing")) {
-                continue;
-            }
-            File dest = getBlueprintFile(regionType.getResolvedBlueprintFile());
-            if (!dest.exists()) {
-                BlueprintGenerator.generateIfMissing(regionType.getProcessedName(), dest);
-            }
-        }
-    }
-
     private boolean isWorldEditRuntimeReady() {
+        if (!isWorldEditAvailable()) {
+            return false;
+        }
         try {
-            com.sk89q.worldedit.world.block.BlockTypes.OAK_PLANKS.getDefaultState();
+            com.sk89q.worldedit.world.block.BlockTypes.get("chest").getDefaultState();
             return true;
         } catch (Exception e) {
             return false;

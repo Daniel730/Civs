@@ -21,6 +21,7 @@ softdepend:
 - Reflex
 - Pl3xMap
 - dynmap
+- FastAsyncWorldEdit
 - WorldEdit
 commands:
   cv:
@@ -61,4 +62,4 @@ permissions:
   civs.streaming:
     description: Hides coords and other identifying info for streamers
     default: false
-loadafter: [Vault, PlaceholderAPI, MMOItems, dynmap, WorldEdit]
+loadafter: [Vault, PlaceholderAPI, MMOItems, dynmap, WorldEdit, FastAsyncWorldEdit]

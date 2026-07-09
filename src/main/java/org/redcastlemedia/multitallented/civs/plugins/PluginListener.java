@@ -11,6 +11,7 @@ import org.redcastlemedia.multitallented.civs.ConfigManager;
 import org.redcastlemedia.multitallented.civs.dynmaphook.DynmapHook;
 import org.redcastlemedia.multitallented.civs.placeholderexpansion.PlaceHook;
 import org.redcastlemedia.multitallented.civs.util.Constants;
+import org.redcastlemedia.multitallented.civs.regions.placement.BlueprintManager;
 import org.redcastlemedia.multitallented.civs.worldedit.WorldEditSessionListener;
 
 import github.scarsz.discordsrv.DiscordSRV;
@@ -34,14 +35,19 @@ public class PluginListener implements Listener {
         } else if ("DiscordSRV".equals(event.getPlugin().getName()) &&
                 Bukkit.getPluginManager().isPluginEnabled("DiscordSRV")) {
             Civs.discordSRV = DiscordSRV.getPlugin();
-        } else if ("WorldEdit".equalsIgnoreCase(event.getPlugin().getName()) &&
-                Bukkit.getPluginManager().isPluginEnabled("WorldEdit") &&
-                ConfigManager.getInstance().isSafeWE()) {
-            // Fallback for when WorldEdit loads after Civs (e.g. Civs isn't declared in
-            // WorldEdit's loadbefore, or admins reload/enable WorldEdit at runtime).
-            // Civs#fancyPrintLog only wires this up if WorldEdit was already enabled
-            // during Civs' own onEnable().
-            WorldEditSessionListener.init();
+        } else if ("WorldEdit".equalsIgnoreCase(event.getPlugin().getName())
+                || "FastAsyncWorldEdit".equalsIgnoreCase(event.getPlugin().getName())) {
+            if (Bukkit.getPluginManager().isPluginEnabled("WorldEdit")
+                    && ConfigManager.getInstance().isSafeWE()) {
+                // Fallback for when WorldEdit loads after Civs (e.g. Civs isn't declared in
+                // WorldEdit's loadbefore, or admins reload/enable WorldEdit at runtime).
+                // Civs#fancyPrintLog only wires this up if WorldEdit was already enabled
+                // during Civs' own onEnable().
+                WorldEditSessionListener.init();
+            }
+            if (BlueprintManager.getInstance().isWorldEditAvailable()) {
+                BlueprintManager.getInstance().ensureGeneratedBlueprintsWhenReady();
+            }
         }
     }
 

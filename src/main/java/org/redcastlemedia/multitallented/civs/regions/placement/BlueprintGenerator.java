@@ -42,8 +42,10 @@ public final class BlueprintGenerator {
             }
             BlueprintManager.getInstance().invalidateCache(regionTypeName);
             Civs.logger.info("Generated fallback blueprint: " + dest.getName());
-        } catch (IOException e) {
+        } catch (IOException | RuntimeException e) {
             Civs.logger.log(Level.WARNING, "Failed to generate blueprint for " + regionTypeName, e);
+        } catch (RuntimeException e) {
+            Civs.logger.log(Level.WARNING, "Failed to generate blueprint for " + regionTypeName + ": " + e.getMessage());
         }
     }
 

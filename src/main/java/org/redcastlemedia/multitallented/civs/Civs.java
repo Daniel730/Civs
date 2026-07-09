@@ -75,6 +75,8 @@ public class Civs extends JavaPlugin {
 
         instantiateSingletons();
         BlueprintManager.getInstance().init();
+        Bukkit.getScheduler().runTaskLater(this,
+                () -> BlueprintManager.getInstance().ensureGeneratedBlueprintsWhenReady(), 1L);
         TownManager.getInstance().checkAllTownsForWarEnabled();
         TownManager.getInstance().recalculateAllHousingAndVillagers();
 
