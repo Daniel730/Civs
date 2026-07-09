@@ -25,7 +25,7 @@ public class RenamePlotCommand extends CivCommand {
         LocaleManager localeManager = LocaleManager.getInstance();
 
         if (args.length < 2) {
-            player.sendMessage(Civs.getPrefix() + localeManager.getTranslation(player, "invalid-name"));
+            player.sendMessage(Civs.getPrefix() + localeManager.getTranslation(player, "rename-plot-desc"));
             return true;
         }
 
