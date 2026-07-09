@@ -1,11 +1,13 @@
 package org.redcastlemedia.multitallented.civs.menus.regions;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 
 import org.bukkit.Location;
@@ -80,6 +82,17 @@ public class RegionMenuTests extends TestUtil {
         assertTrue(region.getRawPeople().containsKey(player.getUniqueId()));
         assertEquals(-1, region.getForSale(), 0.001);
         verify(Civs.econ).withdrawPlayer(player, 250);
+    }
+
+    @Test
+    public void createDataShouldIgnoreMissingRegion() {
+        RegionMenu menu = new RegionMenu();
+        Map<String, String> params = new HashMap<>();
+        params.put("region", "missing-region-id");
+
+        Map<String, Object> data = menu.createData(civilian, params);
+
+        assertFalse(data.containsKey("region"));
     }
 
     private static Region loadBuyableRegion() {
