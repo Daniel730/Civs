@@ -24,6 +24,20 @@ Core migration **compiles and tests pass** on Windows dev machine (386 tests, 6 
 - [x] Batch 18: guide NPC dialog system (`GuideNpcManager`/`GuideNpcListener`, `npc/guides.yml`) firing `GuideNpcInteractEvent`; `TutorialChooseCompleteEvent` on path selection; quest-owner PDC on `spawnForQuest` custom mobs surfaced via `CustomMobKillEvent`; auction browse/my-listings page-param clamping and null/AIR listing-item skip; `RegionMenu`/`TownManager`/`Government`/`VillagerEffect` null/unloaded-world guards; bank command and `/cv recalc` player feedback
 - [x] Cursor project brain: `.cursor/skills/`, `.cursor/rules/`, this doc
 
+## master merge status
+
+`master` and `paper-26.1.2-migration` diverged hard at `96d2c50a`: master's
+Sprint 3 line (auction/mob/shield polish, quest-hunt mob API with its own
+party-radius kill credit, `.gitattributes`) rewrote `CVItem`/`Civilian`/
+`CivItem`/`RegionType`/`Region`/`RegionBlockCheckResponse`/`Government`
+signatures independently of this branch's Adventure/instant-build/blueprint
+work. A trial merge (`git merge master --no-ff`) resolved the direct text
+conflicts but left ~100 "cannot find symbol" compile errors from the two
+lines' incompatible core APIs — not safe to force through without a
+dedicated reconciliation pass. Merge was aborted; `paper-26.1.2-migration`
+(this branch, tested green) remains the deploy source for bot-server.
+Reconciling with master is follow-up work, not a quick fix.
+
 ## Backlog
 
 - [ ] ItemMeta → Adventure `Component` for remaining item display names and lore (skull menus migrated; TNTCannon wand uses CVItem helpers)
