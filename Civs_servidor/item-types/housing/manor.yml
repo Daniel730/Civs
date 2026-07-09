@@ -29,6 +29,7 @@ build-reqs:
 rebuild: basemansion
 rebuild-required: true
 build-radius: 12 #25x25x25
+instant-build: true
 effects:
   - block_break
   - block_build

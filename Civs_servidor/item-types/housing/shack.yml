@@ -35,6 +35,7 @@ towns:
   - metropolis
 
 build-radius: 3 #7x7x7
+instant-build: true
 effects:
   - block_break
   - block_build

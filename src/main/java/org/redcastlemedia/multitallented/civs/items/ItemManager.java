@@ -801,6 +801,14 @@ public class ItemManager {
         if (config.getBoolean("start-in-inventory", false)) {
             regionType.setStartInInventory(true);
         }
+        if (config.isSet("shield-percent")) {
+            regionType.setShieldPercent(org.redcastlemedia.multitallented.civs.regions.effects.ShieldParams
+                    .clampPercent(config.getInt("shield-percent")));
+        }
+        regionType.setInstantBuild(config.getBoolean("instant-build", false));
+        if (config.isSet("blueprint")) {
+            regionType.setBlueprintFile(config.getString("blueprint"));
+        }
         regionType.setCivItemName(name.toLowerCase());
         itemTypes.put(name.toLowerCase(), regionType);
         return regionType;

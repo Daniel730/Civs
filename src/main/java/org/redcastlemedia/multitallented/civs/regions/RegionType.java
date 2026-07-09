@@ -7,8 +7,10 @@ import java.util.List;
 import java.util.Set;
 
 import org.bukkit.block.Biome;
+import org.redcastlemedia.multitallented.civs.ConfigManager;
 import org.redcastlemedia.multitallented.civs.items.CVItem;
 import org.redcastlemedia.multitallented.civs.items.CivItem;
+import org.redcastlemedia.multitallented.civs.regions.placement.BlueprintManager;
 import org.redcastlemedia.multitallented.civs.towns.GovTypeBuff;
 import org.redcastlemedia.multitallented.civs.towns.Government;
 
@@ -47,6 +49,30 @@ public class RegionType extends CivItem {
     private Set<String> govTypes = new HashSet<>();
     @Getter @Setter
     private boolean isWarEnabled = false;
+    /** Optional YAML {@code shield-percent} (0–100); overrides {@code power_shield} effect vars when set. */
+    @Getter @Setter
+    private int shieldPercent = -1;
+    @Getter @Setter
+    private boolean instantBuild = false;
+    @Getter @Setter
+    private String blueprintFile = null;
+
+    public boolean isInstantBuildAvailable() {
+        return instantBuild
+                && getGroups() != null && getGroups().contains("housing")
+                && getReqs() != null && !getReqs().isEmpty()
+                && !getEffects().containsKey(org.redcastlemedia.multitallented.civs.util.Constants.WONDER)
+                && ConfigManager.getInstance().isInstantBuildEnabled()
+                && BlueprintManager.getInstance().isWorldEditAvailable()
+                && BlueprintManager.getInstance().hasBlueprint(this);
+    }
+
+    public String getResolvedBlueprintFile() {
+        if (blueprintFile != null && !blueprintFile.isEmpty()) {
+            return blueprintFile;
+        }
+        return getProcessedName() + ".schem";
+    }
 
     public RegionType(String key, String name,
                       CVItem icon,

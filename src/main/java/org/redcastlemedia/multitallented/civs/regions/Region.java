@@ -53,7 +53,7 @@ public class Region {
     private static final Material WATER_CAULDRON =
             Enums.getIfPresent(Material.class, "WATER_CAULDRON").orNull();
 
-    static boolean matchesBuildReqMaterial(Material blockMat, Material reqMat) {
+    public static boolean matchesBuildReqMaterial(Material blockMat, Material reqMat) {
         if (blockMat == reqMat) {
             return true;
         }
@@ -61,12 +61,12 @@ public class Region {
             return blockMat == Material.WATER || blockMat == WATER_CAULDRON;
         }
         if (reqMat == Material.WATER) {
-            return blockMat == WATER_CAULDRON;
+            return blockMat == WATER_CAULDRON || blockMat == Material.WATER_BUCKET;
         }
         return false;
     }
 
-    private static Material findMatchingReqMaterial(Material blockMat, Map<Material, Integer> reqMap) {
+    public static Material findMatchingReqMaterial(Material blockMat, Map<Material, Integer> reqMap) {
         for (Material reqMat : reqMap.keySet()) {
             if (matchesBuildReqMaterial(blockMat, reqMat)) {
                 return reqMat;
@@ -124,6 +124,17 @@ public class Region {
             return type;
         }
         return regionType.getDisplayName(player);
+    }
+
+    public String getMapDisplayName() {
+        if (displayName != null && !displayName.isEmpty()) {
+            return displayName;
+        }
+        CivItem regionType = ItemManager.getInstance().getItemType(type);
+        if (regionType == null) {
+            return type;
+        }
+        return regionType.getDisplayName();
     }
 
     public Region(String type,
@@ -292,7 +303,7 @@ public class Region {
                 Double.parseDouble(idSplit[3]));
     }
 
-    private static List<HashMap<Material, Integer>> cloneReqMap(List<List<CVItem>> reqMap) {
+    public static List<HashMap<Material, Integer>> cloneReqMap(List<List<CVItem>> reqMap) {
         return cloneReqMap(reqMap, null);
     }
 

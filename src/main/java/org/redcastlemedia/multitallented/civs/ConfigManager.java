@@ -186,6 +186,7 @@ public class ConfigManager {
     @Getter boolean skinsInMenu;
     @Getter boolean useBounties;
     @Getter boolean useAuctionHouse;
+    @Getter boolean auctionPurchaseFeedback;
     @Getter double auctionListingTaxPercent;
     @Getter int auctionMaxListingsPerPlayer;
     @Getter long auctionListingDurationHours;
@@ -214,6 +215,11 @@ public class ConfigManager {
     private NavigableMap<Integer, String> residenciesCountOverride;
 
     @Getter private boolean safeWE;
+
+    @Getter private boolean instantBuildEnabled = true;
+    @Getter private Material instantBuildFoundationBlock = Material.DIRT;
+    @Getter private boolean instantBuildFillHoles = true;
+    @Getter private boolean instantBuildFlattenFoundation = true;
 
     @Getter private String pl3xMapTownMarkerDesc;
 
@@ -472,6 +478,7 @@ public class ConfigManager {
             lineLengthMap = new HashMap<>();
             useBounties = config.getBoolean("use-bounties", true);
             useAuctionHouse = config.getBoolean("use-auction-house", true);
+            auctionPurchaseFeedback = config.getBoolean("auction-purchase-feedback", true);
             auctionListingTaxPercent = config.getDouble("auction-listing-tax-percent", 5.0);
             auctionMaxListingsPerPlayer = config.getInt("auction-max-listings-per-player", 10);
             auctionListingDurationHours = config.getLong("auction-listing-duration-hours", 48);
@@ -529,6 +536,16 @@ public class ConfigManager {
             }
 
             safeWE = config.getBoolean("safe-worldedit", false);
+
+            instantBuildEnabled = config.getBoolean("instant-build.enabled", true);
+            instantBuildFillHoles = config.getBoolean("instant-build.fill-holes", true);
+            instantBuildFlattenFoundation = config.getBoolean("instant-build.flatten-foundation", true);
+            try {
+                instantBuildFoundationBlock = Material.valueOf(
+                        config.getString("instant-build.foundation-block", "DIRT").toUpperCase());
+            } catch (Exception e) {
+                instantBuildFoundationBlock = Material.DIRT;
+            }
 
             pl3xMapTownMarkerDesc = config.getString("pl3xmap-town-desc",
                     "<h3>%town%</h3> " +
@@ -599,6 +616,7 @@ public class ConfigManager {
         skinsInMenu = true;
         useBounties = true;
         useAuctionHouse = true;
+        auctionPurchaseFeedback = true;
         auctionListingTaxPercent = 5.0;
         auctionMaxListingsPerPlayer = 10;
         auctionListingDurationHours = 48;

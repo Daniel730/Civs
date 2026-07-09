@@ -28,6 +28,7 @@ build-reqs:
 
 rebuild: basevilla
 build-radius: 17 # 35x35x35
+instant-build: true
 effects:
   - block_break
   - block_build
