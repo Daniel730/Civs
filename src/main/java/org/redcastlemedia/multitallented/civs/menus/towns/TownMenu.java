@@ -34,6 +34,9 @@ public class TownMenu extends CustomMenu {
         HashMap<String, Object> data = new HashMap<>();
         if (params.containsKey(Constants.TOWN)) {
             Town town = TownManager.getInstance().getTown(params.get(Constants.TOWN));
+            if (town == null) {
+                return data;
+            }
             data.put(Constants.TOWN, town);
             TownType townType = (TownType) ItemManager.getInstance().getItemType(town.getType());
             data.put(Constants.TOWN_TYPE, townType);
@@ -43,6 +46,9 @@ public class TownMenu extends CustomMenu {
         if (params.containsKey(Constants.SELECTED_TOWN)) {
             if (!params.containsKey(Constants.TOWN)) {
                 Town town = TownManager.getInstance().getTown(params.get(Constants.SELECTED_TOWN));
+                if (town == null) {
+                    return data;
+                }
                 data.put(Constants.TOWN, town);
                 data.put(Constants.TOWN_TYPE, ItemManager.getInstance().getItemType(town.getType()));
                 Town selectedTown = TownManager.getInstance().isOwnerOfATown(civilian);
@@ -59,6 +65,9 @@ public class TownMenu extends CustomMenu {
     @Override
     public ItemStack createItemStack(Civilian civilian, MenuIcon menuIcon, int count) {
         Town town = (Town) MenuManager.getData(civilian.getUuid(), Constants.TOWN);
+        if (town == null) {
+            return new ItemStack(Material.AIR);
+        }
         TownType townType = (TownType) MenuManager.getData(civilian.getUuid(), Constants.TOWN_TYPE);
         Town selectedTown = (Town) MenuManager.getData(civilian.getUuid(), Constants.SELECTED_TOWN);
         if (selectedTown == null) {

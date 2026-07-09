@@ -274,7 +274,7 @@ public class ProtectionHandler implements Listener {
         }
         List<HashMap<Material, Integer>> missingBlocks = Region.hasRequiredBlocks(region.getType(),
                 region.getLocation(),
-                new ItemStack(event.getBlock().getType(), 1));
+                new ItemStack(MenuUtil.toItemMaterial(event.getBlock().getType()), 1));
         List<List<CVItem>> missingList = new ArrayList<>();
 
         if (missingBlocks != null && !missingBlocks.isEmpty()) {
