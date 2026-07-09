@@ -312,6 +312,7 @@ anti-camp-active: O anti-camp de $1 foi ativado
 anti-camp-expired: O anti-camp de $1 acabou
 activate-anticamp-question: $1 morreu em $2. Você gostaria de ativar as defesas anti-camp por $3?
 region-sale-set: $1 a venda por $2
+region-sale-cancelled: $1 já não está à venda
 sell-region: Vender região
 cancel-sale: Cancelar venda
 buy-region: Comprar $1 por $2

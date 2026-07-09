@@ -111,11 +111,13 @@ public class ServerPackSyncTests {
 
     @Test
     public void serverConfigEnablesAuctionHouse() throws Exception {
-        File configFile = new File(repoRoot(), "Civs_servidor/config.yml");
-        String config = Files.readString(configFile.toPath());
-        assertTrue(config.contains("use-auction-house: true"));
-        assertTrue(config.contains("auction-listing-tax-percent:"));
-        assertTrue(config.contains("auction-purchase-feedback:"));
+        for (String root : List.of("Civs_servidor", "src/main/java/resources/hybrid")) {
+            File configFile = new File(repoRoot(), root + "/config.yml");
+            String config = Files.readString(configFile.toPath());
+            assertTrue(root + " missing use-auction-house: true", config.contains("use-auction-house: true"));
+            assertTrue(root + " missing auction-listing-tax-percent:", config.contains("auction-listing-tax-percent:"));
+            assertTrue(root + " missing auction-purchase-feedback:", config.contains("auction-purchase-feedback:"));
+        }
     }
 
     private static boolean fileContainsInstantBuild(File file) {
