@@ -89,3 +89,6 @@ compile-errors.txt
 lib/
 pom-fix.patch
 power-fix.patch
+
+# Local Paper test server used for running the plugin
+testserver/
