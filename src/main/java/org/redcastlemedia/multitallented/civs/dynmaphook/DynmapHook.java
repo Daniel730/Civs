@@ -53,7 +53,7 @@ public class DynmapHook implements Listener {
                 RegionType regionType = (RegionType) ItemManager.getInstance().getItemType(region.getType());
                 if (!"".equals(regionType.getDynmapMarkerKey())) {
                     createMarker(region.getLocation(),
-                            regionType.getDisplayName(),
+                            region.getMapDisplayName(),
                             regionType.getDynmapMarkerKey());
                 }
             }
@@ -99,6 +99,18 @@ public class DynmapHook implements Listener {
         } catch (NullPointerException nullPointerException) {
             Civs.logger.log(Level.SEVERE, "Unable to create marker " + label, nullPointerException);
         }
+    }
+
+    public static void refreshRegionMarker(Region region) {
+        if (!isMarkerAPIReady() || region == null) {
+            return;
+        }
+        RegionType regionType = (RegionType) ItemManager.getInstance().getItemType(region.getType());
+        if (regionType == null || "".equals(regionType.getDynmapMarkerKey())) {
+            return;
+        }
+        deleteRegionMarker(region.getLocation());
+        createMarker(region.getLocation(), region.getMapDisplayName(), regionType.getDynmapMarkerKey());
     }
 
     private static void deleteRegionMarker(Location location) {
@@ -165,7 +177,7 @@ public class DynmapHook implements Listener {
     public void onRegionCreated(RegionCreatedEvent event) {
         if (!"".equals(event.getRegionType().getDynmapMarkerKey())) {
             createMarker(event.getRegion().getLocation(),
-                    event.getRegionType().getDisplayName(),
+                    event.getRegion().getMapDisplayName(),
                     event.getRegionType().getDynmapMarkerKey());
         }
     }

@@ -5,9 +5,12 @@ import java.util.List;
 import java.util.Map;
 
 import org.bukkit.Material;
+import org.bukkit.Bukkit;
+import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
 import org.redcastlemedia.multitallented.civs.civilians.Civilian;
 import org.redcastlemedia.multitallented.civs.civilians.CivilianManager;
+import org.redcastlemedia.multitallented.civs.events.TutorialChooseCompleteEvent;
 import org.redcastlemedia.multitallented.civs.items.CVItem;
 import org.redcastlemedia.multitallented.civs.menus.CivsMenu;
 import org.redcastlemedia.multitallented.civs.menus.CustomMenu;
@@ -63,6 +66,10 @@ public class TutorialChoosePathMenu extends CustomMenu {
             String pathName = ((HashMap<ItemStack, String>) MenuManager.getData(civilian.getUuid(), "pathNames")).get(clickedItem);
             civilian.setTutorialPath(pathName);
             TutorialManager.getInstance().sendMessageForCurrentTutorialStep(civilian, true);
+            Player player = Bukkit.getPlayer(civilian.getUuid());
+            if (player != null && player.isOnline()) {
+                Bukkit.getPluginManager().callEvent(new TutorialChooseCompleteEvent(player, pathName));
+            }
             CivilianManager.getInstance().saveCivilian(civilian);
             return true;
         }

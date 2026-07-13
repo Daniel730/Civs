@@ -5,6 +5,7 @@ import org.bukkit.ChatColor;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
+import org.redcastlemedia.multitallented.civs.items.CVItem;
 import org.redcastlemedia.multitallented.civs.Civs;
 import org.redcastlemedia.multitallented.civs.ConfigManager;
 import org.redcastlemedia.multitallented.civs.civilians.CivilianManager;
@@ -42,11 +43,9 @@ public final class AuctionFeedback {
     }
 
     private static String displayItemName(ItemStack item) {
-        if (item.hasItemMeta() && item.getItemMeta().hasDisplayName()) {
-            String custom = item.getItemMeta().getDisplayName();
-            if (custom != null && !custom.isEmpty()) {
-                return custom;
-            }
+        String custom = CVItem.legacyDisplayName(item);
+        if (custom != null && !custom.isEmpty()) {
+            return custom;
         }
         return item.getType().name();
     }

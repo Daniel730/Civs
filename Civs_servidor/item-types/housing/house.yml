@@ -28,6 +28,7 @@ build-reqs:
 
 rebuild: basedwelling
 build-radius: 6 #13x13x13
+instant-build: true
 effects:
   - block_break
   - block_build

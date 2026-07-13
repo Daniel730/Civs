@@ -82,6 +82,7 @@ import org.redcastlemedia.multitallented.civs.items.CivItem;
 import org.redcastlemedia.multitallented.civs.items.ItemManager;
 import org.redcastlemedia.multitallented.civs.localization.LocaleConstants;
 import org.redcastlemedia.multitallented.civs.localization.LocaleManager;
+import org.redcastlemedia.multitallented.civs.menus.MenuUtil;
 import org.redcastlemedia.multitallented.civs.regions.Region;
 import org.redcastlemedia.multitallented.civs.regions.RegionBlockCheckResponse;
 import org.redcastlemedia.multitallented.civs.regions.RegionEffectConstants;
@@ -273,14 +274,14 @@ public class ProtectionHandler implements Listener {
         }
         List<HashMap<Material, Integer>> missingBlocks = Region.hasRequiredBlocks(region.getType(),
                 region.getLocation(),
-                new ItemStack(event.getBlock().getType(), 1));
+                new ItemStack(MenuUtil.toItemMaterial(event.getBlock().getType()), 1));
         List<List<CVItem>> missingList = new ArrayList<>();
 
         if (missingBlocks != null && !missingBlocks.isEmpty()) {
             for (HashMap<Material, Integer> missingMap : missingBlocks) {
                 List<CVItem> tempList = new ArrayList<>();
                 for (Map.Entry<Material, Integer> entry : missingMap.entrySet()) {
-                    tempList.add(new CVItem(entry.getKey(), entry.getValue()));
+                    tempList.add(new CVItem(MenuUtil.toItemMaterial(entry.getKey()), entry.getValue()));
                 }
                 missingList.add(tempList);
             }

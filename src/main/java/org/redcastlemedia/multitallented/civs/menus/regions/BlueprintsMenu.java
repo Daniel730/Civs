@@ -1,6 +1,7 @@
 package org.redcastlemedia.multitallented.civs.menus.regions;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.logging.Level;
@@ -37,6 +38,11 @@ public class BlueprintsMenu extends CustomMenu {
         }
 
         Map<String, Integer> stashItems = civilian.getStashItems();
+        stashItems.entrySet().removeIf(entry -> {
+            CivItem civItem = ItemManager.getInstance().getItemType(entry.getKey());
+            return civItem == null || (civItem.getItemType() != CivItem.ItemType.REGION
+                    && civItem.getItemType() != CivItem.ItemType.TOWN);
+        });
         Map<String, Integer> newItems = ItemManager.getInstance().getNewItems(civilian);
         for (Map.Entry<String, Integer> entry : newItems.entrySet()) {
             String itemName = entry.getKey();
@@ -72,7 +78,7 @@ public class BlueprintsMenu extends CustomMenu {
     @Override @SuppressWarnings("unchecked")
     public void onCloseMenu(Civilian civilian, Inventory inventory) {
         Map<String, Integer> stashItems = civilian.getStashItems();
-        HashMap<String, Integer> itemsInView = (HashMap<String, Integer>) MenuManager.getData(civilian.getUuid(), Constants.ITEMS_IN_VIEW);
+        Map<String, Integer> itemsInView = (Map<String, Integer>) MenuManager.getData(civilian.getUuid(), Constants.ITEMS_IN_VIEW);
         if (itemsInView == null) {
             Civs.logger.log(Level.SEVERE, "Unable to get data for blueprints! Possible Civ item duplication!");
             return;
@@ -96,7 +102,7 @@ public class BlueprintsMenu extends CustomMenu {
         itemsInView.clear();
     }
     private void addItemsToStash(Inventory inventory,
-                                 HashMap<String, Integer> itemsInView,
+                                 Map<String, Integer> itemsInView,
                                  Map<String, Integer> stashItems) {
         for (ItemStack is : inventory) {
             if (!CVItem.isCivsItem(is)) {
@@ -116,7 +122,7 @@ public class BlueprintsMenu extends CustomMenu {
         }
     }
 
-    private void addItemFromItemsInView(HashMap<String, Integer> itemsInView,
+    private void addItemFromItemsInView(Map<String, Integer> itemsInView,
                                         String name,
                                         ItemStack is,
                                         Map<String, Integer> stashItems) {
@@ -163,7 +169,7 @@ public class BlueprintsMenu extends CustomMenu {
             ItemStack itemStack = civItem.createItemStack(player);
             int amount = civilian.getStashItems().get(currentStashItemName);
             itemStack.setAmount(amount);
-            HashMap<String, Integer> itemsInView = (HashMap<String, Integer>) MenuManager.getData(civilian.getUuid(), Constants.ITEMS_IN_VIEW);
+            Map<String, Integer> itemsInView = (Map<String, Integer>) MenuManager.getData(civilian.getUuid(), Constants.ITEMS_IN_VIEW);
             if (itemsInView == null) {
                 return new ItemStack(Material.AIR);
             }
@@ -172,6 +178,34 @@ public class BlueprintsMenu extends CustomMenu {
             return itemStack;
         }
         return super.createItemStack(civilian, menuIcon, count);
+    }
+
+    @Override
+    public boolean doActionAndCancel(Civilian civilian, String actionString, ItemStack clickedItem) {
+        if ("delete".equals(actionString)) {
+            CivItem civItem = CivItem.getFromItemStack(clickedItem);
+            if (civItem == null && clickedItem != null && CVItem.isCivsItem(clickedItem)) {
+                List<String> lore = CVItem.legacyLore(clickedItem.getItemMeta());
+                if (lore != null && lore.size() > 1) {
+                    civItem = ItemManager.getInstance().getItemType(
+                            org.bukkit.ChatColor.stripColor(lore.get(1)).toLowerCase());
+                }
+            }
+            if (civItem != null) {
+                String name = civItem.getProcessedName();
+                civilian.getStashItems().remove(name);
+                @SuppressWarnings("unchecked")
+                Map<String, Integer> itemsInView = (Map<String, Integer>) MenuManager.getData(
+                        civilian.getUuid(), Constants.ITEMS_IN_VIEW);
+                if (itemsInView != null) {
+                    itemsInView.remove(name);
+                }
+                CivilianManager.getInstance().saveCivilian(civilian);
+                MenuManager.getInstance().refreshMenu(civilian);
+            }
+            return true;
+        }
+        return super.doActionAndCancel(civilian, actionString, clickedItem);
     }
 
     @Override

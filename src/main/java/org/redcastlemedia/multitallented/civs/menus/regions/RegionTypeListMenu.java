@@ -88,9 +88,9 @@ public class RegionTypeListMenu extends CustomMenu {
             return new ItemStack(Material.AIR);
         }
         if (menuIcon.getKey().equals(REGION_TYPES)) {
-            HashMap<String, Integer> regionTypes;
+            Map<String, Integer> regionTypes;
             if (MenuManager.getData(civilian.getUuid(), REGION_TYPES) != null) {
-                regionTypes = (HashMap<String, Integer>) MenuManager.getData(civilian.getUuid(), REGION_TYPES);
+                regionTypes = (Map<String, Integer>) MenuManager.getData(civilian.getUuid(), REGION_TYPES);
             } else {
                 return new ItemStack(Material.AIR);
             }

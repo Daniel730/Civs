@@ -22,6 +22,7 @@ import org.redcastlemedia.multitallented.civs.menus.CivsMenu;
 import org.redcastlemedia.multitallented.civs.menus.CustomMenu;
 import org.redcastlemedia.multitallented.civs.menus.MenuConstants;
 import org.redcastlemedia.multitallented.civs.menus.MenuIcon;
+import org.redcastlemedia.multitallented.civs.menus.MenuParams;
 import org.redcastlemedia.multitallented.civs.menus.MenuManager;
 import org.redcastlemedia.multitallented.civs.towns.Town;
 import org.redcastlemedia.multitallented.civs.towns.TownManager;
@@ -33,7 +34,7 @@ public class PlayerMenu extends CustomMenu {
     @Override
     public Map<String, Object> createData(Civilian civilian, Map<String, String> params) {
         HashMap<String, Object> data = new HashMap<>();
-        UUID uuid = UUID.fromString(params.get(Constants.UUID));
+        UUID uuid = MenuParams.resolveUuid(civilian, params);
         Civilian civilian1 = CivilianManager.getInstance().getCivilian(uuid);
         if (params.containsKey(Constants.UUID)) {
             data.put(Constants.UUID, uuid);

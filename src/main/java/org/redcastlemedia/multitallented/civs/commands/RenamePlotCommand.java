@@ -6,7 +6,9 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.redcastlemedia.multitallented.civs.Civs;
+import org.redcastlemedia.multitallented.civs.dynmaphook.DynmapHook;
 import org.redcastlemedia.multitallented.civs.localization.LocaleManager;
+import org.redcastlemedia.multitallented.civs.pl3xmap.Pl3xMapHook;
 import org.redcastlemedia.multitallented.civs.regions.Region;
 import org.redcastlemedia.multitallented.civs.regions.RegionManager;
 import org.redcastlemedia.multitallented.civs.util.Constants;
@@ -23,7 +25,7 @@ public class RenamePlotCommand extends CivCommand {
         LocaleManager localeManager = LocaleManager.getInstance();
 
         if (args.length < 2) {
-            player.sendMessage(Civs.getPrefix() + localeManager.getTranslation(player, "invalid-name"));
+            player.sendMessage(Civs.getPrefix() + localeManager.getTranslation(player, "rename-plot-desc"));
             return true;
         }
 
@@ -66,6 +68,8 @@ public class RenamePlotCommand extends CivCommand {
         }
         region.setDisplayName(validName);
         RegionManager.getInstance().saveRegion(region);
+        DynmapHook.refreshRegionMarker(region);
+        Pl3xMapHook.refreshRegionMarker(region);
 
         player.sendMessage(Civs.getPrefix() + localeManager.getTranslation(player, "plot-renamed")
                 .replace("$1", validName));

@@ -18,10 +18,15 @@ import org.redcastlemedia.multitallented.civs.util.Util;
 public class WithdrawBankCommand extends CivCommand {
     @Override
     public boolean runCommand(CommandSender commandSender, Command command, String label, String[] args) {
-        if (!(commandSender instanceof Player) || args.length < 3 || Civs.econ == null) {
+        if (!(commandSender instanceof Player)) {
             return true;
         }
         Player player = (Player) commandSender;
+        if (args.length < 3 || Civs.econ == null) {
+            player.sendMessage(Civs.getPrefix() + LocaleManager.getInstance().getTranslation(player,
+                    "invalid-target"));
+            return true;
+        }
         Civilian civilian = CivilianManager.getInstance().getCivilian(player.getUniqueId());
 
         //0 withdraw
@@ -33,7 +38,10 @@ public class WithdrawBankCommand extends CivCommand {
             return true;
         }
 
-        Town town = TownManager.getInstance().getTown(args[1]);
+        Town town = TownManager.getInstance().getTownIgnoreCase(args[1]);
+        if (town == null) {
+            return true;
+        }
         town.setBankAccount(town.getBankAccount() - amount);
         TownManager.getInstance().saveTown(town);
         Civs.econ.depositPlayer(player, amount);

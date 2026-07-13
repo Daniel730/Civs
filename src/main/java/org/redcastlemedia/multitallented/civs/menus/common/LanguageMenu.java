@@ -2,6 +2,7 @@ package org.redcastlemedia.multitallented.civs.menus.common;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.bukkit.Bukkit;
@@ -52,8 +53,12 @@ public class LanguageMenu extends CustomMenu {
     @Override
     public boolean doActionAndCancel(Civilian civilian, String actionString, ItemStack clickedItem) {
         if (actionString.equals("select-lang")) {
-            String itemName = clickedItem.getItemMeta().getDisplayName();
-            String langKey = clickedItem.getItemMeta().getLore().get(0);
+            String itemName = CVItem.legacyDisplayName(clickedItem);
+            List<String> lore = CVItem.legacyLore(clickedItem.getItemMeta());
+            if (lore == null || lore.isEmpty()) {
+                return super.doActionAndCancel(civilian, actionString, clickedItem);
+            }
+            String langKey = lore.get(0);
             civilian.setLocale(langKey);
             CivilianManager.getInstance().saveCivilian(civilian);
             Player player = Bukkit.getPlayer(civilian.getUuid());

@@ -28,6 +28,7 @@ build-reqs:
 
 rebuild: baseshack
 build-radius: 4 #9x9x9
+instant-build: true
 effects:
   - block_break
   - block_build

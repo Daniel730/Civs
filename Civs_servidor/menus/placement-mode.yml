@@ -1,0 +1,43 @@
+size: 27
+name: PlacementMode
+# variables: regionType
+items:
+  title:
+    index: 4
+    icon: CHEST
+    name: placement-mode-title
+    desc: placement-mode-desc
+  manual:
+    index: 11
+    icon: BRICKS
+    name: placement-mode-manual
+    desc: placement-mode-manual-desc
+    actions:
+      - mode-manual
+  instant:
+    index: 13
+    icon: STRUCTURE_BLOCK
+    name: placement-mode-instant
+    desc: placement-mode-instant-desc
+    actions:
+      - mode-instant
+  reqs:
+    index: 15
+    icon: SCAFFOLDING
+    name: build-reqs-title
+    desc: build-reqs
+    actions:
+      - menu:recipe?regionType=$regionType$&recipe=reqs
+  confirm:
+    index: 22
+    icon: EMERALD
+    name: placement-mode-confirm
+    desc: placement-mode-confirm-desc
+    actions:
+      - placement-confirm
+  cancel:
+    index: 8
+    icon: BARRIER
+    name: reject
+    actions:
+      - placement-cancel

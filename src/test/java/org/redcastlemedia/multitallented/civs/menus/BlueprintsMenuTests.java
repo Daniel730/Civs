@@ -30,6 +30,8 @@ import org.redcastlemedia.multitallented.civs.civilians.Civilian;
 import org.redcastlemedia.multitallented.civs.civilians.CivilianListener;
 import org.redcastlemedia.multitallented.civs.civilians.CivilianManager;
 import org.redcastlemedia.multitallented.civs.items.CivItem;
+import org.redcastlemedia.multitallented.civs.items.ItemManager;
+import org.redcastlemedia.multitallented.civs.menus.regions.BlueprintsMenu;
 import org.redcastlemedia.multitallented.civs.regions.Region;
 import org.redcastlemedia.multitallented.civs.regions.RegionManager;
 import org.redcastlemedia.multitallented.civs.regions.RegionsTests;
@@ -98,15 +100,13 @@ public class BlueprintsMenuTests extends TestUtil {
         assertFalse(filteredItems.containsKey("nonexistent_item_0"));
     }
 
-    @Test @Ignore // TODO fix this
+    @Test
     public void stashRegionItemsShouldBeEmpty() {
-        civilian.getStashItems().put("coal_mine", 1);
-        blueprintsMenu.createMenu(this.civilian, new HashMap<>());
-        blueprintsMenu.onCloseMenu(this.civilian, this.inventory);
+        civilian.getStashItems().put("nonexistent_region_xyz", 1);
+        blueprintsMenu.createData(this.civilian, new HashMap<>());
         Civilian civilian = CivilianManager.getInstance().getCivilian(TestUtil.player.getUniqueId());
-        blueprintsMenu.createMenu(this.civilian, new HashMap<>());
         assertEquals(1, (int) civilian.getStashItems().get("shelter"));
-        assertNull(civilian.getStashItems().get("coal_mine"));
+        assertNull(civilian.getStashItems().get("nonexistent_region_xyz"));
     }
 
     @Test
@@ -180,6 +180,28 @@ public class BlueprintsMenuTests extends TestUtil {
         ItemMetaImpl itemMeta = new ItemMetaImpl("Civs Cobble", lore);
         itemStack.setItemMeta(itemMeta);
         assertFalse(CivItem.isCivsItem(itemStack));
+    }
+
+    @Test
+    public void deleteActionShouldRemoveBlueprintFromStash() {
+        RegionsTests.loadRegionTypeShelter();
+        RegionsTests.loadRegionTypeCobble();
+        civilian.getStashItems().clear();
+        civilian.getStashItems().put("shelter", 1);
+        civilian.getStashItems().put("cobble", 2);
+
+        ItemStackImpl shelterItem = new ItemStackImpl(Material.CHEST, 1);
+        ArrayList<String> lore = new ArrayList<>();
+        lore.add(TestUtil.player.getUniqueId().toString());
+        lore.add(ChatColor.BLACK + "shelter");
+        ItemMetaImpl meta = new ItemMetaImpl("Civs Shelter", lore);
+        shelterItem.setItemMeta(meta);
+        BlueprintsMenu menu = (BlueprintsMenu) blueprintsMenu;
+        boolean cancelled = menu.doActionAndCancel(civilian, "delete", shelterItem);
+
+        assertTrue(cancelled);
+        assertFalse(civilian.getStashItems().containsKey("shelter"));
+        assertEquals(2, (int) civilian.getStashItems().get("cobble"));
     }
 
     @Test

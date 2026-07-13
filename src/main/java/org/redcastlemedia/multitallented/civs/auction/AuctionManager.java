@@ -10,6 +10,7 @@ import java.util.UUID;
 import java.util.logging.Level;
 
 import org.bukkit.Bukkit;
+import org.bukkit.Material;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
@@ -18,6 +19,7 @@ import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.inventory.ItemStack;
+import org.redcastlemedia.multitallented.civs.items.CVItem;
 import org.redcastlemedia.multitallented.civs.Civs;
 import org.redcastlemedia.multitallented.civs.CivsSingleton;
 import org.redcastlemedia.multitallented.civs.ConfigManager;
@@ -66,12 +68,19 @@ public class AuctionManager implements Listener {
 
     public List<AuctionListing> getBrowseListings(String sort, String materialFilter) {
         purgeExpiredListings();
-        List<AuctionListing> active = new ArrayList<>(listings.values());
-        if (materialFilter != null && !materialFilter.isEmpty()) {
-            active.removeIf(listing -> !listing.getItem().getType().name().equalsIgnoreCase(materialFilter));
+        List<AuctionListing> active = new ArrayList<>();
+        for (AuctionListing listing : listings.values()) {
+            ItemStack item = listing.getItem();
+            if (item == null || item.getType() == Material.AIR) {
+                continue;
+            }
+            if (materialFilter != null && !materialFilter.isEmpty()
+                    && !item.getType().name().equalsIgnoreCase(materialFilter)) {
+                continue;
+            }
+            active.add(listing);
         }
-        Comparator<AuctionListing> comparator = browseComparator(sort);
-        active.sort(comparator);
+        active.sort(browseComparator(sort));
         return active;
     }
 
@@ -94,11 +103,12 @@ public class AuctionManager implements Listener {
     }
 
     private String displayName(ItemStack item) {
-        if (item.hasItemMeta() && item.getItemMeta().hasDisplayName()) {
-            String custom = item.getItemMeta().getDisplayName();
-            if (custom != null) {
-                return custom;
-            }
+        if (item == null || item.getType() == Material.AIR) {
+            return "";
+        }
+        String custom = CVItem.legacyDisplayName(item);
+        if (custom != null && !custom.isEmpty()) {
+            return custom;
         }
         return item.getType().name();
     }
@@ -190,6 +200,9 @@ public class AuctionManager implements Listener {
         if (!isEnabled()) {
             return AuctionResult.DISABLED;
         }
+        if (listingId == null || listingId.isEmpty()) {
+            return AuctionResult.NOT_FOUND;
+        }
         AuctionListing listing = listings.get(listingId);
         if (listing == null) {
             return AuctionResult.NOT_FOUND;
@@ -205,7 +218,13 @@ public class AuctionManager implements Listener {
             return AuctionResult.INSUFFICIENT_FUNDS;
         }
 
-        ItemStack purchasedItem = listing.getItem().clone();
+        ItemStack purchasedItem = listing.getItem();
+        if (purchasedItem == null || purchasedItem.getType() == Material.AIR || purchasedItem.getAmount() < 1) {
+            listings.remove(listing.getId());
+            removeListingFile(listing);
+            return AuctionResult.NOT_FOUND;
+        }
+        purchasedItem = purchasedItem.clone();
         AuctionPurchaseEvent purchaseEvent = new AuctionPurchaseEvent(
                 buyer.getUniqueId(),
                 listing.getSellerId(),
@@ -241,6 +260,9 @@ public class AuctionManager implements Listener {
         if (!isEnabled()) {
             return AuctionResult.DISABLED;
         }
+        if (listingId == null || listingId.isEmpty()) {
+            return AuctionResult.NOT_FOUND;
+        }
         AuctionListing listing = listings.get(listingId);
         if (listing == null) {
             return AuctionResult.NOT_FOUND;
@@ -248,7 +270,10 @@ public class AuctionManager implements Listener {
         if (!seller.getUniqueId().equals(listing.getSellerId())) {
             return AuctionResult.NOT_OWNER;
         }
-        returnItemToPlayer(seller, listing.getItem().clone());
+        ItemStack item = listing.getItem();
+        if (item != null && item.getType() != Material.AIR) {
+            returnItemToPlayer(seller, item.clone());
+        }
         removeListingFile(listing);
         listings.remove(listing.getId());
         return AuctionResult.SUCCESS;
@@ -313,7 +338,10 @@ public class AuctionManager implements Listener {
     }
 
     private void expireListing(AuctionListing listing) {
-        queueReturn(listing.getSellerId(), listing.getItem().clone());
+        ItemStack item = listing.getItem();
+        if (item != null && item.getType() != Material.AIR) {
+            queueReturn(listing.getSellerId(), item.clone());
+        }
         removeListingFile(listing);
         listings.remove(listing.getId());
 

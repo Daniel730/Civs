@@ -26,6 +26,7 @@ import org.redcastlemedia.multitallented.civs.placeholderexpansion.PlaceHook;
 import org.redcastlemedia.multitallented.civs.plugins.PluginListener;
 import org.redcastlemedia.multitallented.civs.regions.RegionManager;
 import org.redcastlemedia.multitallented.civs.regions.StructureUtil;
+import org.redcastlemedia.multitallented.civs.regions.placement.BlueprintManager;
 import org.redcastlemedia.multitallented.civs.regions.effects.ConveyorEffect;
 import org.redcastlemedia.multitallented.civs.regions.effects.FlyEffect;
 import org.redcastlemedia.multitallented.civs.scheduler.CommonScheduler;
@@ -73,6 +74,9 @@ public class Civs extends JavaPlugin {
         setupPermissions();
 
         instantiateSingletons();
+        BlueprintManager.getInstance().init();
+        Bukkit.getScheduler().runTaskLater(this,
+                () -> BlueprintManager.getInstance().ensureGeneratedBlueprintsWhenReady(), 1L);
         TownManager.getInstance().checkAllTownsForWarEnabled();
         TownManager.getInstance().recalculateAllHousingAndVillagers();
 

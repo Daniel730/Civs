@@ -5,6 +5,7 @@ import java.util.function.Predicate;
 import java.util.logging.Level;
 
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.entity.Player;
@@ -290,7 +291,7 @@ public class PeopleMenu extends CustomMenu {
             Boolean invite = (Boolean) MenuManager.getData(civilian.getUuid(), "invite");
             if (region != null) {
                 if (invite != null && invite && clickedItem.getItemMeta() != null) {
-                    player.performCommand("cv add " + clickedItem.getItemMeta().getDisplayName() + " " + region.getId());
+                    player.performCommand("cv add " + ChatColor.stripColor(CVItem.legacyDisplayName(clickedItem)) + " " + region.getId());
                 } else {
                     HashMap<String, String> params = new HashMap<>();
                     params.put(Constants.REGION, region.getId());
@@ -299,7 +300,7 @@ public class PeopleMenu extends CustomMenu {
                 }
             } else if (town != null) {
                 if (invite != null && invite && clickedItem.getItemMeta() != null) {
-                    player.performCommand("cv invite " + clickedItem.getItemMeta().getDisplayName() + " " + town.getName());
+                    player.performCommand("cv invite " + ChatColor.stripColor(CVItem.legacyDisplayName(clickedItem)) + " " + town.getName());
                 } else {
                     HashMap<String, String> params = new HashMap<>();
                     params.put(Constants.TOWN, town.getName());

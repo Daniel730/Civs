@@ -38,21 +38,27 @@ public class SellRegionCommand extends CivCommand {
         }
 
         if (args.length < 2) {
-            setRegionNotForSale(player, region, -1);
+            setRegionForSale(player, region, -1);
+            player.sendMessage(Civs.getPrefix() + LocaleManager.getInstance().getTranslation(player,
+                    "region-sale-cancelled").replace("$1", region.getType()));
             return true;
         }
 
-        double salePrice = -1;
+        double salePrice;
         try {
             salePrice = Double.parseDouble(args[1]);
         } catch (NullPointerException | NumberFormatException exception) {
-            // Don't care
+            player.sendMessage(Civs.getPrefix() + LocaleManager.getInstance().getTranslation(player,
+                    "use-sell-command"));
+            return true;
         }
         if (salePrice < 0) {
+            player.sendMessage(Civs.getPrefix() + LocaleManager.getInstance().getTranslation(player,
+                    "use-sell-command"));
             return true;
         }
 
-        setRegionNotForSale(player, region, salePrice);
+        setRegionForSale(player, region, salePrice);
         commandSender.sendMessage(Civs.getPrefix() +
                 LocaleManager.getInstance().getTranslation(player, "region-sale-set")
                 .replace("$1", region.getType())
@@ -65,7 +71,7 @@ public class SellRegionCommand extends CivCommand {
         return commandSender instanceof Player;
     }
 
-    private void setRegionNotForSale(Player player, Region region, double price) {
+    private void setRegionForSale(Player player, Region region, double price) {
         region.setForSale(price);
         RegionManager.getInstance().saveRegion(region);
     }

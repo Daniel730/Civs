@@ -74,6 +74,13 @@ use-region-bounding-box: true
 ##should region dimensions be shown with particles instead of glass?
 use-particle-bounding-boxes: false
 
+## Instant structure placement (paste .schem blueprints)
+instant-build:
+  enabled: true
+  foundation-block: DIRT
+  fill-holes: true
+  flatten-foundation: true
+
 price-multiplier: 1.0 #multiplier for prices before adding base price
 price-base: 0.0 #added to all item prices
 refund-percentage: 0.5 #how much money you get from destroying your own regions
@@ -143,6 +150,8 @@ allow-teleporting-during-combat: false
 allow-offline-raiding: true
 ##can non-allied players teleport out of towns?
 allow-teleporting-out-of-hostile-towns: true
+
+auction-purchase-feedback: true
 
 ##Should the town enter and exit messages be titles (or chat)
 enter-exit-messages-use-titles: true

@@ -26,6 +26,42 @@ public class MenuVariableSubstitutionTest extends TestUtil {
     }
 
     @Test
+    public void replaceVariablesShouldResolveDefaultUuidWithoutMenuData() {
+        Civilian civilian = CivilianManager.getInstance().getCivilian(player.getUniqueId());
+        MenuManager.clearData(player.getUniqueId());
+
+        String resolved = CustomMenu.replaceVariables(civilian, "menu:player?uuid=$uuid$");
+
+        assertEquals("menu:player?uuid=" + player.getUniqueId(), resolved);
+        assertFalse(resolved.contains("$uuid$"));
+    }
+
+    @Test
+    public void replaceVariablesShouldResolveDefaultClassWithoutMenuData() {
+        Civilian civilian = CivilianManager.getInstance().getCivilian(player.getUniqueId());
+        MenuManager.clearData(player.getUniqueId());
+        if (civilian.getCurrentClass() == null) {
+            return;
+        }
+
+        String resolved = CustomMenu.replaceVariables(civilian, "menu:spell-list?class=$class$");
+
+        assertEquals("menu:spell-list?class=" + civilian.getCurrentClass().getId(), resolved);
+        assertFalse(resolved.contains("$class$"));
+    }
+
+    @Test
+    public void menuParamsShouldTreatUnresolvedPlaceholdersAsSelfUuid() {
+        Civilian civilian = CivilianManager.getInstance().getCivilian(player.getUniqueId());
+        Map<String, String> params = new HashMap<>();
+        params.put(Constants.UUID, "$uuid$");
+
+        UUID resolved = MenuParams.resolveUuid(civilian, params);
+
+        assertEquals(player.getUniqueId(), resolved);
+    }
+
+    @Test
     public void replaceVariablesShouldResolveUuidStoredAsString() {
         Civilian civilian = CivilianManager.getInstance().getCivilian(player.getUniqueId());
         Map<String, Object> data = new HashMap<>();

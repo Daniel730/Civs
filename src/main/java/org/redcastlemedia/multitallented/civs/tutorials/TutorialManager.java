@@ -8,6 +8,7 @@ import org.bukkit.entity.Player;
 import org.redcastlemedia.multitallented.civs.Civs;
 import org.redcastlemedia.multitallented.civs.CivsSingleton;
 import org.redcastlemedia.multitallented.civs.ConfigManager;
+import org.redcastlemedia.multitallented.civs.events.TutorialChooseCompleteEvent;
 import org.redcastlemedia.multitallented.civs.localization.LocaleConstants;
 import org.redcastlemedia.multitallented.civs.localization.LocaleManager;
 import org.redcastlemedia.multitallented.civs.civilians.Civilian;
@@ -195,6 +196,11 @@ public class TutorialManager {
         } while (key != null && civilian.getCompletedTutorialSteps().contains(key));
         civilian.setTutorialIndex(nextIndex);
         CivilianManager.getInstance().saveCivilian(civilian);
+
+        if (type == TutorialType.CHOOSE && player != null && player.isOnline()) {
+            Bukkit.getPluginManager().callEvent(
+                    new TutorialChooseCompleteEvent(player, civilian.getTutorialPath()));
+        }
 
         Util.spawnRandomFirework(player);
 

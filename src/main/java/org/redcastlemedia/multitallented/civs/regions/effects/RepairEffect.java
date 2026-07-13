@@ -1,6 +1,7 @@
 package org.redcastlemedia.multitallented.civs.regions.effects;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import org.bukkit.Bukkit;
@@ -444,8 +445,8 @@ public class RepairEffect implements Listener {
     protected boolean hasReagentCost(Player player, ItemStack itemStack) {
         int amount = 0;
         for (ItemStack stack : player.getInventory().all(itemStack.getType()).values()) {
-            if (stack.getItemMeta() != null && stack.getItemMeta().getLore() != null &&
-                    !stack.getItemMeta().getLore().isEmpty()) {
+            List<String> lore = stack.getItemMeta() != null ? CVItem.legacyLore(stack.getItemMeta()) : null;
+            if (lore != null && !lore.isEmpty()) {
                 continue;
             }
             amount += stack.getAmount();

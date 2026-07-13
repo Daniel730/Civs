@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.regex.Pattern;
 
 import org.bukkit.Bukkit;
+import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.configuration.file.FileConfiguration;
@@ -21,10 +22,13 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.redcastlemedia.multitallented.civs.ConfigManager;
+import org.redcastlemedia.multitallented.civs.ItemMetaImpl;
+import org.redcastlemedia.multitallented.civs.ItemStackImpl;
 import org.redcastlemedia.multitallented.civs.TestUtil;
 import org.redcastlemedia.multitallented.civs.civilians.Civilian;
 import org.redcastlemedia.multitallented.civs.civilians.CivilianListener;
 import org.redcastlemedia.multitallented.civs.civilians.CivilianManager;
+import org.redcastlemedia.multitallented.civs.localization.LocaleManager;
 import org.redcastlemedia.multitallented.civs.regions.RegionManager;
 import org.redcastlemedia.multitallented.civs.regions.RegionType;
 import org.redcastlemedia.multitallented.civs.regions.RegionsTests;
@@ -208,7 +212,7 @@ public class ItemsTests extends TestUtil {
         assertFalse(newItems.containsKey("shelter"));
     }
 
-    @Test @Ignore
+    @Test
     public void cvInventoryAddItemsShouldAddToCorrectIndexes() {
         TestUtil.world.setChunkLoaded(false);
         CVInventory cvInventory = new CVInventory(new Location(TestUtil.world, 0, 0, 0));
@@ -231,7 +235,7 @@ public class ItemsTests extends TestUtil {
         assertEquals(60, cvInventory.getItem(0).getAmount());
     }
 
-    @Test @Ignore
+    @Test
     public void cvInventoryCheckItemsShouldNotAdd() {
         TestUtil.world.setChunkLoaded(false);
         CVInventory cvInventory = new CVInventory(new Location(TestUtil.world, 0, 0, 0));
@@ -245,7 +249,7 @@ public class ItemsTests extends TestUtil {
         assertTrue(returnedItems.isEmpty());
     }
 
-    @Test @Ignore
+    @Test
     public void cvInventoryShouldRemoveIndex() {
         TestUtil.world.setChunkLoaded(false);
         CVInventory cvInventory = new CVInventory(new Location(TestUtil.world, 0, 0, 0));
@@ -285,7 +289,7 @@ public class ItemsTests extends TestUtil {
 //        assertEquals("npc_shack", ChatColor.stripColor(itemStack.getItemMeta().getLore().get(1)));
     }
 
-    @Test @Ignore
+    @Test
     public void imLosingMyMind() {
         Pattern pattern = Pattern.compile("g:fence(?![_A-Za-z])");
         assertTrue(pattern.matcher("LADDER*4,g:fence*4,").find());
@@ -326,6 +330,81 @@ public class ItemsTests extends TestUtil {
         preReqs.add("backflip:level=5|shelter:level=5");
         config.set("pre-reqs", preReqs);
         itemManager.loadRegionType(config, "rage");
+    }
+
+    @Test
+    public void legacyDisplayNameReadsComponentDisplayName() {
+        ItemStack itemStack = new ItemStack(Material.CHEST, 1);
+        ItemMetaImpl itemMeta = new ItemMetaImpl();
+        itemMeta.displayName(net.kyori.adventure.text.Component.text("MyPlot"));
+        itemStack.setItemMeta(itemMeta);
+        assertEquals("MyPlot", CVItem.legacyDisplayName(itemStack));
+    }
+
+    @Test
+    public void isCivsItemReadsComponentLore() {
+        RegionsTests.loadRegionTypeCobble();
+        ItemStackImpl itemStack = new ItemStackImpl(Material.CHEST, 1);
+        ItemMetaImpl itemMeta = new ItemMetaImpl("Civs Cobble", null);
+        ArrayList<String> lore = new ArrayList<>();
+        lore.add("something");
+        lore.add(org.bukkit.ChatColor.BLACK + "cobble");
+        itemMeta.setLore(lore);
+        itemStack.setItemMeta(itemMeta);
+        assertTrue(CVItem.isCivsItem(itemStack));
+    }
+
+    @Test
+    public void createFromItemStackReadsComponentMeta() {
+        ItemStackImpl itemStack = new ItemStackImpl(Material.STONE, 3);
+        ItemMetaImpl itemMeta = new ItemMetaImpl();
+        itemMeta.displayName(net.kyori.adventure.text.Component.text("Named Stone"));
+        ArrayList<String> lore = new ArrayList<>();
+        lore.add("line one");
+        itemMeta.setLore(lore);
+        itemStack.setItemMeta(itemMeta);
+        CVItem cvItem = CVItem.createFromItemStack(itemStack);
+        assertEquals("Named Stone", cvItem.getDisplayName());
+        assertEquals(1, cvItem.getLore().size());
+        assertEquals("line one", cvItem.getLore().get(0));
+        assertEquals(3, cvItem.getQty());
+    }
+
+    @Test
+    public void createItemStackWritesComponentDisplayName() {
+        CVItem cvItem = new CVItem(Material.STONE, 2, 100, ChatColor.GREEN + "Test Item");
+        ArrayList<String> lore = new ArrayList<>();
+        lore.add(ChatColor.GRAY + "line one");
+        cvItem.setLore(lore);
+        ItemStack itemStack = cvItem.createItemStack();
+        ItemMetaImpl meta = (ItemMetaImpl) itemStack.getItemMeta();
+        assertNotNull(meta.displayName());
+        assertEquals(ChatColor.GREEN + "Test Item", CVItem.legacyDisplayName(meta));
+        assertEquals(1, CVItem.legacyLore(meta).size());
+        assertEquals(ChatColor.GRAY + "line one", CVItem.legacyLore(meta).get(0));
+        assertEquals(2, itemStack.getAmount());
+    }
+
+    @Test
+    public void isCustomItemReadsComponentLore() {
+        ItemStackImpl itemStack = new ItemStackImpl(Material.PAPER, 1);
+        ItemMetaImpl itemMeta = new ItemMetaImpl();
+        List<net.kyori.adventure.text.Component> loreComponents = new ArrayList<>();
+        loreComponents.add(net.kyori.adventure.text.Component.text("jade"));
+        itemMeta.lore(loreComponents);
+        itemStack.setItemMeta(itemMeta);
+        LocaleManager.getInstance().addTranslation("en", "item-jade-name", "Jade");
+        assertTrue(CVItem.isCustomItem(itemStack));
+    }
+
+    @Test
+    public void equivalentItemMatchesComponentDisplayName() {
+        CVItem expected = new CVItem(Material.STONE, 1, 100, "Named Stone");
+        ItemStackImpl itemStack = new ItemStackImpl(Material.STONE, 1);
+        ItemMetaImpl itemMeta = new ItemMetaImpl();
+        itemMeta.displayName(net.kyori.adventure.text.Component.text("Named Stone"));
+        itemStack.setItemMeta(itemMeta);
+        assertTrue(expected.equivalentItem(itemStack, true));
     }
 
     private void loadRegionTypeShelter() {

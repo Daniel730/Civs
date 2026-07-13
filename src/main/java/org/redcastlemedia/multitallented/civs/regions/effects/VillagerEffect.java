@@ -129,8 +129,11 @@ public class VillagerEffect implements CreateRegionListener, DestroyRegionListen
         if (!Util.isLocationWithinSightOfPlayer(region.getLocation())) {
             return null;
         }
+        if (region.getLocation().getWorld() == null) {
+            return null;
+        }
         Town town = TownManager.getInstance().getTownAt(region.getLocation());
-        if (town == null) {
+        if (town == null || town.getLocation().getWorld() == null) {
             return null;
         }
         // Don't spawn a villager if there aren't players in the town

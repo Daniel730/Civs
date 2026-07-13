@@ -14,7 +14,7 @@ import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.event.inventory.InventoryDragEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
+import org.redcastlemedia.multitallented.civs.items.CVItem;
 import org.redcastlemedia.multitallented.civs.Civs;
 import org.redcastlemedia.multitallented.civs.civclass.CivClass;
 import org.redcastlemedia.multitallented.civs.items.ItemManager;
@@ -146,14 +146,11 @@ public class CustomMenu {
                 currentActions.add(newAction);
             }
         }
-        String iconDisplayName;
-        ItemMeta iconMeta = itemStack.getItemMeta();
-        if (iconMeta != null) {
-            iconDisplayName = iconMeta.getDisplayName();
-        } else {
+        String iconDisplayName = CVItem.legacyDisplayName(itemStack);
+        if (iconDisplayName == null) {
             iconDisplayName = menuIcon.getIcon();
         }
-        actions.get(civilian.getUuid()).put(itemStack.getType().name() + ":" + iconDisplayName, currentActions);
+        actions.get(civilian.getUuid()).put(getActionKey(itemStack, iconDisplayName), currentActions);
         List<String> currentRightClickActions = new ArrayList<>();
         if (menuIcon.getRightClickActions().isEmpty()) {
             currentRightClickActions.add(menuIcon.getKey());
@@ -165,17 +162,24 @@ public class CustomMenu {
                 currentRightClickActions.add(newAction);
             }
         }
-        rightClickActions.get(civilian.getUuid()).put(itemStack.getType().name() + ":" + iconDisplayName, currentRightClickActions);
+        rightClickActions.get(civilian.getUuid()).put(getActionKey(itemStack, iconDisplayName), currentRightClickActions);
+    }
+
+    protected static String getActionKey(ItemStack itemStack) {
+        return getActionKey(itemStack, CVItem.legacyDisplayName(itemStack));
+    }
+
+    private static String getActionKey(ItemStack itemStack, String displayName) {
+        return itemStack.getType().name() + ":" + (displayName != null ? displayName : "");
     }
 
     protected void putActionList(Civilian civilian, ItemStack itemStack, List<String> actionList) {
-        actions.get(civilian.getUuid()).put(itemStack.getType().name() + ":" + itemStack.getItemMeta().getDisplayName(), actionList);
+        actions.get(civilian.getUuid()).put(getActionKey(itemStack), actionList);
     }
 
     protected List<String> getActions(Civilian civilian, ItemStack itemStack) {
         if (actions.containsKey(civilian.getUuid())) {
-            List<String> actionList = actions.get(civilian.getUuid())
-                    .get(itemStack.getType().name() + ":" + itemStack.getItemMeta().getDisplayName());
+            List<String> actionList = actions.get(civilian.getUuid()).get(getActionKey(itemStack));
             if (actionList != null) {
                 return actionList;
             }
@@ -229,9 +233,9 @@ public class CustomMenu {
         }
         List<String> actionStrings;
         if (event.getClick().isRightClick()) {
-            actionStrings = rightClickActions.get(civilian.getUuid()).get(clickedItem.getType().name() + ":" + clickedItem.getItemMeta().getDisplayName());
+            actionStrings = rightClickActions.get(civilian.getUuid()).get(getActionKey(clickedItem));
         } else {
-            actionStrings = actions.get(civilian.getUuid()).get(clickedItem.getType().name() + ":" + clickedItem.getItemMeta().getDisplayName());
+            actionStrings = actions.get(civilian.getUuid()).get(getActionKey(clickedItem));
         }
         if (actionStrings == null || actionStrings.isEmpty()) {
             if (!event.isCancelled()) {
@@ -304,20 +308,30 @@ public class CustomMenu {
             return "";
         }
         if (key.equals("town")) {
-            Town town = (Town) data;
-            return town.getName();
+            if (data instanceof Town) {
+                return ((Town) data).getName();
+            }
+            return data.toString();
         } else if (key.equals("alliance")) {
-            Alliance alliance = (Alliance) data;
-            return alliance.getName();
+            if (data instanceof Alliance) {
+                return ((Alliance) data).getName();
+            }
+            return data.toString();
         } else if (key.equals("region")) {
-            Region region = (Region) data;
-            return region.getId();
+            if (data instanceof Region) {
+                return ((Region) data).getId();
+            }
+            return data.toString();
         } else if (key.equals("regionType")) {
-            RegionType regionType = (RegionType) data;
-            return regionType.getProcessedName();
+            if (data instanceof RegionType) {
+                return ((RegionType) data).getProcessedName();
+            }
+            return data.toString();
         } else if (key.equals("townType")) {
-            TownType townType = (TownType) data;
-            return townType.getProcessedName();
+            if (data instanceof TownType) {
+                return ((TownType) data).getProcessedName();
+            }
+            return data.toString();
         } else if (key.equals("uuid")) {
             if (data instanceof UUID) {
                 return data.toString();
@@ -348,6 +362,15 @@ public class CustomMenu {
             String replaceString = stringifyData(key, data.get(key));
             actionString = replacePlaceholder(actionString, key, replaceString);
         }
+        if (actionString.contains("$uuid$")) {
+            actionString = replacePlaceholder(actionString, "uuid", civilian.getUuid().toString());
+        }
+        if (actionString.contains("$class$")) {
+            String classId = civilian.getCurrentClass() != null
+                    ? civilian.getCurrentClass().getId().toString()
+                    : "";
+            actionString = replacePlaceholder(actionString, "class", classId);
+        }
         return actionString;
     }
 
@@ -360,11 +383,14 @@ public class CustomMenu {
     }
 
     private static String getItemDisplayName(ItemStack itemStack) {
-        if (itemStack == null || itemStack.getItemMeta() == null ||
-                itemStack.getItemMeta().getDisplayName() == null) {
+        if (itemStack == null) {
             return "";
         }
-        return ChatColor.stripColor(itemStack.getItemMeta().getDisplayName());
+        String displayName = CVItem.legacyDisplayName(itemStack);
+        if (displayName == null) {
+            return "";
+        }
+        return ChatColor.stripColor(displayName);
     }
 
     public void onCloseMenu(Civilian civilian, Inventory inventory) {

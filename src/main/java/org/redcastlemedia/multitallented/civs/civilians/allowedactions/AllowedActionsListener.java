@@ -52,6 +52,7 @@ import org.redcastlemedia.multitallented.civs.skills.CivSkills;
 import org.redcastlemedia.multitallented.civs.skills.Skill;
 import org.redcastlemedia.multitallented.civs.spells.Spell;
 import org.redcastlemedia.multitallented.civs.spells.SpellType;
+import org.redcastlemedia.multitallented.civs.spells.effects.CivPotionEffect;
 import org.redcastlemedia.multitallented.civs.spells.civstate.BuiltInCivState;
 import org.redcastlemedia.multitallented.civs.util.Constants;
 import org.redcastlemedia.multitallented.civs.util.MessageUtil;
@@ -443,10 +444,10 @@ public class AllowedActionsListener implements Listener {
             return null;
         }
         PotionMeta potionMeta = (PotionMeta) item.getItemMeta();
-        PotionEffectType potionEffectType = potionMeta.getBasePotionData().getType().getEffectType();
+        PotionEffectType potionEffectType = CivPotionEffect.getPrimaryEffectType(potionMeta);
         if (potionEffectType != null) {
             int level = civilian.getCurrentClass().isPotionEffectAllowed(potionEffectType);
-            int potionLevel = potionMeta.getBasePotionData().isUpgraded() ? 2 : 1;
+            int potionLevel = CivPotionEffect.isUpgraded(potionMeta) ? 2 : 1;
             if (level < potionLevel) {
                 return potionEffectType.getName();
             }
@@ -647,10 +648,10 @@ public class AllowedActionsListener implements Listener {
         ClassType classType = (ClassType) ItemManager.getInstance().getItemType(civilian.getCurrentClass().getType());
         String localClassName = classType.getDisplayName(player);
         PotionMeta potionMeta = (PotionMeta) item.getItemMeta();
-        PotionEffectType potionEffectType = potionMeta.getBasePotionData().getType().getEffectType();
+        PotionEffectType potionEffectType = CivPotionEffect.getPrimaryEffectType(potionMeta);
         if (potionEffectType != null) {
             int level = civilian.getCurrentClass().isPotionEffectAllowed(potionEffectType);
-            int potionLevel = potionMeta.getBasePotionData().isUpgraded() ? 2 : 1;
+            int potionLevel = CivPotionEffect.isUpgraded(potionMeta) ? 2 : 1;
             if (level < potionLevel) {
                 event.setCancelled(true);
                 player.sendMessage(Civs.getPrefix() + LocaleManager.getInstance().getTranslation(player,

@@ -15,6 +15,7 @@ import org.redcastlemedia.multitallented.civs.items.ItemManager;
 import org.redcastlemedia.multitallented.civs.menus.CivsMenu;
 import org.redcastlemedia.multitallented.civs.menus.CustomMenu;
 import org.redcastlemedia.multitallented.civs.menus.MenuIcon;
+import org.redcastlemedia.multitallented.civs.menus.MenuParams;
 import org.redcastlemedia.multitallented.civs.menus.MenuManager;
 import org.redcastlemedia.multitallented.civs.regions.Region;
 import org.redcastlemedia.multitallented.civs.regions.RegionManager;
@@ -34,7 +35,7 @@ public class MemberActionMenu extends CustomMenu {
     public Map<String, Object> createData(Civilian civilian, Map<String, String> params) {
         HashMap<String, Object> data = new HashMap<>();
         if (params.containsKey("uuid")) {
-            data.put("uuid", UUID.fromString(params.get("uuid")));
+            data.put("uuid", MenuParams.resolveUuid(civilian, params, "uuid"));
         }
         if (params.containsKey("town")) {
             data.put("town", TownManager.getInstance().getTown(params.get("town")));
@@ -121,6 +122,9 @@ public class MemberActionMenu extends CustomMenu {
                 governmentType == GovernmentType.LIBERTARIAN_SOCIALISM;
 
         if ("icon".equals(menuIcon.getKey())) {
+            if (uuid == null) {
+                return new ItemStack(Material.AIR);
+            }
             OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(uuid);
             String displayName = offlinePlayer.getName();
             if (displayName == null) {

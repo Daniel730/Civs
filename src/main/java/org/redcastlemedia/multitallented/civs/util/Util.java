@@ -323,11 +323,11 @@ public final class Util {
         if (!itemStack.hasItemMeta()) {
             return false;
         }
-        if (itemStack.getItemMeta().getLore() == null ||
-                itemStack.getItemMeta().getLore().isEmpty()) {
+        List<String> lore = CVItem.legacyLore(itemStack.getItemMeta());
+        if (lore == null || lore.isEmpty()) {
             return false;
         }
-        return ChatColor.stripColor(itemStack.getItemMeta().getLore().get(0)).equals("starter-book");
+        return ChatColor.stripColor(lore.get(0)).equals("starter-book");
     }
 
     public static boolean isChunkLoadedAt(Location location) {

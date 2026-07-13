@@ -51,7 +51,7 @@ public class PlayerInventoryImpl implements PlayerInventory {
 
     @Override
     public int getSize() {
-        return 0;
+        return 36;
     }
 
     @Override
@@ -258,9 +258,18 @@ public class PlayerInventoryImpl implements PlayerInventory {
 
     @Override
     public ItemStack[] getContents() {
-        ItemStack[] itemStacks = new ItemStack[contents.keySet().size()];
-        for (Integer i : contents.keySet()) {
-            itemStacks[i] = new ItemStack(contents.get(i).getType(), contents.get(i).getAmount());
+        int size = 36;
+        for (Integer slot : contents.keySet()) {
+            if (slot >= size) {
+                size = slot + 1;
+            }
+        }
+        ItemStack[] itemStacks = new ItemStack[size];
+        for (Map.Entry<Integer, ItemStack> entry : contents.entrySet()) {
+            ItemStack stack = entry.getValue();
+            if (stack != null) {
+                itemStacks[entry.getKey()] = stack.clone();
+            }
         }
         return itemStacks;
     }
@@ -285,27 +294,62 @@ public class PlayerInventoryImpl implements PlayerInventory {
 
     @Override
     public boolean contains(Material material) throws IllegalArgumentException {
+        Validate.notNull(material, "Material cannot be null");
+        for (ItemStack item : getStorageContents()) {
+            if (item != null && item.getType() == material) {
+                return true;
+            }
+        }
         return false;
     }
 
     @Override
     public boolean contains(ItemStack itemStack) {
+        if (itemStack == null) {
+            return false;
+        }
+        return contains(itemStack, itemStack.getAmount());
+    }
+
+    @Override
+    public boolean contains(Material material, int amount) throws IllegalArgumentException {
+        Validate.notNull(material, "Material cannot be null");
+        if (amount <= 0) {
+            return true;
+        }
+        for (ItemStack item : getStorageContents()) {
+            if (item != null && item.getType() == material) {
+                amount -= item.getAmount();
+                if (amount <= 0) {
+                    return true;
+                }
+            }
+        }
         return false;
     }
 
     @Override
-    public boolean contains(Material material, int i) throws IllegalArgumentException {
+    public boolean contains(ItemStack itemStack, int amount) {
+        if (itemStack == null) {
+            return amount <= 0;
+        }
+        if (amount <= 0) {
+            return true;
+        }
+        for (ItemStack item : getStorageContents()) {
+            if (item != null && item.isSimilar(itemStack)) {
+                amount -= item.getAmount();
+                if (amount <= 0) {
+                    return true;
+                }
+            }
+        }
         return false;
     }
 
     @Override
-    public boolean contains(ItemStack itemStack, int i) {
-        return false;
-    }
-
-    @Override
-    public boolean containsAtLeast(ItemStack itemStack, int i) {
-        return false;
+    public boolean containsAtLeast(ItemStack itemStack, int amount) {
+        return contains(itemStack, amount);
     }
 
     @Override
@@ -340,12 +384,12 @@ public class PlayerInventoryImpl implements PlayerInventory {
 
     @Override
     public void clear(int i) {
-
+        contents.remove(i);
     }
 
     @Override
     public void clear() {
-
+        contents.clear();
     }
 
     @Override

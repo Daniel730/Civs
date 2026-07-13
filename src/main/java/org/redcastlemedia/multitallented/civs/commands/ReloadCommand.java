@@ -10,6 +10,7 @@ import org.redcastlemedia.multitallented.civs.localization.LocaleManager;
 import org.redcastlemedia.multitallented.civs.alliances.AllianceManager;
 import org.redcastlemedia.multitallented.civs.auction.AuctionManager;
 import org.redcastlemedia.multitallented.civs.mobs.CustomMobManager;
+import org.redcastlemedia.multitallented.civs.npc.GuideNpcManager;
 import org.redcastlemedia.multitallented.civs.civilians.CivilianManager;
 import org.redcastlemedia.multitallented.civs.items.ItemManager;
 import org.redcastlemedia.multitallented.civs.menus.MenuManager;
@@ -38,6 +39,7 @@ public class ReloadCommand extends CivCommand {
             AllianceManager.getInstance().reload();
             AuctionManager.getInstance().reload();
             CustomMobManager.getInstance().reload();
+            GuideNpcManager.getInstance().reload();
             LocaleManager.getInstance().reload();
             ClassManager.getInstance().reload();
             ConveyorEffect.getInstance().reload();
