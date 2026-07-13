@@ -58,6 +58,20 @@ A ready-to-run test server lives at `/workspace/testserver` (git-ignored):
   `cd testserver && java -Xmx2G -jar paper.jar --nogui`.
 - Console is OP, so admin actions like `cv reload` and `cv newday` work from the
   server console. Most other `/cv` subcommands need a real player.
+
+### Manual GUI testing with a real client (non-obvious)
+For player-facing flows (e.g. the `/cv` menu), connect a real client instead of
+the console. The server runs `online-mode=false`, so an offline client joins as
+`Player`. The official Minecraft client matching the server exists in the Mojang
+manifest (client version == Paper version, e.g. `26.1.2`); download client jar +
+Linux libraries/natives + assets from Mojang and launch it in offline mode
+(`--accessToken 0 --uuid <offline-uuid> --userType legacy`). The VM has no GPU, so
+force software OpenGL: `LIBGL_ALWAYS_SOFTWARE=1 GALLIUM_DRIVER=llvmpipe` (Mesa
+llvmpipe gives GL 4.5, enough for Minecraft; expect low FPS). TLauncher's download
+CDN (`dl.tlauncher.org`) is not reachable from the VM, so the official client is
+the reliable route. `op Player` from the console to give the client full access.
+`/cv` opens the Civs main menu; creating a town needs an actual town-type Civs
+*item* (economy-backed shop), not just a creative block.
 - The `Civs_servidor/` pack (authoritative production config: menus, item-types,
   towns, regions, translations) can be copied into `plugins/Civs/` to load the full
   config set. Its saved regions/towns reference a specific world UUID, so on a fresh
