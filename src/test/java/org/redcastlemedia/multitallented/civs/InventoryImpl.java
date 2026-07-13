@@ -253,27 +253,62 @@ public class InventoryImpl implements Inventory {
 
     @Override
     public boolean contains(Material material) throws IllegalArgumentException {
+        Validate.notNull(material, "Material cannot be null");
+        for (ItemStack item : getStorageContents()) {
+            if (item != null && item.getType() == material) {
+                return true;
+            }
+        }
         return false;
     }
 
     @Override
     public boolean contains(ItemStack itemStack) {
+        if (itemStack == null) {
+            return false;
+        }
+        return contains(itemStack, itemStack.getAmount());
+    }
+
+    @Override
+    public boolean contains(Material material, int amount) throws IllegalArgumentException {
+        Validate.notNull(material, "Material cannot be null");
+        if (amount <= 0) {
+            return true;
+        }
+        for (ItemStack item : getStorageContents()) {
+            if (item != null && item.getType() == material) {
+                amount -= item.getAmount();
+                if (amount <= 0) {
+                    return true;
+                }
+            }
+        }
         return false;
     }
 
     @Override
-    public boolean contains(Material material, int i) throws IllegalArgumentException {
+    public boolean contains(ItemStack itemStack, int amount) {
+        if (itemStack == null) {
+            return amount <= 0;
+        }
+        if (amount <= 0) {
+            return true;
+        }
+        for (ItemStack item : getStorageContents()) {
+            if (item != null && item.isSimilar(itemStack)) {
+                amount -= item.getAmount();
+                if (amount <= 0) {
+                    return true;
+                }
+            }
+        }
         return false;
     }
 
     @Override
-    public boolean contains(ItemStack itemStack, int i) {
-        return false;
-    }
-
-    @Override
-    public boolean containsAtLeast(ItemStack itemStack, int i) {
-        return false;
+    public boolean containsAtLeast(ItemStack itemStack, int amount) {
+        return contains(itemStack, amount);
     }
 
     @Override

@@ -10,8 +10,8 @@ import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
+import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.ItemStack;
-import org.bukkit.inventory.meta.ItemMeta;
 import org.redcastlemedia.multitallented.civs.Civs;
 import org.redcastlemedia.multitallented.civs.auction.AuctionListing;
 import org.redcastlemedia.multitallented.civs.auction.AuctionManager;
@@ -34,17 +34,18 @@ public class AuctionBrowseMenu extends CustomMenu {
     @Override
     public Map<String, Object> createData(Civilian civilian, Map<String, String> params) {
         Map<String, Object> data = new HashMap<>();
-        int page = params.containsKey("page") ? Integer.parseInt(params.get("page")) : 0;
+        int page = parsePageParam(params.get("page"));
         String sort = params.getOrDefault("sort", "price_asc");
         String filter = params.getOrDefault("filter", "");
-        data.put("page", page);
         data.put("sort", sort);
         data.put("filter", filter);
         List<AuctionListing> listings = AuctionManager.getInstance().getBrowseListings(sort, filter);
         data.put("listings", listings);
         int perPage = itemsPerPage.getOrDefault("items", 45);
         int maxPage = (int) Math.ceil((double) listings.size() / perPage);
-        data.put("maxPage", Math.max(0, maxPage - 1));
+        int safeMaxPage = Math.max(0, maxPage - 1);
+        data.put("maxPage", safeMaxPage);
+        data.put("page", Math.min(Math.max(0, page), safeMaxPage));
         return data;
     }
 
@@ -89,12 +90,7 @@ public class AuctionBrowseMenu extends CustomMenu {
                 return new ItemStack(Material.AIR);
             }
             CVItem cvItem = menuIcon.createCVItem(player, count);
-            if (filter != null && !filter.isEmpty()) {
-                cvItem.setLore(List.of(localeManager.getTranslation(player, "auction-filter-active")
-                        .replace("$1", filter)));
-            } else {
-                cvItem.setLore(List.of(localeManager.getTranslation(player, "auction-filter-hint")));
-            }
+            cvItem.setLore(List.of(localeManager.getTranslation(player, "auction-filter-hint")));
             ItemStack itemStack = cvItem.createItemStack();
             putActions(civilian, menuIcon, itemStack, count);
             return itemStack;
@@ -118,21 +114,22 @@ public class AuctionBrowseMenu extends CustomMenu {
             return new ItemStack(Material.AIR);
         }
         AuctionListing listing = listings.get(index);
-        ItemStack display = listing.getItem().clone();
-        ItemMeta meta = display.getItemMeta();
-        if (meta != null) {
-            List<String> lore = meta.hasLore() ? new ArrayList<>(meta.getLore()) : new ArrayList<>();
-            lore.add(ChatColor.GRAY + localeManager.getTranslation(player, "auction-price")
-                    .replace("$1", Util.getNumberFormat(listing.getPrice(), civilian.getLocale())));
-            lore.add(ChatColor.GRAY + localeManager.getTranslation(player, "auction-seller")
-                    .replace("$1", listing.getSellerName()));
-            lore.add(ChatColor.GRAY + localeManager.getTranslation(player, "auction-expires")
-                    .replace("$1", formatDuration(listing.getExpiresAt() - System.currentTimeMillis())));
-            lore.add(ChatColor.YELLOW + localeManager.getTranslation(player, "auction-shift-to-buy"));
-            lore.add(ChatColor.DARK_GRAY + listing.getId());
-            meta.setLore(lore);
-            display.setItemMeta(meta);
+        ItemStack listingItem = listing.getItem();
+        if (listingItem == null || listingItem.getType() == Material.AIR) {
+            return new ItemStack(Material.AIR);
         }
+        ItemStack display = listingItem.clone();
+        List<String> existingLore = CVItem.legacyLore(display);
+        List<String> lore = existingLore != null ? new ArrayList<>(existingLore) : new ArrayList<>();
+        lore.add(ChatColor.GRAY + localeManager.getTranslation(player, "auction-price")
+                .replace("$1", Util.getNumberFormat(listing.getPrice(), civilian.getLocale())));
+        lore.add(ChatColor.GRAY + localeManager.getTranslation(player, "auction-seller")
+                .replace("$1", listing.getSellerName()));
+        lore.add(ChatColor.GRAY + localeManager.getTranslation(player, "auction-expires")
+                .replace("$1", formatDuration(listing.getExpiresAt() - System.currentTimeMillis())));
+        lore.add(ChatColor.YELLOW + localeManager.getTranslation(player, "auction-shift-to-buy"));
+        lore.add(ChatColor.DARK_GRAY + listing.getId());
+        CVItem.applyLore(display, lore);
         putActions(civilian, menuIcon, display, count);
         return display;
     }
@@ -143,8 +140,7 @@ public class AuctionBrowseMenu extends CustomMenu {
                 && event.getCurrentItem().getItemMeta() != null) {
             Civilian civilian = CivilianManager.getInstance().getCivilian(player.getUniqueId());
             if (actions.containsKey(civilian.getUuid())) {
-                String key = event.getCurrentItem().getType().name() + ":"
-                        + event.getCurrentItem().getItemMeta().getDisplayName();
+                String key = CustomMenu.getActionKey(event.getCurrentItem());
                 List<String> actionStrings = actions.get(civilian.getUuid()).get(key);
                 if (actionStrings != null && actionStrings.contains("buy-listing") && !event.getClick().isShiftClick()) {
                     event.setCancelled(true);
@@ -165,7 +161,9 @@ public class AuctionBrowseMenu extends CustomMenu {
                 return true;
             }
             String listingId = getListingId(clickedItem);
-            if (listingId == null) {
+            if (listingId == null || listingId.isEmpty()) {
+                player.sendMessage(Civs.getPrefix() + LocaleManager.getInstance()
+                        .getTranslation(player, "auction-not-found"));
                 return true;
             }
             AuctionResult result = AuctionManager.getInstance().purchaseListing(player, listingId);
@@ -211,7 +209,7 @@ public class AuctionBrowseMenu extends CustomMenu {
             return true;
         }
         ItemStack hand = player.getInventory().getItemInMainHand();
-        if (hand.getType().isAir()) {
+        if (hand == null || hand.getType() == Material.AIR) {
             player.sendMessage(Civs.getPrefix() + LocaleManager.getInstance()
                     .getTranslation(player, "auction-filter-no-item"));
             return true;
@@ -257,10 +255,10 @@ public class AuctionBrowseMenu extends CustomMenu {
     }
 
     private String getListingId(ItemStack clickedItem) {
-        if (clickedItem == null || !clickedItem.hasItemMeta() || !clickedItem.getItemMeta().hasLore()) {
+        if (clickedItem == null || !clickedItem.hasItemMeta()) {
             return null;
         }
-        List<String> lore = clickedItem.getItemMeta().getLore();
+        List<String> lore = CVItem.legacyLore(clickedItem);
         if (lore == null || lore.isEmpty()) {
             return null;
         }
@@ -307,5 +305,16 @@ public class AuctionBrowseMenu extends CustomMenu {
             return hours + "h " + minutes + "m";
         }
         return minutes + "m";
+    }
+
+    private static int parsePageParam(String pageValue) {
+        if (pageValue == null || pageValue.isEmpty()) {
+            return 0;
+        }
+        try {
+            return Integer.parseInt(pageValue);
+        } catch (NumberFormatException ignored) {
+            return 0;
+        }
     }
 }

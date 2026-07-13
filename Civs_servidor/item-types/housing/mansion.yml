@@ -28,6 +28,7 @@ build-reqs:
 
 rebuild: basechalet
 build-radius: 10 #21x21x21
+instant-build: true
 effects:
   - block_break
   - block_build

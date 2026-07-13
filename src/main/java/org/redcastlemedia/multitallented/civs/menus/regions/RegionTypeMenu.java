@@ -40,6 +40,9 @@ public class RegionTypeMenu extends CustomMenu {
         HashMap<String, Object> data = new HashMap<>();
         if (params.containsKey(Constants.REGION_TYPE)) {
             RegionType regionType = (RegionType) ItemManager.getInstance().getItemType(params.get(Constants.REGION_TYPE));
+            if (regionType == null) {
+                return data;
+            }
             data.put(Constants.REGION_TYPE, regionType);
             if (regionType.getRebuild() != null && !regionType.getRebuild().isEmpty()) {
                 data.put("rebuildRegion", regionType.getRebuild().get(0));

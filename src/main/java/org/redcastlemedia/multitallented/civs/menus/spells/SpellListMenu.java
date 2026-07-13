@@ -22,6 +22,7 @@ import org.redcastlemedia.multitallented.civs.localization.LocaleManager;
 import org.redcastlemedia.multitallented.civs.menus.CivsMenu;
 import org.redcastlemedia.multitallented.civs.menus.CustomMenu;
 import org.redcastlemedia.multitallented.civs.menus.MenuIcon;
+import org.redcastlemedia.multitallented.civs.menus.MenuParams;
 import org.redcastlemedia.multitallented.civs.menus.MenuManager;
 import org.redcastlemedia.multitallented.civs.spells.SpellManager;
 import org.redcastlemedia.multitallented.civs.spells.SpellType;
@@ -41,17 +42,13 @@ public class SpellListMenu extends CustomMenu {
 
         Player player = Bukkit.getPlayer(civilian.getUuid());
 
-        CivClass selectedClass = null;
-        if (params.containsKey(Constants.CLASS)) {
-            for (CivClass civClass : civilian.getCivClasses()) {
-                if (civClass.getId().equals(UUID.fromString(params.get(Constants.CLASS)))) {
-                    selectedClass = civClass;
-                    CivItem civItem = ItemManager.getInstance().getItemType(selectedClass.getType());
-                    data.put("classTypeName", civItem.getDisplayName(player));
-                    data.put(Constants.CLASS, civClass);
-                    break;
-                }
+        CivClass selectedClass = MenuParams.resolveClass(civilian, params);
+        if (selectedClass != null) {
+            CivItem civItem = ItemManager.getInstance().getItemType(selectedClass.getType());
+            if (player != null && civItem != null) {
+                data.put("classTypeName", civItem.getDisplayName(player));
             }
+            data.put(Constants.CLASS, selectedClass);
         }
         int selectedSlot = -1;
         if (params.containsKey("slot")) {

@@ -139,15 +139,19 @@ public class CivPotionEffect extends Effect {
 
     private static final int MIN = 1200;
     public static PotionEffect getPotionEffect(PotionMeta pm) {
-        PotionType pt = pm.getBasePotionData().getType();
-        PotionEffectType pet = pt.getEffectType();
+        PotionType pt = pm.getBasePotionType();
+        if (pt == null) {
+            return null;
+        }
+        PotionEffectType pet = primaryEffectType(pt);
         if (pet == null) {
             return null;
         }
-        boolean extended = pm.getBasePotionData().isExtended();
-        boolean upgraded = pm.getBasePotionData().isUpgraded();
-        boolean irregular = isIrregular(pet);
+        boolean extended = isExtendedPotionType(pt);
+        boolean upgraded = isUpgradedPotionType(pt);
+        boolean irregular = isIrregular(pet) || isIrregularPotionType(pt);
         boolean negative = isNegative(pet);
+        String baseName = basePotionName(pt);
 
 
         if(!extended && !upgraded && !irregular) {
@@ -156,13 +160,13 @@ public class CivPotionEffect extends Effect {
             return negative ? new PotionEffect(pet, 400, 3) : new PotionEffect(pet, (int) (MIN * 1.5D), 1); // hard code slowness 4 in because its the only negative semi-irregular potion effect
         }else if(extended && !upgraded && !irregular) {
             return negative ? new PotionEffect(pet, MIN * 4, 0) : new PotionEffect(pet, MIN * 8, 0);
-        }else if(pt.equals(PotionType.REGENERATION) || pt.equals(PotionType.POISON)) {
+        }else if("REGENERATION".equals(baseName) || "POISON".equals(baseName)) {
             return extended ? new PotionEffect(pet, (int) (MIN * 1.5), 0) : upgraded ? negative ? new PotionEffect(pet, (int) (21.6 * 20), 1): new PotionEffect(pet, 22*20, 1) : new PotionEffect(pet, 45 * 20, 0) ;
-        }else if(pt.isInstant()) {
+        }else if(pet.isInstant() || isInstantEffect(pet) || "HEALING".equals(baseName) || "HARMING".equals(baseName)) {
             return upgraded ? new PotionEffect(pet, 1, 1) : new PotionEffect(pet, 1, 0);
-        }else if(pt.equals(PotionType.LUCK)) {
+        }else if("LUCK".equals(baseName)) {
             return new PotionEffect(pet, 5 * MIN, 0);
-        }else if(pt.equals(PotionType.TURTLE_MASTER)) {
+        }else if("TURTLE_MASTER".equals(baseName)) {
             return null; // make sure in your method you do something about this. Since turtle master gives two potion effects, you have to handle this outside of this method.
         }
 
@@ -173,10 +177,12 @@ public class CivPotionEffect extends Effect {
 
 
     public static boolean isNegative(PotionEffectType pet) {
-        for(PotionType type: getNegativePotions()) {
-            if(type.getEffectType().equals(pet)) return true;
+        if (pet == null) {
+            return false;
         }
-        return false;
+        String name = pet.getName();
+        return "POISON".equals(name) || "SLOWNESS".equals(name) || "WEAKNESS".equals(name)
+                || "SLOW_FALLING".equals(name) || "HARM".equals(name) || "INSTANT_DAMAGE".equals(name);
     }
 
 
@@ -186,15 +192,22 @@ public class CivPotionEffect extends Effect {
     }
 
     public static boolean isIrregular(PotionEffectType pet) {
-
-        for(PotionType potionType : getIrregularPotions()) {
-            if(potionType.getEffectType() != null &&
-                    potionType.getEffectType().equals(pet)) {
-                return true;
-            }
+        if (pet == null) {
+            return false;
         }
+        String name = pet.getName();
+        return "REGENERATION".equals(name) || "LUCK".equals(name) || "POISON".equals(name)
+                || "TURTLE_MASTER".equals(name) || "HARM".equals(name) || "HEAL".equals(name)
+                || "INSTANT_DAMAGE".equals(name) || "INSTANT_HEALTH".equals(name);
+    }
 
-        return false;
+    private static boolean isIrregularPotionType(PotionType potionType) {
+        if (potionType == null) {
+            return false;
+        }
+        String baseName = basePotionName(potionType);
+        return "REGENERATION".equals(baseName) || "LUCK".equals(baseName) || "POISON".equals(baseName)
+                || "TURTLE_MASTER".equals(baseName) || "HARMING".equals(baseName) || "HEALING".equals(baseName);
     }
 
     private static PotionType[] getIrregularPotions() {
@@ -213,5 +226,62 @@ public class CivPotionEffect extends Effect {
 
     private static PotionType[] getUnusable() {
         return new PotionType[] {PotionType.AWKWARD, PotionType.WATER, PotionType.THICK, PotionType.MUNDANE};
+    }
+
+    public static PotionEffectType getPrimaryEffectType(PotionMeta pm) {
+        if (pm == null) {
+            return null;
+        }
+        return primaryEffectType(pm.getBasePotionType());
+    }
+
+    public static boolean isUpgraded(PotionMeta pm) {
+        if (pm == null) {
+            return false;
+        }
+        PotionType pt = pm.getBasePotionType();
+        return pt != null && isUpgradedPotionType(pt);
+    }
+
+    private static PotionEffectType primaryEffectType(PotionType potionType) {
+        if (potionType == null) {
+            return null;
+        }
+        try {
+            if (!potionType.getPotionEffects().isEmpty()) {
+                return potionType.getPotionEffects().get(0).getType();
+            }
+            return potionType.getEffectType();
+        } catch (Exception ignored) {
+            return null;
+        }
+    }
+
+    private static boolean isInstantEffect(PotionEffectType pet) {
+        if (pet == null) {
+            return false;
+        }
+        String name = pet.getName();
+        return "INSTANT_HEALTH".equals(name) || "INSTANT_DAMAGE".equals(name)
+                || "HEAL".equals(name) || "HARM".equals(name);
+    }
+
+    private static boolean isExtendedPotionType(PotionType potionType) {
+        return potionType.name().startsWith("LONG_");
+    }
+
+    private static boolean isUpgradedPotionType(PotionType potionType) {
+        return potionType.name().startsWith("STRONG_");
+    }
+
+    private static String basePotionName(PotionType potionType) {
+        String name = potionType.name();
+        if (name.startsWith("LONG_")) {
+            return name.substring(5);
+        }
+        if (name.startsWith("STRONG_")) {
+            return name.substring(7);
+        }
+        return name;
     }
 }

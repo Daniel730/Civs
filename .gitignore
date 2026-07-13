@@ -92,3 +92,6 @@ power-fix.patch
 
 # Local Paper test server used for running the plugin
 testserver/
+
+# Local Minecraft client used to test the server
+mc/

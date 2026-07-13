@@ -3,6 +3,7 @@ package org.redcastlemedia.multitallented.civs.regions.effects;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.logging.Level;
@@ -34,6 +35,7 @@ import org.redcastlemedia.multitallented.civs.CivsSingleton;
 import org.redcastlemedia.multitallented.civs.ConfigManager;
 import org.redcastlemedia.multitallented.civs.civilians.Civilian;
 import org.redcastlemedia.multitallented.civs.civilians.CivilianManager;
+import org.redcastlemedia.multitallented.civs.items.CVItem;
 import org.redcastlemedia.multitallented.civs.events.RegionDestroyedEvent;
 import org.redcastlemedia.multitallented.civs.events.TwoSecondEvent;
 import org.redcastlemedia.multitallented.civs.items.CivItem;
@@ -103,22 +105,24 @@ public class TNTCannon implements Listener, RegionCreatedListener {
     @Override
     public void regionCreatedHandler(Region region) {
         ItemStack controllerWand = new ItemStack(Material.STICK, 1);
-        ItemMeta im = controllerWand.getItemMeta();
         UUID uuid  = region.getOwners().isEmpty() ? null : region.getOwners().iterator().next();
         Player player = null;
+        String displayName;
+        List<String> lore;
         if (uuid != null) {
             player = Bukkit.getPlayer(uuid);
             Civilian civilian = CivilianManager.getInstance().getCivilian(uuid);
-            im.setDisplayName(LocaleManager.getInstance().getTranslation(player, "cannon-controller"));
-            im.setLore(new ArrayList<>(Util.textWrap(civilian, LocaleManager.getInstance()
-                    .getTranslation(player, "cannon-controller-desc"))));
+            displayName = LocaleManager.getInstance().getTranslation(player, "cannon-controller");
+            lore = new ArrayList<>(Util.textWrap(civilian, LocaleManager.getInstance()
+                    .getTranslation(player, "cannon-controller-desc")));
         } else {
             String defaultLocale = ConfigManager.getInstance().getDefaultLanguage();
-            im.setDisplayName(LocaleManager.getInstance().getTranslation(defaultLocale,
-                    "cannon-controller"));
-            im.setLore(new ArrayList<>(Util.textWrap(LocaleManager.getInstance()
-                    .getTranslation(defaultLocale, "cannon-controller-desc"))));
+            displayName = LocaleManager.getInstance().getTranslation(defaultLocale, "cannon-controller");
+            lore = new ArrayList<>(Util.textWrap(LocaleManager.getInstance()
+                    .getTranslation(defaultLocale, "cannon-controller-desc")));
         }
+        CVItem.applyDisplayMeta(controllerWand, displayName, lore);
+        ItemMeta im = controllerWand.getItemMeta();
         NamespacedKey controllerKey = new NamespacedKey(Civs.getInstance(), KEY);
         im.getPersistentDataContainer().set(controllerKey, PersistentDataType.STRING, region.getId());
         controllerWand.setItemMeta(im);

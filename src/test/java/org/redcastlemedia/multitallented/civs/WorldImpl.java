@@ -158,7 +158,7 @@ public class WorldImpl implements World {
     @Override
     public Chunk getChunkAt(Location location) {
         Chunk chunk = mock(Chunk.class);
-        when(chunk.isLoaded()).thenReturn(true);
+        when(chunk.isLoaded()).thenReturn(isChunkLoaded);
         return chunk;
     }
 

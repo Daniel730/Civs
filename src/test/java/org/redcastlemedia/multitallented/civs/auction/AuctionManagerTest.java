@@ -3,17 +3,25 @@ package org.redcastlemedia.multitallented.civs.auction;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
+import org.junit.After;
 import org.junit.Test;
 
 public class AuctionManagerTest {
+
+    @After
+    public void tearDown() {
+        AuctionManager.getInstance().reload();
+    }
 
     @Test
     public void browseComparatorSortsByPriceAscending() throws Exception {
@@ -38,6 +46,24 @@ public class AuctionManagerTest {
                 sorted.get(1).getItem().getType().name()) > 0);
     }
 
+    @Test
+    public void browseListingsShouldSkipNullOrAirItems() throws Exception {
+        AuctionManager.getInstance().reload();
+        AuctionListing valid = listing("valid", 10);
+        AuctionListing missingItem = listing("missing", 20);
+        missingItem.setItem(null);
+        AuctionListing airItem = listing("air", 30);
+        airItem.setItem(new ItemStack(Material.AIR));
+        putListing(valid);
+        putListing(missingItem);
+        putListing(airItem);
+
+        List<AuctionListing> listings = AuctionManager.getInstance().getBrowseListings("price_asc", null);
+
+        assertEquals(1, listings.size());
+        assertEquals("valid", listings.get(0).getId());
+    }
+
     private static AuctionListing listing(String id, double price) {
         AuctionListing listing = new AuctionListing();
         listing.setId(id);
@@ -57,5 +83,13 @@ public class AuctionManagerTest {
         Comparator<AuctionListing> comparator = (Comparator<AuctionListing>) method.invoke(
                 AuctionManager.getInstance(), sort);
         return comparator;
+    }
+
+    @SuppressWarnings("unchecked")
+    private static void putListing(AuctionListing listing) throws Exception {
+        Field field = AuctionManager.class.getDeclaredField("listings");
+        field.setAccessible(true);
+        Map<String, AuctionListing> listings = (Map<String, AuctionListing>) field.get(AuctionManager.getInstance());
+        listings.put(listing.getId(), listing);
     }
 }

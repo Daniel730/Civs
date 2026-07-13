@@ -617,24 +617,119 @@ public class Spell {
         if (configString.equals("0")) {
             return 0;
         }
+        String expression = replaceAllVariables(configString, level, target, spell);
         ScriptEngineManager mgr = new ScriptEngineManager();
         ScriptEngine engine = mgr.getEngineByName("JavaScript");
-        try {
-            Object engineEval = engine.eval(replaceAllVariables(configString, level, target, spell));
-            if (engineEval instanceof Integer) {
-                return (Integer) engineEval;
-            } else if (engineEval instanceof Double) {
-                return (Double) engineEval;
-            } else {
-                return 0;
+        if (engine != null) {
+            try {
+                Object engineEval = engine.eval(expression);
+                if (engineEval instanceof Integer) {
+                    return (Integer) engineEval;
+                } else if (engineEval instanceof Double) {
+                    return (Double) engineEval;
+                } else {
+                    return 0;
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
             }
-        } catch (Exception e) {
-            e.printStackTrace();
         }
         try {
-            return Double.parseDouble(configString);
+            return evaluateArithmetic(expression);
         } catch (Exception e) {
+            try {
+                return Double.parseDouble(configString);
+            } catch (Exception ignored) {
+                return 0;
+            }
+        }
+    }
+
+    /** Fallback when Nashorn/GraalJS is unavailable (e.g. Java 15+). */
+    static double evaluateArithmetic(String expression) {
+        String expr = expression.replaceAll("\\s+", "");
+        if (expr.isEmpty()) {
             return 0;
+        }
+        return new ArithmeticParser(expr).parse();
+    }
+
+    private static final class ArithmeticParser {
+        private final String expr;
+        private int pos;
+
+        ArithmeticParser(String expr) {
+            this.expr = expr;
+        }
+
+        double parse() {
+            double value = parseExpression();
+            if (pos < expr.length()) {
+                throw new NumberFormatException("Unexpected trailing input: " + expr.substring(pos));
+            }
+            return value;
+        }
+
+        private double parseExpression() {
+            double value = parseTerm();
+            while (pos < expr.length()) {
+                char op = expr.charAt(pos);
+                if (op == '+') {
+                    pos++;
+                    value += parseTerm();
+                } else if (op == '-') {
+                    pos++;
+                    value -= parseTerm();
+                } else {
+                    break;
+                }
+            }
+            return value;
+        }
+
+        private double parseTerm() {
+            double value = parseFactor();
+            while (pos < expr.length()) {
+                char op = expr.charAt(pos);
+                if (op == '*') {
+                    pos++;
+                    value *= parseFactor();
+                } else if (op == '/') {
+                    pos++;
+                    value /= parseFactor();
+                } else {
+                    break;
+                }
+            }
+            return value;
+        }
+
+        private double parseFactor() {
+            if (pos < expr.length() && expr.charAt(pos) == '(') {
+                pos++;
+                double value = parseExpression();
+                if (pos < expr.length() && expr.charAt(pos) == ')') {
+                    pos++;
+                }
+                return value;
+            }
+            if (pos < expr.length() && expr.charAt(pos) == '-') {
+                pos++;
+                return -parseFactor();
+            }
+            int start = pos;
+            while (pos < expr.length()) {
+                char ch = expr.charAt(pos);
+                if (Character.isDigit(ch) || ch == '.') {
+                    pos++;
+                } else {
+                    break;
+                }
+            }
+            if (start == pos) {
+                throw new NumberFormatException("Expected number at: " + expr.substring(pos));
+            }
+            return Double.parseDouble(expr.substring(start, pos));
         }
     }
     private static String replaceAllVariables(String input, int level, Object target, Spell spell) {

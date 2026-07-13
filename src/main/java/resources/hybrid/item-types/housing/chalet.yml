@@ -28,6 +28,7 @@ build-reqs:
 
 rebuild: basehouse
 build-radius: 8 #17x17x17
+instant-build: true
 effects:
 - block_break
 - block_build

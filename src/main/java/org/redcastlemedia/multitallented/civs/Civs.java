@@ -26,6 +26,7 @@ import org.redcastlemedia.multitallented.civs.placeholderexpansion.PlaceHook;
 import org.redcastlemedia.multitallented.civs.plugins.PluginListener;
 import org.redcastlemedia.multitallented.civs.regions.RegionManager;
 import org.redcastlemedia.multitallented.civs.regions.StructureUtil;
+import org.redcastlemedia.multitallented.civs.regions.placement.BlueprintManager;
 import org.redcastlemedia.multitallented.civs.regions.effects.ConveyorEffect;
 import org.redcastlemedia.multitallented.civs.regions.effects.FlyEffect;
 import org.redcastlemedia.multitallented.civs.scheduler.CommonScheduler;
@@ -73,6 +74,9 @@ public class Civs extends JavaPlugin {
         setupPermissions();
 
         instantiateSingletons();
+        BlueprintManager.getInstance().init();
+        Bukkit.getScheduler().runTaskLater(this,
+                () -> BlueprintManager.getInstance().ensureGeneratedBlueprintsWhenReady(), 1L);
         TownManager.getInstance().checkAllTownsForWarEnabled();
         TownManager.getInstance().recalculateAllHousingAndVillagers();
 
@@ -258,7 +262,11 @@ public class Civs extends JavaPlugin {
             try {
                 Method method = currentSingleton.getMethod("getInstance");
                 method.invoke(currentSingleton);
-            } catch (Exception e) {
+            } catch (Exception | LinkageError e) {
+                // LinkageError (e.g. NoClassDefFoundError) is thrown when a singleton's method
+                // signatures reference an absent optional/softdepend plugin (e.g. WorldEdit's
+                // Clipboard for the blueprint system). Log and skip so one optional integration
+                // failing to load does not abort the whole plugin enable.
                 logger.log(Level.SEVERE, "There was an error when calling  " + currentSingleton+".getInstance()", e);
             }
         }

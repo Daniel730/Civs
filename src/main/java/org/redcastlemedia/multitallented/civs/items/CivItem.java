@@ -228,10 +228,11 @@ public abstract class CivItem extends CVItem {
                 return ItemManager.getInstance().getItemType(itemTypeKey);
             }
         }
-        if (itemStack.getItemMeta().getLore().size() < 2) {
+        List<String> loreLines = CVItem.legacyLore(itemStack.getItemMeta());
+        if (loreLines == null || loreLines.size() < 2) {
             return null;
         }
-        String processedName = ChatColor.stripColor(itemStack.getItemMeta().getLore().get(1));
+        String processedName = ChatColor.stripColor(loreLines.get(1));
         return ItemManager.getInstance().getItemType(processedName
                 .replace(ChatColor.stripColor(ConfigManager.getInstance().getCivsItemPrefix()), "").toLowerCase());
     }

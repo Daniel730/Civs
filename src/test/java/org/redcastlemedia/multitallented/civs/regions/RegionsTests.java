@@ -45,6 +45,10 @@ public class RegionsTests extends TestUtil {
     public void onBefore() {
         RegionManager.getInstance().reload();
         TownManager.getInstance().reload();
+        // Other test classes (e.g. TownTests) mutate the shared GovernmentManager
+        // singleton by adding custom governments; reload here so daily-power upkeep
+        // math sees the default government buffs regardless of test execution order.
+        GovernmentManager.getInstance().reload();
         MenuManager.getInstance().clearOpenMenus();
     }
 
@@ -721,7 +725,6 @@ public class RegionsTests extends TestUtil {
         assertFalse(region.hasUpkeepItems());
     }
     @Test
-    @Ignore // TODO fix this
     public void regionShouldHaveReagents() {
         loadRegionTypeCobble4();
         HashMap<UUID, String> owners = new HashMap<>();
@@ -733,7 +736,6 @@ public class RegionsTests extends TestUtil {
     }
 
     @Test
-    @Ignore // TODO fix this
     public void regionShouldRunUpkeep() {
         loadRegionTypeCobble4();
         HashMap<UUID, String> owners = new HashMap<>();

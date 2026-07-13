@@ -4,6 +4,7 @@ import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.redcastlemedia.multitallented.civs.Civs;
+import org.redcastlemedia.multitallented.civs.localization.LocaleManager;
 import org.redcastlemedia.multitallented.civs.towns.Town;
 import org.redcastlemedia.multitallented.civs.towns.TownManager;
 import org.redcastlemedia.multitallented.civs.util.Constants;
@@ -15,6 +16,12 @@ public class RecalcCommand extends CivCommand {
         boolean isAdmin = !(commandSender instanceof Player) || commandSender.isOp() ||
                 (Civs.perm != null && Civs.perm.has(commandSender, Constants.ADMIN_PERMISSION));
         if (!isAdmin) {
+            if (commandSender instanceof Player player) {
+                commandSender.sendMessage(Civs.getPrefix() + LocaleManager.getInstance()
+                        .getTranslation(player, "no-permission"));
+            } else {
+                commandSender.sendMessage(Civs.getPrefix() + "You do not have permission to run this command.");
+            }
             return true;
         }
         TownManager townManager = TownManager.getInstance();

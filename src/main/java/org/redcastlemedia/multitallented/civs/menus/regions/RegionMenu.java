@@ -46,6 +46,9 @@ public class RegionMenu extends CustomMenu {
             return data;
         }
         Region region = RegionManager.getInstance().getRegionById(params.get("region"));
+        if (region == null) {
+            return data;
+        }
         data.put("region", region);
         StringBuilder failingUpkeeps = new StringBuilder();
         for (Integer i : region.getFailingUpkeeps()) {
@@ -81,7 +84,7 @@ public class RegionMenu extends CustomMenu {
         RegionType regionType = (RegionType) ItemManager.getInstance().getItemType(
                 (String) MenuManager.getData(civilian.getUuid(), "regionTypeName"));
         Player player = Bukkit.getPlayer(civilian.getUuid());
-        if (player == null || region == null) {
+        if (player == null || region == null || regionType == null) {
             return new ItemStack(Material.AIR);
         }
         Map<UUID, String> regionPeople = region.getPeople();
@@ -258,18 +261,6 @@ public class RegionMenu extends CustomMenu {
             if (region.isWarehouseEnabled() || !hasUpkeepsOrInput || !isOwner) {
                 return new ItemStack(Material.AIR);
             }
-        } else if ("rename".equals(menuIcon.getKey())) {
-            if (!isOwner || !region.getEffects().containsKey("plot")) {
-                return new ItemStack(Material.AIR);
-            }
-            CVItem cvItem = menuIcon.createCVItem(player, count);
-            if (menuIcon.getDesc() != null && !menuIcon.getDesc().isEmpty()) {
-                cvItem.setLore(Util.textWrap(civilian, LocaleManager.getInstance().getTranslation(player,
-                        menuIcon.getDesc())));
-            }
-            ItemStack itemStack = cvItem.createItemStack();
-            putActions(civilian, menuIcon, itemStack, count);
-            return itemStack;
         } else if ("missing-blocks".equals(menuIcon.getKey())) {
             if (region.getMissingBlocks().isEmpty()) {
                 return new ItemStack(Material.AIR);
@@ -294,16 +285,23 @@ public class RegionMenu extends CustomMenu {
     public boolean doActionAndCancel(Civilian civilian, String actionString, ItemStack clickedItem) {
         if (actionString.equals("cancel-sale")) {
             Player player = Bukkit.getPlayer(civilian.getUuid());
-            player.performCommand("cv sell");
+            if (player != null) {
+                player.performCommand("cv sell");
+            }
             return true;
         } else if (actionString.equals("toggle-warehouse")) {
             Region region = (Region) MenuManager.getData(civilian.getUuid(), "region");
+            if (region == null) {
+                return true;
+            }
             region.setWarehouseEnabled(!region.isWarehouseEnabled());
             RegionManager.getInstance().saveRegion(region);
             return true;
         } else if (actionString.equals("buy-region")) {
             Region region = (Region) MenuManager.getData(civilian.getUuid(), "region");
-            sellRegion(civilian, region);
+            if (region != null) {
+                sellRegion(civilian, region);
+            }
             return true;
         }
         return super.doActionAndCancel(civilian, actionString, clickedItem);
@@ -311,6 +309,9 @@ public class RegionMenu extends CustomMenu {
 
     private void sellRegion(Civilian civilian, Region region) {
         Player player = Bukkit.getPlayer(civilian.getUuid());
+        if (player == null) {
+            return;
+        }
         if (Civs.econ == null || !Civs.econ.has(player, region.getForSale())) {
             player.sendMessage(Civs.getPrefix() + LocaleManager.getInstance().getTranslation(player,
                     "not-enough-money").replace("$1", Util.getNumberFormat(region.getForSale(), civilian.getLocale())));
