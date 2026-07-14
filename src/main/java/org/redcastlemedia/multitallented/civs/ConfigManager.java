@@ -464,6 +464,7 @@ public class ConfigManager {
             useParticleBoundingBoxes = config.getBoolean("use-particle-bounding-boxes", false);
             combatTagEnabled = config.getBoolean("combat-tag-enabled", true);
             useWarEnabled = config.getBoolean("use-war-enabled", true);
+            useClassesAndSpells = config.getBoolean("use-classes-and-spells", false);
             getGovSettings(config);
             maxTax = config.getDouble("max-town-tax", 50);
             daysBetweenVotes = config.getInt("days-between-elections", 7);
