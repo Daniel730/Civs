@@ -63,7 +63,7 @@ public class DailyScheduler implements Runnable {
             String townName = TownManager.getInstance().getBiggestTown(civilian);
             if (townName != null) {
                 Town town = TownManager.getInstance().getTown(townName);
-                if (town != null) {
+                if (town != null && !town.getRawPeople().isEmpty()) {
                     baseHardship = town.getPrice() / (double) town.getRawPeople().size();
                 }
             }
@@ -98,6 +98,9 @@ public class DailyScheduler implements Runnable {
                 continue;
             }
             Government government = GovernmentManager.getInstance().getGovernment(town.getGovernmentType());
+            if (government == null) {
+                continue;
+            }
             if (government.getGovernmentType() != GovernmentType.DEMOCRACY &&
                     government.getGovernmentType() != GovernmentType.DEMOCRATIC_SOCIALISM &&
                     government.getGovernmentType() != GovernmentType.COOPERATIVE &&

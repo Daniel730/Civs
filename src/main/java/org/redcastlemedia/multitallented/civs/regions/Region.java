@@ -1030,7 +1030,8 @@ public class Region {
             if (town != null) {
                 government = GovernmentManager.getInstance().getGovernment(town.getGovernmentType());
             }
-            if (payout > 0 && town != null && (government.getGovernmentType() == GovernmentType.COMMUNISM ||
+            if (payout > 0 && town != null && government != null &&
+                    (government.getGovernmentType() == GovernmentType.COMMUNISM ||
                     government.getGovernmentType() == GovernmentType.COOPERATIVE)) {
                 return distributePayoutByGovType(payout, town, government);
             } else {

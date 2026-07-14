@@ -29,6 +29,33 @@ import static org.mockito.Mockito.*;
 public class SchedulerTests extends TestUtil {
 
     @Test
+    public void dailyTickSurvivesTownWithInvalidGovernment() {
+        RegionManager.getInstance().reload();
+        TownManager.getInstance().reload();
+        GovernmentManager.getInstance().reload();
+        TownTests.loadTownTypeHamlet2();
+        HashMap<UUID, String> owners = new HashMap<>();
+        owners.put(new UUID(1, 4), Constants.OWNER);
+        Location location1 = new Location(Bukkit.getWorld("world"), 3, 100, 0);
+        Town town = new Town("govtown", "hamlet2", location1, owners, 300, 500, 2, 0, -1);
+        town.setGovernmentType("NOT_A_REAL_GOV");
+        HashMap<UUID, HashMap<UUID, Integer>> votes = new HashMap<>();
+        HashMap<UUID, Integer> inner = new HashMap<>();
+        inner.put(new UUID(1, 4), 1);
+        votes.put(new UUID(1, 4), inner);
+        town.setVotes(votes);
+        TownManager.getInstance().addTown(town);
+        // A single town with a corrupt/invalid government type must not abort the daily
+        // tick for every other town via an NPE in doVotes().
+        try {
+            new DailyScheduler().run();
+        } catch (SuccessException se) {
+            // expected control-flow exception from mocked world interactions
+        }
+        assertEquals("hamlet2", town.getType());
+    }
+
+    @Test
     public void regionShouldTickWhenZeroPlayersAreOnline() {
         CommonScheduler commonScheduler = new CommonScheduler();
         RegionsTests.loadRegionTypeCobble();
