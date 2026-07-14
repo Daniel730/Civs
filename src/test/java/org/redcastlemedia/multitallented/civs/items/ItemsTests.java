@@ -66,6 +66,28 @@ public class ItemsTests extends TestUtil {
     }
 
     @Test
+    public void cloneShouldPreserveDropChance() {
+        CVItem cvItem = new CVItem(Material.DIAMOND, 1, 50); // 50% stored internally as 0.5
+        assertEquals(0.5, cvItem.getChance(), 0.0001);
+        assertEquals(0.5, cvItem.clone().getChance(), 0.0001);
+    }
+
+    @Test
+    public void cloneShouldPreserveFullDropChance() {
+        CVItem cvItem = new CVItem(Material.DIAMOND, 1, 100);
+        assertEquals(1.0, cvItem.getChance(), 0.0001);
+        assertEquals(1.0, cvItem.clone().getChance(), 0.0001);
+    }
+
+    @Test
+    public void cloneShouldPreserveOwnerBound() {
+        CVItem cvItem = new CVItem(Material.DIAMOND, 1, 100);
+        java.util.UUID owner = new java.util.UUID(7, 11);
+        cvItem.setOwnerBound(owner);
+        assertEquals(owner, cvItem.clone().getOwnerBound());
+    }
+
+    @Test
     public void playerShouldHaveGroupUnlocked() {
         loadRegionTypeShack2();
         loadRegionTypeNPCShack2();

@@ -90,4 +90,28 @@ public class FarmRequirementTests extends TestUtil {
         placeBlock(3500, 0, 0, Material.CAULDRON);
         assertNotNull(checkReq("water_farm_strict", 3500, 0, 0).getMissingItems());
     }
+
+    private static void loadAsymmetricRegionType(String name, String req, int radiusX, int radiusZ) {
+        FileConfiguration config = new YamlConfiguration();
+        ArrayList<String> reqs = new ArrayList<>();
+        reqs.add(req);
+        config.set("build-reqs", reqs);
+        config.set("build-radius-x", radiusX);
+        config.set("build-radius-y", radiusZ);
+        config.set("build-radius-z", radiusZ);
+        ItemManager.getInstance().loadRegionType(config, name);
+    }
+
+    @Test
+    public void centerScanUsesZRadiusForZAxis() {
+        // Non-cubic footprint: X radius 1, Z radius 5. The required block is placed 4
+        // blocks along +Z from center -> inside the Z radius but outside the X radius.
+        // With the correct Z-axis scan it is found; the old code scanned Z with the X
+        // radius and missed it.
+        loadAsymmetricRegionType("asym_z_farm", "DIAMOND_BLOCK*1", 1, 5);
+        placeBlock(3600, 5, 4, Material.DIAMOND_BLOCK);
+        RegionType type = (RegionType) ItemManager.getInstance().getItemType("asym_z_farm");
+        Location center = new Location(world, 3600 + 0.5, 5 + 0.5, 0 + 0.5);
+        assertNull(Region.hasRequiredBlocksOnCenter(type, center).getMissingItems());
+    }
 }

@@ -615,11 +615,15 @@ public class CVItem {
 
     @Override
     public CVItem clone() {
-        CVItem cvItem = new CVItem(mat, qty, (int) chance, displayName, new ArrayList<>(lore));
+        // chance is stored as a 0-1 fraction; the int constructor and setChance both
+        // divide by 100, so copy the raw fraction directly instead of round-tripping it.
+        CVItem cvItem = new CVItem(mat, qty, 100, displayName, new ArrayList<>(lore));
+        cvItem.chance = chance;
         cvItem.customModelData = customModelData;
         cvItem.civItemName = civItemName;
         cvItem.mmoItemName = mmoItemName;
         cvItem.mmoItemType = mmoItemType;
+        cvItem.ownerBound = ownerBound;
         cvItem.setGroup(group);
         return cvItem;
     }
