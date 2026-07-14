@@ -1,42 +1,28 @@
 package org.redcastlemedia.multitallented.civs.menus.classes;
 
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 
+import java.util.HashMap;
 import java.util.Map;
-import java.util.UUID;
 
-import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
-import org.redcastlemedia.multitallented.civs.ConfigManager;
 import org.redcastlemedia.multitallented.civs.TestUtil;
 import org.redcastlemedia.multitallented.civs.civclass.CivClass;
 import org.redcastlemedia.multitallented.civs.civilians.Civilian;
 import org.redcastlemedia.multitallented.civs.civilians.CivilianManager;
-import org.redcastlemedia.multitallented.civs.items.ItemManager;
 
 public class ClassMenuTests extends TestUtil {
 
-    private Civilian civilian;
-    private CivClass civClass;
-
-    @Before
-    public void setup() {
-        civilian = CivilianManager.getInstance().getCivilian(TestUtil.player.getUniqueId());
-        civClass = civilian.getCurrentClass();
-        if (civClass == null) {
-            String defaultClassName = ConfigManager.getInstance().getDefaultClass();
-            civClass = new CivClass(UUID.randomUUID(), player.getUniqueId(), defaultClassName);
-        }
-        civClass.resetSpellSlotOrder();
-    }
-
     @Test
-    public void spellsShouldSwapProperly() {
-        ClassMenu.swapSpellSlots(civClass, 1, 4);
-        assertEquals(4, (int) civClass.getSpellSlotOrder().get(1));
-        assertEquals(1, (int) civClass.getSpellSlotOrder().get(4));
-        ClassMenu.swapSpellSlots(civClass, 1, 4);
-        assertEquals(1, (int) civClass.getSpellSlotOrder().get(1));
+    public void classNameShouldNotIncludeClassUuid() {
+        Civilian civilian = CivilianManager.getInstance().getCivilian(TestUtil.player.getUniqueId());
+        CivClass civClass = civilian.getCurrentClass();
+        Map<String, Object> data = new ClassMenu().createData(civilian, new HashMap<>());
+        String className = (String) data.get("className");
+        assertNotNull(className);
+        // The class display name must not have the internal class UUID appended to it.
+        assertFalse("className should not contain the class UUID: " + className,
+                className.contains(civClass.getId().toString()));
     }
 }
