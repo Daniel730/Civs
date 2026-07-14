@@ -593,8 +593,8 @@ public class Region {
         double xMin = location.getX() - regionType.getBuildRadiusX();
         double yMax = location.getY() + regionType.getBuildRadiusY();
         double yMin = location.getY() - regionType.getBuildRadiusY();
-        double zMax = location.getZ() + regionType.getBuildRadiusX();
-        double zMin = location.getZ() - regionType.getBuildRadiusX();
+        double zMax = location.getZ() + regionType.getBuildRadiusZ();
+        double zMin = location.getZ() - regionType.getBuildRadiusZ();
 
         int worldMin = currentWorld.getMinHeight();
         int worldMax = currentWorld.getMaxHeight();
