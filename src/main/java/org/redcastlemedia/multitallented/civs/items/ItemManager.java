@@ -943,9 +943,15 @@ public class ItemManager {
     private void loopThroughTypeFiles(File file, List<CivItem> parentList) {
         try {
             if (file.isDirectory() && !file.getName().contains(".yml")) {
+                // Folders are stored under their name with the "-invisible" suffix stripped,
+                // so look them up by the stripped key. Using the raw directory name here made
+                // "-invisible" folders (e.g. admin-invisible) miss the already-loaded folder,
+                // then overwrite it with an empty-children folder, orphaning its items into
+                // the shop top level.
+                String folderKey = file.getName().replace(Constants.INVISIBLE, "").toLowerCase();
                 List<CivItem> currParentList;
-                if (ItemManager.getInstance().getItemType(file.getName().toLowerCase()) != null) {
-                    FolderType folderType = (FolderType) ItemManager.getInstance().getItemType(file.getName().toLowerCase());
+                if (ItemManager.getInstance().getItemType(folderKey) != null) {
+                    FolderType folderType = (FolderType) ItemManager.getInstance().getItemType(folderKey);
                     currParentList = folderType.getChildren();
                 }
                 else {
@@ -955,7 +961,7 @@ public class ItemManager {
                 for (File pFile : file.listFiles()) {
                     loopThroughTypeFiles(pFile, currParentList);
                 }
-                if (itemTypes.containsKey(file.getName().toLowerCase())) {
+                if (itemTypes.containsKey(folderKey)) {
                     return;
                 }
                 String folderName = file.getName().replace(Constants.INVISIBLE, "");

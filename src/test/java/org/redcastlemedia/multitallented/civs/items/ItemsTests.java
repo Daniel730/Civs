@@ -66,6 +66,24 @@ public class ItemsTests extends TestUtil {
     }
 
     @Test
+    public void adminInvisibleItemsAreNotOrphanedFromTheirFolder() {
+        // admin_graveyard lives in the "admin-invisible" folder (stored under key "admin").
+        // The resource+file double load must not orphan it out of its (invisible) folder,
+        // otherwise it leaks into the shop top level.
+        CivItem adminFolder = ItemManager.getInstance().getItemType("admin");
+        assertNotNull("admin folder should exist", adminFolder);
+        assertTrue(adminFolder instanceof FolderType);
+        boolean found = false;
+        for (CivItem child : ((FolderType) adminFolder).getChildren()) {
+            if ("admin_graveyard".equals(child.getProcessedName())) {
+                found = true;
+                break;
+            }
+        }
+        assertTrue("admin_graveyard should remain a child of the admin folder", found);
+    }
+
+    @Test
     public void playerShouldHaveGroupUnlocked() {
         loadRegionTypeShack2();
         loadRegionTypeNPCShack2();
