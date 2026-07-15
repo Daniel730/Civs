@@ -318,6 +318,26 @@ public class ItemsTests extends TestUtil {
     }
 
     @Test
+    public void createListFromStringSkipsUnknownCivItems() {
+        // A typo'd civ: reference in build-reqs/upkeeps YAML must degrade gracefully,
+        // not insert a null CVItem into the requirements list.
+        List<CVItem> items = CVItem.createListFromString("civ:definitely_not_a_real_item*1");
+        for (CVItem item : items) {
+            assertNotNull("createListFromString must not return null entries", item);
+        }
+    }
+
+    @Test
+    public void createListFromStringHandlesUnknownCivItemInGroup() {
+        // Group path sets a group on each item; an unknown civ: member previously NPE'd.
+        ConfigManager.getInstance().getItemGroups().put("badgroup", "civ:not_a_real_item,STONE");
+        List<CVItem> items = CVItem.createListFromString("g:badgroup*1");
+        for (CVItem item : items) {
+            assertNotNull(item);
+        }
+    }
+
+    @Test
     public void groupsWithinGroups() {
         ConfigManager.getInstance().getItemGroups().put("asdf", "LADDER,g:stairs");
         List<CVItem> itemList = CVItem.createListFromString("g:asdf*2");

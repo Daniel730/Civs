@@ -463,6 +463,12 @@ public class CVItem {
         groupName = itemGroupList.getMainGroup();
         for (String req : input.split(",")) {
             CVItem cvItem = createCVItemFromString(req);
+            if (cvItem == null) {
+                // e.g. a "civ:" reference to an item type that does not exist; skip it
+                // instead of NPE'ing or inserting a null into the requirement list.
+                Civs.logger.log(Level.SEVERE, "Unable to create item from \"{0}\"; skipping", req);
+                continue;
+            }
             if (groupName != null) {
                 cvItem.setGroup(groupName);
             }
