@@ -77,4 +77,13 @@ public class LanguageTests extends TestUtil {
         String translation = LocaleManager.getInstance().getTranslation("en", "karma{2,000");
         assertEquals("Karma: 2,000", translation);
     }
+
+    @Test
+    public void missingTranslationIsLoggedOnlyOncePerKey() {
+        LocaleManager localeManager = LocaleManager.getInstance();
+        localeManager.reload();
+        assertEquals("", localeManager.getTranslation("en", "missing-key-for-dedupe-test-name"));
+        assertEquals("", localeManager.getTranslation("en", "missing-key-for-dedupe-test-name"));
+        assertEquals("", localeManager.getTranslation("en", "another-missing-key-name"));
+    }
 }

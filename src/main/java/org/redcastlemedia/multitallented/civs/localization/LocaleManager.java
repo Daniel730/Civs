@@ -16,6 +16,7 @@ import org.reflections.scanners.ResourcesScanner;
 
 import java.io.File;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.logging.Level;
 import java.util.regex.Pattern;
@@ -25,6 +26,8 @@ public class LocaleManager {
 
     private static LocaleManager localeManager;
     HashMap<String, HashMap<String, String>> languageMap = new HashMap<>();
+    /** Avoid SEVERE spam when menus repeatedly request missing item translations. */
+    private final Set<String> loggedMissingKeys = new HashSet<>();
 
     public String getTranslation(OfflinePlayer player, String key) {
         Civilian civilian = CivilianManager.getInstance().getCivilian(player.getUniqueId());
@@ -62,7 +65,11 @@ public class LocaleManager {
             }
             String translation = map.get(key);
             if (translation == null) {
-                Civs.logger.log(Level.SEVERE, "Unable to find any translation for {0}", key);
+                if (loggedMissingKeys.add(key)) {
+                    Civs.logger.log(Level.WARNING,
+                            "Unable to find any translation for {0} (further misses for this key are suppressed)",
+                            key);
+                }
                 return "";
             }
             return Util.parseColors(textPrefix + replaceVariables(translation, variables));
@@ -110,6 +117,7 @@ public class LocaleManager {
 
     public void reload() {
         languageMap.clear();
+        loggedMissingKeys.clear();
         loadAllConfigs();
     }
 

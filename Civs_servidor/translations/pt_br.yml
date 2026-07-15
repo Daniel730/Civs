@@ -607,6 +607,11 @@ arrow_trap_fastest-desc: Nível 3 | Alcance 21 | Dano 38 | Velocidade 42 | Dispe
 barracks-name: Quartel
 barracks-desc: Adiciona 6 habitações à cidade. Cria 288 de poder por dia. Não pode ser
   construído em cidades com uma pousada.
+barracks1-name: Quartel
+barracks1-desc: Adiciona 6 habitações à cidade. Cria 288 de poder por dia. Não pode ser
+  construído em cidades com uma pousada.
+bandit_camp-name: Acampamento de Bandidos
+bandit_camp-desc: Gera bandidos perto da fogueira no upkeep. Região de defesa de exemplo para mobs customizados.
 bell_tower-name: Campanário
 bell_tower-desc: Alerta membros da cidade quando um intruso entra nela.
 church-name: Igreja
