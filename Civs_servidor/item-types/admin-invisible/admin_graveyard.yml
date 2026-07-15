@@ -5,6 +5,7 @@ name: Admin_Graveyard
 dynmap-marker: skull
 level: 1
 groups: []
+is-in-shop: false
 
 pre-reqs:
   - perm=civs.create.admin_graveyard
