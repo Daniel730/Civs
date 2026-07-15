@@ -4,8 +4,8 @@ HOST=daniel@bot-server
 SERVER=/home/daniel/mineserver
 PLUGINS="$SERVER/plugins"
 SCRIPT=/mnt/c/Users/Danie/Downloads/Civs-1.11.6/rpg-server-plugin/scripts/mineserver-control-remote.sh
-CIVS_JAR=/mnt/c/Users/Danie/Downloads/Civs-1.11.6/Civs-1.11.6/target/civs-1.11.6.jar
-RPG_JAR=/mnt/c/Users/Danie/Downloads/Civs-1.11.6/rpg-server-plugin/target/rpg-server-0.1.0-SNAPSHOT.jar
+CIVS_JAR=/mnt/c/Users/Danie/Downloads/Civs-1.11.6/Civs-1.11.6/target/civs-1.11.7.jar
+RPG_JAR=/mnt/c/Users/Danie/Downloads/Civs-1.11.6/rpg-server-plugin/target/rpg-server-0.1.2.jar
 CIVS_CFG=/mnt/c/Users/Danie/Downloads/Civs-1.11.6/Civs-1.11.6/Civs_servidor/
 QUARANTINE="$SERVER/mineserver_cleanup_$(date +%Y%m%d_%H%M%S)"
 
@@ -17,7 +17,7 @@ echo "== stopping server =="
 ssh -o BatchMode=yes "$HOST" 'bash -s' -- stop < "$SCRIPT"
 
 echo "== quarantine backup =="
-ssh -o BatchMode=yes "$HOST" "mkdir -p \"$QUARANTINE\" && cp -a \"$PLUGINS/Civs\" \"$QUARANTINE/Civs\" && cp -a \"$PLUGINS/civs-1.11.6.jar\" \"$QUARANTINE/\" 2>/dev/null || true && cp -a \"$PLUGINS/rpg-server-0.1.0-SNAPSHOT.jar\" \"$QUARANTINE/\" 2>/dev/null || true"
+ssh -o BatchMode=yes "$HOST" "mkdir -p \"$QUARANTINE\" && cp -a \"$PLUGINS/Civs\" \"$QUARANTINE/Civs\" && cp -a \"$PLUGINS\"/civs-*.jar \"$QUARANTINE/\" 2>/dev/null || true && cp -a \"$PLUGINS\"/rpg-server-*.jar \"$QUARANTINE/\" 2>/dev/null || true"
 echo "QUARANTINE=$QUARANTINE"
 
 echo "== rsync Civs_servidor -> plugins/Civs =="
@@ -30,8 +30,9 @@ rsync -avz --delete \
   "$CIVS_CFG" "${HOST}:${PLUGINS}/Civs/"
 
 echo "== deploy JARs =="
-scp -o BatchMode=yes "$CIVS_JAR" "${HOST}:${PLUGINS}/civs-1.11.6.jar"
-scp -o BatchMode=yes "$RPG_JAR" "${HOST}:${PLUGINS}/rpg-server-0.1.0-SNAPSHOT.jar"
+ssh -o BatchMode=yes "$HOST" "rm -f \"$PLUGINS\"/civs-*.jar \"$PLUGINS\"/rpg-server-*.jar"
+scp -o BatchMode=yes "$CIVS_JAR" "${HOST}:${PLUGINS}/civs-1.11.7.jar"
+scp -o BatchMode=yes "$RPG_JAR" "${HOST}:${PLUGINS}/rpg-server-0.1.2.jar"
 
 echo "== starting server =="
 ssh -o BatchMode=yes "$HOST" 'bash -s' -- start < "$SCRIPT"

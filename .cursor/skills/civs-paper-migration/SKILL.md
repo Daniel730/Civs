@@ -15,7 +15,7 @@ description: >-
 | Java | **25** |
 | Branch | `paper-26.1.2-migration` |
 | Remote | https://github.com/Daniel730/Civs |
-| Plugin version | 1.11.6 (artifact unchanged) |
+| Plugin version | **1.11.7** (see `docs/VERSIONING.md`; git tag `v1.11.7`) |
 
 ## Build
 
@@ -26,7 +26,7 @@ Maven: `C:\Users\Danie\tools\apache-maven-3.9.10\bin\mvn.cmd`
 & "C:\Users\Danie\tools\apache-maven-3.9.10\bin\mvn.cmd" test
 ```
 
-Output JAR: `target/civs-1.11.6.jar` (shade). Deploy to server `plugins/`.
+Output JAR: `target/civs-1.11.7.jar` (shade). Deploy to server `plugins/`.
 
 ## Server configs (authoritative)
 
