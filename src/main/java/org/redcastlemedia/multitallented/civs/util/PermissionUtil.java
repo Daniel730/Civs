@@ -8,6 +8,20 @@ public final class PermissionUtil {
     private PermissionUtil() {
 
     }
+
+    /**
+     * Use Bukkit {@link Player#hasPermission(String)} so plugin.yml defaults
+     * (e.g. {@code civs.shop} default: true) apply when Vault Permission is null.
+     * Prefer this over {@code Civs.perm != null && Civs.perm.has(...)} for shop UI.
+     */
+    public static boolean hasShopAccess(Player player) {
+        return player != null && player.hasPermission("civs.shop");
+    }
+
+    public static boolean hasAdminAccess(Player player) {
+        return player != null && (player.isOp() || player.hasPermission(Constants.ADMIN_PERMISSION));
+    }
+
     public static void applyPermission(OfflinePlayer offlinePlayer, String permission) {
         boolean remove = false;
         boolean transientPerm = false;

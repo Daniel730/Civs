@@ -830,14 +830,16 @@ public class TownManager {
                 return;
             }
 
-            int powerRequired = (int) Math.round((double) town.getMaxPower() * ConfigManager.getInstance().getPercentPowerForUpgrade());
-            if (town.getPower() < powerRequired) {
+            int powerRequired = (int) Math.round((double) intersectTown.getMaxPower() * ConfigManager.getInstance().getPercentPowerForUpgrade());
+            if (intersectTown.getPower() < powerRequired) {
                 player.sendMessage(Civs.getPrefix() + localeManager.getTranslation(player, "not-enough-power")
-                        .replace("$1", town.getName()).replace("$2", "" + powerRequired));
+                        .replace("$1", intersectTown.getName()).replace("$2", "" + powerRequired));
                 return;
             }
 
-            people = intersectTown.getPeople();
+            // Use raw roster only — getPeople() injects alliance members as virtual "ally*" roles
+            // and would persist those allies as real members on the evolved town.
+            people = new HashMap<>(intersectTown.getRawPeople());
             newTownLocation = intersectTown.getLocation();
             childLocations.add(newTownLocation);
             name = intersectTown.getName();

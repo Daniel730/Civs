@@ -81,6 +81,9 @@ public class ItemsTests extends TestUtil {
             }
         }
         assertTrue("admin_graveyard should remain a child of the admin folder", found);
+    }
+
+    @Test
     public void cloneShouldPreserveDropChance() {
         CVItem cvItem = new CVItem(Material.DIAMOND, 1, 50); // 50% stored internally as 0.5
         assertEquals(0.5, cvItem.getChance(), 0.0001);

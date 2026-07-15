@@ -9,7 +9,6 @@ import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
-import org.redcastlemedia.multitallented.civs.Civs;
 import org.redcastlemedia.multitallented.civs.localization.LocaleConstants;
 import org.redcastlemedia.multitallented.civs.localization.LocaleManager;
 import org.redcastlemedia.multitallented.civs.civilians.Civilian;
@@ -23,6 +22,7 @@ import org.redcastlemedia.multitallented.civs.menus.MenuIcon;
 import org.redcastlemedia.multitallented.civs.menus.MenuManager;
 import org.redcastlemedia.multitallented.civs.towns.TownType;
 import org.redcastlemedia.multitallented.civs.util.Constants;
+import org.redcastlemedia.multitallented.civs.util.PermissionUtil;
 import org.redcastlemedia.multitallented.civs.util.Util;
 
 @CivsMenu(name = "town-type") @SuppressWarnings("unused")
@@ -65,7 +65,7 @@ public class TownTypeMenu extends CustomMenu {
             putActions(civilian, menuIcon, itemStack, count);
             return itemStack;
         } else if ("price".equals(menuIcon.getKey())) {
-            boolean hasShopPerms = Civs.perm != null && Civs.perm.has(player, "civs.shop");
+            boolean hasShopPerms = PermissionUtil.hasShopAccess(player);
             String maxLimit = civilian.isAtMax(townType);
             if (hasShopPerms && maxLimit == null) {
                 CVItem priceItem = CVItem.createCVItemFromString(menuIcon.getIcon());

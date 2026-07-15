@@ -110,7 +110,7 @@ public class CustomMenu {
             return new ItemStack(Material.AIR);
         }
         if (!menuIcon.getPerm().isEmpty()) {
-            if (!player.isOp() && (Civs.perm == null || !Civs.perm.has(player, menuIcon.getPerm()))) {
+            if (!player.isOp() && !player.hasPermission(menuIcon.getPerm())) {
                 return new ItemStack(Material.AIR);
             }
         }

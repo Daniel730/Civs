@@ -7,7 +7,6 @@ import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
-import org.redcastlemedia.multitallented.civs.Civs;
 import org.redcastlemedia.multitallented.civs.ConfigManager;
 import org.redcastlemedia.multitallented.civs.alliances.AllianceManager;
 import org.redcastlemedia.multitallented.civs.civclass.CivClass;
@@ -32,6 +31,7 @@ import org.redcastlemedia.multitallented.civs.towns.TownType;
 import org.redcastlemedia.multitallented.civs.tutorials.TutorialManager;
 import org.redcastlemedia.multitallented.civs.util.Constants;
 import org.redcastlemedia.multitallented.civs.regions.StructureUtil;
+import org.redcastlemedia.multitallented.civs.util.PermissionUtil;
 import org.redcastlemedia.multitallented.civs.util.Util;
 
 @CivsMenu(name = "main") @SuppressWarnings("unused")
@@ -114,8 +114,7 @@ public class MainMenu extends CustomMenu {
             putActions(civilian, menuIcon, itemStack, count);
             return itemStack;
         } else if (menuIcon.getKey().equals("shop")) {
-            if (!player.isOp() &&
-                    (Civs.perm == null || !Civs.perm.has(player, "civs.shop"))) {
+            if (!PermissionUtil.hasShopAccess(player)) {
                 return new ItemStack(Material.AIR);
             }
         } else if ("chat".equals(menuIcon.getKey())) {

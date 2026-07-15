@@ -83,7 +83,7 @@ public final class RegionChestUtil {
             return chests;
         }
         Block centerBlock = center.getBlock();
-        if (centerBlock != null && centerBlock.getType() == Material.CHEST) {
+        if (centerBlock != null && isFarmDepositChest(centerBlock.getType())) {
             chests.add(centerBlock.getLocation());
         }
 
@@ -105,11 +105,11 @@ public final class RegionChestUtil {
         int zMax = (int) Math.round(lz + buildRadius);
 
         World world = center.getWorld();
-        for (int x = xMin; x < xMax; x++) {
-            for (int y = yMin; y < yMax; y++) {
-                for (int z = zMin; z < zMax; z++) {
+        for (int x = xMin; x <= xMax; x++) {
+            for (int y = yMin; y <= yMax; y++) {
+                for (int z = zMin; z <= zMax; z++) {
                     Block block = world.getBlockAt(x, y, z);
-                    if (block == null || block.getType() != Material.CHEST) {
+                    if (block == null || !isFarmDepositChest(block.getType())) {
                         continue;
                     }
                     Location blockLocation = block.getLocation();
@@ -127,6 +127,10 @@ public final class RegionChestUtil {
             }
         }
         return chests;
+    }
+
+    private static boolean isFarmDepositChest(Material material) {
+        return material == Material.CHEST || material == Material.TRAPPED_CHEST;
     }
 
     private static boolean sameBlock(Location a, Location b) {

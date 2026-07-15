@@ -27,16 +27,33 @@ Status legend: `[ ]` todo · `[~]` in progress · `[x]` done (PR linked)
   `getRawPeople().size()` with no empty guard → NaN hardship for an empty town. Fix:
   guard size > 0. Test: `SchedulerTests`.
 
+## Batch 5 — silent playability (shop / farms / evolve)
+
+- [x] **Buy emerald gated on Vault Permission** — `RegionTypeMenu` / `TownTypeMenu` /
+  `MainMenu` used `Civs.perm != null && Civs.perm.has(...)`. With no Vault Permission
+  provider (or defaults not wired through Vault), the shop emerald was AIR even when
+  `plugin.yml` says `civs.shop` default:true. Fix: `PermissionUtil.hasShopAccess` via
+  `Player.hasPermission`. Tests: `RegionTypeShopBuyTests`.
+- [x] **Farm upkeep stuck after failed tick** — `Region.runUpkeep` only loaded the input
+  chest when `hasRegionChestChanged`; after a failed reagents tick the region stayed
+  "checked" and later cycles never re-read the chest (silent no-output until chest GUI
+  open). Also exclusive chest scan + `TRAPPED_CHEST` ignored. Fix + tests:
+  `FarmChestDepositTests`.
+- [x] **Town evolve ally roster** — `TownManager` copied `getPeople()` (ally-injected)
+  into the upgraded town. Fix: copy `getRawPeople()`; power check uses `intersectTown`.
+  Test: `TownTests.getPeopleInjectsAlliesButRawPeopleDoesNot`.
+- [x] **Missing barracks1 / bandit_camp translations** — live bot-server spammed SEVERE
+  on every `/cv` that rendered those items (jar hybrid example + evolve-invisible). Fix:
+  add en/pt_br keys; hide `bandit_camp` from shop; LocaleManager logs missing keys once
+  at WARNING.
+
 ## Batch 2 — correctness (needs heavier test setup / event mocking)
 
 - [ ] **Region rebuild group-limit check inverted** — `regions/RegionManager.java`
   sets `rebuildWithinSameGroup = true` when the rebuild type does NOT contain the
   group (`!contains`). Rebuilding within the same group is wrongly blocked; different
   group bypasses the limit. Fix: drop the `!`. (Embedded in placement event handling.)
-- [ ] **Town evolve copies ally-expanded roster** — `towns/TownManager.java` uses
-  `intersectTown.getPeople()` (virtual, ally-injected) instead of `getRawPeople()` when
-  building the upgraded town, persisting allies as members. Also the upgrade power
-  check reads `town` (can be null via `/cv town <name>`) rather than `intersectTown`.
+- [x] **Town evolve copies ally-expanded roster** — fixed in Batch 5.
 - [ ] **Null-government / null-world NPEs** — several call sites read
   `government.getGovernmentType()` or `location.getWorld().getName()` without guards
   (`Region.runUpkeep` payout, `TownMenu`, `RegionMenu` location icon,

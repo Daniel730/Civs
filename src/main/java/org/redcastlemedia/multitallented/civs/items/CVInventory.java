@@ -47,7 +47,8 @@ public class CVInventory {
             return;
         }
         Block block = this.location.getBlock();
-        if (block.getType() != Material.CHEST) {
+        Material type = block.getType();
+        if (type != Material.CHEST && type != Material.TRAPPED_CHEST) {
             this.valid = false;
             return;
         }

@@ -5,7 +5,6 @@ import org.bukkit.Material;
 import org.bukkit.block.Biome;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
-import org.redcastlemedia.multitallented.civs.Civs;
 import org.redcastlemedia.multitallented.civs.ConfigManager;
 import org.redcastlemedia.multitallented.civs.items.CivItem;
 import org.redcastlemedia.multitallented.civs.localization.LocaleConstants;
@@ -25,6 +24,7 @@ import org.redcastlemedia.multitallented.civs.regions.RegionType;
 import org.redcastlemedia.multitallented.civs.regions.effects.EvolveEffect;
 import org.redcastlemedia.multitallented.civs.util.Constants;
 import org.redcastlemedia.multitallented.civs.regions.StructureUtil;
+import org.redcastlemedia.multitallented.civs.util.PermissionUtil;
 import org.redcastlemedia.multitallented.civs.util.Util;
 
 import java.util.ArrayList;
@@ -159,8 +159,10 @@ public class RegionTypeMenu extends CustomMenu {
             return itemStack;
         } else if ("price".equals(menuIcon.getKey())) {
             boolean showPrice = (boolean) MenuManager.getData(civilian.getUuid(), Constants.SHOW_PRICE);
-            boolean isCivsAdmin = Civs.perm != null && Civs.perm.has(player, Constants.ADMIN_PERMISSION);
-            boolean hasShopPerms = Civs.perm != null && Civs.perm.has(player, "civs.shop");
+            // Use Bukkit hasPermission so plugin.yml defaults apply when Vault Permission is unset.
+            // Gating on Civs.perm alone hid the buy emerald even when players could open the shop.
+            boolean isCivsAdmin = PermissionUtil.hasAdminAccess(player);
+            boolean hasShopPerms = PermissionUtil.hasShopAccess(player);
             String maxLimit = civilian.isAtMax(regionType, true);
             boolean isInShop = regionType.getInShop();
             ArrayList<String> lore = new ArrayList<>();

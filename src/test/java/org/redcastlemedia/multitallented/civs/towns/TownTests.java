@@ -19,6 +19,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.redcastlemedia.multitallented.civs.SuccessException;
 import org.redcastlemedia.multitallented.civs.TestUtil;
+import org.redcastlemedia.multitallented.civs.alliances.AllianceManager;
 import org.redcastlemedia.multitallented.civs.civilians.Civilian;
 import org.redcastlemedia.multitallented.civs.civilians.CivilianListener;
 import org.redcastlemedia.multitallented.civs.civilians.CivilianManager;
@@ -127,6 +128,29 @@ public class TownTests extends TestUtil {
         TownManager.getInstance().addInvite(uuid, town);
         TownManager.getInstance().acceptInvite(uuid);
         assertEquals("member", town.getPeople().get(uuid));
+    }
+
+    @Test
+    public void getPeopleInjectsAlliesButRawPeopleDoesNot() {
+        // Evolving a town must copy getRawPeople(), not getPeople() — otherwise ally towns'
+        // members are persisted as real "allyforeign" members on the upgraded town.
+        loadTownTypeHamlet2();
+        Town townA = loadTown("Alpha", "hamlet2", new Location(Bukkit.getWorld("world"), 0, 0, 0));
+        Town townB = loadTown("Beta", "hamlet2", new Location(Bukkit.getWorld("world"), 200, 0, 0));
+        UUID allyOwner = new UUID(9, 9);
+        townB.getRawPeople().put(allyOwner, Constants.OWNER);
+
+        AllianceManager.getInstance().reload();
+        AllianceManager.getInstance().allyTheseTowns(townA, townB);
+
+        assertTrue("getPeople should surface allied towns' members",
+                townA.getPeople().containsKey(allyOwner));
+        assertEquals("allyforeign", townA.getPeople().get(allyOwner));
+        assertFalse("getRawPeople must not permanently store allies",
+                townA.getRawPeople().containsKey(allyOwner));
+
+        HashMap<UUID, String> evolveRoster = new HashMap<>(townA.getRawPeople());
+        assertFalse(evolveRoster.containsKey(allyOwner));
     }
 
     @Test

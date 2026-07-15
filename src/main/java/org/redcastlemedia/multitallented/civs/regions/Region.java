@@ -869,10 +869,11 @@ public class Region {
                 failingUpkeeps.add(i);
             }
 
-            if (inputChest == null && (needsItems || !regionUpkeep.getOutputs().isEmpty()) &&
-                    RegionManager.getInstance().hasRegionChestChanged(this)) {
+            if (inputChest == null && (needsItems || !regionUpkeep.getOutputs().isEmpty())) {
+                // Always load the input chest when the cycle needs it. Gating on
+                // hasRegionChestChanged left farms stuck after a failed upkeep:
+                // inputChest stayed null on later ticks even once tools were present.
                 inputChest = RegionChestUtil.getInputChest(this);
-                RegionManager.getInstance().addCheckedRegion(this);
             }
             if (needsItems && (inputChest == null || !inputChest.isValid())) {
                 if (ConfigManager.getInstance().isWarningLogger()) {
