@@ -1,0 +1,16 @@
+id: frost_wraith
+enabled: true
+display: custom-mob-frost-wraith
+type: STRAY
+health: 60
+damage: 6
+despawn-seconds: 600
+drops:
+  - material: ICE
+    min-amount: 2
+    max-amount: 5
+    chance: 1.0
+  - material: DIAMOND
+    min-amount: 0
+    max-amount: 1
+    chance: 0.15

@@ -1034,9 +1034,7 @@ public class RegionManager {
                             boolean rebuildWithinSameGroup = false;
                             if (rebuildRegion != null) {
                                 RegionType rebuildType = (RegionType) ItemManager.getInstance().getItemType(rebuildRegion.getType());
-                                if (!rebuildType.getGroups().contains(groupType)) {
-                                    rebuildWithinSameGroup = true;
-                                }
+                                rebuildWithinSameGroup = isSameGroupRebuild(rebuildType, groupType);
                             }
                             if (!rebuildWithinSameGroup) {
                                 player.sendMessage(Civs.getPrefix() +
@@ -1108,6 +1106,14 @@ public class RegionManager {
             }
         }
         return false;
+    }
+
+    /**
+     * True when the region being replaced already counts toward {@code groupType},
+     * so a same-group rebuild should not re-consume the town group limit.
+     */
+    static boolean isSameGroupRebuild(RegionType rebuildType, String groupType) {
+        return rebuildType != null && groupType != null && rebuildType.getGroups().contains(groupType);
     }
 
     private boolean regionNotAllowedGovType(RegionType regionType, BlockPlaceEvent event, Player player, Town town) {
