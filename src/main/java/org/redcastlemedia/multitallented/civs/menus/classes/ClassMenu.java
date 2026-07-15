@@ -51,7 +51,7 @@ public class ClassMenu extends CustomMenu {
         String localClassName = classType.getDisplayName(player);
         String manaTitle = LocaleManager.getInstance().getTranslation(player,
                 classType.getManaTitle());
-        data.put("className", localClassName + civClass.getId());
+        data.put("className", localClassName);
         data.put("classTypeName", localClassName);
         Map<String, Integer> allowedActionMap = new HashMap<>(classType.getAllowedActions());
         for (String spellName : civClass.getSelectedSpells().values()) {
@@ -83,7 +83,6 @@ public class ClassMenu extends CustomMenu {
             CivClass civClass = (CivClass) MenuManager.getData(civilian.getUuid(), Constants.CLASS);
             ClassType classType = (ClassType) ItemManager.getInstance().getItemType(civClass.getType());
             CVItem cvItem = classType.getShopIcon(player);
-            cvItem.setDisplayName(cvItem.getDisplayName() + civClass.getId());
             ItemStack itemStack = cvItem.createItemStack();
             putActions(civilian, menuIcon, itemStack, count);
             return itemStack;

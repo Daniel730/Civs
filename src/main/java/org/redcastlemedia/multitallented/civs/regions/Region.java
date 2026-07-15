@@ -593,8 +593,8 @@ public class Region {
         double xMin = location.getX() - regionType.getBuildRadiusX();
         double yMax = location.getY() + regionType.getBuildRadiusY();
         double yMin = location.getY() - regionType.getBuildRadiusY();
-        double zMax = location.getZ() + regionType.getBuildRadiusX();
-        double zMin = location.getZ() - regionType.getBuildRadiusX();
+        double zMax = location.getZ() + regionType.getBuildRadiusZ();
+        double zMin = location.getZ() - regionType.getBuildRadiusZ();
 
         int worldMin = currentWorld.getMinHeight();
         int worldMax = currentWorld.getMaxHeight();
@@ -1030,7 +1030,8 @@ public class Region {
             if (town != null) {
                 government = GovernmentManager.getInstance().getGovernment(town.getGovernmentType());
             }
-            if (payout > 0 && town != null && (government.getGovernmentType() == GovernmentType.COMMUNISM ||
+            if (payout > 0 && town != null && government != null &&
+                    (government.getGovernmentType() == GovernmentType.COMMUNISM ||
                     government.getGovernmentType() == GovernmentType.COOPERATIVE)) {
                 return distributePayoutByGovType(payout, town, government);
             } else {

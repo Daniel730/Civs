@@ -72,6 +72,17 @@ CDN (`dl.tlauncher.org`) is not reachable from the VM, so the official client is
 the reliable route. `op Player` from the console to give the client full access.
 `/cv` opens the Civs main menu; creating a town needs an actual town-type Civs
 *item* (economy-backed shop), not just a creative block.
+
+### Testing economy-dependent flows (shop/town/region/auction)
+Civs uses Vault for money, so with no economy provider installed `Civs.econ` is
+null and shop purchases, town/region buys, taxes, bounties, and auction buys can't
+be exercised. To test these locally, drop a minimal Vault `Economy` provider plugin
+into `plugins/` (a tiny `JavaPlugin` that `register(Economy.class, ...)` with a
+large default balance). Then Civs logs `Hooked into Economy plugin: ...` and the
+shop works: `/cv menu` → Shop (emerald) → category → item → top-left emerald "Buy"
+→ Confirm. Note `/cv money`/`/cv shop` are NOT commands (shop is menu-only); `/cv`
+shows the tutorial path-chooser while a tutorial is active, `/cv menu` forces the
+main menu. `/cv advancetut <player>` steps the tutorial (grants reward items).
 - The `Civs_servidor/` pack (authoritative production config: menus, item-types,
   towns, regions, translations) can be copied into `plugins/Civs/` to load the full
   config set. Its saved regions/towns reference a specific world UUID, so on a fresh

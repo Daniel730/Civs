@@ -33,6 +33,8 @@ auction-max-price: 1000000.0
 
 #allows players to earn exp in skills
 allow-skills: true
+#enables the class selection and spell system (class menu, spell casting)
+use-classes-and-spells: true
 #turns off exp chat notifications for skills
 no-exp-chat-messages: false
 

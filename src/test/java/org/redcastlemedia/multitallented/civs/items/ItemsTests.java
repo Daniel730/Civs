@@ -81,6 +81,25 @@ public class ItemsTests extends TestUtil {
             }
         }
         assertTrue("admin_graveyard should remain a child of the admin folder", found);
+    public void cloneShouldPreserveDropChance() {
+        CVItem cvItem = new CVItem(Material.DIAMOND, 1, 50); // 50% stored internally as 0.5
+        assertEquals(0.5, cvItem.getChance(), 0.0001);
+        assertEquals(0.5, cvItem.clone().getChance(), 0.0001);
+    }
+
+    @Test
+    public void cloneShouldPreserveFullDropChance() {
+        CVItem cvItem = new CVItem(Material.DIAMOND, 1, 100);
+        assertEquals(1.0, cvItem.getChance(), 0.0001);
+        assertEquals(1.0, cvItem.clone().getChance(), 0.0001);
+    }
+
+    @Test
+    public void cloneShouldPreserveOwnerBound() {
+        CVItem cvItem = new CVItem(Material.DIAMOND, 1, 100);
+        java.util.UUID owner = new java.util.UUID(7, 11);
+        cvItem.setOwnerBound(owner);
+        assertEquals(owner, cvItem.clone().getOwnerBound());
     }
 
     @Test
@@ -311,6 +330,26 @@ public class ItemsTests extends TestUtil {
     public void imLosingMyMind() {
         Pattern pattern = Pattern.compile("g:fence(?![_A-Za-z])");
         assertTrue(pattern.matcher("LADDER*4,g:fence*4,").find());
+    }
+
+    @Test
+    public void createListFromStringSkipsUnknownCivItems() {
+        // A typo'd civ: reference in build-reqs/upkeeps YAML must degrade gracefully,
+        // not insert a null CVItem into the requirements list.
+        List<CVItem> items = CVItem.createListFromString("civ:definitely_not_a_real_item*1");
+        for (CVItem item : items) {
+            assertNotNull("createListFromString must not return null entries", item);
+        }
+    }
+
+    @Test
+    public void createListFromStringHandlesUnknownCivItemInGroup() {
+        // Group path sets a group on each item; an unknown civ: member previously NPE'd.
+        ConfigManager.getInstance().getItemGroups().put("badgroup", "civ:not_a_real_item,STONE");
+        List<CVItem> items = CVItem.createListFromString("g:badgroup*1");
+        for (CVItem item : items) {
+            assertNotNull(item);
+        }
     }
 
     @Test
