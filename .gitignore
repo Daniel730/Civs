@@ -95,3 +95,7 @@ testserver/
 
 # Local Minecraft client used to test the server
 mc/
+
+# Local sibling build path / nested clone (cloud QA)
+Civs-1.11.6
+civs-quests/
