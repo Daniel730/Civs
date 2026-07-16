@@ -134,6 +134,12 @@ Smoke results (official offline client `Smokeshow`, TestEconomy, Civs_servidor p
   `CustomMobManager.findSafeSpawn` only nudged Y. Fix: horizontal ring 3–7
   blocks + ground snap.
 
+## Batch 11 — Hearts-slot HP/mana (RPG pack)
+
+- [x] **Prior miss acknowledged** — blanking hearts while leaving ❤/✦ on the
+  center ActionBar did not put vida/mana where hearts were. Fixed in RPG
+  `hud.composed.layout: hearts-slot` (bitmap font bars + negative space).
+
 ## Notes / non-bugs (from client QA)
 - Menus render correctly (localization clean); shop purchase works end-to-end with a
   Vault economy provider; no server-side exceptions from client interactions.
