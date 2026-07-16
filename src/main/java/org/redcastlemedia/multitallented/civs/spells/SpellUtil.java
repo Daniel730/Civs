@@ -2,7 +2,6 @@ package org.redcastlemedia.multitallented.civs.spells;
 
 import java.util.Map;
 
-import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -11,7 +10,6 @@ import org.redcastlemedia.multitallented.civs.civilians.Civilian;
 import org.redcastlemedia.multitallented.civs.items.CVItem;
 import org.redcastlemedia.multitallented.civs.items.CivItem;
 import org.redcastlemedia.multitallented.civs.items.ItemManager;
-import org.redcastlemedia.multitallented.civs.localization.LocaleConstants;
 import org.redcastlemedia.multitallented.civs.localization.LocaleManager;
 import org.redcastlemedia.multitallented.civs.util.Util;
 
@@ -20,17 +18,23 @@ public final class SpellUtil {
 
     }
 
+    /**
+     * {@link CivClass#getSelectedSpells()} keys are already physical hotbar slots
+     * (1-based) after {@code set-spell-slot} stores via {@code spellSlotOrder}.
+     * Do not map through {@code spellSlotOrder} again.
+     */
     public static void enableCombatBar(Player player, Civilian civilian) {
         for (Map.Entry<Integer, String> entry : civilian.getCurrentClass().getSelectedSpells().entrySet()) {
-            int index = entry.getKey();
+            int hotbarSlot = entry.getKey();
             SpellType spellType = (SpellType) ItemManager.getInstance().getItemType(entry.getValue());
-            int mappedIndex = civilian.getCurrentClass().getSpellSlotOrder()
-                    .getOrDefault(index, index);
-            ItemStack itemStack = player.getInventory().getItem(mappedIndex - 1);
+            if (spellType == null || hotbarSlot < 1 || hotbarSlot > 9) {
+                continue;
+            }
+            ItemStack itemStack = player.getInventory().getItem(hotbarSlot - 1);
             if (itemStack == null) {
                 itemStack = new ItemStack(Material.AIR);
             }
-            civilian.getCombatBar().put(index, itemStack);
+            civilian.getCombatBar().put(hotbarSlot, itemStack);
             CVItem cvItem = spellType.clone();
             String localSpellName = spellType.getDisplayName(player);
             cvItem.setDisplayName(localSpellName);
@@ -40,24 +44,26 @@ public final class SpellUtil {
             cvItem.getLore().addAll(Util.textWrap(civilian, LocaleManager.getInstance().getTranslation(player,
                     "switch-spell-cast")));
 
-            player.getInventory().setItem(mappedIndex - 1, cvItem.createItemStack());
+            player.getInventory().setItem(hotbarSlot - 1, cvItem.createItemStack());
         }
     }
 
     public static void removeCombatBar(Player player, Civilian civilian) {
         CivClass civClass = civilian.getCurrentClass();
-        for (Integer index : civClass.getSelectedSpells().keySet()) {
-            int mappedIndex = civClass.getSpellSlotOrder().getOrDefault(index, index);
-            ItemStack itemStack = civilian.getCombatBar().getOrDefault(index, new ItemStack(Material.AIR));
+        for (Integer hotbarSlot : civClass.getSelectedSpells().keySet()) {
+            if (hotbarSlot == null || hotbarSlot < 1 || hotbarSlot > 9) {
+                continue;
+            }
+            ItemStack itemStack = civilian.getCombatBar().getOrDefault(hotbarSlot, new ItemStack(Material.AIR));
             if (CVItem.isCivsItem(itemStack)) {
                 CivItem civItem = CivItem.getFromItemStack(itemStack);
                 if (civItem != null && civItem.getItemType() == CivItem.ItemType.SPELL) {
                     itemStack = new ItemStack(Material.AIR);
                 }
             }
-            ItemStack currentItem = player.getInventory().getItem(mappedIndex - 1);
+            ItemStack currentItem = player.getInventory().getItem(hotbarSlot - 1);
             if (CVItem.isCivsItem(currentItem)) {
-                player.getInventory().setItem(mappedIndex - 1, itemStack);
+                player.getInventory().setItem(hotbarSlot - 1, itemStack);
             }
         }
         civilian.getCombatBar().clear();

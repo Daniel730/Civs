@@ -67,7 +67,15 @@ public class ClassListMenu extends CustomMenu {
             ItemStack itemStack = cvItem.createItemStack();
             ((HashMap<ItemStack, CivClass>) MenuManager.getData(civilian.getUuid(), "classMap"))
                     .put(itemStack, civClass);
+            // Bake this row's class UUID into actions before putActions resolves $class$
+            // (otherwise replaceVariables falls back to the currently equipped class).
+            Object previousClass = MenuManager.getAllData(civilian.getUuid()).put(Constants.CLASS, civClass);
             putActions(civilian, menuIcon, itemStack, count);
+            if (previousClass != null) {
+                MenuManager.getAllData(civilian.getUuid()).put(Constants.CLASS, previousClass);
+            } else {
+                MenuManager.getAllData(civilian.getUuid()).remove(Constants.CLASS);
+            }
             return itemStack;
         }
         return super.createItemStack(civilian, menuIcon, count);
