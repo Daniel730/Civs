@@ -43,6 +43,8 @@ public final class SpellUtil {
             cvItem.setCivItemName(spellType.getProcessedName());
             cvItem.getLore().addAll(Util.textWrap(civilian, LocaleManager.getInstance().getTranslation(player,
                     "switch-spell-cast")));
+            cvItem.getLore().addAll(Util.textWrap(civilian, LocaleManager.getInstance().getTranslation(player,
+                    "spell-command")));
 
             player.getInventory().setItem(hotbarSlot - 1, cvItem.createItemStack());
         }

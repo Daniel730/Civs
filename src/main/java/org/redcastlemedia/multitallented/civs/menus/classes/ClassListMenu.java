@@ -64,6 +64,7 @@ public class ClassListMenu extends CustomMenu {
             CVItem cvItem = classType.getShopIcon(player);
             cvItem.getLore().add(0, LocaleManager.getInstance().getTranslation(player,
                     "level").replace("$1", "" + civClass.getLevel()));
+            cvItem.getLore().add(LocaleManager.getInstance().getTranslation(player, "class-menu-equip-tip"));
             ItemStack itemStack = cvItem.createItemStack();
             ((HashMap<ItemStack, CivClass>) MenuManager.getData(civilian.getUuid(), "classMap"))
                     .put(itemStack, civClass);

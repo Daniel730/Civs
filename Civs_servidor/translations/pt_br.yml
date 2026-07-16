@@ -344,6 +344,9 @@ rebuild-required: Você precisa construir uma $1 em cima de uma $2
 max-rebuild-required: Você já tem $1 de $2 $3. Você só pode usar esse $4 para melhorar um $5.
 prevent-civs-item-share: Você não tem permissão para compartilhar itens de Civs
 region-input-item-denied: "Esse item não é aceito no baú de entrada desta região. Permitidos: $1"
+region-upkeep-missing: "$1 parou — coloque $2 no baú de entrada (ferramentas/sementes/combustível)."
+region-upkeep-output-full: "$1 parou — esvazie o baú de saída para depositar."
+class-menu-equip-tip: "Clique para trocar de classe. Equipe magias no menu da classe e use /cv spells para a barra de combate."
 region-protected: Esta região esta protegida
 region-destroyed: A região $1 foi destruída!
 specify-player-town: Por favor, especifique um jogador de uma vila
@@ -371,7 +374,7 @@ in-combat: Você não pode fazer isso em combate
 cooldown: Isso esta em recarga por mais $1s
 need-more-health: Você precisa de mais $1 de vida para fazer isso
 need-more-stamina: Você precisa de mais $1 de energia para fazer isso
-need-more-mana: Você precisa de mais $1 de mana para fazer isso
+need-more-mana: Você precisa de mais $1 de $2 para fazer isso
 port-not-found: Teletransportador não encontrado
 region-missing-upkeep-items: Região não tem os itens necessários
 raid-porter-offline: Você não pode saquear $1 enquanto nenhum de seus membros esta online.
@@ -1175,7 +1178,7 @@ spell-slot-desc: Botão esquerdo para selecionar uma nova magia. Botão direito 
   ordem dessas magias.
 spell-slot-desc-change-order: Botão direito para trocar a ordem dessas magias.
 empty-spell-slot: Slot Vazio de Magia
-empty-spell-slot-desc: Pegue uma magia para esse slot.
+empty-spell-slot-desc: Clique esquerdo para escolher uma magia neste slot. Depois use /cv spells.
 allowed-items: Itens Permitidos
 allowed-items-desc: Todos os itens que $1 tem permissão de usar
 see-all-spells: Ver todas as magias
@@ -1183,8 +1186,8 @@ see-all-spells-desc: Ver todas as magias disponíveis para $1
 req-skill-level: Você precisa ao menos ser nível $2 em $1
 req-item: Você precisa primeiro comprar um $1
 req-build: Você precisa primeiro construir um $1
-spell-command: Troque para suas magias com /cv spells
-switch-spell-cast: "Troque para esse item para usa-lo "
+spell-command: Equipe magias nos slots vazios e use /cv spells para colocá-las na hotbar.
+switch-spell-cast: Segure este item e clique direito para lançar.
 infinite-cooldown: "@{RED]$1 tem uma recarga infinita"
 view-all-classes: Ver todas as classes
 new-class: Nova Classe

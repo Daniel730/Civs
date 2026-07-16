@@ -977,6 +977,9 @@ public class Region {
                 TutorialManager.getInstance().completeStep(civilian, TutorialManager.TutorialType.UPKEEP, type);
             }
         }
+        if (!failingUpkeeps.isEmpty()) {
+            RegionUpkeepNotifier.maybeNotifyOwners(this);
+        }
         if (!hasItemUpkeep && Util.isChunkLoadedAt(getLocation())) {
             RegionManager.getInstance().addCheckedRegion(this);
         } else if (hasItemUpkeep) {
