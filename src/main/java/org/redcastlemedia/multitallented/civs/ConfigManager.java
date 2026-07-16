@@ -19,6 +19,7 @@ import org.redcastlemedia.multitallented.civs.civilians.ChatChannel;
 import org.redcastlemedia.multitallented.civs.items.CVItem;
 import org.redcastlemedia.multitallented.civs.towns.GovernmentType;
 import org.redcastlemedia.multitallented.civs.regions.effects.ShieldParams;
+import org.redcastlemedia.multitallented.civs.spells.ManaHudMode;
 import org.redcastlemedia.multitallented.civs.util.FallbackConfigUtil;
 import org.redcastlemedia.multitallented.civs.util.Util;
 
@@ -82,6 +83,12 @@ public class ConfigManager {
     boolean shieldFeedbackSound;
     @Getter
     boolean hovelBankActionBar;
+    @Getter
+    ManaHudMode manaHudMode;
+    @Getter
+    boolean regionUpkeepChatTips;
+    @Getter
+    int regionUpkeepTipCooldownSeconds;
     @Getter
     boolean turretFireParticles;
     @Getter
@@ -430,6 +437,10 @@ public class ConfigManager {
             shieldFeedbackParticles = config.getBoolean("shield-feedback-particles", true);
             shieldFeedbackSound = config.getBoolean("shield-feedback-sound", true);
             hovelBankActionBar = config.getBoolean("hovel-bank-action-bar", true);
+            manaHudMode = ManaHudMode.fromConfig(config.getString("mana-hud", "auto"));
+            regionUpkeepChatTips = config.getBoolean("region-upkeep-chat-tips", true);
+            regionUpkeepTipCooldownSeconds = Math.max(30,
+                    config.getInt("region-upkeep-tip-cooldown-seconds", 300));
             turretFireParticles = config.getBoolean("turret-fire-particles", true);
             customMobSpawnParticles = config.getBoolean("custom-mob-spawn-particles", true);
             customMobBossBarPreview = config.getBoolean("custom-mob-boss-bar-preview", true);
@@ -733,6 +744,9 @@ public class ConfigManager {
         shieldFeedbackParticles = true;
         shieldFeedbackSound = true;
         hovelBankActionBar = true;
+        manaHudMode = ManaHudMode.AUTO;
+        regionUpkeepChatTips = true;
+        regionUpkeepTipCooldownSeconds = 300;
         turretFireParticles = true;
         customMobSpawnParticles = true;
         customMobBossBarPreview = true;

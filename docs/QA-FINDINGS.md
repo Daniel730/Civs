@@ -108,6 +108,17 @@ Smoke results (official offline client `Smokeshow`, TestEconomy, Civs_servidor p
 | Economy hook | PASS (`Hooked into Economy plugin: TestEconomy`) |
 | RPG 56 quests | PASS |
 
+## Batch 8 — AuraSkills ActionBar coexistence + UX polish
+
+- [x] **Mana HUD fights AuraSkills ActionBar** — `Civilian.setMana` refreshed
+  ActionBar every regen tick (~1/s), overwriting AuraSkills idle HUD.
+  Fix: `mana-hud: auto|actionbar|bossbar|when-needed|off` (default `auto` =
+  BossBar when AuraSkills present). `ManaHud` + `ManaHudModeTests`.
+- [x] **Farm/region silent stuck upkeep** — throttled chat tips via
+  `RegionUpkeepNotifier` (`region-upkeep-missing` / `region-upkeep-output-full`).
+- [x] **Spell/class UX copy** — clearer `/cv spells` + empty-slot + combat-bar
+  lore; class-list tip; pt_BR `need-more-mana` includes `$2`.
+
 ## Notes / non-bugs (from client QA)
 - Menus render correctly (localization clean); shop purchase works end-to-end with a
   Vault economy provider; no server-side exceptions from client interactions.

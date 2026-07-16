@@ -32,12 +32,11 @@ import org.redcastlemedia.multitallented.civs.regions.RegionManager;
 import org.redcastlemedia.multitallented.civs.regions.RegionType;
 import org.redcastlemedia.multitallented.civs.events.GainExpEvent;
 import org.redcastlemedia.multitallented.civs.skills.Skill;
+import org.redcastlemedia.multitallented.civs.spells.ManaHud;
 import org.redcastlemedia.multitallented.civs.spells.civstate.BuiltInCivState;
 import org.redcastlemedia.multitallented.civs.spells.civstate.CivState;
-import org.redcastlemedia.multitallented.civs.spells.effects.ManaEffect;
 import org.redcastlemedia.multitallented.civs.towns.Town;
 import org.redcastlemedia.multitallented.civs.towns.TownManager;
-import org.redcastlemedia.multitallented.civs.util.ActionBarUtil;
 import org.redcastlemedia.multitallented.civs.util.MessageUtil;
 
 import lombok.Getter;
@@ -168,10 +167,8 @@ public class Civilian {
     }
     public void setMana(int mana, boolean setManaBar) {
         this.mana = Math.max(mana, 0);
-        Player player = Bukkit.getPlayer(uuid);
-        if (setManaBar && player != null && player.isOnline()) {
-            String message = ManaEffect.getManaBar(this);
-            ActionBarUtil.sendActionBar(player, message);
+        if (setManaBar) {
+            ManaHud.update(this);
         }
     }
 

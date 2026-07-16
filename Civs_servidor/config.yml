@@ -47,6 +47,11 @@ use-war-enabled: true
 allow-skills: true
 #enables the class selection and spell system (class menu, spell casting)
 use-classes-and-spells: true
+# Mana HUD: auto = BossBar when AuraSkills present (avoids ActionBar fight), else ActionBar.
+# Options: auto | actionbar | bossbar | when-needed | off
+mana-hud: auto
+region-upkeep-chat-tips: true
+region-upkeep-tip-cooldown-seconds: 300
 #turns off exp chat notifications for skills
 no-exp-chat-messages: true
 
