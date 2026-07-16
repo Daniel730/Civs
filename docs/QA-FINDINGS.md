@@ -124,6 +124,16 @@ Smoke results (official offline client `Smokeshow`, TestEconomy, Civs_servidor p
 - [x] **`mana-hud: composed`** — Civs yields ActionBar/BossBar to RPGServer
   composer; adds `%civs_max_mana%` / `%civs_mana_pair%` for PAPI merges.
 
+## Batch 10 — Combat hotbar, hearts pack, mob spawn offset
+
+- [x] **Scroll-cast fights tool wheel** — `AllowedActionsListener` cancelled
+  hotbar change and cast on scroll. Fix: cast only on right-click
+  (`SpellListener`); combat mode `/cv spells` still toggles temporary hotbar
+  with clear enter/exit restore.
+- [x] **`guild_thief` (and all custom mobs) spawn on player** —
+  `CustomMobManager.findSafeSpawn` only nudged Y. Fix: horizontal ring 3–7
+  blocks + ground snap.
+
 ## Notes / non-bugs (from client QA)
 - Menus render correctly (localization clean); shop purchase works end-to-end with a
   Vault economy provider; no server-side exceptions from client interactions.

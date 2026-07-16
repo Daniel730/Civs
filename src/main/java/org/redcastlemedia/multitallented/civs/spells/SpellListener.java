@@ -13,7 +13,9 @@ import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.ProjectileHitEvent;
+import org.bukkit.event.block.Action;
 import org.bukkit.event.player.PlayerInteractEvent;
+import org.bukkit.inventory.EquipmentSlot;
 import org.bukkit.inventory.ItemStack;
 import org.redcastlemedia.multitallented.civs.Civs;
 import org.redcastlemedia.multitallented.civs.CivsSingleton;
@@ -52,6 +54,13 @@ public class SpellListener implements Listener {
 
     @EventHandler
     public void onSpellUse(PlayerInteractEvent event) {
+        if (event.getHand() != null && event.getHand() != EquipmentSlot.HAND) {
+            return;
+        }
+        Action action = event.getAction();
+        if (action != Action.RIGHT_CLICK_AIR && action != Action.RIGHT_CLICK_BLOCK) {
+            return;
+        }
         ItemStack itemStack = event.getItem();
         if (!ConfigManager.getInstance().getUseClassesAndSpells() || !CivItem.isCivsItem(itemStack)) {
             return;
@@ -63,12 +72,14 @@ public class SpellListener implements Listener {
         }
         SpellType spellType = (SpellType) civItem;
         Civilian civilian = CivilianManager.getInstance().getCivilian(event.getPlayer().getUniqueId());
-        if (civilian.hasBuiltInState(BuiltInCivState.NO_OUTGOING_SPELLS)) {
+        if (civilian.hasBuiltInState(BuiltInCivState.NO_OUTGOING_SPELLS)
+                || civilian.hasBuiltInState(BuiltInCivState.STUN)) {
             event.getPlayer().sendMessage(Civs.getPrefix() + LocaleManager.getInstance().getTranslation(
                     event.getPlayer(), "spell-block"));
             return;
         }
 
+        event.setCancelled(true);
         Spell spell = new Spell(civItem.getProcessedName(), event.getPlayer(), civilian.getLevel(spellType));
         if (spell.useAbility()) {
             if (spellType.getExpPerUse() > 0) {

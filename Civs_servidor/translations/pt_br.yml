@@ -1186,9 +1186,12 @@ see-all-spells-desc: Ver todas as magias disponíveis para $1
 req-skill-level: Você precisa ao menos ser nível $2 em $1
 req-item: Você precisa primeiro comprar um $1
 req-build: Você precisa primeiro construir um $1
-spell-command: Equipe magias nos slots vazios e use /cv spells para colocá-las na hotbar.
-switch-spell-cast: Segure este item e clique direito para lançar.
-infinite-cooldown: "@{RED]$1 tem uma recarga infinita"
+spell-command: Equipe magias nos slots e use /cv spells para o modo combate (substitui a hotbar temporariamente).
+switch-spell-cast: Clique direito para lançar. Role a roda à vontade — não lança ao trocar de slot.
+combat-bar-enabled: "Modo combate ON — magias na hotbar. Clique direito para lançar. /cv spells para sair e restaurar ferramentas."
+combat-bar-disabled: "Modo combate OFF — ferramentas restauradas. Use /cv spells quando precisar das magias."
+combat-bar-exit-hint: "Clique direito para lançar. /cv spells sai do modo combate e restaura suas ferramentas."
+infinite-cooldown: "@{RED}$1 tem uma recarga infinita"
 view-all-classes: Ver todas as classes
 new-class: Nova Classe
 new-class-desc: Comece uma nova classe sem perder seu progresso atual.
