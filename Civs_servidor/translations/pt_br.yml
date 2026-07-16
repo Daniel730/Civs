@@ -343,6 +343,7 @@ cant-build-on-region: Você não pode construir uma $1 em cima de uma $2
 rebuild-required: Você precisa construir uma $1 em cima de uma $2
 max-rebuild-required: Você já tem $1 de $2 $3. Você só pode usar esse $4 para melhorar um $5.
 prevent-civs-item-share: Você não tem permissão para compartilhar itens de Civs
+region-input-item-denied: "Esse item não é aceito no baú de entrada desta região. Permitidos: $1"
 region-protected: Esta região esta protegida
 region-destroyed: A região $1 foi destruída!
 specify-player-town: Por favor, especifique um jogador de uma vila

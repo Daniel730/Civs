@@ -368,6 +368,7 @@ max-rebuild-required: Você já tem $1 de $2 $3. Você só pode usar esse $4 par
 prevent-civs-item-share: Você não tem permissão para compartilhar itens de Civs
 region-protected: Esta região esta protegida
 region-destroyed: A região $1 foi destruída!
+region-input-item-denied: "Esse item não é aceito no baú de entrada desta região. Permitidos: $1"
 specify-player-town: Por favor, especifique um jogador de uma vila
 specify-town-name: Por favor, especifique um nome de vila
 specify-player-region: Por favor, especifique um jogador e uma região
