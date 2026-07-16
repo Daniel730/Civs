@@ -7,6 +7,7 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.entity.Entity;
 import org.bukkit.entity.Villager;
+import org.bukkit.scheduler.BukkitTask;
 import org.redcastlemedia.multitallented.civs.Civs;
 import org.redcastlemedia.multitallented.civs.CivsSingleton;
 import org.redcastlemedia.multitallented.civs.util.FallbackConfigUtil;
@@ -26,6 +27,7 @@ public class GuideNpcManager {
     private static GuideNpcManager instance;
     private final Map<String, GuideNpcDefinition> guides = new HashMap<>();
     private final Map<String, UUID> spawned = new HashMap<>();
+    private BukkitTask pendingSpawnTask;
 
     public static GuideNpcManager getInstance() {
         if (instance == null) {
@@ -93,7 +95,17 @@ public class GuideNpcManager {
     }
 
     public void spawnAll() {
-        Bukkit.getScheduler().runTaskLater(Civs.getInstance(), () -> {
+        if (Civs.getInstance() == null) {
+            return;
+        }
+        if (pendingSpawnTask != null) {
+            pendingSpawnTask.cancel();
+            pendingSpawnTask = null;
+        }
+        pendingSpawnTask = Bukkit.getScheduler().runTaskLater(Civs.getInstance(), () -> {
+            pendingSpawnTask = null;
+            // Sweep orphans again in case another plugin/console spawned tagged villagers.
+            removeOrphanedGuideEntities();
             for (GuideNpcDefinition guide : guides.values()) {
                 spawnGuide(guide);
             }
@@ -122,23 +134,61 @@ public class GuideNpcManager {
     }
 
     private void despawnGuide(String guideId) {
-        UUID existing = spawned.remove(guideId.toLowerCase(Locale.ROOT));
-        if (existing == null) {
-            return;
+        String key = guideId.toLowerCase(Locale.ROOT);
+        UUID existing = spawned.remove(key);
+        if (existing != null) {
+            for (World world : Bukkit.getWorlds()) {
+                Entity entity = world.getEntity(existing);
+                if (entity != null) {
+                    entity.remove();
+                    break;
+                }
+            }
         }
+        // Also remove any duplicate/orphaned villagers tagged with this guide id.
         for (World world : Bukkit.getWorlds()) {
-            Entity entity = world.getEntity(existing);
-            if (entity != null) {
-                entity.remove();
-                return;
+            for (Villager villager : world.getEntitiesByClass(Villager.class)) {
+                String tagged = GuideNpcKeys.readGuideId(villager);
+                if (key.equals(tagged)) {
+                    villager.remove();
+                }
             }
         }
     }
 
     private void despawnAll() {
+        if (pendingSpawnTask != null) {
+            pendingSpawnTask.cancel();
+            pendingSpawnTask = null;
+        }
         List<String> ids = new ArrayList<>(spawned.keySet());
         for (String id : ids) {
             despawnGuide(id);
         }
+        removeOrphanedGuideEntities();
+    }
+
+    /**
+     * Removes every villager tagged as a Civs guide NPC, including orphans left after
+     * failed despawns or overlapping deferred {@link #spawnAll()} tasks.
+     */
+    void removeOrphanedGuideEntities() {
+        for (World world : Bukkit.getWorlds()) {
+            for (Villager villager : world.getEntitiesByClass(Villager.class)) {
+                if (GuideNpcKeys.readGuideId(villager) != null) {
+                    villager.remove();
+                }
+            }
+        }
+        spawned.clear();
+    }
+
+    /** Exposed for unit tests — whether a deferred spawn is queued. */
+    boolean hasPendingSpawnTask() {
+        return pendingSpawnTask != null;
+    }
+
+    int trackedSpawnCount() {
+        return spawned.size();
     }
 }

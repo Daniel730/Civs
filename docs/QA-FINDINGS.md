@@ -86,6 +86,27 @@ Status legend: `[ ]` todo · `[~]` in progress · `[x]` done (PR linked)
 - [x] **Guide NPCs + custom mobs in `Civs_servidor`** — add `npc/guides.yml` and
   `mobs/*.yml` (wild_boar, bandit_*, guild_thief, stone_golem, sand_raider,
   frost_wraith) so live deploy pack matches quest hunt / guide interact flows.
+- [x] **Guide NPC duplicate spawn on reload** — `GuideNpcManager.spawnAll()`
+  stacked deferred tasks and did not sweep world-tagged orphans, so `/cv reload`
+  (and world persistence across restarts) left multiple villagers per guide id.
+  Fix: cancel pending spawn task; despawn by PDC tag across worlds before spawn.
+  Test: `GuideNpcKeysTests`.
+
+## Batch 7 — Cloud VM live QA (Smokeshow / Paper 26.1.2)
+
+Smoke results (official offline client `Smokeshow`, TestEconomy, Civs_servidor pack):
+
+| Check | Result |
+|-------|--------|
+| `/cv menu` main | PASS |
+| `/rpg hub` + starter quest progress | PASS (objective "Abra a Central do Reino" completed) |
+| Magias (`spell-list`) / Combate (`class-list`) | PASS via `/cv menu spell-list` / `class-list` |
+| `/rpg journal` | PASS |
+| `/rpg sync` | PASS |
+| Guide NPCs spawn (4) | PASS after QA coords near spawn + dedupe fix |
+| Guide right-click dialog | PARTIAL (entities present; cursor aim under llvmpipe flaky) |
+| Economy hook | PASS (`Hooked into Economy plugin: TestEconomy`) |
+| RPG 56 quests | PASS |
 
 ## Notes / non-bugs (from client QA)
 - Menus render correctly (localization clean); shop purchase works end-to-end with a
@@ -96,3 +117,5 @@ Status legend: `[ ]` todo · `[~]` in progress · `[x]` done (PR linked)
   artifact, not a plugin defect.
 - Startup "Null world" region/town skips are expected when the `Civs_servidor` pack's
   saved data references a world absent on a fresh test world (handled gracefully).
+- Production `guides.yml` coords (~2030,-2010) do not match a fresh flat spawn; for local
+  QA relocate guides near world spawn (or teleport) before testing interact.
