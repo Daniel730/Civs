@@ -740,13 +740,9 @@ public class Region {
         return lastTick + period * 1000 < new Date().getTime();
     }
     public boolean hasUpkeepItems() {
-        return RegionManager.getInstance().hasRegionChestChanged(this) &&
-                hasUpkeepItems(false);
+        return hasUpkeepItems(false);
     }
     public boolean hasUpkeepItems(boolean ignoreReagentsAndTools) {
-        if (!RegionManager.getInstance().hasRegionChestChanged(this)) {
-            return false;
-        }
         RegionType regionType = (RegionType) ItemManager.getInstance().getItemType(type);
         if (regionType.getUpkeeps().isEmpty()) {
             return true;
@@ -779,9 +775,6 @@ public class Region {
     }
 
     public boolean hasUpkeepItems(int upkeepIndex, boolean ignoreReagentsAndTools) {
-        if (!RegionManager.getInstance().hasRegionChestChanged(this)) {
-            return false;
-        }
         RegionType regionType = (RegionType) ItemManager.getInstance().getItemType(type);
         if (regionType.getUpkeeps().size() <= upkeepIndex) {
             return false;
@@ -896,10 +889,9 @@ public class Region {
             CVInventory outputChest = RegionChestUtil.findOutputChest(this, output);
             boolean fullChest = outputChest == null ||
                     (!emptyOutput && !outputChest.checkAddItems(output).isEmpty());
-            if (fullChest) {
-                failingUpkeeps.remove(i);
-            }
+            // Keep failing flag when output cannot deposit so menus/warehouse show the jam.
             if (!emptyOutput && fullChest) {
+                failingUpkeeps.add(i);
                 i++;
                 continue;
             }

@@ -25,6 +25,7 @@ import org.redcastlemedia.multitallented.civs.items.CVInventory;
 import org.redcastlemedia.multitallented.civs.items.ItemManager;
 import org.redcastlemedia.multitallented.civs.items.UnloadedInventoryHandler;
 import org.redcastlemedia.multitallented.civs.regions.Region;
+import org.redcastlemedia.multitallented.civs.regions.RegionChestUtil;
 import org.redcastlemedia.multitallented.civs.regions.RegionManager;
 import org.redcastlemedia.multitallented.civs.regions.RegionType;
 import org.redcastlemedia.multitallented.civs.util.DebugLogger;
@@ -151,8 +152,11 @@ public class ConveyorEffect implements Listener, RegionCreatedListener {
 
         Location loc = cacheSpawnPoints.get(r);
 
-        CVInventory regionInventory = UnloadedInventoryHandler.getInstance().getChestInventory(l);
-        if (regionInventory == null) {
+        // Farms deposit outputs into a nearby chest; conveyors must pull from that chest.
+        CVInventory regionInventory = RegionChestUtil.isFarmRegion(r)
+                ? RegionChestUtil.findOutputChest(r)
+                : UnloadedInventoryHandler.getInstance().getChestInventory(l);
+        if (regionInventory == null || !regionInventory.isValid()) {
             return;
         }
         HashSet<ItemStack> iss = new HashSet<>();
