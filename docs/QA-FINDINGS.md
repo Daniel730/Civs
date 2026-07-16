@@ -119,6 +119,11 @@ Smoke results (official offline client `Smokeshow`, TestEconomy, Civs_servidor p
 - [x] **Spell/class UX copy** — clearer `/cv spells` + empty-slot + combat-bar
   lore; class-list tip; pt_BR `need-more-mana` includes `$2`.
 
+## Batch 9 — Unified composed HUD
+
+- [x] **`mana-hud: composed`** — Civs yields ActionBar/BossBar to RPGServer
+  composer; adds `%civs_max_mana%` / `%civs_mana_pair%` for PAPI merges.
+
 ## Notes / non-bugs (from client QA)
 - Menus render correctly (localization clean); shop purchase works end-to-end with a
   Vault economy provider; no server-side exceptions from client interactions.

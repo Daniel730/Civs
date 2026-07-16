@@ -36,7 +36,7 @@ public final class ManaHud {
             return;
         }
         ManaHudMode mode = ConfigManager.getInstance().getManaHudMode();
-        if (mode == ManaHudMode.OFF) {
+        if (mode == ManaHudMode.OFF || mode == ManaHudMode.COMPOSED) {
             clear(civilian.getUuid());
             return;
         }

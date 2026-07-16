@@ -34,6 +34,8 @@ public class PlaceHook extends PlaceholderExpansion {
     private static final String POINTS = "points";
     private static final String HIGHEST_BOUNTY = "highestbounty";
     private static final String MANA = "mana";
+    private static final String MAX_MANA = "max_mana";
+    private static final String MANA_PAIR = "mana_pair";
     private static final String NATION = "nation";
     private static final String POWER = "power";
     private static final String MAX_POWER = "max_power";
@@ -132,6 +134,14 @@ public class PlaceHook extends PlaceholderExpansion {
             return "" + (int) civilian.getPoints();
         } else if (MANA.equals(identifier)) {
             return "" + civilian.getMana();
+        } else if (MAX_MANA.equals(identifier)) {
+            if (civilian.getCurrentClass() == null) {
+                return "0";
+            }
+            return "" + civilian.getCurrentClass().getMaxMana();
+        } else if (MANA_PAIR.equals(identifier)) {
+            int max = civilian.getCurrentClass() != null ? civilian.getCurrentClass().getMaxMana() : 0;
+            return civilian.getMana() + "/" + max;
         } else if (CHAT_CHANNEL_NAME.equals(identifier)) {
             if (ChatChannel.ChatChannelType.GLOBAL == civilian.getChatChannel().getChatChannelType()) {
                 return "";

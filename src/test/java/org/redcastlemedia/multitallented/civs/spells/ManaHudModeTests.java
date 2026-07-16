@@ -18,6 +18,8 @@ public class ManaHudModeTests {
         assertEquals(ManaHudMode.WHEN_NEEDED, ManaHudMode.fromConfig("when-needed"));
         assertEquals(ManaHudMode.WHEN_NEEDED, ManaHudMode.fromConfig("combat"));
         assertEquals(ManaHudMode.OFF, ManaHudMode.fromConfig("off"));
+        assertEquals(ManaHudMode.COMPOSED, ManaHudMode.fromConfig("composed"));
+        assertEquals(ManaHudMode.COMPOSED, ManaHudMode.fromConfig("external"));
     }
 
     @Test
@@ -39,5 +41,12 @@ public class ManaHudModeTests {
     public void offUsesNeitherChannel() {
         assertFalse(ManaHudMode.OFF.usesBossBar(true));
         assertFalse(ManaHudMode.OFF.usesActionBar(true));
+    }
+
+    @Test
+    public void composedUsesNeitherChannel() {
+        assertFalse(ManaHudMode.COMPOSED.usesBossBar(true));
+        assertFalse(ManaHudMode.COMPOSED.usesActionBar(false));
+        assertTrue(ManaHudMode.COMPOSED.isExternal());
     }
 }
