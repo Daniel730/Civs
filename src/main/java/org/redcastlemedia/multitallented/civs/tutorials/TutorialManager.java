@@ -47,6 +47,33 @@ public class TutorialManager {
         loadTutorialFile();
     }
 
+    @SuppressWarnings("unchecked")
+    void applyRewardsToStep(TutorialStep tutorialStep, Map<?, ?> rewards) {
+        if (rewards.get("money") != null) {
+            if (rewards.get("money") instanceof Double) {
+                tutorialStep.setRewardMoney((Double) rewards.get("money"));
+            } else if (rewards.get("money") instanceof Integer) {
+                tutorialStep.setRewardMoney((Integer) rewards.get("money"));
+            }
+        }
+
+        List<String> commands = (List<String>) rewards.get("commands");
+        if (commands != null) {
+            tutorialStep.setCommands(commands);
+        }
+        List<String> permissions = (List<String>) rewards.get("permissions");
+        if (permissions != null) {
+            tutorialStep.setPermissions(permissions);
+        }
+
+        List<String> itemList = (List<String>) rewards.get("items");
+        if (itemList != null) {
+            for (String itemString : itemList) {
+                tutorialStep.getRewardItems().add(CVItem.createCVItemFromString(itemString));
+            }
+        }
+    }
+
     private void loadTutorialFile() {
         File dataFolder = Civs.dataLocation;
         File tutorialFile = new File(dataFolder, "tutorial.yml");
@@ -71,31 +98,7 @@ public class TutorialManager {
                     tutorialStep.setTimes(times == null ? 1 : times);
                     LinkedHashMap<?,?> rewards = (LinkedHashMap<?,?>) map.get("rewards");
                     if (rewards != null) {
-                        if (rewards.get("money") != null) {
-                            if (rewards.get("money") instanceof Double) {
-                                Double money = (Double) rewards.get("money");
-                                tutorialStep.setRewardMoney(money);
-                            } else if (rewards.get("money") instanceof Integer) {
-                                Integer money = (Integer) rewards.get("money");
-                                tutorialStep.setRewardMoney(money);
-                            }
-                        }
-
-                        List<String> commands = (List<String>) rewards.get("commands");
-                        if (commands != null) {
-                            tutorialStep.setCommands(commands);
-                        }
-                        List<String> permissions = (List<String>) rewards.get("permissions");
-                        if (permissions != null) {
-                            tutorialStep.setCommands(permissions);
-                        }
-
-                        List<String> itemList = (List<String>) rewards.get("items");
-                        if (itemList != null) {
-                            for (String itemString : itemList) {
-                                tutorialStep.getRewardItems().add(CVItem.createCVItemFromString(itemString));
-                            }
-                        }
+                        applyRewardsToStep(tutorialStep, rewards);
                     }
                     ArrayList<String> pathsList = (ArrayList<String>) map.get("paths");
                     if (pathsList != null) {

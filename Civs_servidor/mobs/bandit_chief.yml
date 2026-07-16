@@ -1,0 +1,18 @@
+id: bandit_chief
+enabled: true
+display: custom-mob-bandit-chief
+type: PILLAGER
+health: 80
+damage: 8
+drops:
+  - material: IRON_SWORD
+    amount: 1
+    chance: 0.35
+  - material: EMERALD
+    min-amount: 2
+    max-amount: 5
+    chance: 1.0
+  - material: GOLD_INGOT
+    min-amount: 1
+    max-amount: 3
+    chance: 0.6

@@ -49,10 +49,9 @@ Status legend: `[ ]` todo · `[~]` in progress · `[x]` done (PR linked)
 
 ## Batch 2 — correctness (needs heavier test setup / event mocking)
 
-- [ ] **Region rebuild group-limit check inverted** — `regions/RegionManager.java`
-  sets `rebuildWithinSameGroup = true` when the rebuild type does NOT contain the
-  group (`!contains`). Rebuilding within the same group is wrongly blocked; different
-  group bypasses the limit. Fix: drop the `!`. (Embedded in placement event handling.)
+- [x] **Region rebuild group-limit check inverted** — `RegionManager.isSameGroupRebuild`
+  now treats same-group rebuild as exempt (was `!contains`). Tests:
+  `RebuildGroupLimitTests`.
 - [x] **Town evolve copies ally-expanded roster** — fixed in Batch 5.
 - [ ] **Null-government / null-world NPEs** — several call sites read
   `government.getGovernmentType()` or `location.getWorld().getName()` without guards
@@ -64,8 +63,7 @@ Status legend: `[ ]` todo · `[~]` in progress · `[x]` done (PR linked)
 
 ## Batch 3 — config wiring (dead config flags)
 
-- [ ] **`use-classes-and-spells`** never loaded from YAML → classes/spells UI is
-  effectively always off. Wire in `ConfigManager.loadFile()` + add YAML key.
+- [x] **`use-classes-and-spells`** — wired in PR #19 (`ConfigManager` + menu gates).
 - [ ] **`allow-changing-gov-type`** loaded but never honored in gov menus.
 - [ ] **`custom-mob-region-spawn-cooldown-seconds`**, **`turret-fire-particles`**
   loaded from defaults only / never read.
@@ -74,11 +72,20 @@ Status legend: `[ ]` todo · `[~]` in progress · `[x]` done (PR linked)
 
 - [ ] **`/cv leave`** self-service leave-town command (+ tab-complete).
 - [ ] **Bank command feedback** — deposit/withdraw silently `return true` on unknown town.
-- [ ] **Tutorial permission rewards** — `TutorialManager` assigns `permissions` via
-  `setCommands` (mis-wired); permission rewards never apply.
+- [x] **Tutorial permission rewards** — `TutorialManager.applyRewardsToStep` now calls
+  `setPermissions` (was wrongly `setCommands`). Test: `TutorialRewardParseTests`.
 - [ ] **StatManager unit tests** — territorial stat ADD/MULTIPLY + friendly-territory
   gating currently have zero coverage.
 - [ ] **README command reference** — many Sprint 2–4 commands undocumented.
+
+## Batch 6 — RPG / civs-quests pack alignment
+
+- [x] **Hub Magias/Combate menus in `Civs_servidor`** — copy `class.yml`,
+  `class-list.yml`, `class-type-list.yml`, `spell-list.yml` into servidor menus so
+  RPG hub opens do not rely only on jar hybrid fallback.
+- [x] **Guide NPCs + custom mobs in `Civs_servidor`** — add `npc/guides.yml` and
+  `mobs/*.yml` (wild_boar, bandit_*, guild_thief, stone_golem, sand_raider,
+  frost_wraith) so live deploy pack matches quest hunt / guide interact flows.
 
 ## Notes / non-bugs (from client QA)
 - Menus render correctly (localization clean); shop purchase works end-to-end with a

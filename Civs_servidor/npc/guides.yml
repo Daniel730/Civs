@@ -1,0 +1,53 @@
+guides:
+  guardiao_trono:
+    id: guardiao_trono
+    name: "Guardião do Trono"
+    world: world
+    x: 2030
+    y: 68
+    z: -2010
+    yaw: 90
+    profession: LIBRARIAN
+    archetype: neutral
+    dialog:
+      - "Bem-vindo ao Conselho, civil."
+      - "Abra a Central do Reino e aceite o Chamado antes de escolher seu destino."
+  capitao_valdris:
+    id: capitao_valdris
+    name: "Capitão Valdris"
+    world: world
+    x: 2045
+    y: 68
+    z: -1995
+    yaw: 180
+    profession: WEAPONSMITH
+    archetype: warrior
+    dialog:
+      - "A espada não mente — só quem a empunha."
+      - "Se busca o caminho do guerreiro, fale comigo após abrir o diário."
+  factor_mira:
+    id: factor_mira
+    name: "Fator Mira"
+    world: world
+    x: 2050
+    y: 68
+    z: -2015
+    yaw: 0
+    profession: MASON
+    archetype: merchant
+    dialog:
+      - "Ouro flui onde há coragem para negociar."
+      - "Mercadores prosperam no cruzamento entre risco e oportunidade."
+  mestre_anvil:
+    id: mestre_anvil
+    name: "Mestre Anvil"
+    world: world
+    x: 2025
+    y: 68
+    z: -2000
+    yaw: 270
+    profession: TOOLSMITH
+    archetype: builder
+    dialog:
+      - "Pedra e madeira obedecem a quem planeja."
+      - "Construtores erguem o reino tijolo por tijolo."

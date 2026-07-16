@@ -1,0 +1,16 @@
+id: sand_raider
+enabled: true
+display: custom-mob-sand-raider
+type: HUSK
+health: 55
+damage: 7
+despawn-seconds: 600
+drops:
+  - material: SAND
+    min-amount: 4
+    max-amount: 8
+    chance: 1.0
+  - material: GOLD_NUGGET
+    min-amount: 2
+    max-amount: 6
+    chance: 0.7
