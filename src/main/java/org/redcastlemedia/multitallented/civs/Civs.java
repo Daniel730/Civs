@@ -6,6 +6,7 @@ import net.Indyuce.mmoitems.MMOItems;
 import net.milkbowl.vault.economy.Economy;
 import net.milkbowl.vault.permission.Permission;
 import org.bukkit.Bukkit;
+import org.bukkit.NamespacedKey;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
@@ -55,6 +56,20 @@ public class Civs extends JavaPlugin {
     public static Boolean mimic = null;
     private HashMap<String, CivCommand> commandList = new HashMap<>();
     public static final String NAME = "Civs";
+
+    /** PDC namespace for item tags; falls back to {@code civs} when plugin is not enabled (tests). */
+    public static NamespacedKey namespacedKey(String key) {
+        String normalized = key.toLowerCase(java.util.Locale.ROOT);
+        Civs inst = getInstance();
+        if (inst != null) {
+            String pluginName = inst.getName();
+            if (pluginName != null && !pluginName.isEmpty()) {
+                return new NamespacedKey(pluginName.toLowerCase(java.util.Locale.ROOT), normalized);
+            }
+        }
+        return new NamespacedKey("civs", normalized);
+    }
+
     public static Economy econ;
     public static Permission perm;
     public static MMOItems mmoItems;

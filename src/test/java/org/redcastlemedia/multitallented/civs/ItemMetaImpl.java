@@ -19,9 +19,17 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.SkullMeta;
 import org.bukkit.inventory.meta.tags.CustomItemTagContainer;
 import org.bukkit.persistence.PersistentDataContainer;
+import org.bukkit.persistence.PersistentDataType;
 import org.bukkit.profile.PlayerProfile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import com.google.common.collect.Multimap;
 
@@ -37,10 +45,28 @@ public class ItemMetaImpl implements ItemMeta, Damageable, SkullMeta {
     private List<String> lore = new ArrayList<>();
     private List<Component> loreComponents = new ArrayList<>();
     private int customModelData = 0;
-    public ItemMetaImpl() {
+    private PersistentDataContainer persistentDataContainer;
 
+    public ItemMetaImpl() {
+    }
+
+    private void ensurePersistentDataContainer() {
+        if (persistentDataContainer != null) {
+            return;
+        }
+        persistentDataContainer = mock(PersistentDataContainer.class);
+        java.util.Map<NamespacedKey, String> stringData = new java.util.HashMap<>();
+        doAnswer(inv -> {
+            stringData.put(inv.getArgument(0), inv.getArgument(2));
+            return null;
+        }).when(persistentDataContainer).set(any(NamespacedKey.class), eq(PersistentDataType.STRING), anyString());
+        when(persistentDataContainer.has(any(NamespacedKey.class), eq(PersistentDataType.STRING)))
+                .thenAnswer(inv -> stringData.containsKey(inv.getArgument(0)));
+        when(persistentDataContainer.get(any(NamespacedKey.class), eq(PersistentDataType.STRING)))
+                .thenAnswer(inv -> stringData.get(inv.getArgument(0)));
     }
     public ItemMetaImpl(String displayName, List<String> lore) {
+        this();
         this.displayName = displayName;
         this.lore = lore;
     }
@@ -328,7 +354,8 @@ public class ItemMetaImpl implements ItemMeta, Damageable, SkullMeta {
 
     @Override
     public PersistentDataContainer getPersistentDataContainer() {
-        return null;
+        ensurePersistentDataContainer();
+        return persistentDataContainer;
     }
 
     @Override

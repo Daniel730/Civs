@@ -42,7 +42,7 @@ import java.util.logging.Level;
 public class CVItem {
     private static final LegacyComponentSerializer LEGACY_SECTION = LegacyComponentSerializer.legacySection();
     private static String CUSTOM_ITEM_KEY = Civs.NAME + "_CUSTOM_ITEM";
-    private static String BOUND_OWNER_KEY = Civs.NAME + "_OWNER";
+    private static final String BOUND_OWNER_KEY = "owner_bound";
 
     private Material mat;
     private int qty;
@@ -440,10 +440,10 @@ public class CVItem {
             }
         }
 
-        if (Civs.getInstance() != null && is.getItemMeta() != null && is.getItemMeta().getPersistentDataContainer()
-                .has(new NamespacedKey(Civs.getInstance(), BOUND_OWNER_KEY), PersistentDataType.STRING)) {
+        if (is.getItemMeta() != null && is.getItemMeta().getPersistentDataContainer()
+                .has(Civs.namespacedKey(BOUND_OWNER_KEY), PersistentDataType.STRING)) {
             String ownerUuidString = is.getItemMeta().getPersistentDataContainer()
-                    .get(new NamespacedKey(Civs.getInstance(), BOUND_OWNER_KEY), PersistentDataType.STRING);
+                    .get(Civs.namespacedKey(BOUND_OWNER_KEY), PersistentDataType.STRING);
             if (ownerUuidString != null) {
                 cvItem.setOwnerBound(UUID.fromString(ownerUuidString));
             }
@@ -494,7 +494,9 @@ public class CVItem {
         Material itemMaterial = MenuUtil.toItemMaterial(mat);
         int stackSize = qty > 0 ? qty : 1;
         ItemStack is = new ItemStack(itemMaterial, stackSize);
-        if (displayName != null || (lore != null && !lore.isEmpty()) || customModelData != null) {
+        boolean needsMeta = displayName != null || (lore != null && !lore.isEmpty()) || customModelData != null
+                || civItemName != null || ownerBound != null;
+        if (needsMeta) {
             ItemMeta im = null;
             if (!is.hasItemMeta()) {
                 im = Bukkit.getItemFactory().getItemMeta(is.getType());
@@ -507,9 +509,13 @@ public class CVItem {
                 if (customModelData != null) {
                     im.setCustomModelData(customModelData);
                 }
-                if (Civs.getInstance() != null && civItemName != null) {
-                    im.getPersistentDataContainer().set(new NamespacedKey(Civs.getInstance(), Civs.NAME),
+                if (civItemName != null) {
+                    im.getPersistentDataContainer().set(Civs.namespacedKey(Civs.NAME),
                             PersistentDataType.STRING, civItemName);
+                }
+                if (ownerBound != null) {
+                    im.getPersistentDataContainer().set(Civs.namespacedKey(BOUND_OWNER_KEY),
+                            PersistentDataType.STRING, ownerBound.toString());
                 }
                 is.setItemMeta(im);
             } else {

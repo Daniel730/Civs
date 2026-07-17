@@ -106,6 +106,17 @@ public class ItemsTests extends TestUtil {
     }
 
     @Test
+    public void createItemStackShouldPersistOwnerBoundInPdc() {
+        java.util.UUID owner = new java.util.UUID(7, 11);
+        CVItem cvItem = new CVItem(Material.DIAMOND, 1, 100);
+        cvItem.setOwnerBound(owner);
+        cvItem.setCivItemName("shelter");
+        ItemStack stack = cvItem.createItemStack();
+        CVItem roundTrip = CVItem.createFromItemStack(stack);
+        assertEquals(owner, roundTrip.getOwnerBound());
+    }
+
+    @Test
     public void playerShouldHaveGroupUnlocked() {
         loadRegionTypeShack2();
         loadRegionTypeNPCShack2();
