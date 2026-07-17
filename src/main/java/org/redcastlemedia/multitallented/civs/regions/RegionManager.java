@@ -581,6 +581,21 @@ public class RegionManager {
         return success;
     }
 
+    /**
+     * Admin/QA path: activate a region at {@code location} without BlockPlaceEvent / mouse.
+     * Always uses {@link PlacementMode#MANUAL} so build-reqs must already be present
+     * (instant-build types still validate footprint blocks rather than blueprints).
+     */
+    public boolean adminCreateRegion(Player player, Location location, RegionType regionType) {
+        if (player == null || location == null || regionType == null) {
+            return false;
+        }
+        if (!playerHasRegionToken(player, regionType)) {
+            player.getInventory().addItem(regionType.createItemStack(player));
+        }
+        return createRegionFromPlacement(player, location, regionType, PlacementMode.MANUAL, null);
+    }
+
     public boolean shouldOpenPlacementMenu(Player player, RegionType regionType) {
         return regionType.isInstantBuildAvailable();
     }
