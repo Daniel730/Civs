@@ -131,16 +131,64 @@ public class CustomMobManager {
     }
 
     private Location findSafeSpawn(Location origin) {
-        Location base = origin.clone();
-        base.setX(Math.floor(base.getX()) + 0.5);
-        base.setZ(Math.floor(base.getZ()) + 0.5);
-        for (int yOffset = 0; yOffset <= 2; yOffset++) {
-            Location candidate = base.clone().add(0, yOffset, 0);
-            if (isSpawnable(candidate)) {
-                return candidate;
+        if (origin == null || origin.getWorld() == null) {
+            return origin;
+        }
+        // Prefer a ring around the player so quest mobs do not spawn on top of them.
+        double minDist = 3.0;
+        double maxDist = 7.0;
+        for (int attempt = 0; attempt < 24; attempt++) {
+            double angle = random.nextDouble() * Math.PI * 2;
+            double dist = minDist + random.nextDouble() * (maxDist - minDist);
+            Location candidate = origin.clone().add(Math.cos(angle) * dist, 0, Math.sin(angle) * dist);
+            Location grounded = snapToGround(candidate, origin.getY());
+            if (grounded != null && isSpawnable(grounded)) {
+                grounded.setX(Math.floor(grounded.getX()) + 0.5);
+                grounded.setZ(Math.floor(grounded.getZ()) + 0.5);
+                return grounded;
             }
         }
-        return base.clone().add(0, 1, 0);
+        // Fallback: 4 blocks along the player's look direction (horizontal).
+        org.bukkit.util.Vector look = origin.getDirection().setY(0);
+        if (look.lengthSquared() < 0.01) {
+            look = new org.bukkit.util.Vector(1, 0, 0);
+        }
+        look.normalize().multiply(4.0);
+        Location fallback = origin.clone().add(look);
+        Location grounded = snapToGround(fallback, origin.getY());
+        if (grounded != null && isSpawnable(grounded)) {
+            grounded.setX(Math.floor(grounded.getX()) + 0.5);
+            grounded.setZ(Math.floor(grounded.getZ()) + 0.5);
+            return grounded;
+        }
+        Location base = origin.clone().add(look);
+        base.setY(origin.getY() + 1);
+        base.setX(Math.floor(base.getX()) + 0.5);
+        base.setZ(Math.floor(base.getZ()) + 0.5);
+        return base;
+    }
+
+    private Location snapToGround(Location candidate, double preferY) {
+        if (candidate.getWorld() == null) {
+            return null;
+        }
+        Location probe = candidate.clone();
+        probe.setY(preferY + 2);
+        for (int i = 0; i < 8; i++) {
+            if (isSpawnable(probe) && probe.clone().add(0, -1, 0).getBlock().getType().isSolid()) {
+                return probe;
+            }
+            probe.add(0, -1, 0);
+        }
+        probe = candidate.clone();
+        probe.setY(preferY);
+        for (int yOffset = 0; yOffset <= 3; yOffset++) {
+            Location up = probe.clone().add(0, yOffset, 0);
+            if (isSpawnable(up)) {
+                return up;
+            }
+        }
+        return null;
     }
 
     private static boolean isSpawnable(Location location) {

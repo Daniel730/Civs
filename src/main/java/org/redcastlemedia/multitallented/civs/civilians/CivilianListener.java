@@ -62,12 +62,14 @@ import org.redcastlemedia.multitallented.civs.localization.LocaleConstants;
 import org.redcastlemedia.multitallented.civs.localization.LocaleManager;
 import org.redcastlemedia.multitallented.civs.menus.MenuManager;
 import org.redcastlemedia.multitallented.civs.regions.Region;
+import org.redcastlemedia.multitallented.civs.regions.RegionInputChestFilter;
 import org.redcastlemedia.multitallented.civs.regions.RegionManager;
 import org.redcastlemedia.multitallented.civs.regions.RegionType;
 import org.redcastlemedia.multitallented.civs.regions.StructureUtil;
 import org.redcastlemedia.multitallented.civs.scheduler.CommonScheduler;
 import org.redcastlemedia.multitallented.civs.skills.CivSkills;
 import org.redcastlemedia.multitallented.civs.spells.effects.CivPotionEffect;
+import org.redcastlemedia.multitallented.civs.spells.ManaHud;
 import org.redcastlemedia.multitallented.civs.spells.SpellUtil;
 import org.redcastlemedia.multitallented.civs.towns.Government;
 import org.redcastlemedia.multitallented.civs.towns.GovernmentManager;
@@ -169,6 +171,7 @@ public class CivilianListener implements Listener {
         if (!civilian.getCombatBar().isEmpty()) {
             SpellUtil.removeCombatBar(player, civilian);
         }
+        ManaHud.clear(uuid);
         CivilianManager.getInstance().unloadCivilian(player);
         CommonScheduler.getLastRegion().remove(uuid);
         CommonScheduler.getLastTown().remove(uuid);
@@ -588,6 +591,11 @@ public class CivilianListener implements Listener {
     // for hoppers and the like
     @EventHandler(ignoreCancelled = true)
     public void onInventoryMoveEvent(InventoryMoveItemEvent event) {
+        Region inputRegion = RegionInputChestFilter.resolveInputRegion(event.getDestination());
+        if (inputRegion != null && !RegionInputChestFilter.isAllowedInInput(inputRegion, event.getItem())) {
+            event.setCancelled(true);
+            return;
+        }
         if (ConfigManager.getInstance().getAllowSharingCivsItems()) {
             return;
         }
@@ -628,6 +636,24 @@ public class CivilianListener implements Listener {
 
     @EventHandler(ignoreCancelled = true)
     public void onCivilianDragItem(InventoryDragEvent event) {
+        if (!MenuManager.getInstance().hasMenuOpen(event.getWhoClicked().getUniqueId())) {
+            Region inputRegion = RegionInputChestFilter.resolveInputRegion(event.getInventory());
+            if (inputRegion != null) {
+                int inventorySize = event.getInventory().getSize();
+                boolean depositing = false;
+                for (int i : event.getRawSlots()) {
+                    if (i < inventorySize) {
+                        depositing = true;
+                        break;
+                    }
+                }
+                if (depositing && !RegionInputChestFilter.isAllowedInInput(inputRegion, event.getOldCursor())) {
+                    event.setCancelled(true);
+                    denyInputItem((Player) event.getWhoClicked(), inputRegion);
+                    return;
+                }
+            }
+        }
         if (ConfigManager.getInstance().getAllowSharingCivsItems()) {
             return;
         }
@@ -704,7 +730,6 @@ public class CivilianListener implements Listener {
             }
         }
 
-
         ChatManager instance = ChatManager.getInstance();
         instance.formatAndSendMessage(event.getPlayer(), civilian, chatChannelConfig, event.getMessage(),event.getRecipients());
     }
@@ -712,6 +737,10 @@ public class CivilianListener implements Listener {
     @EventHandler(ignoreCancelled = true) @SuppressWarnings("unused")
     public void onCivilianClickItem(InventoryClickEvent event) {
         handleCustomItem(event.getCurrentItem(), event.getWhoClicked().getUniqueId());
+        if (!MenuManager.getInstance().hasMenuOpen(event.getWhoClicked().getUniqueId())
+                && blockDisallowedRegionInput(event)) {
+            return;
+        }
         if (ConfigManager.getInstance().getAllowSharingCivsItems()) {
             return;
         }
@@ -752,6 +781,56 @@ public class CivilianListener implements Listener {
         event.setCancelled(true);
         humanEntity.sendMessage(Civs.getPrefix() +
                 LocaleManager.getInstance().getTranslation((Player) humanEntity, LocaleConstants.PREVENT_CIVS_ITEM_SHARE));
+    }
+
+    /**
+     * Blocks depositing items that are not in the region's upkeep tools/reagents/inputs
+     * into the region's input (center) chest.
+     */
+    private boolean blockDisallowedRegionInput(InventoryClickEvent event) {
+        Region inputRegion = RegionInputChestFilter.resolveInputRegion(event.getView().getTopInventory());
+        if (inputRegion == null) {
+            return false;
+        }
+        boolean shiftFromPlayer = event.getClick().isShiftClick()
+                && event.getClickedInventory() != null
+                && event.getClickedInventory().equals(event.getWhoClicked().getInventory());
+        boolean placeIntoChest = event.getClickedInventory() != null
+                && !event.getClickedInventory().equals(event.getWhoClicked().getInventory());
+        boolean numberKeyIntoChest = event.getClick() == ClickType.NUMBER_KEY
+                && event.getClickedInventory() != null
+                && !event.getClickedInventory().equals(event.getWhoClicked().getInventory());
+
+        ItemStack stack;
+        if (shiftFromPlayer) {
+            stack = event.getCurrentItem();
+        } else if (numberKeyIntoChest) {
+            int hotbar = event.getHotbarButton();
+            stack = hotbar >= 0 ? event.getWhoClicked().getInventory().getItem(hotbar) : null;
+        } else if (placeIntoChest) {
+            stack = event.getCursor();
+        } else {
+            return false;
+        }
+        if (stack == null || stack.getType() == Material.AIR) {
+            return false;
+        }
+        if (RegionInputChestFilter.isAllowedInInput(inputRegion, stack)) {
+            return false;
+        }
+        event.setCancelled(true);
+        if (event.getWhoClicked() instanceof Player player) {
+            denyInputItem(player, inputRegion);
+        }
+        return true;
+    }
+
+    private void denyInputItem(Player player, Region region) {
+        String hint = RegionInputChestFilter.formatAllowedHint(
+                RegionInputChestFilter.getAllowedInputMaterials(region));
+        player.sendMessage(Civs.getPrefix() + LocaleManager.getInstance()
+                .getTranslation(player, LocaleConstants.REGION_INPUT_ITEM_DENIED)
+                .replace("$1", hint.isEmpty() ? "?" : hint));
     }
 
     private void handleCustomItem(ItemStack itemStack, UUID uuid) {

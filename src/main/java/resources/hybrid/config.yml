@@ -35,6 +35,15 @@ auction-max-price: 1000000.0
 allow-skills: true
 #enables the class selection and spell system (class menu, spell casting)
 use-classes-and-spells: true
+# Mana HUD channel.
+# bossbar = subtle mana bar; keeps vanilla hearts (preferred over composed/hearts-slot)
+# auto = BossBar when AuraSkills is present, else ActionBar
+# composed = RPGServer owns the unified ActionBar (Civs sends nothing) — optional experiment
+# Options: auto | actionbar | bossbar | when-needed | composed | off
+mana-hud: bossbar
+# Chat tip when a farm/region upkeep is stuck (missing hoe/seeds or full output chest)
+region-upkeep-chat-tips: true
+region-upkeep-tip-cooldown-seconds: 300
 #turns off exp chat notifications for skills
 no-exp-chat-messages: false
 

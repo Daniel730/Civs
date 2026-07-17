@@ -9,23 +9,12 @@ Status legend: `[ ]` todo · `[~]` in progress · `[x]` done (PR linked)
 
 ## Batch 1 — correctness fixes (unit-tested)
 
-- [~] **CVItem.clone() corrupts drop chance** — `items/CVItem.java` `clone()` passes
-  `(int) chance` into a constructor that divides by 100 again, so `chance` (stored as
-  a 0–1 fraction) collapses (50% → 0%, 100% → 1%). Also drops `ownerBound`. Impacts
-  weighted upkeep payouts/loot and any cloned `RegionType` reqs. Fix: preserve the
-  fraction and copy `ownerBound`. Test: `ItemsTests`.
-- [~] **Region center-block scan uses X radius for the Z axis** —
-  `regions/Region.java` `hasRequiredBlocksOnCenter()` computes `zMax/zMin` from
-  `getBuildRadiusX()` instead of `getBuildRadiusZ()`. Non-cubic region footprints
-  validate the wrong volume. Fix: use `getBuildRadiusZ()`. Test: `RegionsTests`.
-- [~] **DailyScheduler.doVotes() NPE on invalid government** —
-  `scheduler/DailyScheduler.java` calls `government.getGovernmentType()` with no null
-  guard (unlike `addDailyPower`). A town with pending votes + a bad `gov-type` aborts
-  the whole daily tick. Fix: null-guard. Test: `SchedulerTests`/`RegionsTests`.
-- [~] **Hardship depreciation divide-by-(near-)zero** —
-  `scheduler/DailyScheduler.java` `depreciateHardship()` divides `town.getPrice()` by
-  `getRawPeople().size()` with no empty guard → NaN hardship for an empty town. Fix:
-  guard size > 0. Test: `SchedulerTests`.
+- [x] **CVItem.clone() corrupts drop chance** — fixed in PR #18 (`fca8332e`); clone
+  preserves 0–1 fraction + `ownerBound`. Test: `ItemsTests`.
+- [x] **Region center-block scan uses X radius for the Z axis** — fixed in PR #18.
+  Test: `RegionsTests` / `FarmRequirementTests`.
+- [x] **DailyScheduler.doVotes() NPE on invalid government** — fixed in PR #20.
+- [x] **Hardship depreciation divide-by-(near-)zero** — fixed in PR #20.
 
 ## Batch 5 — silent playability (shop / farms / evolve)
 
@@ -107,6 +96,38 @@ Smoke results (official offline client `Smokeshow`, TestEconomy, Civs_servidor p
 | Guide right-click dialog | PARTIAL (entities present; cursor aim under llvmpipe flaky) |
 | Economy hook | PASS (`Hooked into Economy plugin: TestEconomy`) |
 | RPG 56 quests | PASS |
+
+## Batch 8 — AuraSkills ActionBar coexistence + UX polish
+
+- [x] **Mana HUD fights AuraSkills ActionBar** — `Civilian.setMana` refreshed
+  ActionBar every regen tick (~1/s), overwriting AuraSkills idle HUD.
+  Fix: `mana-hud: auto|actionbar|bossbar|when-needed|off` (default `auto` =
+  BossBar when AuraSkills present). `ManaHud` + `ManaHudModeTests`.
+- [x] **Farm/region silent stuck upkeep** — throttled chat tips via
+  `RegionUpkeepNotifier` (`region-upkeep-missing` / `region-upkeep-output-full`).
+- [x] **Spell/class UX copy** — clearer `/cv spells` + empty-slot + combat-bar
+  lore; class-list tip; pt_BR `need-more-mana` includes `$2`.
+
+## Batch 9 — Unified composed HUD
+
+- [x] **`mana-hud: composed`** — Civs yields ActionBar/BossBar to RPGServer
+  composer; adds `%civs_max_mana%` / `%civs_mana_pair%` for PAPI merges.
+
+## Batch 10 — Combat hotbar, hearts pack, mob spawn offset
+
+- [x] **Scroll-cast fights tool wheel** — `AllowedActionsListener` cancelled
+  hotbar change and cast on scroll. Fix: cast only on right-click
+  (`SpellListener`); combat mode `/cv spells` still toggles temporary hotbar
+  with clear enter/exit restore.
+- [x] **`guild_thief` (and all custom mobs) spawn on player** —
+  `CustomMobManager.findSafeSpawn` only nudged Y. Fix: horizontal ring 3–7
+  blocks + ground snap.
+
+## Batch 11 — Hearts-slot HP/mana (RPG pack) — REVERTED
+
+- [x] **Hearts-slot UX rejected** — bitmap bars + hide-hearts pack looked terrible
+  in-game. Reverted to vanilla hearts + Civs `mana-hud: bossbar` + quest BossBar.
+  RPG composed HUD / hide-hearts pack default OFF. Readable > clever.
 
 ## Notes / non-bugs (from client QA)
 - Menus render correctly (localization clean); shop purchase works end-to-end with a

@@ -50,10 +50,7 @@ import org.redcastlemedia.multitallented.civs.localization.LocaleManager;
 import org.redcastlemedia.multitallented.civs.regions.effects.RepairEffect;
 import org.redcastlemedia.multitallented.civs.skills.CivSkills;
 import org.redcastlemedia.multitallented.civs.skills.Skill;
-import org.redcastlemedia.multitallented.civs.spells.Spell;
-import org.redcastlemedia.multitallented.civs.spells.SpellType;
 import org.redcastlemedia.multitallented.civs.spells.effects.CivPotionEffect;
-import org.redcastlemedia.multitallented.civs.spells.civstate.BuiltInCivState;
 import org.redcastlemedia.multitallented.civs.util.Constants;
 import org.redcastlemedia.multitallented.civs.util.MessageUtil;
 
@@ -710,41 +707,18 @@ public class AllowedActionsListener implements Listener {
     public void onPlayerHeldItem(PlayerItemHeldEvent event) {
         final Player player = event.getPlayer();
         ItemStack item = player.getInventory().getItem(event.getNewSlot());
-        if (!ConfigManager.getInstance().getUseClassesAndSpells() || item == null) {
-            return;
-        }
-        checkForSpellCasting(player, item, event);
+
+        // Do NOT cast spells on scroll/hotbar change — that fights tool wheel-swapping.
+        // Spells cast via right-click in SpellListener.
 
         if (player.getGameMode() != GameMode.SURVIVAL || (Civs.perm != null &&
                 Civs.perm.has(player, Constants.ADMIN_PERMISSION))) {
             return;
         }
+        if (item == null) {
+            return;
+        }
         cancelEventIfItemHasDisallowedEnchants(event, player, item);
-    }
-
-    private void checkForSpellCasting(Player player, ItemStack item, PlayerItemHeldEvent event) {
-        if (!CivItem.isCivsItem(item)) {
-            return;
-        }
-        CivItem civItem = CivItem.getFromItemStack(item);
-        if (civItem.getItemType() != CivItem.ItemType.SPELL) {
-            return;
-        }
-        event.setCancelled(true);
-        SpellType spellType = (SpellType) civItem;
-        Civilian civilian = CivilianManager.getInstance().getCivilian(player.getUniqueId());
-        if (civilian.hasBuiltInState(BuiltInCivState.STUN) ||
-                civilian.hasBuiltInState(BuiltInCivState.NO_OUTGOING_SPELLS)) {
-            event.getPlayer().sendMessage(Civs.getPrefix() + LocaleManager.getInstance().getTranslation(
-                    event.getPlayer(), "spell-block"));
-            return;
-        }
-        Spell spell = new Spell(spellType.getProcessedName(), player, civilian.getLevel(spellType));
-        if (spell.useAbility()) {
-            if (spellType.getExpPerUse() > 0) {
-                civilian.addExp(spellType, spellType.getExpPerUse());
-            }
-        }
     }
 
     private void cancelEventIfItemHasDisallowedEnchants(Cancellable event, Player player, ItemStack item) {
