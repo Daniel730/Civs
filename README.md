@@ -43,6 +43,81 @@ Discord Link: [KDqVjdx](https://discord.gg/KDqVjdx)
 
 **Official Server:** We're currently working on building an official test server for players and admins to test our plugin. If you wish to join our test server, feel free to join our discord, we'll be releasing more updates soon!
 
+## Compilação e Build
+
+Para compilar o Civs localmente a partir do código-fonte, siga as instruções abaixo:
+
+### Pré-requisitos
+1. **Java JDK 25**: O projeto utiliza recursos do Java 25. Recomendamos instalar o **Eclipse Temurin JDK 25**.
+   - Garanta que a variável de ambiente `JAVA_HOME` aponte para o JDK 25.
+   - Adicione o JDK ao `PATH` do sistema.
+2. **Apache Maven 3.9.x**: O projeto gerencia as dependências com Maven.
+   - Adicione o executável do Maven (`mvn` ou `mvn.cmd`) ao `PATH` do sistema.
+
+### Dependências com Problemas (JitPack Bug)
+O Civs possui uma dependência do **NoCheatPlus** que é baixada via JitPack (`com.github.Updated-NoCheatPlus.NoCheatPlus:nocheatplus:1.5`). Devido a um problema no repositório JitPack, essa dependência pode retornar erro `404 Not Found` ao tentar compilar.
+
+Para resolver isso, você deve instalar a dependência manualmente no seu repositório Maven local (`.m2`):
+
+#### No Windows (PowerShell):
+```powershell
+# Criar pasta temporária
+New-Item -ItemType Directory -Force -Path "$env:TEMP\ncp"
+
+# Baixar o JAR oficial do NoCheatPlus
+Invoke-WebRequest -Uri "https://github.com/Updated-NoCheatPlus/NoCheatPlus/releases/download/v1.5/NoCheatPlus.jar" -OutFile "$env:TEMP\ncp\NoCheatPlus.jar"
+
+# Criar o arquivo POM mínimo
+@'
+<project xmlns="http://maven.apache.org/POM/4.0.0">
+    <modelVersion>4.0.0</modelVersion>
+    <groupId>com.github.Updated-NoCheatPlus.NoCheatPlus</groupId>
+    <artifactId>nocheatplus</artifactId>
+    <version>1.5</version>
+    <packaging>jar</packaging>
+</project>
+'@ | Out-File -FilePath "$env:TEMP\ncp\ncp-clean-pom.xml" -Encoding utf8
+
+# Instalar no repositório Maven local
+mvn install:install-file -Dfile="$env:TEMP\ncp\NoCheatPlus.jar" -DpomFile="$env:TEMP\ncp\ncp-clean-pom.xml"
+```
+
+#### No Windows (CMD / Prompt de Comando):
+```cmd
+mkdir %TEMP%\ncp
+curl -sL -o %TEMP%\ncp\NoCheatPlus.jar https://github.com/Updated-NoCheatPlus/NoCheatPlus/releases/download/v1.5/NoCheatPlus.jar
+echo ^<project xmlns="http://maven.apache.org/POM/4.0.0"^>^<modelVersion^>4.0.0^</modelVersion^>^<groupId^>com.github.Updated-NoCheatPlus.NoCheatPlus^</groupId^>^<artifactId^>nocheatplus^</artifactId^>^<version^>1.5^</version^>^<packaging^>jar^</packaging^>^</project^> > %TEMP%\ncp\ncp-clean-pom.xml
+mvn install:install-file -Dfile=%TEMP%\ncp\NoCheatPlus.jar -DpomFile=%TEMP%\ncp\ncp-clean-pom.xml
+```
+
+#### No Linux / macOS:
+```bash
+curl -sL -o /tmp/NoCheatPlus.jar https://github.com/Updated-NoCheatPlus/NoCheatPlus/releases/download/v1.5/NoCheatPlus.jar
+printf '<project xmlns="http://maven.apache.org/POM/4.0.0"><modelVersion>4.0.0</modelVersion><groupId>com.github.Updated-NoCheatPlus.NoCheatPlus</groupId><artifactId>nocheatplus</artifactId><version>1.5</version><packaging>jar</packaging></project>' > /tmp/ncp-clean-pom.xml
+mvn install:install-file -Dfile=/tmp/NoCheatPlus.jar -DpomFile=/tmp/ncp-clean-pom.xml
+```
+
+### Como Compilar
+Com as dependências resolvidas e o JDK 25 configurado:
+
+1. Abra o terminal no diretório raiz do Civs (`Civs-1.11.6`).
+2. Execute o comando:
+   ```bash
+   mvn clean package -DskipTests
+   ```
+3. O JAR compilado e com as dependências integradas (shaded) será gerado em:
+   `target/civs-1.11.7.jar`
+
+### Executar Testes
+Para rodar a suite de testes automatizados:
+```bash
+mvn test
+```
+*(Nota: O teste `RegionsTests.dailyRegionShouldUpkeepDaily` pode falhar de forma intermitente quando a suite completa é executada devido ao estado compartilhado do gerenciador de regiões. O teste passa de forma consistente quando rodado de forma isolada com `mvn test -Dtest=RegionsTests`.)*
+
+---
+
 ## WARNING: Civs is a Work in Progress project! 
 Its not ready yet, so please report any bug you find and help us improve and make this dream project come true!
 Thanks for reading!
+
