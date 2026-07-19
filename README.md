@@ -57,9 +57,23 @@ Para compilar o Civs localmente a partir do código-fonte, siga as instruções 
 ### Dependências com Problemas (JitPack Bug)
 O Civs possui uma dependência do **NoCheatPlus** que é baixada via JitPack (`com.github.Updated-NoCheatPlus.NoCheatPlus:nocheatplus:1.5`). Devido a um problema no repositório JitPack, essa dependência pode retornar erro `404 Not Found` ao tentar compilar.
 
-Para resolver isso, você deve instalar a dependência manualmente no seu repositório Maven local (`.m2`):
+Para resolver isso de forma simples e 100% garantida (especialmente no Windows sem WSL ou onde o PowerShell/scripts estejam restritos):
 
-#### No Windows (PowerShell):
+#### Método Manual Recomendado (Qualquer OS / Windows CMD):
+1. Baixe o arquivo JAR oficial do NoCheatPlus clicando no link a seguir pelo seu navegador:
+   👉 [NoCheatPlus.jar (v1.5)](https://github.com/Updated-NoCheatPlus/NoCheatPlus/releases/download/v1.5/NoCheatPlus.jar)
+2. Salve o arquivo com o nome `NoCheatPlus.jar` na pasta raiz do projeto `Civs-1.11.6`.
+3. Abra o **Prompt de Comando (CMD)** ou terminal na pasta raiz do projeto e execute:
+   ```cmd
+   mvn install:install-file -Dfile=NoCheatPlus.jar -DgroupId=com.github.Updated-NoCheatPlus.NoCheatPlus -DartifactId=nocheatplus -Dversion=1.5 -Dpackaging=jar
+   ```
+*(O Maven criará o arquivo POM necessário automaticamente).*
+
+---
+
+#### Métodos Alternativos via Scripts:
+
+##### No Windows (PowerShell):
 ```powershell
 # Criar pasta temporária
 New-Item -ItemType Directory -Force -Path "$env:TEMP\ncp"
@@ -82,7 +96,7 @@ Invoke-WebRequest -Uri "https://github.com/Updated-NoCheatPlus/NoCheatPlus/relea
 mvn install:install-file -Dfile="$env:TEMP\ncp\NoCheatPlus.jar" -DpomFile="$env:TEMP\ncp\ncp-clean-pom.xml"
 ```
 
-#### No Windows (CMD / Prompt de Comando):
+##### No Windows (CMD / Prompt de Comando automatizado):
 ```cmd
 mkdir %TEMP%\ncp
 curl -sL -o %TEMP%\ncp\NoCheatPlus.jar https://github.com/Updated-NoCheatPlus/NoCheatPlus/releases/download/v1.5/NoCheatPlus.jar
@@ -90,12 +104,13 @@ echo ^<project xmlns="http://maven.apache.org/POM/4.0.0"^>^<modelVersion^>4.0.0^
 mvn install:install-file -Dfile=%TEMP%\ncp\NoCheatPlus.jar -DpomFile=%TEMP%\ncp\ncp-clean-pom.xml
 ```
 
-#### No Linux / macOS:
+##### No Linux / macOS / WSL:
 ```bash
 curl -sL -o /tmp/NoCheatPlus.jar https://github.com/Updated-NoCheatPlus/NoCheatPlus/releases/download/v1.5/NoCheatPlus.jar
 printf '<project xmlns="http://maven.apache.org/POM/4.0.0"><modelVersion>4.0.0</modelVersion><groupId>com.github.Updated-NoCheatPlus.NoCheatPlus</groupId><artifactId>nocheatplus</artifactId><version>1.5</version><packaging>jar</packaging></project>' > /tmp/ncp-clean-pom.xml
 mvn install:install-file -Dfile=/tmp/NoCheatPlus.jar -DpomFile=/tmp/ncp-clean-pom.xml
 ```
+
 
 ### Como Compilar
 Com as dependências resolvidas e o JDK 25 configurado:
