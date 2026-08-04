@@ -1,0 +1,23 @@
+Mineflayer investigation vs running Paper 26.1.2 (empirical)
+============================================================
+Env: mineflayer 4.37.1, minecraft-protocol 1.66.2, minecraft-data (has 26.1 data)
+
+1. mineflayer.createBot(version auto/'26.1.2')
+   -> Error: Server version '26.1' is not supported. Latest supported version is '1.21.11'.
+   (mineflayer/lib/version.js testedVersions caps at 1.21.11)
+
+2. Raw minecraft-protocol.createClient({version:'26.1.2'})
+   -> "success" + "login" packet received. RAW PROTOCOL CONNECTS/AUTHS OK (offline).
+   (minecraft-data ships 26.1 protocol data; nmp can use it when forced)
+
+3. Patch mineflayer/lib/version.js (latestSupportedVersion='26.1') then createBot
+   -> passes version gate, "login ok", THEN crashes in lib/plugins/time.js longToBigInt
+      (Cannot read properties of undefined) -- 26.x 'time' packet shape != 1.x assumption.
+
+4. Same patch + disable plugins {time,breath,health,experience}
+   -> no crash, but bot NEVER reaches 'spawn' (position/game flow mis-parses 26.x packets).
+
+CONCLUSION: Mineflayer's HIGH-LEVEL API is unusable against Paper 26.1.2 in this env.
+Raw protocol works, but rebuilding movement/inventory/GUI on raw packets = reimplementing
+mineflayer. On a real 1.21.x Paper server, mineflayer works fully. => Player-action layer
+is version-gated; the version-proof server-side harness is the reliable backbone here.

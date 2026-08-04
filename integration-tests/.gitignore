@@ -1,0 +1,5 @@
+# Build output & deps — not committed
+**/target/
+**/node_modules/
+runner/reports/
+*.log
