@@ -83,7 +83,7 @@ public class CustomMenu {
     public Inventory createMenu(Civilian civilian) {
         actions.put(civilian.getUuid(), new HashMap<>());
         rightClickActions.put(civilian.getUuid(), new HashMap<>());
-        Inventory inventory = Bukkit.createInventory(null, this.size, getName());
+        Inventory inventory = Bukkit.createInventory(null, this.size, getMenuTitle(civilian));
         HashMap<String, Integer> duplicateCount = new HashMap<>();
         for (MenuIcon menuIcon : itemIndexes) {
             for (Integer i : menuIcon.getIndex()) {
@@ -210,6 +210,17 @@ public class CustomMenu {
     }
     public String getName() {
         return this.name;
+    }
+
+    /**
+     * Title shown at the top of the inventory GUI. Defaults to the internal menu
+     * {@link #getName() name}; subclasses may override to show a human-friendly,
+     * context-specific title (e.g. the region type's display name). This value is
+     * only the visible title and is NOT used to route clicks (see
+     * {@code MenuManager.openMenus}), so overriding it is safe.
+     */
+    protected String getMenuTitle(Civilian civilian) {
+        return getName();
     }
 
     public void onInventoryDrag(InventoryDragEvent event) {

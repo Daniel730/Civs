@@ -34,6 +34,21 @@ import java.util.Map;
 
 @CivsMenu(name = "region-type") @SuppressWarnings("unused")
 public class RegionTypeMenu extends CustomMenu {
+
+    /**
+     * Show the structure's display name (e.g. "Shelter") as the GUI title instead
+     * of the raw internal menu name ("RegionType"), which is meaningless to players.
+     */
+    @Override
+    protected String getMenuTitle(Civilian civilian) {
+        RegionType regionType = (RegionType) MenuManager.getData(civilian.getUuid(), Constants.REGION_TYPE);
+        Player player = Bukkit.getPlayer(civilian.getUuid());
+        if (regionType != null && player != null) {
+            return regionType.getDisplayName(player);
+        }
+        return super.getMenuTitle(civilian);
+    }
+
     @Override
     public Map<String, Object> createData(Civilian civilian, Map<String, String> params) {
         super.cycleItems.remove(civilian.getUuid());
