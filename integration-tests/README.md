@@ -27,21 +27,30 @@ node run.js --scenario region                             # run a single scenari
 Config via env: `RCON_HOST/RCON_PORT/RCON_PASSWORD`, `MC_HOST/MC_PORT`, `ACTOR=1` to enable
 the Mineflayer actor, `MC_SERVER_MAJOR=1.21` (actor version hint), `REPORT=<path>`.
 
-## Add a scenario
+## Add a scenario (DSL)
 
-Drop a file in `runner/scenarios/` exporting `{ name, setup?, run, cleanup? }`:
+Drop a file in `runner/scenarios/` that exports a built DSL scenario. Actions are performed
+by the **actor** (production code); expectations are checked by the **harness** (observation):
 
 ```js
-module.exports = {
-  name: 'MyScenario',
-  async run(ctx) {
-    ctx.expect('balance is 100', await ctx.harness.assert.economy('Tester', 'eq', 100));
-  },
-};
+const { scenario } = require('../lib/dsl');
+module.exports = scenario('MyScenario')
+  .player('Steve')                          // real online player, OP'd
+  .placeRegion('shelter', 500, -60, 500)    // actor -> /cv placeregion -> production pipeline
+  .expectRegion('shelter', 500, -60, 500)   // harness observes internal state
+  .expectNoErrors()
+  .resetRegion(500, -60, 500)               // teardown
+  .build();
 ```
 
-`ctx` provides `harness` (RCON assertions), `actor` (Mineflayer, when available), and the
-verbs `exec`, `wait`, `waitTicks`, `expect`, `expectEqual`, `expectTrue`.
+Actions: `.player .teleport .placeRegion .give .runCommand`. Expectations:
+`.expectRegion .expectRegionCount .expectMoney .expectPermission .expectBlock .expectNoErrors`.
+Arrange/teardown: `.arrangeMoney .arrangeBlock .saveRegions .reloadRegions .resetRegion
+.resetBlock .wait .waitTicks .step`. On failure, an evidence bundle is written to
+`reports/evidence/<scenario>/`.
+
+> Architecture rule: the harness **observes and resets**; it never creates Civs game state.
+> That's the actor's job, so the real event chain is exercised (see the design doc).
 
 > Note: on this cloud VM the server is Paper "26.1.2", which Mineflayer cannot drive
 > (see the design doc §7 and `MINEFLAYER-PROBE-RESULTS.txt`). Scenarios therefore assert

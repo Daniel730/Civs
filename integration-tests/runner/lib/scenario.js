@@ -7,11 +7,34 @@
  * economy/permission).
  */
 class ScenarioContext {
-  constructor({ harness, actor, log }) {
-    this.harness = harness;   // low-level state assertions (server-side, via RCON)
-    this.actor = actor;       // player actions (Mineflayer) — may be unavailable
+  constructor({ harness, actor, log, serverLogPath }) {
+    this.harness = harness;   // low-level state OBSERVATION (server-side, via RCON)
+    this.actor = actor;       // player ACTIONS (real Player via raw client / Mineflayer)
     this.log = log || (() => {});
+    this.serverLogPath = serverLogPath || null;
     this.cases = [];          // { name, ok, message, timeMs }
+  }
+
+  /** Byte offset of the server log now (a marker to diff error lines against later). */
+  markLog() {
+    try { return this.serverLogPath ? require('fs').statSync(this.serverLogPath).size : 0; }
+    catch (_) { return 0; }
+  }
+  /** ERROR/SEVERE/Exception lines appended to the server log since `mark`. */
+  errorsSince(mark) {
+    if (!this.serverLogPath) return [];
+    try {
+      const fs = require('fs');
+      const size = fs.statSync(this.serverLogPath).size;
+      const fd = fs.openSync(this.serverLogPath, 'r');
+      const len = Math.max(0, size - mark);
+      const buf = Buffer.alloc(len);
+      fs.readSync(fd, buf, 0, len, mark);
+      fs.closeSync(fd);
+      // eslint-disable-next-line no-control-regex
+      return buf.toString('utf8').replace(/\u0000/g, '').replace(/\x1b\[[0-9;]*m/g, '')
+        .split('\n').filter((l) => /\bERROR\b|\bSEVERE\b|Exception/.test(l));
+    } catch (_) { return []; }
   }
 
   _record(name, ok, message, started) {
@@ -57,6 +80,12 @@ async function runScenario(scenario, deps) {
     suite.error = `${e.name}: ${e.message}`;
     deps.log(`  ERROR ${suite.error}`);
   } finally {
+    suite.timeMs = Date.now() - started;
+    // Capture evidence BEFORE teardown, so snapshots reflect the failure state.
+    const failed = suite.error || ctx.cases.some((c) => !c.ok);
+    if (failed && deps.onFailure) {
+      try { await deps.onFailure(ctx, suite); } catch (e) { deps.log(`  evidence error: ${e.message}`); }
+    }
     try { if (scenario.cleanup) await scenario.cleanup(ctx); }
     catch (e) { deps.log(`  cleanup error: ${e.message}`); }
   }

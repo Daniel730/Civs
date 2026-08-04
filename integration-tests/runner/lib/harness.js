@@ -55,20 +55,34 @@ class Harness {
     add: async (p, amt) => this.raw(`test money add ${p} ${amt}`),
   };
 
+  // Observation + reset only. The harness does NOT create regions — that's the actor's job.
   region = {
     count: async (type) => parseInt(this._kv(await this.raw(`test region count ${type}`)).count, 10),
     at: async (x, y, z, world) => this._kv(await this.raw(`test region at ${x} ${y} ${z}${world ? ' ' + world : ''}`)),
-    create: async (type, x, y, z, world) => this._kv(await this.raw(`test createregion ${type} ${x} ${y} ${z}${world ? ' ' + world : ''}`)),
-    remove: async (x, y, z, world) => this._kv(await this.raw(`test removeregion ${x} ${y} ${z}${world ? ' ' + world : ''}`)),
+    reset: async (x, y, z, world) => this._kv(await this.raw(`test reset region ${x} ${y} ${z}${world ? ' ' + world : ''}`)),
     save: async () => this.raw('test saveregions'),
     reload: async () => this._kv(await this.raw('test reloadregions')),
   };
 
   block = {
     at: async (x, y, z, world) => this._kv(await this.raw(`test block ${x} ${y} ${z}${world ? ' ' + world : ''}`)).material,
-    // Main-thread, chunk-loading block placement via the harness (reliable in unloaded chunks).
+    // Generic world fixture (not a Civs game action): reliable main-thread block placement.
     set: async (x, y, z, material, world) => this._kv(await this.raw(`test setblock ${x} ${y} ${z} ${material}${world ? ' ' + world : ''}`)),
+    reset: async (x, y, z, world) => this._kv(await this.raw(`test reset block ${x} ${y} ${z}${world ? ' ' + world : ''}`)),
   };
+
+  // Read-only JSON snapshots of internal state (for failure evidence).
+  dump = {
+    regions: async () => this._json(await this.raw('test dump regions')),
+    scheduler: async () => this._json(await this.raw('test dump scheduler')),
+    economy: async (p) => this._json(await this.raw(`test dump economy ${p}`)),
+    inventory: async (p) => this._json(await this.raw(`test dump inventory ${p}`)),
+  };
+  _json(line) {
+    const i = line.indexOf('json=');
+    if (i < 0) return { _raw: line };
+    try { return JSON.parse(line.slice(i + 5)); } catch (e) { return { _raw: line, _parseError: e.message }; }
+  }
 
   async spawnEntity(type, x, y, z, world) { return this._kv(await this.raw(`test spawnentity ${type} ${x} ${y} ${z}${world ? ' ' + world : ''}`)); }
   async held(p) { return this._kv(await this.raw(`test held ${p}`)); }

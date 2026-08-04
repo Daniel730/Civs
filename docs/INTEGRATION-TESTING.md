@@ -7,8 +7,21 @@ it, and it drives the server, asserts the plugin's **internal state**, and write
 XML report.
 
 > Status: **working prototype in this repo** (`integration-tests/`). A run of the two
-> bundled scenarios produces `integration-tests/runner/reports/junit.xml` with 11 passing
+> bundled scenarios produces `integration-tests/runner/reports/junit.xml` with 10 passing
 > assertions (see [Example scenario](#5-example-autonomous-scenario)).
+
+### Architecture principle (v2): actions ≠ assertions
+The framework enforces a strict split, the way mature game-test frameworks do:
+
+- The **Actor** *performs player actions* that run **production code** (a real online
+  `Player` drives Civs' real region/item pipelines). It never asserts.
+- The **Harness** is an **observation/diagnosis layer only**: it queries and asserts
+  internal state, dumps snapshots, waits for conditions, and resets the world. It **never
+  creates Civs game state** (no create-region/town/claim-chunk) — otherwise you'd be
+  testing the harness instead of the plugin.
+
+This keeps tests honest (the whole event chain runs) and low-fragility. Scenarios are
+written in a fluent **DSL**, and any failure auto-captures an **evidence bundle**.
 
 ---
 
@@ -36,14 +49,19 @@ JUnit / XML report  ──────►  CI (Jenkins/GitLab/GitHub)
 ```
 
 **Two-layer design (the key idea).** A bot that only *observes the world* misses silent
-bugs. So we split responsibilities:
+bugs; a harness that *creates state* stops testing production code. So responsibilities are
+split and kept apart:
 
-- **Actor layer (Mineflayer):** performs *player actions* (movement, block place/break,
-  GUI clicks, attacks, item pickup). This is what a real player does.
-- **Harness layer (server-side plugin, over RCON):** performs *low-level assertions against
-  the plugin's internal state* — is the `Region` actually registered in `RegionManager`?
-  what does Vault report for the balance? did the block change? This runs inside the JVM
-  with direct access to Civs' managers, so it can't be fooled by rendering/latency.
+- **Actor layer:** performs *player actions* that exercise production code. On this Paper
+  26.1.2 server the actor is a **raw `minecraft-protocol` keep-alive client** that holds a
+  real online `Player`; actions like region creation run through `/cv placeregion <player>`
+  → `RegionManager.createRegionFromPlacement` → `RegionCreatedEvent` → listeners. On real
+  ≤1.21.x servers, a **Mineflayer** actor adds native block-place/break and GUI clicks
+  (fuller chain: place block → `BlockPlaceEvent` → `AllowedActionsListener` → managers).
+- **Harness layer (server-side plugin, over RCON):** **observation/diagnosis only** —
+  assert internal state (`RegionManager.getRegionAt`, Vault balance, permissions, block,
+  scheduler), dump JSON snapshots, and reset the world between scenarios. It runs inside the
+  JVM so it can't be fooled by rendering/latency, and it **creates no Civs game state**.
 
 This separation (explicitly recommended in the task) makes tests far less fragile and
 turns them into durable long-term regression checks. The harness is also **version-proof**
@@ -77,23 +95,29 @@ harness and `/cv` admin commands and still assert real internal state.
 All under [`integration-tests/`](../integration-tests):
 
 - **`test-harness-plugin/`** — the `CivsTestHarness` Paper plugin (Maven; depends on the
-  Civs jar like `civs-quests`). Registers `/test` with inspection/assertion subcommands and
-  replies in a single machine-parseable line. Highlights:
-  - Assertions: `assert economy|region|permission|block|inventory|town`.
-  - Queries: `ping`, `money get`, `region at|count`, `held`, `inventory`, `block`, `scheduler`.
-  - Control: `money set|add`, `createregion`, `removeregion`, `saveregions`, `reloadregions`,
-    `setblock`, `spawnentity`.
-  - Runs world/entity access on the primary thread (RCON dispatches there already), reads
-    Civs managers directly (`RegionManager`, `TownManager`, `ItemManager`) and Vault.
+  Civs jar like `civs-quests`). **Observation layer.** Registers `/test` and replies in a
+  single machine-parseable line. It reads Civs managers directly (`RegionManager`,
+  `TownManager`, `ItemManager`) and Vault, on the primary thread (RCON dispatches there).
+  - Observe (assert): `assert economy|region|permission|block|inventory|town`.
+  - Observe (query): `ping`, `money get`, `region at|count`, `held`, `inventory`, `block`,
+    `scheduler`, `dump regions|scheduler|economy|inventory` (JSON snapshots).
+  - Reset (teardown): `reset region|block`, `saveregions`, `reloadregions`.
+  - **No** `createregion`/`createtown`/`claimchunk` — creating Civs state is the actor's job.
 - **`runner/`** — the Node scenario runner:
-  - `lib/harness.js` — typed RCON client for the harness + `/cv`.
-  - `lib/scenario.js` — `ScenarioContext` with the required verbs (`exec`, `wait`,
-    `waitTicks`, `expect`, `expectEqual`, `expectTrue`) and per-assertion recording.
+  - `lib/harness.js` — typed RCON client (observe/assert/dump/reset) + raw `/cv`.
+  - `lib/actor.js` — **`RawKeepAliveActor`**: holds a real online player and issues
+    production-code actions (`placeRegion`, `give`, `teleport`, `runCommand`).
+  - `lib/dsl.js` — fluent scenario DSL (`scenario().player().placeRegion().expectRegion()…`).
+  - `lib/scenario.js` — `ScenarioContext` (verbs `exec`, `wait`, `waitTicks`, `expect*`,
+    plus server-log watching for `expectNoErrors`) and per-assertion recording.
+  - `lib/evidence.js` — on failure, writes a bundle (server log + JSON state snapshots +
+    timings + failure summary) under `reports/evidence/<scenario>/`.
   - `lib/junit.js` — JUnit XML writer (Jenkins/GitLab/GitHub compatible).
-  - `lib/actor-mineflayer.js` — optional Mineflayer actor (version-gate patch + graceful
-    fallback when unsupported).
-  - `run.js` — connect → run scenarios → write JUnit → exit non-zero on failure.
-  - `scenarios/*.js` — declarative scenarios.
+  - `lib/actor-mineflayer.js` — Mineflayer actor for real ≤1.21.x (version-gate patch +
+    graceful fallback).
+  - `run.js` — connect harness + actor → run scenarios → capture evidence on failure →
+    write JUnit → exit non-zero on failure.
+  - `scenarios/*.js` — DSL scenarios.
 
 **Framework verbs → implementation**
 
@@ -148,40 +172,49 @@ cd ../runner && npm install && node run.js         # -> reports/junit.xml, exit 
 
 ## 5. Example autonomous scenario
 
-`scenarios/01-region-persistence.js` — proves **serialization + reload on a live server**,
-which unit tests cannot:
+`scenarios/01-region-persistence.js` — the **actor** creates the region through production
+code; the **harness** only observes + reloads from disk (real serialization), written in the
+fluent DSL:
 
 ```js
-async run(ctx) {
-  const before = await ctx.harness.region.count('shelter');
-  const created = await ctx.harness.region.create('shelter', 500, -60, 500);
-  ctx.expectEqual('createregion returns the region type', created.created, 'shelter');
-  ctx.expect('region exists at target coords', await ctx.harness.assert.region('shelter', 500, -60, 500));
-  ctx.expectEqual('region count incremented by one', await ctx.harness.region.count('shelter'), before + 1);
-
-  await ctx.harness.region.save();          // write to disk (AsyncFileWriter)
-  await ctx.wait(1000);
-  const reload = await ctx.harness.region.reload();   // reload the region set FROM disk
-  ctx.expect('region PERSISTS after reload from disk', await ctx.harness.assert.region('shelter', 500, -60, 500));
-}
+const { scenario } = require('../lib/dsl');
+module.exports = scenario('RegionPersistence')
+  .player('Steve')                 // actor: real online player, OP'd
+  .teleport(500, -58, 500)         // actor action
+  .placeRegion('shelter', 500, -60, 500)  // actor -> /cv placeregion -> PRODUCTION pipeline
+  .waitTicks(5)
+  .expectRegion('shelter', 500, -60, 500) // harness OBSERVES it was really registered
+  .expectRegionCount('shelter', 3)        // harness OBSERVES internal count
+  .saveRegions().wait(1000).reloadRegions()
+  .expectRegion('shelter', 500, -60, 500) // survived reload from disk
+  .expectNoErrors({ ignore: [/Null world/, /invalid region/] })
+  .resetRegion(500, -60, 500)             // teardown
+  .build();
 ```
 
 Actual run output (both bundled scenarios, zero manual interaction):
 
 ```
+Actor 'Steve': ONLINE (real player)
 === Scenario: RegionPersistence ===
-  PASS  createregion returns the region type — expected=shelter actual=shelter
-  PASS  region exists at target coords — region shelter present at 500,-60,500
-  PASS  region count incremented by one — expected=3 actual=3
-  PASS  reload loaded regions from disk — TEST-RESULT reloaded regions=3
-  PASS  region PERSISTS after reload from disk — region shelter present at 500,-60,500
+  PASS  region shelter exists at 500,-60,500        (actor created it via production code)
+  PASS  region count shelter — expected=3 actual=3
+  PASS  reload loaded regions from disk
+  PASS  region shelter exists at 500,-60,500         (survived reload from disk)
+  PASS  no server errors during scenario — clean
 === Scenario: EconomyAndWorldState ===
-  PASS  economy balance set to 5000 / >= 7500 after add / <= 8000 (no overflow)
-  PASS  placed block is DIAMOND_BLOCK
-  PASS  cow entity spawned — uuid=d5f3192c-...
-  PASS  civs scheduler pending-task count is readable — civsPendingTasks=5
-TOTAL: 11 assertions, 0 failed, 0 scenario error(s).
+  PASS  economy Steve eq 5000 / ge 7500 / le 8000
+  PASS  block DIAMOND_BLOCK at 5,-59,5
+  PASS  no server errors during scenario — clean
+TOTAL: 10 assertions, 0 failed, 0 scenario error(s).
 ```
+
+### Evidence on failure
+Any failing scenario auto-writes `reports/evidence/<scenario>/`:
+`server.log`, `loaded-regions.json`, `scheduler.json`, `economy.json`, `inventory.json`,
+`timings.txt`, `failure-summary.json` (captured **before** teardown, so snapshots reflect
+the failure state). A GUI screenshot is added only when a GUI-capable actor is present
+(not on this headless 26.1.2 server). This lets CI show exactly why a test failed.
 
 ---
 
@@ -222,10 +255,15 @@ labels for speed. A `docker-compose` (Paper + harness) service makes this reprod
   `callSyncMethod().get()` (deadlock); the harness detects `isPrimaryThread()` and calls
   world APIs directly. Long operations (cold chunk generation) should be avoided or use
   near-spawn/loaded coordinates.
-- **Server-side region creation** (`createregion`) uses a synthetic owner and bypasses the
-  block-placement/BlockPlaceEvent pipeline — great for persistence/economy tests, but the
-  *placement validation* path still needs the actor (or `/cv placeregion` with an online
-  player).
+- **Depth of the production path on 26.1.2.** The raw actor holds a real `Player` and drives
+  region creation via `/cv placeregion`, which runs the real
+  `RegionManager.createRegionFromPlacement` + `RegionCreatedEvent` (with a real Player) — far
+  better than the harness creating state directly. But it does **not** fire the
+  `BlockPlaceEvent → AllowedActionsListener → PermissionManager` prefix, because the raw
+  client can't place blocks natively. That full chain runs with the **Mineflayer actor on
+  real ≤1.21.x servers**. This is a property of the environment, not the architecture: the
+  actor interface is the seam, and swapping actors upgrades the depth without touching
+  scenarios or the harness.
 - **Determinism:** scenarios should clean up (remove regions, reset blocks) and use isolated
   coordinates; the harness provides `removeregion`/`setblock`/`reloadregions` for teardown.
 
@@ -233,8 +271,10 @@ labels for speed. A `docker-compose` (Paper + harness) service makes this reprod
 
 ## 8. Incremental roadmap
 
-1. **Now (done):** harness plugin + RCON runner + JUnit XML + 2 scenarios (persistence,
-   economy/world-state) green.
+1. **Now (done):** observation-only harness + RCON runner + **fluent DSL** + **raw
+   keep-alive actor** (real online player driving production code) + **evidence capture on
+   failure** + JUnit XML + 2 green scenarios (player-driven region persistence,
+   economy/world-state).
 2. **Harness breadth:** add `assert region owner/member`, `region effects <id>`, town
    create/assert, auction listing/purchase inspection, serialized-YAML dump
    (`/test dump region <id>`), permission grant/revoke, and `/test tick <n>` via a
@@ -260,8 +300,8 @@ labels for speed. A `docker-compose` (Paper + harness) service makes this reprod
 | `/test ping` | `TEST-RESULT pong=1 civs=<bool> economy=<bool>` |
 | `/test money get\|set\|add <player> [amt]` | balance result / OK |
 | `/test assert economy <player> <eq\|ge\|le> <amt>` | TEST-OK / TEST-FAIL |
-| `/test createregion <type> <x> <y> <z> [world]` | `TEST-RESULT created=<type> id=<id>` |
-| `/test removeregion <x> <y> <z> [world]` | `TEST-RESULT removed=<0\|1>` |
+| `/test reset region\|block <x> <y> <z> [world]` | `TEST-RESULT removed=<0\|1>` / `material=<mat>` (teardown) |
+| `/test dump regions\|scheduler\|economy <p>\|inventory <p>` | `TEST-RESULT json=<...>` (evidence) |
 | `/test saveregions` / `/test reloadregions` | OK / `regions=<n>` |
 | `/test region at <x> <y> <z> [world]` | type/owners/forsale/exp/effects or `region=none` |
 | `/test region count <type>` | `TEST-RESULT count=<n>` |

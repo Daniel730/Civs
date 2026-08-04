@@ -32,10 +32,16 @@ import org.redcastlemedia.multitallented.civs.towns.Town;
 import org.redcastlemedia.multitallented.civs.towns.TownManager;
 
 /**
- * Server-side integration-test harness for Civs. Exposes machine-parseable inspection and
- * assertion commands so an external runner (over RCON) can verify the plugin's <b>internal
- * state</b> — regions, economy, permissions, blocks, inventories — not just what a bot can
- * see in the world. Every command replies with exactly one line:
+ * Server-side integration-test <b>observation</b> layer for Civs. It deliberately does NOT
+ * create Civs game state (no region/town/chunk creation) — that must be driven by a player
+ * actor through production code so the whole event chain is exercised. This plugin only:
+ * <ul>
+ *   <li><b>observes</b> — query &amp; assert internal state (regions, economy, permissions,
+ *       blocks, inventories, scheduler);</li>
+ *   <li><b>dumps</b> — JSON snapshots of internal state for failure evidence;</li>
+ *   <li><b>resets</b> — teardown/cleanup between scenarios (remove region, reset block).</li>
+ * </ul>
+ * Every command replies with exactly one line:
  * <ul>
  *   <li>{@code TEST-OK &lt;msg&gt;}   — assertion passed</li>
  *   <li>{@code TEST-FAIL &lt;msg&gt;} — assertion failed</li>
@@ -98,8 +104,9 @@ public class TestHarnessPlugin extends JavaPlugin implements CommandExecutor {
                 case "setblock":   return setblock(sender, a);
                 case "spawnentity":return spawnEntity(sender, a);
                 case "scheduler":  return scheduler(sender);
-                case "createregion": return createRegion(sender, a);
-                case "removeregion": return removeRegion(sender, a);
+                case "dump":       return dump(sender, a);
+                // reset/teardown (allowed: clean world between scenarios) — NOT game-state creation
+                case "reset":      return reset(sender, a);
                 case "saveregions":  return saveRegions(sender);
                 case "reloadregions":return reloadRegions(sender);
                 case "assert":     return assertion(sender, a);
@@ -235,35 +242,85 @@ public class TestHarnessPlugin extends JavaPlugin implements CommandExecutor {
         return result(s, "spawned=" + type + " uuid=" + uuid);
     }
 
-    // A fixed synthetic owner so server-side region creation needs no online player.
-    private static final UUID SYNTHETIC_OWNER = UUID.fromString("00000000-0000-0000-0000-0000000000aa");
-
-    // /test createregion <type> <x> <y> <z> [world] — create + persist a region via the Civs API.
-    private boolean createRegion(CommandSender s, String[] a) {
-        if (a.length < 5) return err(s, "usage: /test createregion <type> <x> <y> <z> [world]");
-        String type = a[1].toLowerCase(Locale.ROOT);
-        var civItem = ItemManager.getInstance().getItemType(type);
-        if (!(civItem instanceof RegionType regionType)) return err(s, "not a region type: " + type);
-        Location loc = new Location(world(a, 5), Double.parseDouble(a[2]), Double.parseDouble(a[3]), Double.parseDouble(a[4]));
-        HashMap<UUID, String> people = new HashMap<>();
-        people.put(SYNTHETIC_OWNER, "owner");
-        @SuppressWarnings("unchecked")
-        HashMap<String, String> effects = (HashMap<String, String>) regionType.getEffects().clone();
-        Region region = new Region(regionType.getProcessedName(), people, loc,
-                new int[] { 3, 3, 3, 3, 3, 3 }, effects, 0);
-        RegionManager.getInstance().addRegion(region);
-        RegionManager.getInstance().saveRegion(region);
-        return result(s, "created=" + region.getType() + " id=" + region.getId());
+    // ---- reset / teardown (allowed: clean world between scenarios) -----------------
+    // NOTE: the harness intentionally has NO create-region / create-town / claim-chunk.
+    // Creating Civs game state is the actor's job (via production code) so the whole event
+    // chain (player action -> listeners -> managers) is exercised, not bypassed.
+    // /test reset region <x> <y> <z> [world]   |   /test reset block <x> <y> <z> [world]
+    private boolean reset(CommandSender s, String[] a) throws Exception {
+        if (a.length < 2) return err(s, "usage: /test reset <region|block> ...");
+        String what = a[1].toLowerCase(Locale.ROOT);
+        if (what.equals("region")) {
+            if (a.length < 5) return err(s, "usage: /test reset region <x> <y> <z> [world]");
+            Location loc = new Location(world(a, 5), Double.parseDouble(a[2]), Double.parseDouble(a[3]), Double.parseDouble(a[4]));
+            Region r = RegionManager.getInstance().getRegionAt(loc);
+            if (r == null) return result(s, "removed=0");
+            RegionManager.getInstance().removeRegion(r, false, false);
+            return result(s, "removed=1 type=" + r.getType());
+        }
+        if (what.equals("block")) {
+            if (a.length < 5) return err(s, "usage: /test reset block <x> <y> <z> [world]");
+            World w = world(a, 5);
+            int x = (int) Double.parseDouble(a[2]), y = (int) Double.parseDouble(a[3]), z = (int) Double.parseDouble(a[4]);
+            return result(s, "material=" + sync(() -> { Block b = blockAt(w, a, x, y, z); b.setType(Material.AIR); return b.getType().name(); }));
+        }
+        return err(s, "reset target must be region|block");
     }
 
-    // /test removeregion <x> <y> <z> [world]
-    private boolean removeRegion(CommandSender s, String[] a) {
-        if (a.length < 4) return err(s, "usage: /test removeregion <x> <y> <z> [world]");
-        Location loc = new Location(world(a, 4), Double.parseDouble(a[1]), Double.parseDouble(a[2]), Double.parseDouble(a[3]));
-        Region r = RegionManager.getInstance().getRegionAt(loc);
-        if (r == null) return result(s, "removed=0");
-        RegionManager.getInstance().removeRegion(r, false, false);
-        return result(s, "removed=1 type=" + r.getType());
+    private static String jsonStr(String v) {
+        return '"' + (v == null ? "" : v.replace("\\", "\\\\").replace("\"", "\\\"")) + '"';
+    }
+
+    // Read-only JSON snapshots of internal state, for failure evidence.
+    // /test dump <regions|scheduler|economy <player>|inventory <player>>
+    private boolean dump(CommandSender s, String[] a) {
+        if (a.length < 2) return err(s, "usage: /test dump <regions|scheduler|economy <player>|inventory <player>>");
+        String what = a[1].toLowerCase(Locale.ROOT);
+        switch (what) {
+            case "regions": {
+                StringBuilder sb = new StringBuilder("{\"count\":");
+                Set<Region> regions = RegionManager.getInstance().getAllRegions();
+                sb.append(regions.size()).append(",\"regions\":[");
+                int i = 0;
+                for (Region r : regions) {
+                    if (i++ > 0) sb.append(",");
+                    sb.append("{\"type\":").append(jsonStr(r.getType()))
+                      .append(",\"id\":").append(jsonStr(r.getId()))
+                      .append(",\"owners\":").append(r.getOwners().size())
+                      .append(",\"forsale\":").append(r.getForSale()).append("}");
+                    if (i >= 200) break; // cap
+                }
+                return result(s, "json=" + sb.append("]}"));
+            }
+            case "scheduler": {
+                int civsTasks = 0;
+                var civs = getServer().getPluginManager().getPlugin("Civs");
+                for (var task : Bukkit.getScheduler().getPendingTasks()) {
+                    if (civs != null && task.getOwner() == civs) civsTasks++;
+                }
+                return result(s, "json={\"civsPendingTasks\":" + civsTasks + "}");
+            }
+            case "economy": {
+                if (economy == null) return result(s, "json={\"error\":\"no economy\"}");
+                if (a.length < 3) return err(s, "usage: /test dump economy <player>");
+                OfflinePlayer p = resolvePlayer(a[2]);
+                return result(s, "json={\"player\":" + jsonStr(a[2]) + ",\"balance\":" + economy.getBalance(p) + "}");
+            }
+            case "inventory": {
+                if (a.length < 3) return err(s, "usage: /test dump inventory <player>");
+                Player p = Bukkit.getPlayerExact(a[2]);
+                if (p == null) return result(s, "json={\"player\":" + jsonStr(a[2]) + ",\"online\":false}");
+                StringBuilder sb = new StringBuilder("{\"player\":" + jsonStr(a[2]) + ",\"online\":true,\"items\":[");
+                int i = 0;
+                for (ItemStack item : p.getInventory().getContents()) {
+                    if (item == null || item.getType() == Material.AIR) continue;
+                    if (i++ > 0) sb.append(",");
+                    sb.append("{\"material\":").append(jsonStr(item.getType().name())).append(",\"amount\":").append(item.getAmount()).append("}");
+                }
+                return result(s, "json=" + sb.append("]}"));
+            }
+            default: return err(s, "unknown dump target: " + what);
+        }
     }
 
     private boolean saveRegions(CommandSender s) {

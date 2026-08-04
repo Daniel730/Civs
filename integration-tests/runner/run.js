@@ -1,22 +1,23 @@
 #!/usr/bin/env node
 'use strict';
 /**
- * Civs integration-test runner.
+ * Civs integration-test runner (two-layer architecture).
  *
- *   Cursor / CI  ->  Scenario Generator (scenarios/*.js)  ->  this runner
- *        ->  Harness (RCON)  +  Actor (Mineflayer, when supported)  ->  Paper server
- *        ->  Assertions (server-side internal state)  ->  JUnit XML report
+ *   Cursor / CI  ->  Scenario (DSL)  ->  this runner
+ *        ├─ ACTOR (raw keep-alive client / Mineflayer):  performs player actions -> production code
+ *        └─ HARNESS (RCON):                               observes internal state + resets
+ *        ->  Assertions  ->  JUnit XML  (+ evidence bundle on failure)
  *
- * Zero manual interaction: connect, run every scenario, write JUnit XML, exit non-zero on
- * failure. Config via env: RCON_HOST, RCON_PORT, RCON_PASSWORD, MC_HOST, MC_PORT,
- * MC_SERVER_MAJOR, ACTOR (0/1), REPORT (path).
+ * Zero manual interaction. Config via env: RCON_HOST/PORT/PASSWORD, MC_HOST/PORT,
+ * MC_SERVER_MAJOR, ACTOR (0/1, default 1), ACTOR_NAME, SERVER_LOG, REPORT.
  */
 const fs = require('fs');
 const path = require('path');
 const { Harness } = require('./lib/harness');
 const { runScenario } = require('./lib/scenario');
 const { writeJUnit } = require('./lib/junit');
-const { createActor } = require('./lib/actor-mineflayer');
+const { RawKeepAliveActor } = require('./lib/actor');
+const { capture } = require('./lib/evidence');
 
 const cfg = {
   rconHost: process.env.RCON_HOST || '127.0.0.1',
@@ -24,8 +25,10 @@ const cfg = {
   rconPassword: process.env.RCON_PASSWORD || 'civs-itest',
   mcHost: process.env.MC_HOST || '127.0.0.1',
   mcPort: parseInt(process.env.MC_PORT || '25565', 10),
-  serverMajor: process.env.MC_SERVER_MAJOR || null, // e.g. "26.1" to attempt the version patch
-  actor: process.env.ACTOR === '1',
+  serverMajor: process.env.MC_SERVER_MAJOR || '26.1.2',
+  actorEnabled: process.env.ACTOR !== '0',
+  actorName: process.env.ACTOR_NAME || 'Steve',
+  serverLog: process.env.SERVER_LOG || '/tmp/paper.log',
   report: process.env.REPORT || path.join(__dirname, 'reports', 'junit.xml'),
 };
 
@@ -46,20 +49,35 @@ function loadScenarios(filter) {
   await harness.connect();
   const ping = await harness.ping();
   log(`Harness connected: ${ping._raw}`);
-  if (ping.civs !== 'true') log('WARNING: Civs not detected by harness.');
 
-  // Optional player-action actor (Mineflayer). Falls back gracefully when unsupported.
-  let actor = { available: false, reason: 'actor not requested', async disconnect() {} };
-  if (cfg.actor) {
-    actor = await createActor({ host: cfg.mcHost, port: cfg.mcPort, serverMajor: cfg.serverMajor });
-    log(`Actor: ${actor.available ? 'AVAILABLE as ' + actor.username : 'UNAVAILABLE (' + actor.reason + ')'}`);
+  // Actor: holds a REAL online player so actions hit production code.
+  let actor = { available: false, reason: 'actor disabled', name: cfg.actorName, async disconnect() {}, async grantOp() {} };
+  if (cfg.actorEnabled) {
+    actor = new RawKeepAliveActor({
+      host: cfg.mcHost, port: cfg.mcPort, username: cfg.actorName, version: cfg.serverMajor,
+      sendCommand: (c) => harness.raw(c),
+    });
+    await actor.connect();
+    log(`Actor '${cfg.actorName}': ${actor.available ? 'ONLINE (real player)' : 'UNAVAILABLE (' + actor.reason + ')'}`);
+    if (actor.available) { await actor.grantOp(); await new Promise((r) => setTimeout(r, 500)); }
   }
 
-  const scenarios = loadScenarios(filter);
+  const evidenceDir = path.join(path.dirname(cfg.report), 'evidence');
+  const deps = {
+    harness, actor, log, serverLogPath: cfg.serverLog,
+    // Capture an evidence bundle at failure time (before teardown).
+    onFailure: async (ctx, suite) => {
+      const dir = path.join(evidenceDir, suite.name.replace(/[^\w.-]+/g, '_'));
+      await capture(dir, { harness, suite, serverLogPath: cfg.serverLog, playerName: ctx.playerName || actor.name });
+      log(`  evidence captured: ${dir}`);
+    },
+  };
+  const scenarios = loadScenarios(filter).map((s) => (typeof s.build === 'function' ? s.build() : s));
   log(`Running ${scenarios.length} scenario(s)...`);
+
   const suites = [];
   for (const scenario of scenarios) {
-    suites.push(await runScenario(scenario, { harness, actor, log }));
+    suites.push(await runScenario(scenario, deps));
   }
 
   const totals = writeJUnit(suites, cfg.report);
