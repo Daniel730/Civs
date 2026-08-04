@@ -1,0 +1,11 @@
+name: CivsTestHarness
+version: 0.1.0
+main: org.civs.itest.harness.TestHarnessPlugin
+api-version: "1.21"
+load: POSTWORLD
+softdepend: [Civs, Vault]
+description: "Integration-test harness exposing internal-state inspection and assertions for Civs."
+commands:
+  test:
+    description: "Civs integration-test harness command."
+    usage: "/test <ping|money|assert|region|held|inventory|permission|block|spawnentity|scheduler> ..."

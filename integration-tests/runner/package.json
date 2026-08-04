@@ -1,0 +1,18 @@
+{
+  "name": "civs-integration-runner",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Autonomous integration-test runner for Civs on a real Paper server (RCON + optional Mineflayer actor, JUnit XML output).",
+  "type": "commonjs",
+  "bin": { "civs-itest": "run.js" },
+  "scripts": {
+    "test": "node run.js",
+    "test:one": "node run.js --scenario"
+  },
+  "dependencies": {
+    "rcon-client": "^4.2.5"
+  },
+  "optionalDependencies": {
+    "mineflayer": "^4.37.1"
+  }
+}
