@@ -106,3 +106,49 @@ in-repo, integrate directly with Civs' item/region model (a generic teleport/spa
 plugin cannot create Civs regions), and let a console operator drive the dumb player
 without mouse control. If broader world manipulation is later needed, WorldEdit/FAWE
 (already a Civs dependency) is the maintained community choice.
+
+**S2.5 — Confirmed dumb player can log in, move, and interact with a structure.**
+The real client joined the server as `Tester` (RPGServer boss-bar + Civs tutorial HUD
+visible), was moved via WASD, and a `shelter` structure was placed at its feet via
+`/cv give Tester shelter` + `/cv placeregion Tester shelter` (server log: "Region
+shelter created ... placeregion OK shelter @ -10,-60,6"). Right-clicking the
+structure's center chest opened the Civs region GUI. Example log saved as an
+artifact. RegionCreatedEvent fires into RPGServer (companion loaded "Civs detectado").
+
+---
+
+## Stage 3 / 4 — Structures & usability (in progress)
+
+**Reload vs restart (important environment learning).** `/cv reload` only re-reads
+Civs YAML/config; it does NOT reload the plugin jar. Java code changes require a full
+server restart to take effect. (Discovered when a rebuilt jar's fixes appeared not to
+apply after `cv reload`.) Documented so future agents don't chase phantom failures.
+
+**S4.1 — Usability issue list (from driving the dumb player through the region GUI).**
+Prioritised by impact (what most confuses/blocks a player first):
+1. **[High] Region GUI title was the raw internal name "RegionType"** — meaningless to
+   players; every structure's info screen looked identical/cryptic.
+2. [Med] Payout icons appear with terse numbered labels; minor.
+3. [Med] Effects shown as a raw key list (e.g. `block_break`), not friendly text.
+4. [Low] Lots of empty GUI slots; weak visual grouping.
+Chose #1 first: highest impact, self-contained, and precisely verifiable.
+
+**S4.2 — Fix #1: region menu title now shows the structure name.**
+`CustomMenu.createMenu` used `getName()` (internal id) as the inventory title for
+*every* menu. Added an overridable `getMenuTitle(civilian)` (default unchanged =
+`getName()`, so all other menus keep their current titles) and overrode it in
+`RegionTypeMenu` to return `regionType.getDisplayName(player)`. Verified safe: click
+routing keys off `MenuManager.openMenus` (menu name), not the inventory title.
+Test: `RegionTypeMenuTitleTest` (2). Live-verified: the shelter GUI title now reads
+**"Shelter"** (was "RegionType") — screen recording saved.
+
+**S3/S4 bug found + fixed — per-tick ClassCastException.**
+While a player was online, `cv reload` made the mana scheduler spam a
+`ClassCastException` every tick: `ClassManager.createDefaultClass` blindly cast
+`getItemType(default-class)` to `ClassType`. After a reload the configured
+`default-class` resolved to a non-class item, so the cast threw ~20x/sec.
+**Fix:** `createDefaultClass` now resolves the class defensively and falls back to any
+loaded `ClassType` (warning once) instead of crashing, so mana/spells keep working.
+Test: `DefaultClassFallbackTest` (2). Live-verified after restart: 0 heartbeat errors.
+The root cause of the misresolution is config-set specific; the defensive fix is
+correct regardless and prevents a tick-rate crash loop.
