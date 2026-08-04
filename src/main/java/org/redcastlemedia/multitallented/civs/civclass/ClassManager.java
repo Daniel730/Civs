@@ -235,11 +235,48 @@ public class ClassManager {
         }
     }
 
+    private boolean warnedInvalidDefaultClass = false;
+
     public CivClass createDefaultClass(UUID uuid) {
         String className = ConfigManager.getInstance().getDefaultClass();
         Civilian civilian = CivilianManager.getInstance().getCivilian(uuid);
-        ClassType classType = (ClassType) ItemManager.getInstance().getItemType(className);
+        ClassType classType = resolveDefaultClassType(className);
+        if (classType == null) {
+            return null;
+        }
         return createNewClass(civilian, classType);
+    }
+
+    /**
+     * Resolves the configured default class name to a {@link ClassType}. Historically
+     * this blindly cast {@code getItemType(name)} to {@code ClassType}, which threw a
+     * {@link ClassCastException} every scheduler tick when {@code default-class} was
+     * missing or pointed at a non-class item type (e.g. a region). Instead, fall back
+     * to any loaded class type so mana/spells keep working, warning only once.
+     */
+    private ClassType resolveDefaultClassType(String className) {
+        CivItem configured = className == null ? null : ItemManager.getInstance().getItemType(className);
+        if (configured instanceof ClassType classType) {
+            return classType;
+        }
+        for (CivItem civItem : ItemManager.getInstance().getAllItemTypes().values()) {
+            if (civItem instanceof ClassType fallback) {
+                if (!warnedInvalidDefaultClass) {
+                    Civs.logger.log(Level.WARNING,
+                            "Configured default-class \"{0}\" is not a valid class type; falling back to \"{1}\".",
+                            new Object[] { className, fallback.getProcessedName() });
+                    warnedInvalidDefaultClass = true;
+                }
+                return fallback;
+            }
+        }
+        if (!warnedInvalidDefaultClass) {
+            Civs.logger.log(Level.WARNING,
+                    "No class types are loaded; cannot assign a default class (configured default-class=\"{0}\").",
+                    className);
+            warnedInvalidDefaultClass = true;
+        }
+        return null;
     }
 
     public CivClass createNewClass(Civilian civilian, ClassType classType) {
