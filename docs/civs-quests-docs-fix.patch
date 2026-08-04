@@ -1,0 +1,74 @@
+From bb0c1d9f08634f55df9b7ac2c68b9602d0f26369 Mon Sep 17 00:00:00 2001
+From: Cursor Agent <cursoragent@cursor.com>
+Date: Tue, 4 Aug 2026 10:52:08 +0000
+Subject: [PATCH] docs: fix build-breaking + stale references for new
+ contributors
+
+- AGENTS.md referenced ../Civs-1.11.6/target/civs-1.11.6.jar, but pom.xml requires
+  civs-1.11.7.jar; nothing compiled if you followed the doc. Corrected to 1.11.7.
+- README claimed 'zero automated tests' but ~13 JUnit/Mockito test classes exist
+  (run via mvn test); corrected.
+- README said 3 bundled quests; the pack now ships 56. Corrected the counts.
+---
+ AGENTS.md | 6 +++---
+ README.md | 6 +++---
+ 2 files changed, 6 insertions(+), 6 deletions(-)
+
+diff --git a/AGENTS.md b/AGENTS.md
+index 274d929..1ff3bbb 100644
+--- a/AGENTS.md
++++ b/AGENTS.md
+@@ -13,8 +13,8 @@ apply on the cloud VM — use the Linux locations below.
+   script) do not, so invoke Maven as `JAVA_HOME=/opt/jdk-25 /opt/maven/bin/mvn ...`.
+ 
+ ### The Civs dependency JAR (most important gotcha)
+-`pom.xml` has a **`system`-scoped** dependency on `../Civs-1.11.6/target/civs-1.11.6.jar`
+-(resolved on the VM as `/Civs-1.11.6/target/civs-1.11.6.jar`). Nothing compiles without it.
++`pom.xml` has a **`system`-scoped** dependency on `../Civs-1.11.6/target/civs-1.11.7.jar`
++(resolved on the VM as `/Civs-1.11.6/target/civs-1.11.7.jar`). Nothing compiles without it.
+ - Always use the **custom `Daniel730/Civs` fork** (cloned at `/Civs-1.11.6`, remote `origin`
+   = `https://github.com/Daniel730/Civs.git`) — **never** the upstream `Multitallented/Civs`
+   (kept only as the `upstream` remote). This fork is actively maintained by another agent, so
+@@ -32,7 +32,7 @@ apply on the cloud VM — use the Linux locations below.
+   `fr.neatmonster:ncpplugin:1.1-SNAPSHOT`.
+ - To rebuild the Civs jar (only needed if the Civs source changes):
+   `cd /Civs-1.11.6 && JAVA_HOME=/opt/jdk-25 /opt/maven/bin/mvn -q -B package -DskipTests`
+-  then it lands at `/Civs-1.11.6/target/civs-1.11.6.jar`.
++  then it lands at `/Civs-1.11.6/target/civs-1.11.7.jar`.
+ 
+ ### Build / test / package (run from repo root)
+ - Compile: `JAVA_HOME=/opt/jdk-25 /opt/maven/bin/mvn -q -B -DskipTests compile`
+diff --git a/README.md b/README.md
+index 06a40c4..ea0803a 100644
+--- a/README.md
++++ b/README.md
+@@ -13,7 +13,7 @@ Plugin Paper para adicionar uma camada RPG ao servidor Civs, com quests iniciais
+ | Área | Descrição |
+ | --- | --- |
+ | **Bootstrap** | Carrega config, hooks, quests, listeners, autosave e `/rpg reload`. |
+-| **Quests YAML** | Lê `plugins/RPGServer/quests/*.yml`; na 1ª execução copia as 3 quests empacotadas. |
++| **Quests YAML** | Lê `plugins/RPGServer/quests/*.yml`; na 1ª execução copia as quests empacotadas (56 no pacote atual). |
+ | **Objetivo `build_region`** | Escuta `RegionCreatedEvent` do Civs e compara `regionType.getKey()` com o YAML. |
+ | **Objetivo `skill_level`** | Escuta `SkillLevelUpEvent` do AuraSkills e compara skill + nível. |
+ | **Progresso passivo** | Não há comando para aceitar quest — o avanço é automático ao construir regiões ou subir skills. |
+@@ -40,7 +40,7 @@ Plugin Paper para adicionar uma camada RPG ao servidor Civs, com quests iniciais
+ | **`integrations.auraskills.sync-on-join`** | Só no YAML; sem sync de skills ao entrar. |
+ | **`settings.debug`**, **`progression.default-track`** | Presentes no config sem efeito. |
+ | **Tutorial Civs nativo** | Objetivos espelham os tutoriais, mas **não ligam** ao fluxo de menus do Civs. |
+-| **Testes automatizados** | Zero testes no projeto. |
++| **Cobertura de testes** | Parcial — há ~13 classes de teste (JUnit/Mockito) em `src/test`; rode com `mvn test`. Muitos fluxos ainda não têm cobertura. |
+ 
+ > **Nota:** construir um `shelter` conta para guerreiro **e** construtor (objetivo partilhado). O arquétipo fica fixado na primeira quest em que houver progresso.
+ 
+@@ -203,7 +203,7 @@ O plugin cria automaticamente:
+ 
+ ```text
+ plugins/RPGServer/config.yml
+-plugins/RPGServer/quests/          # 3 quests default (warrior, builder, merchant)
++plugins/RPGServer/quests/          # quests empacotadas (56 no pacote atual; ex.: warrior, builder, merchant)
+ plugins/RPGServer/players/         # um YAML por jogador
+ ```
+ 
+-- 
+2.43.0
+

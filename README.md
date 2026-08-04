@@ -67,68 +67,120 @@ Para resolver isso de forma simples e 100% garantida (especialmente no Windows s
    ```cmd
    mvn install:install-file -Dfile=NoCheatPlus.jar -DgroupId=com.github.Updated-NoCheatPlus.NoCheatPlus -DartifactId=nocheatplus -Dversion=1.5 -Dpackaging=jar
    ```
-*(O Maven criará o arquivo POM necessário automaticamente).*
+*(O Maven criará o arquivo POM necessário automaticamente.)*
 
----
-
-#### Métodos Alternativos via Scripts:
-
-##### No Windows (PowerShell):
-```powershell
-# Criar pasta temporária
-New-Item -ItemType Directory -Force -Path "$env:TEMP\ncp"
-
-# Baixar o JAR oficial do NoCheatPlus
-Invoke-WebRequest -Uri "https://github.com/Updated-NoCheatPlus/NoCheatPlus/releases/download/v1.5/NoCheatPlus.jar" -OutFile "$env:TEMP\ncp\NoCheatPlus.jar"
-
-# Criar o arquivo POM mínimo
-@'
-<project xmlns="http://maven.apache.org/POM/4.0.0">
-    <modelVersion>4.0.0</modelVersion>
-    <groupId>com.github.Updated-NoCheatPlus.NoCheatPlus</groupId>
-    <artifactId>nocheatplus</artifactId>
-    <version>1.5</version>
-    <packaging>jar</packaging>
-</project>
-'@ | Out-File -FilePath "$env:TEMP\ncp\ncp-clean-pom.xml" -Encoding utf8
-
-# Instalar no repositório Maven local
-mvn install:install-file -Dfile="$env:TEMP\ncp\NoCheatPlus.jar" -DpomFile="$env:TEMP\ncp\ncp-clean-pom.xml"
-```
-
-##### No Windows (CMD / Prompt de Comando automatizado):
-```cmd
-mkdir %TEMP%\ncp
-curl -sL -o %TEMP%\ncp\NoCheatPlus.jar https://github.com/Updated-NoCheatPlus/NoCheatPlus/releases/download/v1.5/NoCheatPlus.jar
-echo ^<project xmlns="http://maven.apache.org/POM/4.0.0"^>^<modelVersion^>4.0.0^</modelVersion^>^<groupId^>com.github.Updated-NoCheatPlus.NoCheatPlus^</groupId^>^<artifactId^>nocheatplus^</artifactId^>^<version^>1.5^</version^>^<packaging^>jar^</packaging^>^</project^> > %TEMP%\ncp\ncp-clean-pom.xml
-mvn install:install-file -Dfile=%TEMP%\ncp\NoCheatPlus.jar -DpomFile=%TEMP%\ncp\ncp-clean-pom.xml
-```
-
-##### No Linux / macOS / WSL:
+**Alternativa Linux / macOS / WSL (sem navegador, tudo pelo terminal):**
 ```bash
 curl -sL -o /tmp/NoCheatPlus.jar https://github.com/Updated-NoCheatPlus/NoCheatPlus/releases/download/v1.5/NoCheatPlus.jar
 printf '<project xmlns="http://maven.apache.org/POM/4.0.0"><modelVersion>4.0.0</modelVersion><groupId>com.github.Updated-NoCheatPlus.NoCheatPlus</groupId><artifactId>nocheatplus</artifactId><version>1.5</version><packaging>jar</packaging></project>' > /tmp/ncp-clean-pom.xml
 mvn install:install-file -Dfile=/tmp/NoCheatPlus.jar -DpomFile=/tmp/ncp-clean-pom.xml
 ```
 
+> Você só precisa fazer isso **uma vez** por máquina — o JAR fica no seu repositório Maven local (`~/.m2`).
+
 
 ### Como Compilar
 Com as dependências resolvidas e o JDK 25 configurado:
 
-1. Abra o terminal no diretório raiz do Civs (`Civs-1.11.6`).
-2. Execute o comando:
+1. Abra o terminal na pasta raiz do projeto (a pasta que contém o `pom.xml`).
+   Se você baixou um release, essa pasta pode se chamar `Civs-1.11.6`; se clonou o
+   repositório, ela se chama `Civs`. O nome da pasta não importa para compilar — mas
+   veja a nota abaixo se você também for compilar o RPG complementar.
+2. Execute:
    ```bash
    mvn clean package -DskipTests
    ```
-3. O JAR compilado e com as dependências integradas (shaded) será gerado em:
-   `target/civs-1.11.7.jar`
+3. O JAR final (shaded, com as dependências embutidas) é gerado em
+   `target/civs-<versão>.jar` — atualmente `target/civs-1.11.7.jar`. A versão vem do
+   `<version>` no `pom.xml`, então confira lá se este número mudar.
 
 ### Executar Testes
-Para rodar a suite de testes automatizados:
+Para rodar a suíte de testes automatizados:
 ```bash
-mvn test
+mvn test          # suíte completa
+mvn test -Dtest=RegionsTests   # apenas uma classe
 ```
-*(Nota: O teste `RegionsTests.dailyRegionShouldUpkeepDaily` pode falhar de forma intermitente quando a suite completa é executada devido ao estado compartilhado do gerenciador de regiões. O teste passa de forma consistente quando rodado de forma isolada com `mvn test -Dtest=RegionsTests`.)*
+*(Nota: o teste `RegionsTests.dailyRegionShouldUpkeepDaily` pode falhar de forma
+intermitente **apenas** quando a suíte completa roda, por causa de estado compartilhado
+entre os gerenciadores singletons. Ele passa de forma consistente isolado com
+`mvn test -Dtest=RegionsTests`. Não é um bug do seu ambiente.)*
+
+---
+
+## Rodar em um servidor Paper (ambiente de teste)
+
+Compilar gera o JAR, mas para **ver o plugin funcionando** você precisa carregá-lo em um
+servidor Paper. Passo a passo mínimo, do zero:
+
+1. **Servidor:** baixe o **Paper 26.1.2** (mesma versão-alvo do `pom.xml`). A API v2 antiga
+   do PaperMC foi descontinuada; use a API v3 "fill" para obter o link do JAR:
+   ```bash
+   curl -s https://fill.papermc.io/v3/projects/paper/versions/26.1.2/builds/72 \
+     | grep -o 'https://[^"]*paper-26.1.2-72.jar' | head -1   # -> URL do download
+   ```
+2. **Dependências obrigatórias/recomendadas** (coloque os JARs em `plugins/`):
+   - **Vault** (obrigatório — Civs depende dele para economia): baixe o release de
+     `MilkBowl/Vault`.
+   - **Um provedor de economia** (ex.: EssentialsX) — sem ele, `Civs.econ` fica nulo e
+     compras de loja/região/cidade, impostos e recompensas não funcionam. Para testes,
+     qualquer plugin que registre um `Economy` no Vault serve.
+   - **Civs** (o JAR que você compilou).
+3. **Configuração:** aceite a EULA (`eula.txt` com `eula=true`) e, para testes locais,
+   use `online-mode=false` no `server.properties`.
+4. **Suba o servidor:** `java -Xmx2G -jar paper.jar --nogui`. No log você deve ver
+   `Civs Version: 1.11.7 is now enabled!` e `Hooked into Economy plugin: ...`.
+5. **Config de produção (opcional):** o pacote `Civs_servidor/` contém a configuração
+   completa (menus, item-types, cidades, regiões, traduções). Copie o conteúdo dele para
+   `plugins/Civs/` para carregar tudo. Regiões/cidades salvas apontam para um UUID de
+   mundo específico, então em um mundo novo você verá erros esperados de `Null world` /
+   "invalid region" — o Civs ignora essas entradas com segurança.
+6. **Teste no jogo:** entre com um cliente, use `/cv` para abrir o menu. Comandos de
+   admin úteis para QA (OP ou `civs.admin`): `/cv give <player> <itemType> [qty]` e
+   `/cv placeregion <player> <regionType> [x y z]` para receber itens e posicionar
+   estruturas sem depender do mouse.
+
+> Dica: `/cv reload` recarrega apenas a **configuração** do Civs, não o JAR. Ao trocar o
+> JAR (código Java), **reinicie o servidor** para as mudanças valerem.
+
+## RPG complementar (civs-quests)
+
+Existe um plugin complementar que adiciona uma camada de RPG/quests por cima do Civs:
+[`Daniel730/civs-quests`](https://github.com/Daniel730/civs-quests) (plugin `RPGServer`).
+Ele **depende do JAR do Civs** (dependência Maven de escopo `system`) e escuta eventos do
+Civs (ex.: `RegionCreatedEvent`) para progredir quests. Se você for compilar os dois:
+
+- O `pom.xml` do `civs-quests` espera o JAR do Civs em
+  `../Civs-1.11.6/target/civs-<versão>.jar` (pastas **lado a lado**, com a do Civs chamada
+  `Civs-1.11.6`). Compile o Civs **primeiro**, depois o `civs-quests`.
+- No servidor de teste, coloque `Civs.jar` **e** `RPGServer.jar` juntos em `plugins/`.
+
+## Estrutura do código (visão geral)
+
+Civs é um **único módulo Maven** que gera um JAR de plugin Bukkit/Paper. Pontos de
+entrada e organização:
+
+```
+src/main/java/org/redcastlemedia/multitallented/civs/
+├── Civs.java            # classe principal do plugin (onEnable, hooks, logger)
+├── items/               # ItemManager + tipos de item (CivItem, RegionType, ClassType...)
+├── regions/             # Region, RegionType, RegionManager, effects/* (estruturas)
+├── towns/               # Town, TownManager, governos
+├── menus/               # CustomMenu + telas @CivsMenu; YAML das telas em menus/
+├── commands/            # comandos @CivsCommand (ex.: GiveCommand, PlaceRegionCommand)
+├── civclass/            # sistema de classes (ClassManager, ClassType) e mana
+├── spells/ · skills/    # magias e skills
+├── scheduler/           # tarefas periódicas (upkeep de regiões, mana, etc.)
+└── localization/        # traduções
+```
+
+Conceitos-chave:
+- **Estruturas = "region types"**: cada estrutura é um `type: region` em
+  `Civs_servidor/item-types/**` (174 no total). Ver `docs/STRUCTURE-TEST-REPORT.md`.
+- **Identidade de região** é a localização (`worldUuid~x~y~z`), não o nome exibido.
+- **Sem NMS**: apenas API do Paper + hooks opcionais (Vault, WorldEdit/FAWE, Dynmap).
+- **Config autoritativa** fica em `Civs_servidor/` (a pasta `Civs/` é o pacote-bundle
+  padrão). Menus são roteados pelo nome interno do menu, não pelo título exibido.
+- Para orientações de desenvolvimento no ambiente de nuvem, veja `AGENTS.md`.
 
 ---
 
