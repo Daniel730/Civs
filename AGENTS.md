@@ -1,8 +1,9 @@
 # AGENTS.md
 
 Civs is a Bukkit/Paper RPG plugin (land management via Towns & Regions). It is a
-single Maven module that builds one shaded plugin jar (`target/civs-1.11.6.jar`)
-which is loaded by a Paper server. Target runtime: **Paper 26.1.2 / Java 25**.
+single Maven module that builds one shaded plugin jar (`target/civs-<version>.jar`,
+currently `civs-1.11.7.jar` — the version comes from `pom.xml`) which is loaded by a
+Paper server. Target runtime: **Paper 26.1.2 / Java 25**.
 
 For architecture, workflow, and migration status see `.cursor/skills/civs-paper-migration/SKILL.md`,
 `docs/MIGRATION-STATUS.md`, and `README.md`.
@@ -20,8 +21,8 @@ normally do NOT need to reinstall them.
   Note: the distro's apt Java is 21 — do not use it; this project requires Java 25.
 
 ### Build / test / run
-- Compile + build the plugin jar: `mvn -B -DskipTests package` → `target/civs-1.11.6.jar`.
-- Full test suite: `mvn -B test` (293 tests, Mockito 5.23.0 for Java 25).
+- Compile + build the plugin jar: `mvn -B -DskipTests package` → `target/civs-1.11.7.jar`.
+- Full test suite: `mvn -B test` (~427 tests, 6 skipped; Mockito 5.23.0 for Java 25).
 - Run a subset: `mvn -B test -Dtest=RegionsTests`.
 - There is no lint config beyond the compiler; `mvn -B -DskipTests compile` is the
   effective lint gate.
@@ -50,10 +51,26 @@ normally do NOT need to reinstall them.
   (this is what the update script runs).
 
 ### Running the plugin on a local Paper server
-A ready-to-run test server lives at `/workspace/testserver` (git-ignored):
-`paper.jar` (Paper 26.1.2 build 72), `plugins/Vault.jar` (hard dependency),
-`plugins/Civs.jar`, `eula.txt`, and an offline-mode `server.properties`.
-- Rebuild + redeploy the plugin: `mvn -B -DskipTests package && cp target/civs-1.11.6.jar testserver/plugins/Civs.jar`.
+The test server lives at `/workspace/testserver` (git-ignored). It is NOT preserved
+across cloud runs: `/workspace` is re-cloned each session and git-ignored paths are
+wiped, and the update script only refreshes `~/.m2`. So `testserver/` (paper.jar,
+Vault.jar, etc.) will usually be absent on a fresh pod and must be recreated once per
+run to exercise the "run the plugin" flow (the `mvn` compile/test/package flow does
+NOT need it). Only `~/.m2` (deps, incl. the `nocheatplus` fixup) persists.
+
+Recreate it (all hosts are reachable from the VM):
+```
+mkdir -p /workspace/testserver/plugins && cd /workspace/testserver
+# Paper 26.1.2 build 72. NOTE: the old v2 API (api.papermc.io/v2) is SUNSET (HTTP 410);
+# use the v3 "fill" API. Get the download URL, then fetch the jar:
+curl -s https://fill.papermc.io/v3/projects/paper/versions/26.1.2/builds/72 \
+  | grep -o 'https://[^"]*paper-26.1.2-72.jar' | head -1   # -> download URL
+curl -sL -o paper.jar "<that url>"
+curl -sL -o plugins/Vault.jar https://github.com/MilkBowl/Vault/releases/download/1.7.3/Vault.jar
+echo "eula=true" > eula.txt
+printf 'online-mode=false\nlevel-type=minecraft:flat\nspawn-protection=0\n' > server.properties
+```
+- Rebuild + redeploy the plugin: `mvn -B -DskipTests package && cp target/civs-1.11.7.jar testserver/plugins/Civs.jar`.
 - Start it in a tmux session and drive it from the console:
   `cd testserver && java -Xmx2G -jar paper.jar --nogui`.
 - Console is OP, so admin actions like `cv reload` and `cv newday` work from the
