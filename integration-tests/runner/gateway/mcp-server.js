@@ -10,6 +10,8 @@
  * Never maps "command accepted" to PASS — returns structured status:
  *   OBSERVED | PASS | FAIL | BLOCKED | UNKNOWN
  */
+const fs = require('fs');
+const path = require('path');
 const { McpServer } = require('@modelcontextprotocol/sdk/server/mcp.js');
 const { StdioServerTransport } = require('@modelcontextprotocol/sdk/server/stdio.js');
 const { z } = require('zod');
@@ -25,6 +27,10 @@ const cfg = {
   actorName: process.env.ACTOR_NAME || 'Steve',
   version: process.env.MC_SERVER_MAJOR || '26.1.2',
 };
+
+const REPORTS_DIR = process.env.GATEWAY_REPORTS_DIR
+  || path.join(__dirname, '..', 'reports');
+const TOOL_LOG = path.join(REPORTS_DIR, 'gateway-tools.jsonl');
 
 let harness = null;
 let actor = null;
@@ -42,6 +48,68 @@ function envelope(status, action, payload = {}, reason = null) {
 
 function textResult(obj) {
   return { content: [{ type: 'text', text: JSON.stringify(obj, null, 2) }] };
+}
+
+/** Observability: model-facing tool args/results + latency. Never logs secrets. */
+function logTool(entry) {
+  try {
+    fs.mkdirSync(REPORTS_DIR, { recursive: true });
+    const row = {
+      ts: new Date().toISOString(),
+      player: cfg.actorName,
+      ...entry,
+    };
+    fs.appendFileSync(TOOL_LOG, JSON.stringify(row) + '\n');
+  } catch (e) {
+    console.error('gateway log warn:', e.message);
+  }
+}
+
+function withToolLog(toolName, args, fn) {
+  const t0 = Date.now();
+  return Promise.resolve()
+    .then(fn)
+    .then((result) => {
+      let status = 'UNKNOWN';
+      let preview = null;
+      try {
+        const text = result && result.content && result.content[0] && result.content[0].text;
+        const parsed = text ? JSON.parse(text) : null;
+        status = (parsed && parsed.status) || status;
+        const r = parsed && parsed.result;
+        const pos = (r && (r.position || r.pos || r.location))
+          || (parsed && (parsed.position || parsed.pos))
+          || null;
+        // Common harness shape: { x, y, z } at top of result
+        const xyz = pos || (r && typeof r.x === 'number' ? { x: r.x, y: r.y, z: r.z } : null);
+        preview = parsed && {
+          status: parsed.status,
+          action: parsed.action,
+          reason: parsed.reason || null,
+          position: xyz,
+          success: r && typeof r.success === 'boolean' ? r.success : undefined,
+          final_distance: r && r.final_distance != null ? r.final_distance : undefined,
+        };
+      } catch (_) { /* ignore parse */ }
+      logTool({
+        tool: toolName,
+        args: args || {},
+        status,
+        latency_ms: Date.now() - t0,
+        result_preview: preview,
+      });
+      return result;
+    })
+    .catch((err) => {
+      logTool({
+        tool: toolName,
+        args: args || {},
+        status: 'FAIL',
+        latency_ms: Date.now() - t0,
+        error: String(err && err.message ? err.message : err),
+      });
+      throw err;
+    });
 }
 
 async function ensureSession() {
@@ -88,12 +156,12 @@ server.tool(
   'minecraft_observe',
   'Observe online player state (position, health, inventory). Verified via /test observe.',
   {},
-  async () => {
+  async () => withToolLog('minecraft_observe', {}, async () => {
     const blocked = await ensureSession();
     if (blocked) return textResult(blocked);
     const r = await harness.cap.observe(cfg.actorName);
     return textResult(fromCap('observe', r));
-  },
+  }),
 );
 
 server.tool(
@@ -106,12 +174,16 @@ server.tool(
     timeout_ms: z.number().optional(),
     arrive: z.number().optional(),
   },
-  async ({ x, y, z, timeout_ms, arrive }) => {
-    const blocked = await ensureSession();
-    if (blocked) return textResult(blocked);
-    const r = await harness.cap.moveTo(cfg.actorName, x, y, z, timeout_ms ?? 15000, arrive ?? 1.5);
-    return textResult(fromCap('move_to', r));
-  },
+  async ({ x, y, z, timeout_ms, arrive }) => withToolLog(
+    'minecraft_move_to',
+    { x, y, z, timeout_ms, arrive },
+    async () => {
+      const blocked = await ensureSession();
+      if (blocked) return textResult(blocked);
+      const r = await harness.cap.moveTo(cfg.actorName, x, y, z, timeout_ms ?? 15000, arrive ?? 1.5);
+      return textResult(fromCap('move_to', r));
+    },
+  ),
 );
 
 server.tool(
@@ -162,11 +234,11 @@ server.tool(
   'minecraft_rpg_observe',
   'Observe RPGServer profile (archetype, active/completed quests) via /test rpg observe.',
   {},
-  async () => {
+  async () => withToolLog('minecraft_rpg_observe', {}, async () => {
     const blocked = await ensureSession();
     if (blocked) return textResult(blocked);
     return textResult(fromCap('rpg_observe', await harness.cap.rpgObserve(cfg.actorName)));
-  },
+  }),
 );
 
 server.tool(

@@ -1,0 +1,102 @@
+# Minecraft Agent model policy — empirically selected 2026-08-10
+# selection_method: live Ollama probes on WSL desktop-vioren5-1 (RTX 3060 12GB)
+# Never silently switch to an unprobed model.
+
+selection_method:
+  type: benchmarked
+  date: 2026-08-10
+  hardware: "WSL ollama @ 100.69.136.92:11434; NVIDIA GeForce RTX 3060 12GB; host RAM ~15Gi"
+  probes:
+    - scripts/_probe_focused.py
+    - scripts/_probe_ollama_models.py
+  reports_glob: integration-tests/runner/reports/model-probe-*.json*
+  notes:
+    - "Hermes Agent v0.19.0 requires model.context_length >= 65536 (FACT from CLI error)."
+    - "systemd ollama override sets OLLAMA_CONTEXT_LENGTH=65536 and OLLAMA_KEEP_ALIVE=24h (FACT)."
+    - "Short-ctx aliases *-mc (num_ctx=8192) win local API probes but Hermes rejects them (<64k)."
+    - "Do not load multiple 14B models concurrently on this GPU."
+
+ollama:
+  base_url: http://100.69.136.92:11434/v1
+  # Hostname desktop-vioren5-1 often fails Windows DNS — prefer Tailscale IP.
+
+roles:
+  fast_agent:
+    purpose: "Default Minecraft QA / MCP tool loops (observe, move, rpg)."
+    preferred: hermes-fast
+    fallback: hermes-agent
+    never_silent_switch: true
+    justification: >
+      Focused probes (think disabled, num_ctx=4096): hermes-fast and hermes-fast-mc
+      returned PONG, chose minecraft_rpg_observe first, no hallucinated tool names on
+      the initial tool-selection prompt. hermes-agent hallucinated get_available_quests
+      on FAIL recovery. hermes-coder hallucinated minecraft_rpg_check_quests.
+      hermes-fast is lighter (~9.7B) than hermes-agent (~12B) — better for 12GB + Paper.
+
+  planner:
+    purpose: "Multi-step recovery / plan after FAIL tool results."
+    preferred: hermes-fast
+    fallback: hermes-qwen14
+    never_silent_switch: true
+    justification: >
+      Same family as fast_agent for now. hermes-qwen14 not fully scored under contention;
+      treat as fallback only after a fresh probe. Do not use hermes-agent as planner until
+      recovery hallucination is re-tested clean.
+
+  qa_explorer:
+    purpose: "Exploratory quest/world investigation via MCP only."
+    preferred: hermes-fast
+    fallback: hermes-agent
+    never_silent_switch: true
+    justification: "Same evidence as fast_agent; keep one strong + one light loaded max."
+
+  code_analysis:
+    purpose: "Code patches / repo analysis only — NOT default Minecraft brain."
+    preferred: hermes-coder
+    fallback: hermes-qwen14
+    never_silent_switch: true
+    justification: >
+      Coder models are for code_analysis. Probes show tool-name hallucination on
+      Minecraft recovery prompts; do not route gameplay MCP loops here.
+
+  # director: omitted — no dedicated director model probed/required for P1.
+  vision:
+    purpose: "Optional screenshot/vision tasks only."
+    preferred: hermes-fast
+    fallback: null
+    never_silent_switch: true
+    justification: >
+      hermes-fast (qwen3.5:9b) advertises vision capability. Only enable Hermes vision
+      toolset when needed — vision mmproj + ctx 65536 was OBSERVED to pin ~9.5GB VRAM.
+
+hermes_windows:
+  # Machine-local; not committed secrets. Documented for operators.
+  recommended_config:
+    model.provider: custom
+    model.default: hermes-fast
+    model.base_url: http://100.69.136.92:11434/v1
+    model.context_length: 65536   # Hermes minimum; NOT a green light for huge prompts
+    moa.enabled: false
+    agent.max_turns: 20
+  recommended_cli_toolsets_disabled:
+    - browser
+    - computer_use
+    - image_gen
+    - vision
+    - tts
+    - web
+    - delegation
+    - cronjob
+    - session_search
+    - skills
+    - code_execution
+    - terminal
+    - file
+  oneshot_hints:
+    - "Run from a neutral cwd with --ignore-rules to avoid AGENTS.md bloating the prompt."
+    - "Keep bot-server Hermes floods off this Ollama during Minecraft E2E."
+
+blocked_until_sudo:
+  - action: "Edit /etc/systemd/system/ollama.service.d/override.conf"
+    change: "OLLAMA_CONTEXT_LENGTH=8192 (or 16384) and OLLAMA_KEEP_ALIVE=5m"
+    why: "Default 65536 ctx + 24h keep-alive starves RTX 3060 and causes near-hang generations."

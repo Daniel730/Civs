@@ -21,7 +21,7 @@ Role → model mapping: **`docs/HERMES-MODELS.md`** (+ `integration-tests/runner
 | Install method | git | FACT |
 | Home / config | `C:\Users\Danie\AppData\Local\hermes\` (`config.yaml`, `SOUL.md`, sessions, skills) | FACT |
 | Python | 3.11.15 | FACT |
-| Configured model | `hermes-agent` via **custom** OpenAI-compatible Ollama `http://100.69.136.92:11434/v1` | **FACT** (post-config; see §3) |
+| Configured model | `hermes-fast` via **custom** OpenAI-compatible Ollama `http://100.69.136.92:11434/v1` | **FACT** (benchmarked; see `docs/HERMES-MODELS.md`) |
 | MCP servers configured | `minecraft-qa` (10 tools, enabled) | **PASS** (`hermes mcp list` / `mcp test`) |
 
 ### WSL (dansilva)
@@ -79,19 +79,21 @@ Non-interactive config: `hermes config set <key> <value>` (**FACT** from `hermes
 8. **`hermes mcp add` is interactive** for tool enable (`Enable all N tools? [Y/n/select]`). Non-interactive: pipe `Y` on stdin (**OBSERVED**). There is no `--yes` flag in `hermes mcp add --help`.
 9. **Windows `--env` alone may not reach Node inside WSL** — put `KEY=VAL` on the WSL command via `wsl.exe -e env …` (**OBSERVED** working pattern).
 
-### One-shot / MCP probes (2026-08-10) — UPDATED
+### One-shot / MCP probes (2026-08-10) — UPDATED (evening unblock)
 
 | Check | Result | Label |
 |-------|--------|-------|
 | Prior MoA default `poolside/laguna-s-2.1:free` | preset missing; Active MoA off | BLOCKED (resolved by switching provider) |
-| `--provider openrouter` without key | `No LLM provider configured.` | BLOCKED (unused now) |
-| Config → custom Ollama Tailscale IP + `hermes-agent` | `hermes status` shows Custom endpoint / hermes-agent | **PASS** |
-| `hermes -z "Reply with exactly PONG"` (earlier same day) | stdout `PONG`, exit 0 (~60s) | **PASS** |
-| `hermes mcp add minecraft-qa` (WSL node + env bridge, pipe Y) | saved 10/10 tools | **PASS** |
-| `hermes mcp list` / `hermes mcp test minecraft-qa` | enabled; 10 tools; connect ~1.1s (reconfirmed evening) | **PASS** |
-| Oneshot `-m hermes-fast` “list minecraft-qa tools, do not call” | replied with `mcp__minecraft_qa__minecraft_*` names | **OBSERVED** |
-| Tool-calling oneshot `-m hermes-agent` (`minecraft_observe` + `minecraft_rpg_observe`) | hung minutes at near-zero CPU; aborted (PIDs killed); no observe JSON | **BLOCKED** |
-| Evening recheck `hermes -z "Reply with exactly PONG" -m hermes-fast` | no stdout within 60s timeout | **BLOCKED** |
+| Config → custom Ollama Tailscale IP | `hermes status` Custom endpoint | **PASS** |
+| Default model | `hermes-fast` (benchmarked; was hermes-agent) | **FACT** — see `docs/HERMES-MODELS.md` |
+| Root cause of hangs | systemd `OLLAMA_CONTEXT_LENGTH=65536` + `KEEP_ALIVE=24h`; runaway `n_predict=65536`; bot-server Hermes floods; oneshot raced MCP discovery | **FACT** |
+| `hermes -z "Reply with exactly PONG" -m hermes-fast --ignore-rules` | stdout `PONG`, ~15s, exit 0 (after unload + slim toolsets) | **PASS** |
+| `hermes mcp test minecraft-qa` | 10 tools, connect ~1.5s | **PASS** |
+| Oneshot without `wait_for_mcp_discovery` | model only saw clarify/memory/todo | **OBSERVED** (fixed via local oneshot patch) |
+| E2E A observe + rpg_observe | real Steve state reported; gateway log PASS | **PASS** |
+| E2E B observe → move_to(+2x) → observe | move args logged; coords changed | **PASS** |
+| E2E C quest accept exploratory | `BLOCKED already_active` (3 active quests) — correct | **PASS** (process) |
+| Lower Ollama global ctx/keep-alive | needs sudo on `/etc/systemd/system/ollama.service.d/override.conf` | **BLOCKED** (user action) |
 
 ---
 
@@ -131,13 +133,15 @@ Hermes Agent (Windows CLI / -z or chat -q)
 2. **P1 `move_to` / `step`** — **EMPIRICALLY VALIDATED** (scenario `07-move-to`, 5/5).
 3. Minimal **Agent Gateway** MCP stdio — **EMPIRICALLY VALIDATED** (`gateway/smoke.js` → `GATEWAY_SMOKE PASS`).
 4. Register via `hermes mcp add` — **PASS** (WSL node bridge; see `gateway/hermes-mcp.example.yaml`).
-5. Windows Hermes `-z` — **PASS** with local Ollama `hermes-agent` (see `docs/HERMES-MODELS.md`).
-6. Role → model mapping recorded — **done** (`docs/HERMES-MODELS.md`).
+5. Windows Hermes `-z` — **PASS** with local Ollama `hermes-fast` + oneshot MCP wait patch.
+6. Role → model mapping (benchmarked) — **done** (`docs/HERMES-MODELS.md`, `gateway/model-policy.yaml`).
+7. E2E A/B (+ C exploratory) — **PASS** (evidence `runner/reports/e2e-hermes-2026-08-10.md`).
+8. Gateway JSONL observability — **done** (`reports/gateway-tools.jsonl`).
 
 ### Later
 
-- Full exploratory gameplay E2E (goal → observe/move → structured harness status) with assertion on tool use, not just schema visibility.
-- Quest complete → reward deterministic scenario (P2/P3).
+- sudo fix for Ollama `CONTEXT_LENGTH` / `KEEP_ALIVE` (still **BLOCKED** without password).
+- Quest accept when a free quest id exists; quest complete → reward (P2/P3).
 - Replaceable `LLMProvider` inside the repo for CI without Hermes (P4).
 - AI world / Director / OBS (P5–P7).
 - Optional: install Windows Node so MCP can drop the WSL bridge.

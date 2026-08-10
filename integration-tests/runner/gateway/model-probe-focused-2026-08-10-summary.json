@@ -1,0 +1,36 @@
+{
+  "date": "2026-08-10",
+  "hardware": "RTX 3060 12GB; Ollama WSL 100.69.136.92:11434",
+  "method": "scripts/_probe_focused.py (num_ctx=4096, think=false)",
+  "selection": {
+    "fast_agent": "hermes-fast",
+    "code_analysis": "hermes-coder",
+    "rejected_for_hermes_cli": ["hermes-fast-mc", "hermes-agent-mc", "hermes-coder-mc"]
+  },
+  "results": [
+    {
+      "model": "hermes-fast-mc",
+      "ping": {"ok": true, "content": "PONG", "latency_s": 54.83},
+      "tool_text": {"observe_first": true, "preview": "TOOL: minecraft_rpg_observe"},
+      "recovery": {"hallucinated": [], "note": "prose without tool"}
+    },
+    {
+      "model": "hermes-agent-mc",
+      "ping": {"ok": true, "content": "PONG", "latency_s": 32.93},
+      "tool_text": {"observe_first": true},
+      "recovery": {"hallucinated": ["get_available_quests"]}
+    },
+    {
+      "model": "hermes-coder-mc",
+      "ping": {"ok": true, "content": "PONG", "latency_s": 38.54},
+      "tool_text": {"observe_first": true},
+      "recovery": {"hallucinated": ["minecraft_rpg_check_quests"]}
+    },
+    {
+      "model": "hermes-fast",
+      "ping": {"ok": true, "content": "PONG", "latency_s": 40.21},
+      "tool_text": {"observe_first": true}
+    }
+  ],
+  "hermes_cli_constraint": "v0.19 requires model.context_length >= 65536; *-mc aliases rejected"
+}
