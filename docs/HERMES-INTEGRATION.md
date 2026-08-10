@@ -86,10 +86,12 @@ Non-interactive config: `hermes config set <key> <value>` (**FACT** from `hermes
 | Prior MoA default `poolside/laguna-s-2.1:free` | preset missing; Active MoA off | BLOCKED (resolved by switching provider) |
 | `--provider openrouter` without key | `No LLM provider configured.` | BLOCKED (unused now) |
 | Config → custom Ollama Tailscale IP + `hermes-agent` | `hermes status` shows Custom endpoint / hermes-agent | **PASS** |
-| `hermes -z "Reply with exactly PONG"` | stdout `PONG`, exit 0 (~60s) | **PASS** |
+| `hermes -z "Reply with exactly PONG"` (earlier same day) | stdout `PONG`, exit 0 (~60s) | **PASS** |
 | `hermes mcp add minecraft-qa` (WSL node + env bridge, pipe Y) | saved 10/10 tools | **PASS** |
-| `hermes mcp list` / `hermes mcp test minecraft-qa` | enabled; 10 tools; connect ~1.1s | **PASS** |
+| `hermes mcp list` / `hermes mcp test minecraft-qa` | enabled; 10 tools; connect ~1.1s (reconfirmed evening) | **PASS** |
 | Oneshot `-m hermes-fast` “list minecraft-qa tools, do not call” | replied with `mcp__minecraft_qa__minecraft_*` names | **OBSERVED** |
+| Tool-calling oneshot `-m hermes-agent` (`minecraft_observe` + `minecraft_rpg_observe`) | hung minutes at near-zero CPU; aborted (PIDs killed); no observe JSON | **BLOCKED** |
+| Evening recheck `hermes -z "Reply with exactly PONG" -m hermes-fast` | no stdout within 60s timeout | **BLOCKED** |
 
 ---
 
