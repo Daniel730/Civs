@@ -49,9 +49,12 @@ Arrange/teardown: `.arrangeMoney .arrangeBlock .saveRegions .reloadRegions .rese
 .resetBlock .wait .waitTicks .step`. On failure, an evidence bundle is written to
 `reports/evidence/<scenario>/`.
 
-> Architecture rule: the harness **observes and resets**; it never creates Civs game state.
-> That's the actor's job, so the real event chain is exercised (see the design doc).
+**Capabilities (Paper 26.1.2 actor control):** `harness.cap.*` → `/test act` / `/test observe`
+/ `/test rpg …` (see `docs/AGENT_PLATFORM.md`, probe `CAPABILITY-PROBE-RESULTS.txt`).
 
-> Note: on this cloud VM the server is Paper "26.1.2", which Mineflayer cannot drive
-> (see the design doc §7 and `MINEFLAYER-PROBE-RESULTS.txt`). Scenarios therefore assert
-> via the harness; the actor layer activates on real Paper ≤1.21.x servers.
+> Architecture rule: the harness **observes and resets** Civs game state; it never creates
+> regions/towns. Player *actions* may run server-side via `/test act` against the online
+> actor player (required on 26.1.2 where Mineflayer cannot drive the client).
+
+> Note: Mineflayer cannot drive Paper 26.1.2 (see `MINEFLAYER-PROBE-RESULTS.txt`). Presence
+> uses `RawKeepAliveActor`; physical actions use the server-side capability layer.

@@ -1,0 +1,21 @@
+Server-side capability probe vs Paper 26.1.2 (empirical)
+=======================================================
+Date: 2026-08-10
+Env: WSL /home/dansilva/civs-testserver
+Plugins: Civs 1.11.7, CivsTestHarness 0.2.0, RPGServer 0.1.2, Vault, TestEconomy, WorldEdit
+Actor: RawKeepAliveActor username=Steve (minecraft-protocol, offline)
+Scenario: integration-tests/runner/scenarios/03-player-capabilities.js
+Result: TOTAL 14 assertions, 0 failed
+
+Verified SUCCESS:
+- observe (position, health, food, sneak/sprint flags, inventory, hotbar)
+- sneak on/off (Player.setSneaking) — observe confirms flag
+- look (Player.setRotation)
+- jump (setJumping + velocity vy=0.42)
+- break_block (Player.breakBlock) STONE -> AIR (fires BlockBreakEvent per Paper javadoc)
+- place_block (BlockPlaceEvent + setType) -> OAK_PLANKS present
+- attack nearest ZOMBIE (LivingEntity.attack) — target_health decreased (20 -> ~19.06)
+
+Completion state: EMPIRICALLY VALIDATED (capability subset above)
+NOT validated yet: pathfind move_to, container GUI clicks, crafting, Civs menu clicks,
+RPG quest accept via capability, swim/climb, reconnect recovery loops.

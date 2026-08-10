@@ -1,5 +1,6 @@
 'use strict';
 const { Rcon } = require('rcon-client');
+const { Capabilities } = require('./capabilities');
 
 const STRIP_COLOR = /\u00a7[0-9a-fk-or]|\u00a7x(\u00a7[0-9a-f]){6}|\x1b\[[0-9;]*m/gi;
 
@@ -12,6 +13,7 @@ class Harness {
   constructor(opts) {
     this.opts = Object.assign({ host: '127.0.0.1', port: 25575, password: 'civs-itest', timeout: 15000 }, opts);
     this.rcon = null;
+    this.cap = new Capabilities(this);
   }
 
   async connect() {

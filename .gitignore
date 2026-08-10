@@ -86,7 +86,7 @@ ide.general.xml
 !.cursor/rules/
 !.cursor/rules/**
 compile-errors.txt
-lib/
+/lib/
 pom-fix.patch
 power-fix.patch
 

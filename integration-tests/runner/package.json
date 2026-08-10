@@ -10,7 +10,8 @@
     "test:one": "node run.js --scenario"
   },
   "dependencies": {
-    "rcon-client": "^4.2.5"
+    "rcon-client": "^4.2.5",
+    "minecraft-protocol": "^1.66.2"
   },
   "optionalDependencies": {
     "mineflayer": "^4.37.1"

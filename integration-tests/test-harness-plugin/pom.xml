@@ -6,7 +6,7 @@
 
     <groupId>org.civs.itest</groupId>
     <artifactId>civs-test-harness</artifactId>
-    <version>0.1.0</version>
+    <version>0.2.0</version>
     <packaging>jar</packaging>
     <name>CivsTestHarness</name>
     <description>Server-side integration-test harness for Civs: exposes internal-state
