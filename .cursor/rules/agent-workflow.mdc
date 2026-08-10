@@ -1,0 +1,15 @@
+---
+description: Issues→PR workflow, quality stack, motion UI for Civs agents
+alwaysApply: true
+---
+
+# Agent workflow (Civs)
+
+Before non-trivial work, read `docs/AGENT-WORKFLOW.md`.
+
+- Open a GitHub issue with one of: `tipo:correção`, `tipo:melhoria`, `tipo:nova-função`.
+- Ship via PR that mentions the issue (`Closes #N` / `Refs #N`).
+- Observability primary = OpenTelemetry; Sentry + one of Datadog/New Relic as backends.
+- Node runner quality: Biome, commitlint, knip, arch-contract, Stryker; coverage via Codecov; browser E2E via Playwright when UI exists.
+- Any web/operator UI: design-motion-principles skill — skeleton, lazy load, enter/exit, loading, progress, `prefers-reduced-motion`.
+- Prefer Hermes forge scripts for cheap drafts; parent reviews before apply/commit.

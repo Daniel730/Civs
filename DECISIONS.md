@@ -208,3 +208,17 @@ access to `Daniel730/Civs`, not `Daniel730/civs-quests`**. This is a genuine acc
 blocker (no credential I can obtain). Per the autonomy rules I did not stop: the ready-to-
 apply patch is saved at `docs/civs-quests-docs-fix.patch` (and as a run artifact) for the
 owner to apply, or grant the bot push access to that repo. Everything else continued.
+
+---
+
+## Stage PE — Platform engineering standards (2026-08-11)
+
+**D-PE-001 — Issues→PR + OTel-primary quality stack.**
+User required observability (Sentry/Datadog/New Relic/OTel), JS quality
+(Biome/commitlint/knip/arch-contract/Stryker), Codecov/Playwright, motion UI
+(design-motion-principles), and GitHub Issues→PR for all work. **Decision:** document
+mandatory process in `docs/AGENT-WORKFLOW.md` + `.cursor/rules/agent-workflow.mdc`;
+**OpenTelemetry is the primary instrumentation contract** — Sentry for errors; Datadog
+*or* New Relic as one APM backend via OTLP (not three parallel SDKs). Install
+`kylezantos/design-motion-principles` under `.cursor/skills/`. Backlog filed as
+issues #31–#44. Implementation is incremental via those issues, not a big-bang rewrite.
