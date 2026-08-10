@@ -2,7 +2,7 @@
 
 **Audience:** any Cursor / Hermes / Claude / GPT agent working on this repo.  
 **Status:** mandatory process. Do not ship features without following this file.  
-**Related:** `AGENTS.md`, `docs/AGENT_PLATFORM.md`, `DECISIONS.md`, `.cursor/skills/design-motion-principles/`.
+**Related:** `AGENTS.md`, `DECISIONS.md`, `.cursor/skills/design-motion-principles/` (and `docs/AGENT_PLATFORM.md` on agent-platform branches).
 
 Labels used below: **FACT** · **OBSERVED** · **INFERRED** · **TODO**
 
