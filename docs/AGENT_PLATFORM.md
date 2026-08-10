@@ -19,7 +19,8 @@ Two independently deployable systems sharing one capability/observation core:
 | Mineflayer on 26.1.2 | **FAILED / blocked** | `MINEFLAYER-PROBE-RESULTS.txt` |
 | Server-side capability layer | **EMPIRICALLY VALIDATED** (subset) | `CAPABILITY-PROBE-RESULTS.txt` — 14/14 |
 | RPG observe bridge | **EMPIRICALLY VALIDATED** | scenario `04-rpg-observe` — 8/8 |
-| Death / respawn / reconnect | **EMPIRICALLY VALIDATED** | scenario `05` — 12/12; full suite 44/44 |
+| Death / respawn / reconnect | **EMPIRICALLY VALIDATED** | scenario `05` — 12/12 |
+| RPG quest accept | **EMPIRICALLY VALIDATED** | scenario `06` — abandon slot + `QuestAcceptResult.SUCCESS` |
 | LLM planner | **TODO** | — |
 | AI world / Director / OBS | **TODO** | — |
 

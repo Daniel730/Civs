@@ -20,7 +20,7 @@ final class RpgBridge {
 
     static boolean handle(CommandSender sender, String[] a) {
         if (a.length < 2) {
-            return err(sender, "usage: /test rpg <ping|observe> [player]");
+            return err(sender, "usage: /test rpg <ping|observe|abandon|accept> ...");
         }
         String sub = a[1].toLowerCase(Locale.ROOT);
         return switch (sub) {
@@ -28,6 +28,14 @@ final class RpgBridge {
             case "observe" -> {
                 if (a.length < 3) yield err(sender, "usage: /test rpg observe <player>");
                 yield observe(sender, a[2]);
+            }
+            case "abandon" -> {
+                if (a.length < 4) yield err(sender, "usage: /test rpg abandon <player> <questId>");
+                yield abandon(sender, a[2], a[3]);
+            }
+            case "accept" -> {
+                if (a.length < 4) yield err(sender, "usage: /test rpg accept <player> <questId>");
+                yield accept(sender, a[2], a[3]);
             }
             default -> err(sender, "unknown rpg subcommand: " + sub);
         };
@@ -99,6 +107,95 @@ final class RpgBridge {
         return ((Collection<Object>) col).stream()
                 .map(o -> jsonStr(String.valueOf(o)))
                 .collect(Collectors.joining(",", "[", "]"));
+    }
+
+    /**
+     * Calls {@code QuestManager.acceptQuest} and returns the real {@code QuestAcceptResult}
+     * name — {@code performCommand} alone is insufficient because it returns true even when
+     * accept fails (LOCKED / MAX_ACTIVE / …).
+     */
+    private static boolean accept(CommandSender sender, String playerName, String questId) {
+        long t0 = System.currentTimeMillis();
+        Plugin rpg = Bukkit.getPluginManager().getPlugin("RPGServer");
+        if (rpg == null || !rpg.isEnabled()) {
+            return failJson(sender, "rpg_accept", questId, t0, "rpg_absent");
+        }
+        Player player = Bukkit.getPlayerExact(playerName);
+        if (player == null || !player.isOnline()) {
+            return failJson(sender, "rpg_accept", questId, t0, "player_offline");
+        }
+        try {
+            Object questManager = rpg.getClass().getMethod("getQuestManager").invoke(rpg);
+            Method acceptQuest = questManager.getClass().getMethod("acceptQuest", Player.class, String.class);
+            Object result = acceptQuest.invoke(questManager, player, questId);
+            String resultName = result == null ? "null" : String.valueOf(result);
+            boolean ok = "SUCCESS".equals(resultName);
+            return json(sender, ok, "rpg_accept", questId, System.currentTimeMillis() - t0,
+                    ok ? null : resultName,
+                    "\"player\":" + jsonStr(playerName) + ",\"result\":" + jsonStr(resultName));
+        } catch (ReflectiveOperationException | ClassCastException | NullPointerException e) {
+            return failJson(sender, "rpg_accept", questId, t0,
+                    e.getClass().getSimpleName() + ":" + e.getMessage());
+        }
+    }
+
+    /**
+     * Calls RPGServer {@code QuestManager.abandonQuest} via reflection so QA can free
+     * max-active slots. This is teardown/setup, not a fake accept path.
+     */
+    private static boolean abandon(CommandSender sender, String playerName, String questId) {
+        long t0 = System.currentTimeMillis();
+        Plugin rpg = Bukkit.getPluginManager().getPlugin("RPGServer");
+        if (rpg == null || !rpg.isEnabled()) {
+            return failJson(sender, "rpg_abandon", questId, t0, "rpg_absent");
+        }
+        Player player = Bukkit.getPlayerExact(playerName);
+        if (player == null || !player.isOnline()) {
+            return failJson(sender, "rpg_abandon", questId, t0, "player_offline");
+        }
+        try {
+            Object profileManager = rpg.getClass().getMethod("getProfileManager").invoke(rpg);
+            Object profile = profileManager.getClass().getMethod("getOrCreate", Player.class)
+                    .invoke(profileManager, player);
+            Object questManager = rpg.getClass().getMethod("getQuestManager").invoke(rpg);
+            Object quest = questManager.getClass().getMethod("getQuest", String.class)
+                    .invoke(questManager, questId);
+            if (quest == null) {
+                return failJson(sender, "rpg_abandon", questId, t0, "quest_not_found");
+            }
+            Method abandon = null;
+            for (Method m : questManager.getClass().getMethods()) {
+                if ("abandonQuest".equals(m.getName()) && m.getParameterCount() == 3) {
+                    abandon = m;
+                    break;
+                }
+            }
+            if (abandon == null) {
+                return failJson(sender, "rpg_abandon", questId, t0, "method_missing");
+            }
+            boolean ok = Boolean.TRUE.equals(abandon.invoke(questManager, player, profile, quest));
+            return json(sender, ok, "rpg_abandon", questId, System.currentTimeMillis() - t0,
+                    ok ? null : "abandon_rejected",
+                    "\"player\":" + jsonStr(playerName));
+        } catch (ReflectiveOperationException | ClassCastException | NullPointerException e) {
+            return failJson(sender, "rpg_abandon", questId, t0,
+                    e.getClass().getSimpleName() + ":" + e.getMessage());
+        }
+    }
+
+    private static boolean json(CommandSender sender, boolean success, String action, String target,
+                                long durationMs, String reason, String dataObj) {
+        StringBuilder sb = new StringBuilder(96);
+        sb.append("{\"success\":").append(success)
+                .append(",\"action\":").append(jsonStr(action))
+                .append(",\"target\":").append(target == null ? "null" : jsonStr(target))
+                .append(",\"duration_ms\":").append(durationMs)
+                .append(",\"reason\":").append(reason == null ? "null" : jsonStr(reason))
+                .append(",\"data\":{");
+        if (dataObj != null) sb.append(dataObj);
+        sb.append("}}");
+        sender.sendMessage("TEST-RESULT json=" + sb);
+        return true;
     }
 
     private static boolean failJson(CommandSender sender, String action, String target, long t0, String reason) {

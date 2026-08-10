@@ -251,3 +251,13 @@ or the API moves, `/test rpg observe` returns `success:false` with an explicit r
 `Player.performCommand` is verified in paper-api. **Decision:** expose `act run_as` only for
 prefixes `rpg|cv|say|me` so LLM/planner layers cannot escalate to arbitrary console commands
 through the capability API.
+
+**D-AP-008 — Quest accept must use QuestManager.acceptQuest result, not performCommand alone.**
+EMPIRICALLY: `performCommand("rpg quest accept …")` returns true even when accept fails
+(`LOCKED`, `MAX_ACTIVE`). **Decision:** `/test rpg accept` reflects
+`QuestManager.acceptQuest` and reports the `QuestAcceptResult` name; scenarios assert
+`SUCCESS` plus `active_quests` membership.
+
+**D-AP-009 — Free max-active slots via reflected abandonQuest for QA setup.**
+Starter merchant profiles often hold 3 active quests (`quests.max-active: 3`). **Decision:**
+`/test rpg abandon` calls the real `abandonQuest` API for test setup only.

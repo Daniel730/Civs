@@ -64,6 +64,12 @@ class Capabilities {
   respawn(player) { return this.act(player, 'respawn'); }
   rpgPing() { return this.harness.raw('test rpg ping').then((line) => this._parse(line)); }
   rpgObserve(player) { return this.harness.raw(`test rpg observe ${player}`).then((line) => this._parse(line)); }
+  rpgAbandon(player, questId) {
+    return this.harness.raw(`test rpg abandon ${player} ${questId}`).then((line) => this._parse(line));
+  }
+  rpgAccept(player, questId) {
+    return this.harness.raw(`test rpg accept ${player} ${questId}`).then((line) => this._parse(line));
+  }
 }
 
 module.exports = { Capabilities };

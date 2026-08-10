@@ -24,6 +24,12 @@ Also validated (scenario 05-death-respawn-reconnect, 12/12):
 - RawKeepAliveActor disconnect → observe offline → reconnect → observe online
 - RPG profile survives reconnect
 
+Also validated (scenario 06-rpg-quest-accept):
+- /test rpg abandon → QuestManager.abandonQuest (frees max-active slot)
+- /test rpg accept → QuestAcceptResult (SUCCESS for rescue_quartermaster)
+- OBSERVED: performCommand accept can return true while result is LOCKED
+- OBSERVED: requires: entries mean completed quests, not merely active
+
 Completion state: EMPIRICALLY VALIDATED (capability subset above)
 NOT validated yet: pathfind move_to, container GUI clicks, crafting, Civs menu clicks,
-RPG quest accept→complete chain, swim/climb.
+full quest complete→reward chain, swim/climb.

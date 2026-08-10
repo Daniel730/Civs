@@ -9,4 +9,5 @@
 - Runner `lib/capabilities.js` and scenarios `03-player-capabilities.js`, `04-rpg-observe.js`.
 - Empirical probe log `integration-tests/CAPABILITY-PROBE-RESULTS.txt`.
 - Death/respawn/reconnect scenario (`05-death-respawn-reconnect.js`) + `game_mode`/`die`/`respawn` capabilities.
-- Decisions D-AP-001…007 in `DECISIONS.md`.
+- RPG quest accept/abandon via `/test rpg accept|abandon` + scenario `06-rpg-quest-accept.js`.
+- Decisions D-AP-001…009 in `DECISIONS.md`.
