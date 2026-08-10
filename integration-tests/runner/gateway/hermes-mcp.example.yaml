@@ -1,33 +1,40 @@
-# Example fragment for Hermes MCP client config (DO NOT auto-merge).
+# Working Windows Hermes MCP registration for minecraft-qa (2026-08-10).
 # Official docs: hermes mcp add / mcp_servers in config.yaml
 # (website/docs/user-guide/features/mcp.md — Minimal stdio example).
 #
-# Empirically on this machine (2026-08-10):
+# Empirically on this machine:
 # - Windows Hermes v0.19.0 has NO node.exe on PATH → `hermes mcp add --command node` fails WinError 2.
 # - Gateway smoke PASS via WSL node (gateway/smoke.js).
-# - Recommended register (run manually after confirming Windows node OR wsl bridge):
+# - `hermes mcp add` prompts "Enable all N tools? [Y/n/select]" — pipe Y for non-interactive save.
+# - Windows `--env` alone does NOT reliably reach the Node process inside WSL; put KEY=VAL
+#   on the WSL side via `env` in --args (shown below).
 #
-#   # Option A — if Windows Node is installed and on PATH:
-#   hermes mcp add minecraft-qa --command node --args C:\Users\Danie\Downloads\Civs-1.11.6\Civs-1.11.6\integration-tests\runner\gateway\mcp-server.js --env RCON_PASSWORD=civsqa --env ACTOR_NAME=Steve
+# Register (PowerShell):
 #
-#   # Option B — WSL node bridge (pattern used in Hermes MCP docs for Windows/WSL):
-#   hermes mcp add minecraft-qa --command wsl.exe --args -e /home/dansilva/.nvm/versions/node/v25.8.0/bin/node /mnt/c/Users/Danie/Downloads/Civs-1.11.6/Civs-1.11.6/integration-tests/runner/gateway/mcp-server.js --env RCON_PASSWORD=civsqa
+#   $h = "$env:LOCALAPPDATA\hermes\hermes-agent\venv\Scripts\hermes.exe"
+#   $node = "/home/dansilva/.nvm/versions/node/v25.8.0/bin/node"
+#   $script = "/mnt/c/Users/Danie/Downloads/Civs-1.11.6/Civs-1.11.6/integration-tests/runner/gateway/mcp-server.js"
+#   "Y" | & $h mcp add minecraft-qa --command wsl.exe --connect-timeout 60 `
+#     --args -e env RCON_HOST=127.0.0.1 RCON_PORT=25575 RCON_PASSWORD=civsqa `
+#     MC_HOST=127.0.0.1 MC_PORT=25565 ACTOR_NAME=Steve $node $script
+#   & $h mcp list
+#   & $h mcp test minecraft-qa
 #
-# Then: hermes mcp list && hermes mcp test minecraft-qa
-#
-# YAML shape (if editing config by hand):
+# YAML shape written to Hermes home config.yaml:
 
 mcp_servers:
   minecraft-qa:
     command: "wsl.exe"
     args:
       - "-e"
+      - "env"
+      - "RCON_HOST=127.0.0.1"
+      - "RCON_PORT=25575"
+      - "RCON_PASSWORD=civsqa"
+      - "MC_HOST=127.0.0.1"
+      - "MC_PORT=25565"
+      - "ACTOR_NAME=Steve"
       - "/home/dansilva/.nvm/versions/node/v25.8.0/bin/node"
       - "/mnt/c/Users/Danie/Downloads/Civs-1.11.6/Civs-1.11.6/integration-tests/runner/gateway/mcp-server.js"
-    env:
-      RCON_HOST: "127.0.0.1"
-      RCON_PORT: "25575"
-      RCON_PASSWORD: "civsqa"
-      MC_HOST: "127.0.0.1"
-      MC_PORT: "25565"
-      ACTOR_NAME: "Steve"
+    connect_timeout: 60
+    enabled: true

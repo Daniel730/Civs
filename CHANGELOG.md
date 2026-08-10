@@ -12,4 +12,6 @@
 - RPG quest accept/abandon via `/test rpg accept|abandon` + scenario `06-rpg-quest-accept.js`.
 - Greedy `move_to`/`step` (no Mineflayer) + scenario `07-move-to.js`.
 - Agent Gateway MCP stdio (`runner/gateway/`) + Hermes recon (`docs/HERMES-INTEGRATION.md`).
-- Decisions D-AP-001…009 in `DECISIONS.md`.
+- Hermes role→model mapping (`docs/HERMES-MODELS.md`, `runner/gateway/hermes-models.yaml`).
+- Windows Hermes MCP register recipe updated in `runner/gateway/hermes-mcp.example.yaml` (WSL node + `env` bridge; pipe `Y`).
+- Decisions D-AP-001…012 in `DECISIONS.md`.

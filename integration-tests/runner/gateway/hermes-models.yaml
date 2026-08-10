@@ -1,0 +1,24 @@
+# Role → Ollama model mapping for Windows Hermes (Civs Minecraft QA).
+# Source of truth commentary: docs/HERMES-MODELS.md
+# Endpoint: Tailscale IP of WSL Ollama (desktop-vioren5-1). Hostname often fails on Windows DNS.
+
+ollama:
+  base_url: http://100.69.136.92:11434/v1
+  # Prefer this when MagicDNS works from Windows:
+  base_url_hostname: http://desktop-vioren5-1:11434/v1
+
+roles:
+  exploratory_agent: hermes-agent   # default tool loops / MCP gameplay
+  cheap_summary: hermes-fast
+  coding_patches: hermes-coder
+  heavy_alt: hermes-qwen14
+
+hermes_windows:
+  cli: C:\Users\Danie\AppData\Local\hermes\hermes-agent\venv\Scripts\hermes.exe
+  home: C:\Users\Danie\AppData\Local\hermes\
+  model:
+    provider: custom
+    default: hermes-agent
+    base_url: http://100.69.136.92:11434/v1
+    api_key: no-key
+    context_length: 65536

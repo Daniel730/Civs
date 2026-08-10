@@ -266,9 +266,20 @@ Starter merchant profiles often hold 3 active quests (`quests.max-active: 3`). *
 Recon found Windows Hermes v0.19.0 with official `-z` oneshot, `hermes mcp add` (stdio/HTTP),
 and `hermes mcp serve` (Hermes-as-server — wrong direction for our tools). **Decision:** expose
 verified capabilities as an MCP **stdio Agent Gateway**; Hermes attaches as MCP **client**.
-Do not invent endpoints; do not auto-mutate `~\AppData\Local\hermes` config without approval.
+Do not invent endpoints. Mutating Hermes home config requires explicit user authorization for
+that task (granted for D-AP-012).
 
 **D-AP-011 — Greedy move_to, not pathfinder.**
 Paper 26.1.2 has no Mineflayer pathfinder. **Decision:** implement `step`/`move_to` as
 server-side greedy teleport stepping with standability checks. Document navigator as
 `greedy_step`; mazes may `stuck`/`timeout` — that is honest failure, not fake success.
+
+**D-AP-012 — Windows Hermes → local Ollama; WSL node for MCP (2026-08-10).**
+Blockers: MoA preset `poolside/laguna-s-2.1:free` missing; no Windows `node.exe`; hostname
+`desktop-vioren5-1` fails Windows DNS. User authorized Hermes home mutation for Civs QA.
+**Decision:** set `model.provider: custom`, `default: hermes-agent`,
+`base_url: http://100.69.136.92:11434/v1` (Tailscale IP of WSL Ollama); roles
+exploratory=`hermes-agent`, summaries=`hermes-fast`, coding=`hermes-coder`
+(`docs/HERMES-MODELS.md`). Register `minecraft-qa` via `hermes mcp add` with
+`wsl.exe -e env … node mcp-server.js` and pipe `Y` for the enable-tools prompt. Empirically:
+`-z` PONG PASS; `mcp test` 10 tools PASS. Keep Nous login as fallback only; leave MoA off.
