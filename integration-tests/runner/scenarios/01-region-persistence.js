@@ -18,10 +18,18 @@ const X = 500, Y = -60, Z = 500;
 module.exports = scenario('RegionPersistence')
   .player('Steve')                 // actor: real online player, OP'd
   .teleport(X, Y + 2, Z)           // actor action
+  .step('baseline shelter count + clear pad', async (ctx) => {
+    // Isolation: remove any leftover region at the pad, then record count.
+    await ctx.harness.region.reset(X, Y, Z);
+    ctx._shelterBefore = await ctx.harness.region.count(TYPE);
+  })
   .placeRegion(TYPE, X, Y, Z)      // actor action -> PRODUCTION region-creation pipeline
   .waitTicks(5)
   .expectRegion(TYPE, X, Y, Z)     // harness observes: region really registered
-  .expectRegionCount(TYPE, 3)      // harness observes internal count (2 pre-existing + this one)
+  .step('shelter count increased by 1', async (ctx) => {
+    const after = await ctx.harness.region.count(TYPE);
+    ctx.expectEqual(`region count ${TYPE} delta`, after, (ctx._shelterBefore || 0) + 1);
+  })
   .saveRegions()                   // persist to disk
   .wait(1000)                      // AsyncFileWriter flushes off-thread
   .reloadRegions()                 // reload region set FROM disk
