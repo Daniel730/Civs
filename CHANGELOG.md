@@ -10,4 +10,6 @@
 - Empirical probe log `integration-tests/CAPABILITY-PROBE-RESULTS.txt`.
 - Death/respawn/reconnect scenario (`05-death-respawn-reconnect.js`) + `game_mode`/`die`/`respawn` capabilities.
 - RPG quest accept/abandon via `/test rpg accept|abandon` + scenario `06-rpg-quest-accept.js`.
+- Greedy `move_to`/`step` (no Mineflayer) + scenario `07-move-to.js`.
+- Agent Gateway MCP stdio (`runner/gateway/`) + Hermes recon (`docs/HERMES-INTEGRATION.md`).
 - Decisions D-AP-001…009 in `DECISIONS.md`.

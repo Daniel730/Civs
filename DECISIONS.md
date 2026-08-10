@@ -261,3 +261,14 @@ EMPIRICALLY: `performCommand("rpg quest accept …")` returns true even when acc
 **D-AP-009 — Free max-active slots via reflected abandonQuest for QA setup.**
 Starter merchant profiles often hold 3 active quests (`quests.max-active: 3`). **Decision:**
 `/test rpg abandon` calls the real `abandonQuest` API for test setup only.
+
+**D-AP-010 — Hermes is external explorer; harness remains sole Minecraft executor.**
+Recon found Windows Hermes v0.19.0 with official `-z` oneshot, `hermes mcp add` (stdio/HTTP),
+and `hermes mcp serve` (Hermes-as-server — wrong direction for our tools). **Decision:** expose
+verified capabilities as an MCP **stdio Agent Gateway**; Hermes attaches as MCP **client**.
+Do not invent endpoints; do not auto-mutate `~\AppData\Local\hermes` config without approval.
+
+**D-AP-011 — Greedy move_to, not pathfinder.**
+Paper 26.1.2 has no Mineflayer pathfinder. **Decision:** implement `step`/`move_to` as
+server-side greedy teleport stepping with standability checks. Document navigator as
+`greedy_step`; mazes may `stuck`/`timeout` — that is honest failure, not fake success.

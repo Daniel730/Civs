@@ -77,6 +77,8 @@ final class CapabilityActions {
                 case "game_mode" -> gameMode(sender, p, args, t0);
                 case "die" -> die(sender, p, t0);
                 case "respawn" -> respawn(sender, p, t0);
+                case "step" -> step(sender, p, args, t0);
+                case "move_to" -> moveTo(sender, p, args, t0);
                 default -> json(sender, false, action, null, System.currentTimeMillis() - t0,
                         "unknown_action", null);
             };
@@ -263,6 +265,192 @@ final class CapabilityActions {
         p.getInventory().setHeldItemSlot(slot);
         return ok(sender, "hotbar", String.valueOf(slot), t0,
                 "\"held\":" + quote(p.getInventory().getItemInMainHand().getType().name()));
+    }
+
+    /**
+     * Single greedy navigation step toward a point (or forward). Not a pathfinder —
+     * uses {@link Player#teleport} after a collision probe. Empirically for open terrain.
+     * Usage: {@code step <x> <y> <z> [step_len]} or {@code step forward [step_len]}.
+     */
+    private static boolean step(CommandSender sender, Player p, String[] args, long t0) {
+        if (args.length < 1) throw new IllegalArgumentException("step <x> <y> <z> [len] | step forward [len]");
+        double len = 0.8;
+        Location cur = p.getLocation();
+        Vector dir;
+        String targetLabel;
+        if (args[0].equalsIgnoreCase("forward")) {
+            if (args.length >= 2) len = Double.parseDouble(args[1]);
+            dir = cur.getDirection().clone();
+            dir.setY(0);
+            if (dir.lengthSquared() < 1e-6) dir = new Vector(0, 0, 1);
+            dir.normalize().multiply(len);
+            targetLabel = "forward";
+        } else {
+            if (args.length < 3) throw new IllegalArgumentException("step <x> <y> <z> [len]");
+            if (args.length >= 4) len = Double.parseDouble(args[3]);
+            double tx = Double.parseDouble(args[0]);
+            double ty = Double.parseDouble(args[1]);
+            double tz = Double.parseDouble(args[2]);
+            dir = new Vector(tx - cur.getX(), 0, tz - cur.getZ());
+            if (dir.lengthSquared() < 1e-6) {
+                return ok(sender, "step", fmt(cur), t0, "\"moved\":false,\"reason\":\"already_there\"");
+            }
+            dir.normalize().multiply(Math.min(len, dir.length()));
+            targetLabel = tx + "," + ty + "," + tz;
+            // Face the horizontal target
+            Location eye = p.getEyeLocation();
+            Vector look = new Vector(tx - eye.getX(), ty + 0.5 - eye.getY(), tz - eye.getZ());
+            if (look.lengthSquared() > 1e-6) {
+                Location tmp = eye.clone();
+                tmp.setDirection(look);
+                p.setRotation(tmp.getYaw(), tmp.getPitch());
+            }
+        }
+        Location next = tryStep(p, cur, dir);
+        if (next == null) {
+            return json(sender, false, "step", targetLabel, System.currentTimeMillis() - t0,
+                    "blocked", "\"from\":" + quote(fmt(cur)));
+        }
+        boolean ok = p.teleport(next);
+        double remaining = args[0].equalsIgnoreCase("forward") ? -1
+                : next.distance(new Location(next.getWorld(),
+                Double.parseDouble(args[0]), Double.parseDouble(args[1]), Double.parseDouble(args[2])));
+        return json(sender, ok, "step", targetLabel, System.currentTimeMillis() - t0,
+                ok ? null : "teleport_failed",
+                "\"x\":" + next.getX() + ",\"y\":" + next.getY() + ",\"z\":" + next.getZ()
+                        + ",\"remaining\":" + remaining);
+    }
+
+    /**
+     * Greedy navigate to coordinates by repeating {@link #step} until arrival or timeout.
+     * Usage: {@code move_to <x> <y> <z> [timeout_ms=10000] [arrive=1.5] [step_len=0.8]}
+     *
+     * <p>This is <b>not</b> A* / Mineflayer-pathfinder. It succeeds on open/near-open terrain;
+     * maze-like obstacles may return {@code stuck} or {@code timeout}.
+     */
+    private static boolean moveTo(CommandSender sender, Player p, String[] args, long t0) {
+        if (args.length < 3) throw new IllegalArgumentException("move_to <x> <y> <z> [timeout_ms] [arrive] [step_len]");
+        double tx = Double.parseDouble(args[0]);
+        double ty = Double.parseDouble(args[1]);
+        double tz = Double.parseDouble(args[2]);
+        long timeoutMs = args.length >= 4 ? Long.parseLong(args[3]) : 10000L;
+        double arrive = args.length >= 5 ? Double.parseDouble(args[4]) : 1.5;
+        double stepLen = args.length >= 6 ? Double.parseDouble(args[5]) : 0.8;
+        World w = p.getWorld();
+        Location goal = new Location(w, tx, ty, tz);
+        int steps = 0;
+        int stalled = 0;
+        final int maxSteps = 250; // hard cap so RCON primary-thread navigation cannot hang the server
+        double lastDist = p.getLocation().distance(goal);
+        while (System.currentTimeMillis() - t0 < timeoutMs && steps < maxSteps) {
+            Location cur = p.getLocation();
+            double dist = cur.distance(goal);
+            if (dist <= arrive) {
+                return json(sender, true, "move_to", fmt(goal), System.currentTimeMillis() - t0, null,
+                        "\"steps\":" + steps + ",\"final_distance\":" + dist
+                                + ",\"x\":" + cur.getX() + ",\"y\":" + cur.getY() + ",\"z\":" + cur.getZ()
+                                + ",\"navigator\":\"greedy_step\"");
+            }
+            Vector horiz = new Vector(tx - cur.getX(), 0, tz - cur.getZ());
+            if (horiz.lengthSquared() < 1e-6) {
+                // Only Y remains — teleport vertically if clear
+                Location vertical = cur.clone();
+                vertical.setY(ty);
+                if (isStandable(vertical)) {
+                    p.teleport(vertical);
+                    steps++;
+                    continue;
+                }
+                return json(sender, false, "move_to", fmt(goal), System.currentTimeMillis() - t0,
+                        "vertical_blocked", "\"steps\":" + steps + ",\"final_distance\":" + dist);
+            }
+            double len = Math.min(stepLen, horiz.length());
+            Vector dir = horiz.normalize().multiply(len);
+            Location eye = p.getEyeLocation();
+            Vector look = new Vector(tx - eye.getX(), ty + 0.5 - eye.getY(), tz - eye.getZ());
+            if (look.lengthSquared() > 1e-6) {
+                Location tmp = eye.clone();
+                tmp.setDirection(look);
+                p.setRotation(tmp.getYaw(), tmp.getPitch());
+            }
+            Location next = tryStep(p, cur, dir);
+            if (next == null) {
+                // Try slight left/right offsets before declaring stuck
+                Vector left = new Vector(-dir.getZ(), 0, dir.getX()).normalize().multiply(len);
+                Vector right = new Vector(dir.getZ(), 0, -dir.getX()).normalize().multiply(len);
+                next = tryStep(p, cur, left);
+                if (next == null) next = tryStep(p, cur, right);
+            }
+            if (next == null) {
+                return json(sender, false, "move_to", fmt(goal), System.currentTimeMillis() - t0,
+                        "stuck", "\"steps\":" + steps + ",\"final_distance\":" + dist
+                                + ",\"x\":" + cur.getX() + ",\"y\":" + cur.getY() + ",\"z\":" + cur.getZ());
+            }
+            if (!p.teleport(next)) {
+                return json(sender, false, "move_to", fmt(goal), System.currentTimeMillis() - t0,
+                        "teleport_failed", "\"steps\":" + steps);
+            }
+            steps++;
+            double newDist = p.getLocation().distance(goal);
+            if (newDist >= lastDist - 0.01) {
+                if (++stalled >= 8) {
+                    return json(sender, false, "move_to", fmt(goal), System.currentTimeMillis() - t0,
+                            "no_progress", "\"steps\":" + steps + ",\"final_distance\":" + newDist);
+                }
+            } else {
+                stalled = 0;
+            }
+            lastDist = newDist;
+        }
+        Location cur = p.getLocation();
+        return json(sender, false, "move_to", fmt(goal), System.currentTimeMillis() - t0,
+                "timeout", "\"steps\":" + steps + ",\"final_distance\":" + cur.distance(goal)
+                        + ",\"x\":" + cur.getX() + ",\"y\":" + cur.getY() + ",\"z\":" + cur.getZ());
+    }
+
+    /** Probe a candidate foot position: solid below, air for feet+head. Allows ±1 block step-up/down. */
+    private static Location tryStep(Player p, Location from, Vector delta) {
+        World w = from.getWorld();
+        if (w == null) return null;
+        double nx = from.getX() + delta.getX();
+        double nz = from.getZ() + delta.getZ();
+        int baseY = from.getBlockY();
+        for (int yHint : new int[]{baseY + 1, baseY, baseY - 1}) {
+            Location grounded = groundAt(w, nx, nz, yHint + 2);
+            if (grounded == null) continue;
+            if (from.getY() - grounded.getY() > 2.1) continue; // reject cliffs
+            grounded.setYaw(from.getYaw());
+            grounded.setPitch(from.getPitch());
+            if (isStandable(grounded)) return grounded;
+        }
+        return null;
+    }
+
+    private static Location groundAt(World w, double x, double z, int startY) {
+        int minY = w.getMinHeight() + 1;
+        for (int y = Math.min(startY, w.getMaxHeight() - 2); y >= minY; y--) {
+            Location foot = new Location(w, x, y, z);
+            if (isStandable(foot)) return foot;
+        }
+        return null;
+    }
+
+    private static boolean isStandable(Location foot) {
+        World w = foot.getWorld();
+        if (w == null) return false;
+        int x = foot.getBlockX();
+        int y = foot.getBlockY();
+        int z = foot.getBlockZ();
+        w.getChunkAt(x >> 4, z >> 4).load(true);
+        Block below = w.getBlockAt(x, y - 1, z);
+        Block at = w.getBlockAt(x, y, z);
+        Block above = w.getBlockAt(x, y + 1, z);
+        if (!below.getType().isSolid()) return false;
+        if (at.getType().isSolid()) return false;
+        if (above.getType().isSolid()) return false;
+        // Keep fractional xz; integer y is the floor the player stands on
+        foot.setY(y);
+        return true;
     }
 
     private static boolean gameMode(CommandSender sender, Player p, String[] args, long t0) {

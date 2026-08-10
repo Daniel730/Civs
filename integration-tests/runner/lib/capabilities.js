@@ -62,6 +62,17 @@ class Capabilities {
   gameMode(player, mode) { return this.act(player, 'game_mode', mode); }
   die(player) { return this.act(player, 'die'); }
   respawn(player) { return this.act(player, 'respawn'); }
+  step(player, x, y, z, len) {
+    if (x === 'forward') return this.act(player, 'step', 'forward', ...(len != null ? [len] : []));
+    return this.act(player, 'step', x, y, z, ...(len != null ? [len] : []));
+  }
+  moveTo(player, x, y, z, timeoutMs, arrive, stepLen) {
+    const args = [x, y, z];
+    if (timeoutMs != null) args.push(timeoutMs);
+    if (arrive != null) args.push(arrive);
+    if (stepLen != null) args.push(stepLen);
+    return this.act(player, 'move_to', ...args);
+  }
   rpgPing() { return this.harness.raw('test rpg ping').then((line) => this._parse(line)); }
   rpgObserve(player) { return this.harness.raw(`test rpg observe ${player}`).then((line) => this._parse(line)); }
   rpgAbandon(player, questId) {

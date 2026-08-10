@@ -30,6 +30,16 @@ Also validated (scenario 06-rpg-quest-accept):
 - OBSERVED: performCommand accept can return true while result is LOCKED
 - OBSERVED: requires: entries mean completed quests, not merely active
 
+Also validated (scenario 07-move-to, 5/5):
+- step / move_to greedy_step navigator (~8 blocks open pad, final_distance≈0.8)
+
+Agent Gateway MCP (gateway/smoke.js): GATEWAY_SMOKE PASS
+(observe, teleport, move_to, rpg_observe tools over MCP stdio)
+
+Hermes integration: see docs/HERMES-INTEGRATION.md
+- oneshot BLOCKED (MoA preset)
+- mcp add BLOCKED on Windows (no node.exe) — example yaml only
+
 Completion state: EMPIRICALLY VALIDATED (capability subset above)
-NOT validated yet: pathfind move_to, container GUI clicks, crafting, Civs menu clicks,
-full quest complete→reward chain, swim/climb.
+NOT validated yet: A* pathfinding, container GUI clicks, crafting, Civs menu clicks,
+full quest complete→reward chain, swim/climb, Hermes exploratory E2E.

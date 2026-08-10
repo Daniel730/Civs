@@ -21,6 +21,8 @@ Two independently deployable systems sharing one capability/observation core:
 | RPG observe bridge | **EMPIRICALLY VALIDATED** | scenario `04-rpg-observe` — 8/8 |
 | Death / respawn / reconnect | **EMPIRICALLY VALIDATED** | scenario `05` — 12/12 |
 | RPG quest accept | **EMPIRICALLY VALIDATED** | scenario `06` — abandon slot + `QuestAcceptResult.SUCCESS` |
+| Greedy `move_to` / `step` | **EMPIRICALLY VALIDATED** | scenario `07` — 5/5 open pad |
+| Hermes recon + Agent Gateway MCP | **OBSERVED / PARTIAL** | see `docs/HERMES-INTEGRATION.md`; gateway smoke PASS; Hermes `-z`/mcp add BLOCKED |
 | LLM planner | **TODO** | — |
 | AI world / Director / OBS | **TODO** | — |
 

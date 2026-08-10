@@ -4,14 +4,17 @@
   "private": true,
   "description": "Autonomous integration-test runner for Civs on a real Paper server (RCON + optional Mineflayer actor, JUnit XML output).",
   "type": "commonjs",
-  "bin": { "civs-itest": "run.js" },
+  "bin": {
+    "civs-itest": "run.js"
+  },
   "scripts": {
     "test": "node run.js",
     "test:one": "node run.js --scenario"
   },
   "dependencies": {
-    "rcon-client": "^4.2.5",
-    "minecraft-protocol": "^1.66.2"
+    "@modelcontextprotocol/sdk": "^1.12.1",
+    "minecraft-protocol": "^1.66.2",
+    "rcon-client": "^4.2.5"
   },
   "optionalDependencies": {
     "mineflayer": "^4.37.1"
