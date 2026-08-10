@@ -208,3 +208,46 @@ access to `Daniel730/Civs`, not `Daniel730/civs-quests`**. This is a genuine acc
 blocker (no credential I can obtain). Per the autonomy rules I did not stop: the ready-to-
 apply patch is saved at `docs/civs-quests-docs-fix.patch` (and as a run artifact) for the
 owner to apply, or grant the bot push access to that repo. Everything else continued.
+
+---
+
+## Stage AP — Autonomous Minecraft agent platform (2026-08-10)
+
+**D-AP-001 — Extend integration-tests; do not create a competing harness.**
+Recon found a working two-layer framework (`CivsTestHarness` + Node runner +
+`RawKeepAliveActor`) and a separate Python `scripts/qa` path. Mission forbids destroying
+working systems. **Decision:** grow agent capabilities inside `integration-tests/` and
+document the platform under `docs/*`; defer a top-level `agent/` package until capabilities
+are empirically stable.
+
+**D-AP-002 — Server-side capability layer for Paper 26.1.2.**
+Mineflayer remains unusable here (prior empirical probe). Raw protocol provides *presence*
+only. **Decision:** add `/test act` / `/test observe` that invoke verified Paper
+`Player`/`LivingEntity` APIs (`breakBlock`, `setSneaking`, `setSprinting`, `attack`,
+`swingMainHand`, `setRotation`, `teleport`) against the online actor player. This is still
+an *actor* concern (production event paths), not harness Civs-state creation.
+
+**D-AP-003 — `place_block` via `BlockPlaceEvent` until a better API exists.**
+Paper `Player` has `breakBlock` but no `placeBlock` (javap 26.1.2). **Decision:** implement
+`place_block` by calling `BlockPlaceEvent` then `setType` if not cancelled; mark
+EMPIRICALLY VALIDATED only after a live probe confirms listeners see the event. Do not
+claim native client placement.
+
+**D-AP-004 — Work branch `cursor/agent-platform-p1` from `master`.**
+`docs/MIGRATION-STATUS.md` states migration landed on `master` / `v1.11.7`. **Decision:**
+platform work branches from `master`, not the leftover `paper-26.1.2-migration` tip.
+
+**D-AP-005 — WSL QA credentials differ from docs default.**
+OBSERVED: `/home/dansilva/civs-testserver` uses RCON password `civsqa`. Runner docs default
+to `civs-itest`. **Decision:** document both in `docs/TESTING.md` / `OPERATIONS.md`; probes
+on this host must export `RCON_PASSWORD=civsqa`.
+
+**D-AP-006 — RPG observe via reflection, not a civs-quests compile dependency.**
+Harness must stay buildable from the Civs repo alone. **Decision:** `RpgBridge` reflects
+`RPGServer.getProfileManager().getOrCreate(Player)` and profile getters. If RPG is absent
+or the API moves, `/test rpg observe` returns `success:false` with an explicit reason.
+
+**D-AP-007 — Allowlisted `run_as` for player commands.**
+`Player.performCommand` is verified in paper-api. **Decision:** expose `act run_as` only for
+prefixes `rpg|cv|say|me` so LLM/planner layers cannot escalate to arbitrary console commands
+through the capability API.
