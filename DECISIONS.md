@@ -313,3 +313,12 @@ now because knip under-detects CommonJS `require` + member access (`tel.foo`) fa
 positives on intentional public/test APIs. `zod` is a direct dependency (MCP tool schemas).
 `typescript` is a knip peer only (ignored as unused app dep). Broader CI (Maven, merge
 blocking policy) remains #42; arch-contract remains #36.
+
+**D-AP-016 — CI gates + master branch protection (#42, 2026-08-11).**
+**Decision:** ship `.github/workflows/maven-ci.yml` (`maven-test` on Temurin 25 with
+nocheatplus installed from the GitHub release jar — jitpack 404 workaround from
+`AGENTS.md`) and keep `runner-quality.yml` always present on PRs (path-filter skips
+Biome work when JS unchanged so required checks never hang). Integration stays a
+**documented** job (`integration-manual`) until a self-hosted Paper runner exists —
+do not fake green Minecraft E2E in GHA. Enable `master` branch protection requiring
+`maven-test`, `Biome + knip`, and `Conventional PR title`.

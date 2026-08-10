@@ -88,15 +88,15 @@ Java equivalents while JVM OTel lands: structured logging with correlation ids; 
 - `npm run knip` — unused files & dependency graph (CI fails on critical dead-ends)
 - `npm run test:unit` — also re-run after lint/format changes
 
-CI: `.github/workflows/runner-quality.yml` (Biome + knip + unit + conventional PR title). Broader Maven/integration gates: #42.
+CI: `.github/workflows/runner-quality.yml` (Biome + knip + unit + conventional PR title; always reports on PRs). Maven: `.github/workflows/maven-ci.yml` (`maven-test`). Broader notes: `docs/TESTING.md` § CI gates. Merge on `master` requires the named checks via branch protection (#42).
 
 ### Java (Civs plugin)
 
 | Tool | Role |
 |------|------|
-| `javac` + `mvn test` | Current gate (**FACT**) |
-| Checkstyle / SpotBugs / Error Prone | Static quality (**TODO**) |
-| ArchUnit | Package architecture contracts (**TODO**) |
+| `javac` + `mvn test` | Current gate (**FACT**) — CI job `maven-test` (#42) |
+| Checkstyle / SpotBugs / Error Prone | Static quality (**TODO** #43) |
+| ArchUnit | Package architecture contracts (**TODO** #43) |
 | PIT / other Java mutation (optional) | Parallel to Stryker for Java hotspots (**TODO**) |
 
 Agents must not weaken these gates in CI without an issue of type `tipo:melhoria` explaining why.
