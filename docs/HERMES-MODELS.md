@@ -70,7 +70,9 @@ See `integration-tests/runner/gateway/patches/hermes-oneshot-wait-mcp.patch`.
 
 - Hostname `desktop-vioren5-1` often fails Windows DNS — use Tailscale IP (**OBSERVED**).
 - `127.0.0.1:11434` refused on Windows — Ollama listens in WSL (**FACT**).
-- systemd override (**FACT**): `OLLAMA_CONTEXT_LENGTH=65536`, `OLLAMA_KEEP_ALIVE=24h` — needs **sudo** to lower (recommended 8192–16384 + `5m` keep-alive).
+- systemd override (**FACT**, root-owned `/etc/systemd/system/ollama.service.d/override.conf`): `OLLAMA_CONTEXT_LENGTH=65536`, `OLLAMA_KEEP_ALIVE=24h` — **BLOCKED** to change without sudo password.
+- User-safe mitigation (**PASS**): `ollama stop <model>` unloads sticky VRAM (e.g. after E2E); does not change global ctx/keep-alive.
+- Recommended sudo fix (Daniel): set `OLLAMA_CONTEXT_LENGTH=16384` (or 8192) and `OLLAMA_KEEP_ALIVE=5m`, then `daemon-reload` + `restart ollama` — see `docs/HERMES-INTEGRATION.md` § Later.
 - Concurrent bot-server `hermes -z` floods starve the GPU — clear before Minecraft E2E (`scripts/_clear_ollama_contention.sh`).
 
 ### Override per invocation

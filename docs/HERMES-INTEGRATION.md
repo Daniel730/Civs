@@ -92,8 +92,9 @@ Non-interactive config: `hermes config set <key> <value>` (**FACT** from `hermes
 | Oneshot without `wait_for_mcp_discovery` | model only saw clarify/memory/todo | **OBSERVED** (fixed via local oneshot patch) |
 | E2E A observe + rpg_observe | real Steve state reported; gateway log PASS | **PASS** |
 | E2E B observe → move_to(+2x) → observe | move args logged; coords changed | **PASS** |
-| E2E C quest accept exploratory | `BLOCKED already_active` (3 active quests) — correct | **PASS** (process) |
-| Lower Ollama global ctx/keep-alive | needs sudo on `/etc/systemd/system/ollama.service.d/override.conf` | **BLOCKED** (user action) |
+| E2E C quest accept | Hermes oneshot abandon `rescue_treasurer` → accept `rescue_quartermaster` → observe; confirmed active includes `rescue_quartermaster` (~45s) | **PASS** |
+| Lower Ollama global ctx/keep-alive | root-owned systemd override; no passwordless sudo | **BLOCKED** (user action — see § Later + `docs/HERMES-MODELS.md`) |
+| User-safe Ollama unload | `ollama stop hermes-fast` (and siblings) clears sticky VRAM without sudo | **PASS** |
 
 ---
 
@@ -135,13 +136,28 @@ Hermes Agent (Windows CLI / -z or chat -q)
 4. Register via `hermes mcp add` — **PASS** (WSL node bridge; see `gateway/hermes-mcp.example.yaml`).
 5. Windows Hermes `-z` — **PASS** with local Ollama `hermes-fast` + oneshot MCP wait patch.
 6. Role → model mapping (benchmarked) — **done** (`docs/HERMES-MODELS.md`, `gateway/model-policy.yaml`).
-7. E2E A/B (+ C exploratory) — **PASS** (evidence `runner/reports/e2e-hermes-2026-08-10.md`).
+7. E2E A/B/C — **PASS** (evidence `runner/gateway/e2e-hermes-2026-08-10.md`).
 8. Gateway JSONL observability — **done** (`reports/gateway-tools.jsonl`).
 
 ### Later
 
-- sudo fix for Ollama `CONTEXT_LENGTH` / `KEEP_ALIVE` (still **BLOCKED** without password).
-- Quest accept when a free quest id exists; quest complete → reward (P2/P3).
+- sudo fix for Ollama `CONTEXT_LENGTH` / `KEEP_ALIVE` (still **BLOCKED** without password). Exact one-liner for Daniel (WSL):
+
+```bash
+sudo tee /etc/systemd/system/ollama.service.d/override.conf >/dev/null <<'EOF'
+[Service]
+Environment="OLLAMA_HOST=0.0.0.0:11434"
+Environment="OLLAMA_KEEP_ALIVE=5m"
+Environment="OLLAMA_CONTEXT_LENGTH=16384"
+Environment="OLLAMA_NOPRUNE=1"
+Environment="OLLAMA_REGISTRY_MAXSTREAMS=4"
+Environment="GODEBUG=netdns=cgo"
+EOF
+sudo systemctl daemon-reload && sudo systemctl restart ollama
+```
+
+Until then, unload sticky models without sudo: `ollama stop hermes-fast` (repeat for other loaded models) or `scripts/_clear_ollama_contention.sh`.
+- Quest complete → reward (P2/P3).
 - Replaceable `LLMProvider` inside the repo for CI without Hermes (P4).
 - AI world / Director / OBS (P5–P7).
 - Optional: install Windows Node so MCP can drop the WSL bridge.
