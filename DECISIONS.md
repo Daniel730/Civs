@@ -283,3 +283,15 @@ exploratory=`hermes-agent`, summaries=`hermes-fast`, coding=`hermes-coder`
 (`docs/HERMES-MODELS.md`). Register `minecraft-qa` via `hermes mcp add` with
 `wsl.exe -e env … node mcp-server.js` and pipe `Y` for the enable-tools prompt. Empirically:
 `-z` PONG PASS; `mcp test` 10 tools PASS. Keep Nous login as fallback only; leave MoA off.
+
+**D-AP-013 — Platform engineering standards + Issues→PR (2026-08-11).**
+User required observability (Sentry/Datadog/New Relic/OTel), JS quality
+(Biome/commitlint/knip/arch-contract/Stryker), Codecov/Playwright, motion UI
+(design-motion-principles), and GitHub Issues→PR for all work. **Decision:** document
+mandatory process in `docs/AGENT-WORKFLOW.md` + `.cursor/rules/agent-workflow.mdc`;
+**OpenTelemetry is the primary instrumentation contract** — Sentry for errors; Datadog
+*or* New Relic as one APM backend via OTLP (not three parallel SDKs). Install
+`kylezantos/design-motion-principles` under `.cursor/skills/`. Backlog filed as
+issues #31–#44. Hermes-fast used for checklist draft; Hermes-coder backlog timed out
+— parent authored issues. Full tool install is incremental via those issues, not a
+big-bang rewrite of the Paper plugin.

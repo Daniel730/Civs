@@ -117,3 +117,5 @@ Rules:
 ## Coordination
 
 Hermes Agent and other Cursor agents may work in parallel. Prefer extending `integration-tests/` and documenting decisions in `DECISIONS.md`. Do not delete harnesses or reset production worlds.
+
+**Process:** every Correção / Melhoria / Nova função goes through GitHub Issues → PR (`Closes #N`). Full stack requirements (OTel/Sentry/Datadog|New Relic, Biome/commitlint/knip/arch-contract/Stryker, Codecov/Playwright, motion UI) live in **`docs/AGENT-WORKFLOW.md`**.
