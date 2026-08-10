@@ -17,6 +17,16 @@ const { StdioServerTransport } = require('@modelcontextprotocol/sdk/server/stdio
 const { z } = require('zod');
 const { Harness } = require('../lib/harness');
 const { RawKeepAliveActor } = require('../lib/actor');
+const {
+  initTelemetry,
+  shutdownTelemetry,
+  withSpan,
+  setSpanAttrs,
+  recordResultStatus,
+} = require('../lib/telemetry');
+
+// Agent Gateway telemetry — optional; never blocks MCP if exporter down.
+initTelemetry({ serviceName: process.env.OTEL_SERVICE_NAME || 'civs-agent-gateway' });
 
 const cfg = {
   rconHost: process.env.RCON_HOST || '127.0.0.1',
@@ -67,9 +77,14 @@ function logTool(entry) {
 
 function withToolLog(toolName, args, fn) {
   const t0 = Date.now();
-  return Promise.resolve()
-    .then(fn)
-    .then((result) => {
+  return withSpan('mcp.tool', {
+    'mcp.tool': toolName,
+    'agent.role': 'minecraft-qa',
+    'agent.id': process.env.AGENT_ID || 'gateway',
+    'minecraft.player': cfg.actorName,
+  }, async (span) => {
+    try {
+      const result = await Promise.resolve().then(fn);
       let status = 'UNKNOWN';
       let preview = null;
       try {
@@ -80,7 +95,6 @@ function withToolLog(toolName, args, fn) {
         const pos = (r && (r.position || r.pos || r.location))
           || (parsed && (parsed.position || parsed.pos))
           || null;
-        // Common harness shape: { x, y, z } at top of result
         const xyz = pos || (r && typeof r.x === 'number' ? { x: r.x, y: r.y, z: r.z } : null);
         preview = parsed && {
           status: parsed.status,
@@ -90,7 +104,14 @@ function withToolLog(toolName, args, fn) {
           success: r && typeof r.success === 'boolean' ? r.success : undefined,
           final_distance: r && r.final_distance != null ? r.final_distance : undefined,
         };
+        if (parsed && parsed.action) {
+          setSpanAttrs(span, {
+            'minecraft.action': parsed.action,
+            'minecraft.capability': parsed.action,
+          });
+        }
       } catch (_) { /* ignore parse */ }
+      recordResultStatus(span, status);
       logTool({
         tool: toolName,
         args: args || {},
@@ -99,8 +120,8 @@ function withToolLog(toolName, args, fn) {
         result_preview: preview,
       });
       return result;
-    })
-    .catch((err) => {
+    } catch (err) {
+      recordResultStatus(span, 'FAIL');
       logTool({
         tool: toolName,
         args: args || {},
@@ -109,7 +130,8 @@ function withToolLog(toolName, args, fn) {
         error: String(err && err.message ? err.message : err),
       });
       throw err;
-    });
+    }
+  });
 }
 
 async function ensureSession() {
@@ -190,44 +212,48 @@ server.tool(
   'minecraft_look',
   'Set player yaw/pitch via Player.setRotation.',
   { yaw: z.number(), pitch: z.number() },
-  async ({ yaw, pitch }) => {
+  async ({ yaw, pitch }) => withToolLog('minecraft_look', { yaw, pitch }, async () => {
     const blocked = await ensureSession();
     if (blocked) return textResult(blocked);
     return textResult(fromCap('look', await harness.cap.look(cfg.actorName, yaw, pitch)));
-  },
+  }),
 );
 
 server.tool(
   'minecraft_break_block',
   'Break block via Player.breakBlock (fires BlockBreakEvent).',
   { x: z.number(), y: z.number(), z: z.number() },
-  async ({ x, y, z }) => {
+  async ({ x, y, z }) => withToolLog('minecraft_break_block', { x, y, z }, async () => {
     const blocked = await ensureSession();
     if (blocked) return textResult(blocked);
     return textResult(fromCap('break_block', await harness.cap.breakBlock(cfg.actorName, x, y, z)));
-  },
+  }),
 );
 
 server.tool(
   'minecraft_place_block',
   'Place block via BlockPlaceEvent + setType (not native client place).',
   { x: z.number(), y: z.number(), z: z.number(), material: z.string() },
-  async ({ x, y, z, material }) => {
-    const blocked = await ensureSession();
-    if (blocked) return textResult(blocked);
-    return textResult(fromCap('place_block', await harness.cap.placeBlock(cfg.actorName, x, y, z, material)));
-  },
+  async ({ x, y, z, material }) => withToolLog(
+    'minecraft_place_block',
+    { x, y, z, material },
+    async () => {
+      const blocked = await ensureSession();
+      if (blocked) return textResult(blocked);
+      return textResult(fromCap('place_block', await harness.cap.placeBlock(cfg.actorName, x, y, z, material)));
+    },
+  ),
 );
 
 server.tool(
   'minecraft_attack_nearest',
   'Attack nearest entity of optional type via LivingEntity.attack.',
   { entity_type: z.string().optional() },
-  async ({ entity_type }) => {
+  async ({ entity_type }) => withToolLog('minecraft_attack_nearest', { entity_type }, async () => {
     const blocked = await ensureSession();
     if (blocked) return textResult(blocked);
     return textResult(fromCap('attack', await harness.cap.attackNearest(cfg.actorName, entity_type)));
-  },
+  }),
 );
 
 server.tool(
@@ -245,38 +271,44 @@ server.tool(
   'minecraft_rpg_accept',
   'Accept quest via QuestManager.acceptQuest. Returns QuestAcceptResult — NOT performCommand.',
   { quest_id: z.string() },
-  async ({ quest_id }) => {
+  async ({ quest_id }) => withToolLog('minecraft_rpg_accept', { quest_id }, async () => {
     const blocked = await ensureSession();
     if (blocked) return textResult(blocked);
     return textResult(fromCap('rpg_accept', await harness.cap.rpgAccept(cfg.actorName, quest_id)));
-  },
+  }),
 );
 
 server.tool(
   'minecraft_rpg_abandon',
   'Abandon quest via QuestManager.abandonQuest (QA setup / free max-active slot).',
   { quest_id: z.string() },
-  async ({ quest_id }) => {
+  async ({ quest_id }) => withToolLog('minecraft_rpg_abandon', { quest_id }, async () => {
     const blocked = await ensureSession();
     if (blocked) return textResult(blocked);
     return textResult(fromCap('rpg_abandon', await harness.cap.rpgAbandon(cfg.actorName, quest_id)));
-  },
+  }),
 );
 
 server.tool(
   'minecraft_teleport',
   'Teleport player (Bukkit teleport / tp). Useful for pads; not a substitute for move_to.',
   { x: z.number(), y: z.number(), z: z.number() },
-  async ({ x, y, z }) => {
+  async ({ x, y, z }) => withToolLog('minecraft_teleport', { x, y, z }, async () => {
     const blocked = await ensureSession();
     if (blocked) return textResult(blocked);
     return textResult(fromCap('teleport', await harness.cap.teleport(cfg.actorName, x, y, z)));
-  },
+  }),
 );
 
 async function main() {
   const transport = new StdioServerTransport();
-  await server.connect(transport);
+  await withSpan('gateway.lifecycle', {
+    'agent.role': 'minecraft-qa',
+    'agent.id': process.env.AGENT_ID || 'gateway',
+  }, async (span) => {
+    recordResultStatus(span, 'OBSERVED');
+    await server.connect(transport);
+  });
 }
 
 main().catch((e) => {
@@ -288,5 +320,6 @@ main().catch((e) => {
 process.on('SIGINT', async () => {
   try { if (actor) await actor.disconnect(); } catch (_) {}
   try { if (harness) await harness.close(); } catch (_) {}
+  try { await shutdownTelemetry(); } catch (_) {}
   process.exit(0);
 });

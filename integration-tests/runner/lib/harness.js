@@ -1,6 +1,7 @@
 'use strict';
 const { Rcon } = require('rcon-client');
 const { Capabilities } = require('./capabilities');
+const { withSpan, setSpanAttrs, recordResultStatus } = require('./telemetry');
 
 const STRIP_COLOR = /\u00a7[0-9a-fk-or]|\u00a7x(\u00a7[0-9a-f]){6}|\x1b\[[0-9;]*m/gi;
 
@@ -17,15 +18,38 @@ class Harness {
   }
 
   async connect() {
-    this.rcon = await Rcon.connect(this.opts);
-    return this;
+    return withSpan('rcon.connect', {
+      'rcon.operation': 'connect',
+      'net.peer.name': this.opts.host,
+      'net.peer.port': this.opts.port,
+    }, async (span) => {
+      // Never put password in span attributes (opts may contain it).
+      this.rcon = await Rcon.connect(this.opts);
+      recordResultStatus(span, 'PASS');
+      return this;
+    });
   }
-  async close() { if (this.rcon) await this.rcon.end(); }
+  async close() {
+    return withSpan('rcon.close', { 'rcon.operation': 'close' }, async (span) => {
+      if (this.rcon) await this.rcon.end();
+      recordResultStatus(span, 'PASS');
+    });
+  }
 
   /** Send any raw server command; returns the color-stripped response text. */
   async raw(cmd) {
-    const res = await this.rcon.send(cmd);
-    return String(res).replace(STRIP_COLOR, '').trim();
+    const op = String(cmd || '').trim().split(/\s+/)[0] || 'raw';
+    return withSpan('rcon.send', {
+      'rcon.operation': 'send',
+      'rcon.command_prefix': op,
+    }, async (span) => {
+      const res = await this.rcon.send(cmd);
+      const text = String(res).replace(STRIP_COLOR, '').trim();
+      setSpanAttrs(span, {
+        'rcon.reply_prefix': text.slice(0, 24),
+      });
+      return text;
+    });
   }
 
   /** Run a Civs command, e.g. cv('reload') or cv('placeregion', 'Tester', 'shelter'). */

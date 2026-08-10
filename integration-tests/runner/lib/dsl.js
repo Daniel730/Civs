@@ -1,4 +1,6 @@
 'use strict';
+const { withSpan, setSpanAttrs, recordResultStatus } = require('./telemetry');
+
 /**
  * Fluent scenario DSL. Turns a chain of player actions + expectations into a runnable
  * scenario. Actions are delegated to the ACTOR (production code path); expectations are
@@ -19,6 +21,31 @@ class ScenarioBuilder {
     this.steps = [];
     this.teardown = [];
     this._checkNoErrors = false;
+  }
+
+  _wrapStep(step, index) {
+    const desc = step.desc || step.kind || `step-${index}`;
+    const run = step.run;
+    return {
+      ...step,
+      run: async (ctx) => withSpan('scenario.step', {
+        'scenario.name': ctx.scenarioName || this.name,
+        'scenario.id': ctx.scenarioId || this.name,
+        'scenario.step': desc,
+        'scenario.step_index': index,
+        'scenario.step_kind': step.kind || 'op',
+      }, async (span) => {
+        try {
+          const out = await run(ctx);
+          recordResultStatus(span, 'PASS');
+          return out;
+        } catch (e) {
+          recordResultStatus(span, 'FAIL');
+          setSpanAttrs(span, { 'error.type': e && e.name ? e.name : 'Error' });
+          throw e;
+        }
+      }),
+    };
   }
 
   // --- actions (delegated to the actor) ---
@@ -91,15 +118,17 @@ class ScenarioBuilder {
 
   build() {
     const self = this;
+    const wrapped = this.steps.map((s, i) => this._wrapStep(s, i));
     return {
       name: this.name,
+      id: this.name,
       async run(ctx) {
         const mark = ctx.markLog();
-        for (const step of self.steps) await step.run(ctx);
+        for (const step of wrapped) await step.run(ctx);
         if (self._checkNoErrors) {
           const ignore = self._noErrorsIgnore || [];
           const errs = ctx.errorsSince(mark).filter((l) => !ignore.some((re) => re.test(l)));
-          ctx.expectTrue('no server errors during scenario', errs.length === 0,
+          await ctx.expectTrue('no server errors during scenario', errs.length === 0,
             errs.slice(0, 3).join(' | ') || 'clean');
         }
       },

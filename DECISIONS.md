@@ -295,3 +295,11 @@ mandatory process in `docs/AGENT-WORKFLOW.md` + `.cursor/rules/agent-workflow.md
 issues #31–#44. Hermes-fast used for checklist draft; Hermes-coder backlog timed out
 — parent authored issues. Full tool install is incremental via those issues, not a
 big-bang rewrite of the Paper plugin.
+
+**D-AP-014 — OpenTelemetry Node-first for #32 (2026-08-11).**
+Issue #32 asks for JVM + Node OTel. **Decision:** ship Node `integration-tests/runner`
++ Agent Gateway MCP instrumentation first (real Hermes→MCP→capability→RCON path),
+with env-driven exporters (`none` default so Minecraft QA never depends on a backend).
+JVM plugin spans deferred to a follow-up under the same issue/contract — avoid blocking
+#32 on Paper plugin shading while the agent platform already emits verifiable traces.
+No vendor SDKs (Sentry/Datadog/NR) in this PR; OTLP only.

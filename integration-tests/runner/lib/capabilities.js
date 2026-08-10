@@ -1,4 +1,6 @@
 'use strict';
+const { withSpan, setSpanAttrs, recordResultStatus } = require('./telemetry');
+
 /**
  * Structured capability client for CivsTestHarness `/test act` and `/test observe`.
  * Never invents success — parses TEST-RESULT json= payloads from the server.
@@ -26,13 +28,33 @@ class Capabilities {
     }
   }
 
+  _capSpan(capability, player, action, fn) {
+    return withSpan(`minecraft.capability.${capability}`, {
+      'minecraft.capability': capability,
+      'minecraft.action': action || capability,
+      'minecraft.player': player || undefined,
+    }, async (span) => {
+      const result = await fn(span);
+      if (result) {
+        setSpanAttrs(span, {
+          'minecraft.world': result.data && result.data.world,
+          'result.reason': result.reason || undefined,
+        });
+        recordResultStatus(span, result.success === true ? 'PASS' : (result.reason === 'player_offline' ? 'BLOCKED' : 'FAIL'));
+      }
+      return result;
+    });
+  }
+
   act(player, action, ...args) {
     const cmd = ['test', 'act', player, action, ...args].join(' ');
-    return this.harness.raw(cmd).then((line) => this._parse(line));
+    return this._capSpan(action, player, action, () =>
+      this.harness.raw(cmd).then((line) => this._parse(line)));
   }
 
   observe(player) {
-    return this.harness.raw(`test observe ${player}`).then((line) => this._parse(line));
+    return this._capSpan('observe', player, 'observe', () =>
+      this.harness.raw(`test observe ${player}`).then((line) => this._parse(line)));
   }
 
   teleport(player, x, y, z, yaw, pitch) {
@@ -71,15 +93,36 @@ class Capabilities {
     if (timeoutMs != null) args.push(timeoutMs);
     if (arrive != null) args.push(arrive);
     if (stepLen != null) args.push(stepLen);
-    return this.act(player, 'move_to', ...args);
+    // Dedicated span (does not call act() to avoid duplicate capability span).
+    return withSpan('minecraft.move_to', {
+      'minecraft.capability': 'move_to',
+      'minecraft.action': 'move_to',
+      'minecraft.player': player,
+    }, async (span) => {
+      const cmd = ['test', 'act', player, 'move_to', ...args].join(' ');
+      const result = await this.harness.raw(cmd).then((line) => this._parse(line));
+      if (result && result.data && typeof result.data.final_distance === 'number') {
+        setSpanAttrs(span, { 'minecraft.final_distance': result.data.final_distance });
+      }
+      recordResultStatus(span, result && result.success === true ? 'PASS' : 'FAIL');
+      return result;
+    });
   }
-  rpgPing() { return this.harness.raw('test rpg ping').then((line) => this._parse(line)); }
-  rpgObserve(player) { return this.harness.raw(`test rpg observe ${player}`).then((line) => this._parse(line)); }
+  rpgPing() {
+    return this._capSpan('rpg_ping', null, 'rpg_ping', () =>
+      this.harness.raw('test rpg ping').then((line) => this._parse(line)));
+  }
+  rpgObserve(player) {
+    return this._capSpan('rpg_observe', player, 'rpg_observe', () =>
+      this.harness.raw(`test rpg observe ${player}`).then((line) => this._parse(line)));
+  }
   rpgAbandon(player, questId) {
-    return this.harness.raw(`test rpg abandon ${player} ${questId}`).then((line) => this._parse(line));
+    return this._capSpan('rpg_abandon', player, 'rpg_abandon', () =>
+      this.harness.raw(`test rpg abandon ${player} ${questId}`).then((line) => this._parse(line)));
   }
   rpgAccept(player, questId) {
-    return this.harness.raw(`test rpg accept ${player} ${questId}`).then((line) => this._parse(line));
+    return this._capSpan('rpg_accept', player, 'rpg_accept', () =>
+      this.harness.raw(`test rpg accept ${player} ${questId}`).then((line) => this._parse(line)));
   }
 }
 

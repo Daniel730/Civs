@@ -18,6 +18,7 @@ const { runScenario } = require('./lib/scenario');
 const { writeJUnit } = require('./lib/junit');
 const { RawKeepAliveActor } = require('./lib/actor');
 const { capture } = require('./lib/evidence');
+const { initTelemetry, shutdownTelemetry, withSpan } = require('./lib/telemetry');
 
 const cfg = {
   rconHost: process.env.RCON_HOST || '127.0.0.1',
@@ -45,46 +46,63 @@ function loadScenarios(filter) {
   const filter = filterIdx > -1 ? process.argv[filterIdx + 1] : null;
   const log = (m) => process.stdout.write(m + '\n');
 
-  const harness = new Harness({ host: cfg.rconHost, port: cfg.rconPort, password: cfg.rconPassword });
-  await harness.connect();
-  const ping = await harness.ping();
-  log(`Harness connected: ${ping._raw}`);
-
-  // Actor: holds a REAL online player so actions hit production code.
-  let actor = { available: false, reason: 'actor disabled', name: cfg.actorName, async disconnect() {}, async grantOp() {} };
-  if (cfg.actorEnabled) {
-    actor = new RawKeepAliveActor({
-      host: cfg.mcHost, port: cfg.mcPort, username: cfg.actorName, version: cfg.serverMajor,
-      sendCommand: (c) => harness.raw(c),
-    });
-    await actor.connect();
-    log(`Actor '${cfg.actorName}': ${actor.available ? 'ONLINE (real player)' : 'UNAVAILABLE (' + actor.reason + ')'}`);
-    if (actor.available) { await actor.grantOp(); await new Promise((r) => setTimeout(r, 500)); }
+  const tel = initTelemetry({ serviceName: process.env.OTEL_SERVICE_NAME || 'civs-integration-runner' });
+  if (tel.mode && tel.mode !== 'none' && tel.mode !== 'disabled') {
+    log(`Telemetry: mode=${tel.mode}${tel.file ? ' file=' + tel.file : ''}${tel.ok ? '' : ' (degraded: ' + tel.error + ')'}`);
   }
 
-  const evidenceDir = path.join(path.dirname(cfg.report), 'evidence');
-  const deps = {
-    harness, actor, log, serverLogPath: cfg.serverLog,
-    // Capture an evidence bundle at failure time (before teardown).
-    onFailure: async (ctx, suite) => {
-      const dir = path.join(evidenceDir, suite.name.replace(/[^\w.-]+/g, '_'));
-      await capture(dir, { harness, suite, serverLogPath: cfg.serverLog, playerName: ctx.playerName || actor.name });
-      log(`  evidence captured: ${dir}`);
-    },
-  };
-  const scenarios = loadScenarios(filter).map((s) => (typeof s.build === 'function' ? s.build() : s));
-  log(`Running ${scenarios.length} scenario(s)...`);
+  await withSpan('runner.session', {
+    'agent.role': 'integration-runner',
+    'agent.id': process.env.AGENT_ID || 'runner',
+  }, async () => {
+    const harness = new Harness({ host: cfg.rconHost, port: cfg.rconPort, password: cfg.rconPassword });
+    await harness.connect();
+    const ping = await harness.ping();
+    log(`Harness connected: ${ping._raw}`);
 
-  const suites = [];
-  for (const scenario of scenarios) {
-    suites.push(await runScenario(scenario, deps));
-  }
+    // Actor: holds a REAL online player so actions hit production code.
+    let actor = { available: false, reason: 'actor disabled', name: cfg.actorName, async disconnect() {}, async grantOp() {} };
+    if (cfg.actorEnabled) {
+      actor = new RawKeepAliveActor({
+        host: cfg.mcHost, port: cfg.mcPort, username: cfg.actorName, version: cfg.serverMajor,
+        sendCommand: (c) => harness.raw(c),
+      });
+      await actor.connect();
+      log(`Actor '${cfg.actorName}': ${actor.available ? 'ONLINE (real player)' : 'UNAVAILABLE (' + actor.reason + ')'}`);
+      if (actor.available) { await actor.grantOp(); await new Promise((r) => setTimeout(r, 500)); }
+    }
 
-  const totals = writeJUnit(suites, cfg.report);
-  log(`\nJUnit report: ${cfg.report}`);
-  log(`TOTAL: ${totals.totalTests} assertions, ${totals.totalFail} failed, ${totals.totalErr} scenario error(s).`);
+    const evidenceDir = path.join(path.dirname(cfg.report), 'evidence');
+    const deps = {
+      harness, actor, log, serverLogPath: cfg.serverLog,
+      agentId: process.env.AGENT_ID || 'runner',
+      agentRole: 'integration-runner',
+      // Capture an evidence bundle at failure time (before teardown).
+      onFailure: async (ctx, suite) => {
+        const dir = path.join(evidenceDir, suite.name.replace(/[^\w.-]+/g, '_'));
+        await capture(dir, { harness, suite, serverLogPath: cfg.serverLog, playerName: ctx.playerName || actor.name });
+        log(`  evidence captured: ${dir}`);
+      },
+    };
+    const scenarios = loadScenarios(filter).map((s) => (typeof s.build === 'function' ? s.build() : s));
+    log(`Running ${scenarios.length} scenario(s)...`);
 
-  try { await actor.disconnect(); } catch (_) {}
-  await harness.close();
-  process.exit(totals.totalFail === 0 && totals.totalErr === 0 ? 0 : 1);
-})().catch((e) => { console.error('RUNNER FATAL:', e); process.exit(2); });
+    const suites = [];
+    for (const scenario of scenarios) {
+      suites.push(await runScenario(scenario, deps));
+    }
+
+    const totals = writeJUnit(suites, cfg.report);
+    log(`\nJUnit report: ${cfg.report}`);
+    log(`TOTAL: ${totals.totalTests} assertions, ${totals.totalFail} failed, ${totals.totalErr} scenario error(s).`);
+
+    try { await actor.disconnect(); } catch (_) {}
+    await harness.close();
+    try { await shutdownTelemetry(); } catch (_) {}
+    process.exit(totals.totalFail === 0 && totals.totalErr === 0 ? 0 : 1);
+  });
+})().catch(async (e) => {
+  console.error('RUNNER FATAL:', e);
+  try { await shutdownTelemetry(); } catch (_) {}
+  process.exit(2);
+});
