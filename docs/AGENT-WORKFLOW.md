@@ -73,13 +73,22 @@ Java equivalents while JVM OTel lands: structured logging with correlation ids; 
 
 ### Node (`integration-tests/runner` and any future web/UI package)
 
-| Tool | Role |
-|------|------|
-| **Biome** | Format + lint |
-| **commitlint** | Conventional commits on PR titles / commit messages |
-| **knip** | Dead exports / unused deps |
-| **arch-contract** (dependency-cruiser or eslint-plugin-boundaries) | Forbidden import edges (runner ↛ plugin internals, UI ↛ secrets) |
-| **Stryker** | Mutation testing on critical runner libs (`harness`, `capabilities`, `dsl`) |
+| Tool | Role | Status |
+|------|------|--------|
+| **Biome** | Format + lint | **DONE** (#35) — `cd integration-tests/runner && npm run lint` |
+| **commitlint** | Conventional commits on PR titles / commit messages | **DONE** (#35) — CI on PRs touching the runner; local: pipe title into `npx commitlint` |
+| **knip** | Dead files / unused & unlisted deps | **DONE** (#35) — `npm run knip` (CJS export-member noise off; see D-AP-015) |
+| **arch-contract** (dependency-cruiser or eslint-plugin-boundaries) | Forbidden import edges (runner ↛ plugin internals, UI ↛ secrets) | **TODO** (#36) |
+| **Stryker** | Mutation testing on critical runner libs (`harness`, `capabilities`, `dsl`) | **TODO** (#37) |
+
+**Runner quality scripts (FACT):** from `integration-tests/runner`:
+
+- `npm run lint` — Biome format + lint (check only)
+- `npm run lint:fix` / `npm run format` — apply Biome fixes / format only
+- `npm run knip` — unused files & dependency graph (CI fails on critical dead-ends)
+- `npm run test:unit` — also re-run after lint/format changes
+
+CI: `.github/workflows/runner-quality.yml` (Biome + knip + unit + conventional PR title). Broader Maven/integration gates: #42.
 
 ### Java (Civs plugin)
 

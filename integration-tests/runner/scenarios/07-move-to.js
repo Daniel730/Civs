@@ -1,4 +1,3 @@
-'use strict';
 /**
  * Empirically validates greedy server-side move_to / step (no Mineflayer pathfinder).
  * Open flat pad: teleport to A, move_to B ~8 blocks away, assert arrival distance.
@@ -23,17 +22,33 @@ module.exports = scenario('MoveToNavigation')
   })
   .teleport(A.x + 0.5, A.y, A.z + 0.5)
   .step('move_to goal', async (ctx) => {
-    const r = await ctx.harness.cap.moveTo(ctx.playerName, B.x + 0.5, B.y, B.z + 0.5, 15000, 1.5, 0.9);
+    const r = await ctx.harness.cap.moveTo(
+      ctx.playerName,
+      B.x + 0.5,
+      B.y,
+      B.z + 0.5,
+      15000,
+      1.5,
+      0.9
+    );
     ctx.expectTrue('move_to success', r.success === true, r.reason || r._raw);
     const dist = r.data && typeof r.data.final_distance === 'number' ? r.data.final_distance : 99;
-    ctx.expectTrue('arrived within 1.5', dist <= 1.5, 'final_distance=' + dist + ' data=' + JSON.stringify(r.data));
+    ctx.expectTrue(
+      'arrived within 1.5',
+      dist <= 1.5,
+      'final_distance=' + dist + ' data=' + JSON.stringify(r.data)
+    );
   })
   .step('observe near goal', async (ctx) => {
     const obs = await ctx.harness.cap.observe(ctx.playerName);
     ctx.expectTrue('observe ok', obs.success === true, obs.reason || obs._raw);
     const dx = Math.abs((obs.data.x || 0) - (B.x + 0.5));
     const dz = Math.abs((obs.data.z || 0) - (B.z + 0.5));
-    ctx.expectTrue('near goal xz', Math.hypot(dx, dz) <= 1.5, JSON.stringify({ dx, dz, data: obs.data }));
+    ctx.expectTrue(
+      'near goal xz',
+      Math.hypot(dx, dz) <= 1.5,
+      JSON.stringify({ dx, dz, data: obs.data })
+    );
   })
   .expectNoErrors({ ignore: [/\[CivsTestHarness\]/] })
   .build();

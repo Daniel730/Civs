@@ -1,4 +1,3 @@
-'use strict';
 /**
  * OpenTelemetry bootstrap for the Civs integration runner / Agent Gateway.
  *
@@ -66,7 +65,9 @@ function parentSpanIdOf(span) {
     if (span.parentSpanContext && span.parentSpanContext.spanId) {
       return span.parentSpanContext.spanId;
     }
-  } catch (_) { /* ignore */ }
+  } catch (_) {
+    /* ignore */
+  }
   return null;
 }
 
@@ -106,10 +107,16 @@ class InMemorySpanProcessor {
         startTime: span.startTime,
         endTime: span.endTime,
       });
-    } catch (_) { /* never break host */ }
+    } catch (_) {
+      /* never break host */
+    }
   }
-  shutdown() { return Promise.resolve(); }
-  forceFlush() { return Promise.resolve(); }
+  shutdown() {
+    return Promise.resolve();
+  }
+  forceFlush() {
+    return Promise.resolve();
+  }
 }
 
 /**
@@ -141,7 +148,9 @@ class FileSpanExporter {
       resultCallback({ code: 1, error: e });
     }
   }
-  shutdown() { return Promise.resolve(); }
+  shutdown() {
+    return Promise.resolve();
+  }
 }
 
 function exporterMode() {
@@ -174,8 +183,12 @@ function initTelemetry(opts = {}) {
   }
 
   const mode = exporterMode();
-  if (mode === 'none' && !process.env.CIVS_OTEL_FILE
-    && process.env.CIVS_OTEL_IN_MEMORY !== '1' && process.env.CIVS_OTEL_IN_MEMORY !== 'true') {
+  if (
+    mode === 'none' &&
+    !process.env.CIVS_OTEL_FILE &&
+    process.env.CIVS_OTEL_IN_MEMORY !== '1' &&
+    process.env.CIVS_OTEL_IN_MEMORY !== 'true'
+  ) {
     _started = true;
     _tracer = null;
     return { ok: true, mode: 'none' };
@@ -195,13 +208,13 @@ function initTelemetry(opts = {}) {
       ConsoleSpanExporter,
     } = require('@opentelemetry/sdk-trace-base');
 
-    const serviceName = opts.serviceName
-      || process.env.OTEL_SERVICE_NAME
-      || 'civs-integration-runner';
+    const serviceName =
+      opts.serviceName || process.env.OTEL_SERVICE_NAME || 'civs-integration-runner';
 
-    const serviceKey = semconv.ATTR_SERVICE_NAME
-      || (semconv.SemanticResourceAttributes && semconv.SemanticResourceAttributes.SERVICE_NAME)
-      || 'service.name';
+    const serviceKey =
+      semconv.ATTR_SERVICE_NAME ||
+      (semconv.SemanticResourceAttributes && semconv.SemanticResourceAttributes.SERVICE_NAME) ||
+      'service.name';
     const resource = new resources.Resource({ [serviceKey]: serviceName });
 
     _memorySpans = [];
@@ -210,20 +223,26 @@ function initTelemetry(opts = {}) {
     if (mode === 'console' || process.env.CIVS_OTEL_CONSOLE === '1') {
       spanProcessors.push(new SimpleSpanProcessor(new ConsoleSpanExporter()));
     }
-    if (mode === 'memory' || process.env.CIVS_OTEL_IN_MEMORY === '1' || process.env.CIVS_OTEL_IN_MEMORY === 'true') {
+    if (
+      mode === 'memory' ||
+      process.env.CIVS_OTEL_IN_MEMORY === '1' ||
+      process.env.CIVS_OTEL_IN_MEMORY === 'true'
+    ) {
       spanProcessors.push(new InMemorySpanProcessor(_memorySpans));
     }
     if (process.env.CIVS_OTEL_FILE || mode === 'file') {
-      const fp = process.env.CIVS_OTEL_FILE
-        || require('path').join(require('os').tmpdir(), 'civs-otel-spans.jsonl');
+      const fp =
+        process.env.CIVS_OTEL_FILE ||
+        require('path').join(require('os').tmpdir(), 'civs-otel-spans.jsonl');
       spanProcessors.push(new SimpleSpanProcessor(new FileSpanExporter(fp)));
       _fileStream = fp;
     }
     if (mode === 'otlp') {
       try {
         const { OTLPTraceExporter } = require('@opentelemetry/exporter-trace-otlp-http');
-        const url = process.env.OTEL_EXPORTER_OTLP_TRACES_ENDPOINT
-          || (process.env.OTEL_EXPORTER_OTLP_ENDPOINT
+        const url =
+          process.env.OTEL_EXPORTER_OTLP_TRACES_ENDPOINT ||
+          (process.env.OTEL_EXPORTER_OTLP_ENDPOINT
             ? String(process.env.OTEL_EXPORTER_OTLP_ENDPOINT).replace(/\/$/, '') + '/v1/traces'
             : undefined);
         const exporter = new OTLPTraceExporter(url ? { url } : undefined);
@@ -242,7 +261,11 @@ function initTelemetry(opts = {}) {
     for (const p of spanProcessors) provider.addSpanProcessor(p);
 
     // Best-effort global registration (only first call sticks in OTel API).
-    try { api.trace.setGlobalTracerProvider(provider); } catch (_) { /* ignore */ }
+    try {
+      api.trace.setGlobalTracerProvider(provider);
+    } catch (_) {
+      /* ignore */
+    }
 
     _sdk = provider;
     // Always take tracer from OUR provider so re-init after shutdown works in tests.
@@ -268,14 +291,19 @@ function _finishOk(span, api, result) {
       if (result.status != null) {
         span.setAttribute('result.status', resultStatusAttr(result.status));
       }
-      if (result.ok === false || result.success === false
-        || (result.status && ['FAIL', 'BLOCKED'].includes(String(result.status).toUpperCase()))) {
+      if (
+        result.ok === false ||
+        result.success === false ||
+        (result.status && ['FAIL', 'BLOCKED'].includes(String(result.status).toUpperCase()))
+      ) {
         if (api) span.setStatus({ code: api.SpanStatusCode.ERROR });
       } else if (result.status && String(result.status).toUpperCase() === 'PASS') {
         if (api) span.setStatus({ code: api.SpanStatusCode.OK });
       }
     }
-  } catch (_) { /* ignore */ }
+  } catch (_) {
+    /* ignore */
+  }
 }
 
 function _finishErr(span, api, err) {
@@ -289,7 +317,9 @@ function _finishErr(span, api, err) {
       span.setAttribute('error.type', err && err.name ? err.name : 'Error');
       span.setAttribute('result.status', 'FAIL');
     }
-  } catch (_) { /* ignore */ }
+  } catch (_) {
+    /* ignore */
+  }
 }
 
 /**
@@ -307,8 +337,16 @@ function withSpan(name, attrs, fn) {
       const result = fn(span);
       if (result && typeof result.then === 'function') {
         return Promise.resolve(result).then(
-          (v) => { _finishOk(span, api, v); span.end(); return v; },
-          (err) => { _finishErr(span, api, err); span.end(); throw err; },
+          (v) => {
+            _finishOk(span, api, v);
+            span.end();
+            return v;
+          },
+          (err) => {
+            _finishErr(span, api, err);
+            span.end();
+            throw err;
+          }
         );
       }
       _finishOk(span, api, result);
@@ -328,7 +366,9 @@ function setSpanAttrs(span, attrs) {
     const safe = safeAttrs(attrs);
     if (!safe) return;
     for (const [k, v] of Object.entries(safe)) span.setAttribute(k, v);
-  } catch (_) { /* ignore */ }
+  } catch (_) {
+    /* ignore */
+  }
 }
 
 function recordResultStatus(span, status) {
@@ -344,13 +384,17 @@ function recordResultStatus(span, status) {
     } else if (up === 'PASS' || up === 'OBSERVED') {
       span.setStatus({ code: api.SpanStatusCode.OK });
     }
-  } catch (_) { /* ignore */ }
+  } catch (_) {
+    /* ignore */
+  }
 }
 
 async function shutdownTelemetry() {
   try {
     if (_sdk && typeof _sdk.shutdown === 'function') await _sdk.shutdown();
-  } catch (_) { /* ignore */ }
+  } catch (_) {
+    /* ignore */
+  }
   _sdk = null;
   _tracer = null;
   _started = false;

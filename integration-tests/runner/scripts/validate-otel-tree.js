@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-'use strict';
 /**
  * Empirically validate OTel parent/child tree for the closest real path available
  * without requiring Hermes:
@@ -35,15 +34,20 @@ async function main() {
   const wantMcp = process.argv.includes('--mcp');
 
   const fakeHarness = {
-    raw: async (cmd) => tel.withSpan('rcon.send', {
-      'rcon.operation': 'send',
-      'rcon.command_prefix': String(cmd).split(/\s+/)[0],
-    }, async () => {
-      if (String(cmd).includes('move_to')) {
-        return 'TEST-RESULT json={"success":true,"action":"move_to","data":{"final_distance":0.2,"world":"world"}}';
-      }
-      return 'TEST-RESULT json={"success":true,"action":"observe","data":{"x":1,"y":2,"z":3,"world":"world"}}';
-    }),
+    raw: async (cmd) =>
+      tel.withSpan(
+        'rcon.send',
+        {
+          'rcon.operation': 'send',
+          'rcon.command_prefix': String(cmd).split(/\s+/)[0],
+        },
+        async () => {
+          if (String(cmd).includes('move_to')) {
+            return 'TEST-RESULT json={"success":true,"action":"move_to","data":{"final_distance":0.2,"world":"world"}}';
+          }
+          return 'TEST-RESULT json={"success":true,"action":"observe","data":{"x":1,"y":2,"z":3,"world":"world"}}';
+        }
+      ),
   };
   const cap = new Capabilities(fakeHarness);
   const harness = { ...fakeHarness, cap };
@@ -71,15 +75,19 @@ async function main() {
 
   let suite;
   if (wantMcp) {
-    suite = await tel.withSpan('mcp.tool', {
-      'mcp.tool': 'minecraft_move_to',
-      'agent.role': 'minecraft-qa',
-      'agent.id': 'validate-mcp',
-      'minecraft.player': 'Steve',
-    }, async (span) => {
-      tel.recordResultStatus(span, 'PASS');
-      return runBody();
-    });
+    suite = await tel.withSpan(
+      'mcp.tool',
+      {
+        'mcp.tool': 'minecraft_move_to',
+        'agent.role': 'minecraft-qa',
+        'agent.id': 'validate-mcp',
+        'minecraft.player': 'Steve',
+      },
+      async (span) => {
+        tel.recordResultStatus(span, 'PASS');
+        return runBody();
+      }
+    );
   } else {
     suite = await runBody();
   }
@@ -91,7 +99,9 @@ async function main() {
     console.log('FILE', file, 'bytes', fs.statSync(file).size);
   }
 
-  function find(name) { return spans.filter((s) => s.name === name); }
+  function find(name) {
+    return spans.filter((s) => s.name === name);
+  }
   const tree = spans.map((s) => ({
     name: s.name,
     spanId: s.spanId,
@@ -126,7 +136,8 @@ async function main() {
   if (wantMcp) {
     const mcp = find('mcp.tool')[0];
     if (!mcp) errors.push('missing mcp.tool');
-    else if (run && run.parentSpanId !== mcp.spanId) errors.push('scenario.run not child of mcp.tool');
+    else if (run && run.parentSpanId !== mcp.spanId)
+      errors.push('scenario.run not child of mcp.tool');
   }
 
   if (suite.error) errors.push('suite.error=' + suite.error);
@@ -136,8 +147,9 @@ async function main() {
     console.error('OTEL_VALIDATE FAIL', errors);
     process.exit(1);
   }
-  console.log('OTEL_VALIDATE PASS tree=scenario→step→move_to→rcon'
-    + (wantMcp ? ' (under mcp.tool)' : ''));
+  console.log(
+    'OTEL_VALIDATE PASS tree=scenario→step→move_to→rcon' + (wantMcp ? ' (under mcp.tool)' : '')
+  );
 }
 
 main().catch((e) => {

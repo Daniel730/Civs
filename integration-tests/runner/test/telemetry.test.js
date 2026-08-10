@@ -1,4 +1,3 @@
-'use strict';
 /**
  * Unit tests for OpenTelemetry instrumentation (no Minecraft server required).
  * Run: npm run test:unit
@@ -90,7 +89,10 @@ describe('spans success failure nesting', () => {
       return { status: 'PASS' };
     });
     const spans = tel.getMemorySpans();
-    assert.ok(spans.some((s) => s.name === 'op.ok'), JSON.stringify(spans.map((s) => s.name)));
+    assert.ok(
+      spans.some((s) => s.name === 'op.ok'),
+      JSON.stringify(spans.map((s) => s.name))
+    );
     const s = spans.find((s) => s.name === 'op.ok');
     assert.equal(s.attributes['minecraft.action'], 'observe');
     assert.equal(s.attributes['result.status'], 'PASS');
@@ -123,7 +125,10 @@ describe('spans success failure nesting', () => {
     const parent = spans.find((s) => s.name === 'parent');
     const child = spans.find((s) => s.name === 'child');
     const grand = spans.find((s) => s.name === 'grandchild');
-    assert.ok(parent && child && grand, JSON.stringify(spans.map((s) => ({ n: s.name, p: s.parentSpanId }))));
+    assert.ok(
+      parent && child && grand,
+      JSON.stringify(spans.map((s) => ({ n: s.name, p: s.parentSpanId })))
+    );
     assert.equal(child.parentSpanId, parent.spanId);
     assert.equal(grand.parentSpanId, child.spanId);
     assert.equal(parent.traceId, child.traceId);
@@ -137,10 +142,16 @@ describe('scenario → step → capability relationships', () => {
 
     const { withSpan, getMemorySpans } = tel;
     const fakeHarness = {
-      raw: async (cmd) => withSpan('rcon.send', {
-        'rcon.operation': 'send',
-        'rcon.command_prefix': String(cmd).split(/\s+/)[0],
-      }, async () => 'TEST-RESULT json={"success":true,"action":"move_to","data":{"final_distance":0.4,"world":"world"}}'),
+      raw: async (cmd) =>
+        withSpan(
+          'rcon.send',
+          {
+            'rcon.operation': 'send',
+            'rcon.command_prefix': String(cmd).split(/\s+/)[0],
+          },
+          async () =>
+            'TEST-RESULT json={"success":true,"action":"move_to","data":{"final_distance":0.4,"world":"world"}}'
+        ),
     };
 
     // capabilities/scenario/dsl already require('./telemetry') — same singleton as `tel`.

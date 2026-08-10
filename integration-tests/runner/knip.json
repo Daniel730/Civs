@@ -1,0 +1,33 @@
+{
+  "$schema": "https://unpkg.com/knip@5/schema.json",
+  "entry": [
+    "run.js!",
+    "gateway/mcp-server.js!",
+    "gateway/smoke.js!",
+    "scripts/*.js!",
+    "scenarios/*.js!",
+    "test/*.test.js!",
+    "lib/actor-mineflayer.js!"
+  ],
+  "project": ["**/*.{js,cjs,mjs}"],
+  "ignore": ["reports/**", "node_modules/**", "commitlint.config.cjs"],
+  "ignoreDependencies": ["typescript"],
+  "ignoreBinaries": [],
+  "ignoreExportsUsedInFile": true,
+  "rules": {
+    "files": "error",
+    "dependencies": "error",
+    "devDependencies": "error",
+    "optionalPeerDependencies": "error",
+    "unlisted": "error",
+    "binaries": "error",
+    "unresolved": "error",
+    "exports": "off",
+    "nsExports": "off",
+    "types": "off",
+    "nsTypes": "off",
+    "duplicates": "off",
+    "enumMembers": "off",
+    "classMembers": "off"
+  }
+}

@@ -1,0 +1,54 @@
+# Lint / dead-code / conventional PR titles for integration-tests/runner (#35).
+# Broader Maven + integration CI gates remain issue #42.
+name: runner-quality
+
+on:
+  pull_request:
+    paths:
+      - 'integration-tests/runner/**'
+      - '.github/workflows/runner-quality.yml'
+
+jobs:
+  biome-knip:
+    name: Biome + knip
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: integration-tests/runner
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: integration-tests/runner/package-lock.json
+      - name: Install
+        run: npm ci
+      - name: Biome check (format + lint)
+        run: npm run lint
+      - name: Knip (unused exports / deps)
+        run: npm run knip
+      - name: Unit tests
+        run: npm run test:unit
+
+  commitlint:
+    name: Conventional PR title
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: integration-tests/runner/package-lock.json
+      - name: Install commitlint
+        working-directory: integration-tests/runner
+        run: npm ci
+      - name: Lint PR title
+        working-directory: integration-tests/runner
+        env:
+          PR_TITLE: ${{ github.event.pull_request.title }}
+        run: |
+          printf '%s\n' "$PR_TITLE" | npx commitlint --config commitlint.config.cjs
