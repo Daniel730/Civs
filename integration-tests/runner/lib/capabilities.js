@@ -59,6 +59,9 @@ class Capabilities {
   hotbar(player, slot) { return this.act(player, 'hotbar', slot); }
   giveItem(player, material, amount = 1) { return this.act(player, 'give_item', material, amount); }
   runAs(player, command) { return this.act(player, 'run_as', ...String(command).replace(/^\//, '').split(/\s+/)); }
+  gameMode(player, mode) { return this.act(player, 'game_mode', mode); }
+  die(player) { return this.act(player, 'die'); }
+  respawn(player) { return this.act(player, 'respawn'); }
   rpgPing() { return this.harness.raw('test rpg ping').then((line) => this._parse(line)); }
   rpgObserve(player) { return this.harness.raw(`test rpg observe ${player}`).then((line) => this._parse(line)); }
 }

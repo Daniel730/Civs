@@ -8,4 +8,5 @@
 - RPG observation bridge: `/test rpg ping|observe` (reflection into RPGServer `ProfileManager`, no compile dep).
 - Runner `lib/capabilities.js` and scenarios `03-player-capabilities.js`, `04-rpg-observe.js`.
 - Empirical probe log `integration-tests/CAPABILITY-PROBE-RESULTS.txt`.
-- Decisions D-AP-001…005 in `DECISIONS.md`.
+- Death/respawn/reconnect scenario (`05-death-respawn-reconnect.js`) + `game_mode`/`die`/`respawn` capabilities.
+- Decisions D-AP-001…007 in `DECISIONS.md`.

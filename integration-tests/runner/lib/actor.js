@@ -53,7 +53,19 @@ class RawKeepAliveActor {
   /** Ensure the actor can use admin QA actions (OP grants civs.admin). */
   async grantOp() { return this.sendCommand(`op ${this.name}`); }
 
-  async disconnect() { try { if (this.client) this.client.end(); } catch (_) {} }
+  async disconnect() {
+    try { if (this.client) this.client.end(); } catch (_) {}
+    this.client = null;
+    this.available = false;
+  }
+
+  /** Drop and re-login with the same identity (used by death/reconnect scenarios). */
+  async reconnect(waitMs = 1000) {
+    await this.disconnect();
+    await new Promise((r) => setTimeout(r, waitMs));
+    await this.connect();
+    return this;
+  }
 }
 
 module.exports = { RawKeepAliveActor };

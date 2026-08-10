@@ -4,6 +4,7 @@ import java.util.Locale;
 import java.util.UUID;
 
 import org.bukkit.Bukkit;
+import org.bukkit.GameMode;
 import org.bukkit.Location;
 import org.bukkit.Material;
 import org.bukkit.World;
@@ -73,6 +74,9 @@ final class CapabilityActions {
                 case "hotbar" -> hotbar(sender, p, args, t0);
                 case "give_item" -> giveItem(sender, p, args, t0);
                 case "run_as" -> runAs(sender, p, args, t0);
+                case "game_mode" -> gameMode(sender, p, args, t0);
+                case "die" -> die(sender, p, t0);
+                case "respawn" -> respawn(sender, p, t0);
                 default -> json(sender, false, action, null, System.currentTimeMillis() - t0,
                         "unknown_action", null);
             };
@@ -259,6 +263,40 @@ final class CapabilityActions {
         p.getInventory().setHeldItemSlot(slot);
         return ok(sender, "hotbar", String.valueOf(slot), t0,
                 "\"held\":" + quote(p.getInventory().getItemInMainHand().getType().name()));
+    }
+
+    private static boolean gameMode(CommandSender sender, Player p, String[] args, long t0) {
+        if (args.length < 1) throw new IllegalArgumentException("game_mode <SURVIVAL|CREATIVE|ADVENTURE|SPECTATOR>");
+        GameMode mode = GameMode.valueOf(args[0].toUpperCase(Locale.ROOT));
+        p.setGameMode(mode);
+        return ok(sender, "game_mode", mode.name(), t0, "\"game_mode\":" + quote(p.getGameMode().name()));
+    }
+
+    /** Kill the player via {@link org.bukkit.entity.Damageable#setHealth(double)} (0). Creative mode may prevent death. */
+    private static boolean die(CommandSender sender, Player p, long t0) {
+        if (p.getGameMode() == GameMode.CREATIVE || p.getGameMode() == GameMode.SPECTATOR) {
+            return json(sender, false, "die", p.getName(), System.currentTimeMillis() - t0,
+                    "wrong_game_mode", "\"game_mode\":" + quote(p.getGameMode().name()));
+        }
+        p.setHealth(0.0);
+        boolean dead = p.isDead() || p.getHealth() <= 0.0;
+        return json(sender, dead, "die", p.getName(), System.currentTimeMillis() - t0,
+                dead ? null : "not_dead",
+                "\"health\":" + p.getHealth() + ",\"dead\":" + p.isDead());
+    }
+
+    /** Respawn via {@link org.bukkit.entity.Player.Spigot#respawn()}. */
+    private static boolean respawn(CommandSender sender, Player p, long t0) {
+        if (!p.isDead()) {
+            return json(sender, false, "respawn", p.getName(), System.currentTimeMillis() - t0,
+                    "not_dead", "\"health\":" + p.getHealth());
+        }
+        p.spigot().respawn();
+        boolean alive = !p.isDead() && p.getHealth() > 0.0;
+        Location loc = p.getLocation();
+        return json(sender, alive, "respawn", fmt(loc), System.currentTimeMillis() - t0,
+                alive ? null : "respawn_failed",
+                "\"health\":" + p.getHealth() + ",\"dead\":" + p.isDead());
     }
 
     /** Run a player command via {@link Player#performCommand} (no leading slash). Allowlisted prefixes only. */

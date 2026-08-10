@@ -16,6 +16,14 @@ Verified SUCCESS:
 - place_block (BlockPlaceEvent + setType) -> OAK_PLANKS present
 - attack nearest ZOMBIE (LivingEntity.attack) — target_health decreased (20 -> ~19.06)
 
+Also validated (scenario 05-death-respawn-reconnect, 12/12):
+- game_mode SURVIVAL/CREATIVE
+- die via setHealth(0) (requires non-creative)
+- respawn via Player.spigot().respawn()
+- RPG profile fields survive death
+- RawKeepAliveActor disconnect → observe offline → reconnect → observe online
+- RPG profile survives reconnect
+
 Completion state: EMPIRICALLY VALIDATED (capability subset above)
 NOT validated yet: pathfind move_to, container GUI clicks, crafting, Civs menu clicks,
-RPG quest accept via capability, swim/climb, reconnect recovery loops.
+RPG quest accept→complete chain, swim/climb.
