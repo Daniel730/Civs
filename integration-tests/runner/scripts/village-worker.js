@@ -24,6 +24,7 @@ const { SurvivalMonitor, executeSurvival } = require('../lib/survival');
 const { IntentionCache, AntiStall } = require('../lib/ai-world/intention-cache');
 const { ConsultGate, plannerFromEnv } = require('../lib/ai-world/consult-planner');
 const { recordFocusDecision, recordFocusOutcome } = require('../lib/ai-world/decision');
+const rt = require('../lib/ai-world/agent-runtime');
 const { initTelemetry, shutdownTelemetry } = require('../lib/telemetry');
 const { METRIC, initMetrics, observeMetric, metricsSnapshot } = require('../lib/metrics');
 
@@ -553,6 +554,14 @@ async function equipSurvivalGear(harness, actorName) {
 }
 
 async function connectActor(harness, name, attempt = 1) {
+  // Kick any stale client using this identity so we never collide with an orphaned
+  // minecraft-protocol session ("logged in from another location" → reconnect storm).
+  try {
+    await harness.raw(`kick ${name}`);
+  } catch (_) {
+    /* best effort */
+  }
+  await sleep(800);
   const actor = new RawKeepAliveActor({
     host: cfg.mcHost,
     port: cfg.mcPort,
@@ -749,6 +758,40 @@ async function main() {
     });
   }
 
+  // Name -> actor handle, so the work loop can re-ensure the player is online each tick.
+  const actorByName = { [cfg.actorName]: primary.actor };
+  if (helper && helper.ok) actorByName[cfg.helperName] = helper.actor;
+
+  // Name -> persistent ai-world agent (memory + goals + personality). Loaded from disk so
+  // NPCs remember across process / server restarts (Phase 2 of the Living AI World audit).
+  const agentByName = {};
+  const regPrimary = rt.loadOrCreateAgent(cfg.actorName, {
+    occupation: 'builder',
+    origin: cfg.origin,
+  });
+  agentByName[cfg.actorName] = regPrimary;
+  log({
+    status: 'PASS',
+    action: 'agent_loaded',
+    worker: cfg.actorName,
+    episodes: regPrimary.memory.episodic.length,
+    semantic: Object.keys(regPrimary.memory.semantic).length,
+  });
+  if (helper && helper.ok) {
+    const regHelper = rt.loadOrCreateAgent(cfg.helperName, {
+      occupation: 'helper',
+      origin: cfg.origin,
+    });
+    agentByName[cfg.helperName] = regHelper;
+    log({
+      status: 'PASS',
+      action: 'agent_loaded',
+      worker: cfg.helperName,
+      episodes: regHelper.memory.episodic.length,
+      semantic: Object.keys(regHelper.memory.semantic).length,
+    });
+  }
+
   await sleep(2500);
   const camera = new SpectatorCamera({
     harness,
@@ -843,6 +886,19 @@ async function main() {
     if (busy) return;
     busy = true;
     state.tick += 1;
+    // Phase 2: flush persistent agent memory to disk periodically so NPCs remember
+    // across restarts. Done FIRST (before the survival/try branch) so it runs even when
+    // the agent is in danger and the loop returns early after the survival action.
+    // Every 10 ticks (~2 min) is frequent enough to survive a crash without thrashing disk.
+    if (state.tick % 10 === 0) {
+      for (const name of Object.keys(agentByName)) {
+        try {
+          rt.saveAgent(agentByName[name]);
+        } catch (_) {
+          /* best-effort */
+        }
+      }
+    }
     try {
       const town = await harness.assert.town(cfg.town);
       if ((!town || !town.ok) && state.tick % 12 === 1) {
@@ -851,7 +907,20 @@ async function main() {
       }
       const who = helper && helper.ok && state.tick % 2 === 0 ? cfg.helperName : cfg.actorName;
 
-      // 0. Keep survival gear topped up BEFORE the survival assessment, so a bot in danger
+      // 0a. Keep the player client online (auto-heal dropped keepalive connections).
+      const actor = actorByName[who];
+      if (actor) {
+        try {
+          const ok = await actor.ensureOnline();
+          if (!ok) {
+            log({ status: 'DEGRADED', action: 'actor_reconnect', worker: who, online: false });
+          }
+        } catch (_) {
+          /* best effort */
+        }
+      }
+
+      // 0b. Keep survival gear topped up BEFORE the survival assessment, so a bot in danger
       // still gets armour (otherwise it dies before runJob's ensureAlive ever runs).
       try {
         await equipSurvivalGear(harness, who);
@@ -898,6 +967,21 @@ async function main() {
         } catch (_) {
           /* best-effort */
         }
+        // Phase 2: persistent memory — a death is an important episode to remember.
+        try {
+          const ag = agentByName[who];
+          if (ag) {
+            rt.recordEpisode(ag, {
+              type: 'death',
+              summary: `Died near work (${assessment.deathCause || 'unknown'})`,
+              importance: 0.8,
+              tags: ['death', assessment.deathCause || 'unknown'],
+            });
+            rt.closeCurrentGoal(ag, 'abandoned');
+          }
+        } catch (_) {
+          /* best-effort */
+        }
       }
       if (assessment.action.kind !== 'work') {
         if (typeof observation.noteEvent === 'function') {
@@ -928,6 +1012,20 @@ async function main() {
               recovered: true,
               damageTaken: assessment.healthPct != null ? (1 - assessment.healthPct) * 20 : 0,
             });
+          } catch (_) {
+            /* best-effort */
+          }
+          // Phase 2: remember the recovery as a positive episode.
+          try {
+            const ag = agentByName[who];
+            if (ag) {
+              rt.recordEpisode(ag, {
+                type: 'survival_recovery',
+                summary: `Recovered from ${assessment.state} (${survived.kind})`,
+                importance: 0.6,
+                tags: ['survival', survived.kind, assessment.state],
+              });
+            }
           } catch (_) {
             /* best-effort */
           }
@@ -1004,6 +1102,29 @@ async function main() {
         if (ep) lastEpisode[who] = ep;
       } catch (_) {
         /* experience recording must never break the work tick */
+      }
+
+      // Phase 2: persistent memory — remember the committed objective as an episode and a goal.
+      try {
+        const ag = agentByName[who];
+        if (ag) {
+          rt.recordEpisode(ag, {
+            type: 'objective',
+            summary: `Working ${step.job} @ ${siteKey} (${objective.focus})`,
+            importance: 0.5,
+            tags: [step.job, siteKey, objective.focus],
+          });
+          if (!ag.goals.current || ag.goals.current.title !== `Objective: ${step.job}`) {
+            rt.commitGoal(ag, {
+              kind: 'current',
+              title: `Objective: ${step.job}`,
+              motive: objective.focus,
+              priority: 0.7,
+            });
+          }
+        }
+      } catch (_) {
+        /* best-effort */
       }
 
       state.agentJobs = state.agentJobs || {};
