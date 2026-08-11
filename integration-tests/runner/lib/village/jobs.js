@@ -1,4 +1,13 @@
-const JOBS = Object.freeze(['patrol', 'builder', 'miner', 'farmer', 'stockpile', 'placeregion']);
+const JOBS = Object.freeze([
+  'patrol',
+  'builder',
+  'miner',
+  'farmer',
+  'stockpile',
+  'lumberjack',
+  'guard',
+  'placeregion',
+]);
 
 /** Sites relative to village origin (matches village-builder pad layout). */
 const SITES = Object.freeze({
@@ -11,6 +20,32 @@ const SITES = Object.freeze({
   inn: { dx: 24, dz: 24, label: 'inn_pad' },
   barracks: { dx: 24, dz: -18, label: 'barracks_pad' },
   shack: { dx: 10, dz: 0, label: 'shack_pad' },
+});
+
+/**
+ * Preferred work sites per job so camera shows coherent activity
+ * (farmer at farm, not barracks).
+ */
+const JOB_SITE_AFFINITY = Object.freeze({
+  patrol: ['center'],
+  builder: ['shelter', 'hovel', 'smithy', 'shack'],
+  miner: ['quarry', 'hovel'],
+  farmer: ['farm'],
+  stockpile: ['shack', 'shelter'],
+  lumberjack: ['quarry', 'shelter', 'hovel'],
+  guard: ['barracks', 'center'],
+});
+
+/** Preferred FallbackDirector / ShotPlanner modes when a job succeeds. */
+const JOB_CAMERA_MODE = Object.freeze({
+  patrol: 'orbit',
+  builder: 'event',
+  miner: 'poi',
+  farmer: 'wide',
+  stockpile: 'follow',
+  lumberjack: 'follow',
+  guard: 'orbit',
+  placeregion: 'event',
 });
 
 /** Settlement-tier retries (honest stockpile + placeregion). */
@@ -28,6 +63,18 @@ const EXCLUSIVE_PAIRS = Object.freeze({
 });
 
 /**
+ * Pick a site key for a job using affinity, falling back to all sites.
+ * @param {string} job
+ * @param {number} tick
+ */
+function siteForJob(job, tick) {
+  const n = Math.max(0, Math.floor(tick));
+  const affinity = JOB_SITE_AFFINITY[job];
+  const keys = affinity && affinity.length ? affinity : Object.keys(SITES);
+  return keys[n % keys.length];
+}
+
+/**
  * @param {number} tick
  * @param {{ blocked?: Record<string, boolean>, completedPlaces?: Record<string, boolean> }} [state]
  */
@@ -40,8 +87,7 @@ function nextJob(tick, state = {}) {
   }
   const rotate = JOBS.filter((j) => j !== 'placeregion');
   const job = rotate[n % rotate.length];
-  const sites = Object.keys(SITES);
-  const siteKey = sites[n % sites.length];
+  const siteKey = siteForJob(job, n);
   return { job, site: siteKey, ...SITES[siteKey] };
 }
 
@@ -86,6 +132,22 @@ function workCoords(origin, step) {
           material: 'potatoes',
         },
       };
+    case 'lumberjack':
+      return {
+        stand: { x: ox + 2, y: oy + 1, z: oz - 1 },
+        target: { x: ox + 3, y: oy, z: oz - 1 },
+        place: { x: ox + 4, y: oy + 1, z: oz - 1, material: 'oak_planks' },
+      };
+    case 'guard':
+      return {
+        stand: {
+          x: ox + Math.cos(tick * 0.7) * 4,
+          y: oy + 1,
+          z: oz + Math.sin(tick * 0.7) * 4,
+        },
+        target: { x: ox, y: oy + 1, z: oz },
+        place: null,
+      };
     case 'builder':
     case 'stockpile':
       return {
@@ -116,8 +178,11 @@ function workCoords(origin, step) {
 module.exports = {
   JOBS,
   SITES,
+  JOB_SITE_AFFINITY,
+  JOB_CAMERA_MODE,
   PLACE_ATTEMPTS,
   EXCLUSIVE_PAIRS,
+  siteForJob,
   nextJob,
   nextPlaceAttempt,
   workCoords,
