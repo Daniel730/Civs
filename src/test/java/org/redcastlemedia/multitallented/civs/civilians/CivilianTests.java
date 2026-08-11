@@ -13,14 +13,26 @@ import org.bukkit.event.inventory.InventoryMoveItemEvent;
 import org.bukkit.event.player.PlayerDropItemEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
+import org.junit.Before;
 import org.junit.Test;
 import org.redcastlemedia.multitallented.civs.TestUtil;
 import org.redcastlemedia.multitallented.civs.items.CivItem;
 import org.redcastlemedia.multitallented.civs.items.ItemManager;
+import org.redcastlemedia.multitallented.civs.regions.RegionManager;
 import org.redcastlemedia.multitallented.civs.regions.RegionType;
 import org.redcastlemedia.multitallented.civs.regions.RegionsTests;
+import org.redcastlemedia.multitallented.civs.towns.TownManager;
 
 public class CivilianTests extends TestUtil {
+
+    @Before
+    public void onBefore() {
+        // Isolate from earlier suites that leave regions / stash on shared singletons (CI order).
+        RegionManager.getInstance().reload();
+        TownManager.getInstance().reload();
+        CivilianManager.getInstance().reload();
+        CivilianManager.getInstance().loadCivilian(TestUtil.player);
+    }
 
     @Test
     public void inventoryClickOnUnownedCivItemShouldBeCancelled() {

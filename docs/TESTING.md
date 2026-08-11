@@ -43,6 +43,7 @@ A capability or scenario is not done at “files created”. Use:
 
 ## Known flaky / pitfalls
 
-- FACT (`AGENTS.md`): `RegionsTests.dailyRegionShouldUpkeepDaily` can fail in full suite due to singleton state.
+- FACT (`AGENTS.md`): `RegionsTests.dailyRegionShouldUpkeepDaily` can fail in full suite when government / town-type fixtures are polluted — fixture now pins `DICTATORSHIP` (#41).
+- FACT (CI 2026-08-11): `ItemsTests` CVInventory cases failed when shared chest at `(0,0,0)` retained items; `CivilianTests` failed without Region/Civilian singleton reload. Isolation added under #42.
 - FACT: `/cv reload` does not reload Java code — restart required.
 - FACT: Mineflayer actor unavailable on 26.1.2.
