@@ -128,7 +128,15 @@ async function placeAesthetic(harness, actorName, block) {
   // Honest fallback: RCON setblock (already used for stockpiles). Still grid blueprint.
   await harness.raw(`setblock ${block.x} ${block.y} ${block.z} ${mat}`);
   await harness.cap.swing(actorName);
-  return { via: 'setblock', success: true, material: mat, role: block.role, x: block.x, y: block.y, z: block.z };
+  return {
+    via: 'setblock',
+    success: true,
+    material: mat,
+    role: block.role,
+    x: block.x,
+    y: block.y,
+    z: block.z,
+  };
 }
 
 /**

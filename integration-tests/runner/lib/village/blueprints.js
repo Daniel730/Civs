@@ -24,9 +24,27 @@ const JUNK_MATERIALS = Object.freeze([
 
 /** Site-specific palettes for coherent builds. */
 const PALETTES = Object.freeze({
-  shelter: { wall: 'oak_planks', trim: 'oak_log', roof: 'oak_slab', floor: 'oak_planks', path: 'dirt_path' },
-  hovel: { wall: 'oak_planks', trim: 'oak_log', roof: 'oak_slab', floor: 'oak_planks', path: 'dirt_path' },
-  shack: { wall: 'oak_planks', trim: 'oak_log', roof: 'oak_slab', floor: 'oak_planks', path: 'dirt_path' },
+  shelter: {
+    wall: 'oak_planks',
+    trim: 'oak_log',
+    roof: 'oak_slab',
+    floor: 'oak_planks',
+    path: 'dirt_path',
+  },
+  hovel: {
+    wall: 'oak_planks',
+    trim: 'oak_log',
+    roof: 'oak_slab',
+    floor: 'oak_planks',
+    path: 'dirt_path',
+  },
+  shack: {
+    wall: 'oak_planks',
+    trim: 'oak_log',
+    roof: 'oak_slab',
+    floor: 'oak_planks',
+    path: 'dirt_path',
+  },
   smithy: {
     wall: 'stone_bricks',
     trim: 'oak_log',
@@ -49,7 +67,13 @@ const PALETTES = Object.freeze({
     floor: 'stone_bricks',
     path: 'stone_bricks',
   },
-  inn: { wall: 'oak_planks', trim: 'oak_log', roof: 'oak_slab', floor: 'oak_planks', path: 'dirt_path' },
+  inn: {
+    wall: 'oak_planks',
+    trim: 'oak_log',
+    roof: 'oak_slab',
+    floor: 'oak_planks',
+    path: 'dirt_path',
+  },
   center: {
     wall: 'stone_bricks',
     trim: 'oak_log',
@@ -153,7 +177,13 @@ function pathToCenter(origin, step) {
     const z = Math.round(oz + (cz - oz) * t);
     blocks.push({ x, y: oy, z, material: pal.path, role: 'path' });
     // 2-wide path
-    blocks.push({ x: x + (Math.abs(cx - ox) >= Math.abs(cz - oz) ? 0 : 1), y: oy, z: z + (Math.abs(cx - ox) >= Math.abs(cz - oz) ? 1 : 0), material: pal.path, role: 'path' });
+    blocks.push({
+      x: x + (Math.abs(cx - ox) >= Math.abs(cz - oz) ? 0 : 1),
+      y: oy,
+      z: z + (Math.abs(cx - ox) >= Math.abs(cz - oz) ? 1 : 0),
+      material: pal.path,
+      role: 'path',
+    });
   }
   const tick = Math.max(0, Math.floor(step.tick || 0));
   const start = (tick * 2) % Math.max(1, blocks.length);
