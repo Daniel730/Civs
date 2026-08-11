@@ -1,3 +1,9 @@
+/**
+ * Deterministic cinematic shot planner (anti-repetition).
+ * Not an AI Director — picks camera modes with history, cooldowns, duration bounds.
+ */
+'use strict';
+
 const MODES = Object.freeze([
   'follow',
   'orbit',
@@ -145,6 +151,7 @@ class ShotPlanner {
           lookY: t.y + 1,
           lookZ: t.z,
         };
+      case 'idle':
       default:
         return {
           kind: 'teleport_look',

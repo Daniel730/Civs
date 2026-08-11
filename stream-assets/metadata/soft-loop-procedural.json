@@ -1,0 +1,13 @@
+{
+  "id": "soft-loop-procedural",
+  "title": "Soft Loop Procedural",
+  "artist": "Civs stream prep (original)",
+  "path": "music/soft-loop-procedural.wav",
+  "source_url": "in-repo:generated",
+  "license": "Original work — Daniel / Civs stream nightshift",
+  "download_date": "2026-08-11",
+  "duration_sec": 30,
+  "checksum_sha256": "344541B2EDE6052E36C2DDE698A66CD4EC9AFEA08AFBE0E0CA713F5F1B26E484",
+  "youtube_ok": true,
+  "notes": "Procedural PCM soft loop for OBS Media Source testing."
+}

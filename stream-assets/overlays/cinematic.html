@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Civs cinematic overlay</title>
+  <style>
+    :root {
+      --fg: #f2efe6;
+      --muted: rgba(242, 239, 230, 0.72);
+      --accent: #c4a574;
+    }
+    html, body {
+      margin: 0;
+      width: 1920px;
+      height: 1080px;
+      overflow: hidden;
+      background: transparent;
+      font-family: "Segoe UI", "Candara", sans-serif;
+      color: var(--fg);
+      pointer-events: none;
+    }
+    .wrap {
+      position: absolute;
+      inset: 0;
+      box-sizing: border-box;
+      padding: 48px 56px;
+    }
+    .live {
+      position: absolute;
+      top: 40px;
+      right: 56px;
+      letter-spacing: 0.18em;
+      font-size: 14px;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+    .live::before {
+      content: "";
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      margin-right: 10px;
+      border-radius: 50%;
+      background: #d45c4a;
+      vertical-align: middle;
+      animation: pulse 2.4s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { opacity: 0.45; }
+      50% { opacity: 1; }
+    }
+    .title {
+      position: absolute;
+      left: 56px;
+      bottom: 88px;
+      font-size: 34px;
+      font-weight: 600;
+      letter-spacing: 0.02em;
+      text-shadow: 0 2px 18px rgba(0,0,0,0.55);
+    }
+    .location {
+      position: absolute;
+      left: 56px;
+      bottom: 52px;
+      font-size: 18px;
+      color: var(--muted);
+      text-shadow: 0 1px 12px rgba(0,0,0,0.5);
+    }
+    .event {
+      position: absolute;
+      left: 56px;
+      bottom: 140px;
+      font-size: 16px;
+      color: var(--accent);
+      opacity: 0;
+      transition: opacity 400ms ease;
+    }
+    .event.show { opacity: 1; }
+    .attr {
+      position: absolute;
+      right: 56px;
+      bottom: 48px;
+      font-size: 13px;
+      color: var(--muted);
+      max-width: 420px;
+      text-align: right;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .live::before { animation: none; }
+      .event { transition: none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="live" id="live">Live</div>
+    <div class="event" id="event"></div>
+    <div class="title" id="title">Civs — AI Village</div>
+    <div class="location" id="location">NpcPad · waiting for camera</div>
+    <div class="attr" id="attr">Music: original procedural · stream-assets licenses</div>
+  </div>
+  <script>
+    // Optional query params: ?title=&location=&event=&attr=&live=0
+    const q = new URLSearchParams(location.search);
+    const set = (id, key, fallback) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      const v = q.get(key);
+      if (v != null && v !== '') el.textContent = v;
+      else if (fallback != null) el.textContent = fallback;
+    };
+    set('title', 'title');
+    set('location', 'location');
+    set('attr', 'attr');
+    if (q.get('live') === '0') {
+      const live = document.getElementById('live');
+      if (live) live.style.display = 'none';
+    }
+    const ev = q.get('event');
+    if (ev) {
+      const el = document.getElementById('event');
+      el.textContent = ev;
+      el.classList.add('show');
+    }
+  </script>
+</body>
+</html>

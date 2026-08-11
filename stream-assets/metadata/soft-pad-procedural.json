@@ -1,0 +1,13 @@
+{
+  "id": "soft-pad-procedural",
+  "title": "Soft Pad Procedural",
+  "artist": "Civs stream prep (original)",
+  "path": "ambience/soft-pad-procedural.wav",
+  "source_url": "in-repo:generated",
+  "license": "Original work — Daniel / Civs stream nightshift",
+  "download_date": "2026-08-11",
+  "duration_sec": 30,
+  "checksum_sha256": "C4A8BC7070969FC32DE1C0ACD88B94E7324C4A7CDBDCA696A97719B415B894A0",
+  "youtube_ok": true,
+  "notes": "Procedural PCM sine pad; no third-party samples."
+}

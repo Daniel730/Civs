@@ -32,3 +32,10 @@ Interest scoring and anti-boredom cooldowns: configurable weights; do not hardco
 follow, over-shoulder, side track, orbit, establishing, wide, close, action, static, aerial, POV — each implemented as deterministic camera controllers, not LLM tick control.
 
 **Now:** `follow` via vanilla spectate + optional orbit tick.
+
+## Stream nightshift integration (#51)
+
+- Deterministic **FallbackDirector** + **ShotPlanner** (anti-repetition, cooldowns, event priority):
+  `integration-tests/runner/lib/stream/`
+- OBS / music / health / local stream-test: `docs/STREAMING-ARCHITECTURE.md`, `docs/STREAM-NIGHTSHIFT.md`
+- Full interest-scoring Director remains **TODO** — do not pretend fallback is AI.
