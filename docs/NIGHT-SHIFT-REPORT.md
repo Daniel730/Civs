@@ -50,7 +50,7 @@ Village stack: #50 → #54 → #61 → #62 (approach). Hygiene PRs #52/#55–#59
 
 Before apron fix (**FACT** tally of jsonl): ~346 `move_to` fails / ~1099 ticks — farmer `no_progress` 147, patrol `stuck` 88. Root cause: farmer stand at `oz-2` inside potato_farm footprint (radius 4).
 
-After recover-npc with #63 (**FACT** ticks ≥1148 sample): 10 work ticks, **0** move fails, farmer move OK 1/1, `recoverTeleport` unused (apron walks finished).
+After recover-npc with #63 (**FACT** ticks ≥1148): 40 work ticks all **PASS**, **0** move fails, `recoverTeleport` unused (apron walks finished).
 
 ### Worker diversity (live evidence)
 
