@@ -1,73 +1,73 @@
-# Night shift report — 2026-08-11 (late)
+# Night shift report — 2026-08-11 (continued unattended)
 
 Unattended dual mandate: **NPCs work** on WSL Paper QA + **engineering PRs**.  
 Labels: **FACT** · **OBSERVED** · **BLOCKED** · **INFERRED**.
 
-## NIGHT SHIFT SUMMARY
+## NIGHT SHIFT SUMMARY (continuation)
 
 ### NPC activity (live)
 
 | Check | Result | Label |
 |-------|--------|-------|
 | Paper `civs-qa` tmux | UP | **FACT** |
-| `village-npc` tmux | Running `village-worker.js` | **FACT** |
-| Players | Viewer, Steve, Alex, Cam | **OBSERVED** |
-| Town `NpcPad` | exists (recovered after mid-shift wipe) | **FACT** |
+| `village-npc` tmux | Running `village-worker.js` (recovered) | **FACT** |
+| Players | Steve, Alex, Cam (+ Viewer when watching) | **OBSERVED** |
+| Town `NpcPad` | exists | **FACT** |
 | Pad origin | 5200,80,5200 | **FACT** |
-| Work ticks (JSONL) | 119 ticks; **116 PASS** / 3 BLOCKED | **FACT** |
-| Job mix | builder/miner/farmer/stockpile/patrol ×23; placeregion ×4 | **FACT** |
-| Capabilities exercised | `move_to`, `look_at`, `break_block`, `place_block` (BlockPlaceEvent), `swing`, `jump` | **FACT** |
-| Helper actor | Alex (`ENABLE_HELPER=1`) | **FACT** |
+| Work ticks | ~827+; continuous PASS work_tick | **FACT** |
+| Director | `director_start` PASS (FallbackDirector / ShotPlanner) | **FACT** |
 | Watch | `launch-viewer.ps1` → WSL IP `192.168.152.149:25565` (not 127.0.0.1) | **FACT** |
 
-Evidence: `integration-tests/runner/reports/village-worker.jsonl`.
+Evidence: `integration-tests/runner/reports/village-worker.jsonl` + `village-worker-state.json`.
 
 ### Soft goals / village structures
 
 | Structure | Status | Notes |
 |-----------|--------|-------|
-| council_room / shelter / hovel / cobble_quarry / smithy | Present from #49/#50 | **OBSERVED** |
-| shack | Briefly placed @5210 then later `region=none` | **OBSERVED** — overnight dig/place can disturb pads; worker now uses dig pits + work aprons |
-| inn / barracks / potato_farm | **BLOCKED** | placeregion FAIL on build-reqs (honest stockpile retries logged) |
-| Hamlet upgrade | **BLOCKED** | Needs build-reqs / evolve path — not forced |
+| council_room / shelter / hovel / cobble_quarry / smithy | Present | **OBSERVED** |
+| shack | **PASS** placeregion | **FACT** |
+| potato_farm | **PASS** `@ 5200,80,5186` after stockpile v2 | **FACT** |
+| barracks | **PASS** `@ 5214,80,5190` | **FACT** |
+| inn | **BLOCKED** | Failed build-reqs ×3, then exclusive vs barracks (**FACT** Civs `exclusive:barracks`) |
+| Hamlet upgrade | **BLOCKED** | Needs evolve path — not forced |
 
-### Engineering shipped this shift
+### Engineering shipped this continuation
 
-| Issue | PR | Title |
-|-------|-----|-------|
-| [#53](https://github.com/Daniel730/Civs/issues/53) | [#54](https://github.com/Daniel730/Civs/pull/54) | Overnight NPC village worker (real capabilities) |
-| [#36](https://github.com/Daniel730/Civs/issues/36) | [#55](https://github.com/Daniel730/Civs/pull/55) | dependency-cruiser arch-contract |
-| [#44](https://github.com/Daniel730/Civs/issues/44) | [#56](https://github.com/Daniel730/Civs/pull/56) | GitHub issue/PR templates (área/prioridade) |
+| Issue | PR | Title | CI |
+|-------|-----|-------|-----|
+| [#53](https://github.com/Daniel730/Civs/issues/53) | [#54](https://github.com/Daniel730/Civs/pull/54) | Overnight NPC village worker (+ stockpile/director follow-ups) | **GREEN** |
+| [#49](https://github.com/Daniel730/Civs/issues/49) | [#50](https://github.com/Daniel730/Civs/pull/50) | Village builder + Cam (biome + title hygiene) | **GREEN** |
+| [#36](https://github.com/Daniel730/Civs/issues/36) | [#55](https://github.com/Daniel730/Civs/pull/55) | dependency-cruiser arch-contract | open |
+| [#44](https://github.com/Daniel730/Civs/issues/44) | [#56](https://github.com/Daniel730/Civs/pull/56) | GitHub templates | open |
+| [#43](https://github.com/Daniel730/Civs/issues/43) | [#57](https://github.com/Daniel730/Civs/pull/57) | Java Checkstyle + ArchUnit phase-1 | **GREEN** checks |
 
-Pre-existing open: [#50](https://github.com/Daniel730/Civs/pull/50) village builder, [#52](https://github.com/Daniel730/Civs/pull/52) stream prep, [#45](https://github.com/Daniel730/Civs/pull/45) docs→master.
+Also: PR titles normalized to commitlint `subject-case` (lowercase).
 
 ### Tests
 
-- `npm run test:village-unit` — **5/5 PASS** (**FACT**)
-- `npm run arch` — **0 violations** (14 modules) (**FACT**)
-- Biome on WSL: **BLOCKED** locally (missing `@biomejs/cli-linux-x64` in this node_modules install) — CI on Ubuntu still authoritative
+- Runner: village unit **8/8**, stream planner tests, knip clean, biome clean on touched files (**FACT**)
+- Java (#57): `checkstyle:check` PASS; ArchUnit **2/2**; full `mvn test` **766** run / 6 skipped (**FACT**)
 
 ### Blocked (do not spin)
 
 | Item | Cause | Min action |
 |------|-------|------------|
-| #38 Codecov | No `CODECOV_TOKEN` visible in repo secrets listing | Add secret → wire JaCoCo/c8 upload |
-| #33 Sentry | Needs DSN after OTel stack merge | Wait secrets + #32 lineage |
-| Public YouTube | Explicitly out of scope | Keep local OBS only (#51/#52) |
-| inn/barracks/potato_farm | build-reqs / overlap | Improve stockpile profiles or hamlet evolve |
+| #38 Codecov | Needs `CODECOV_TOKEN` | User secret |
+| #33 Sentry | Needs DSN | User secret |
+| Public YouTube | Out of scope | Local OBS only (#52) |
+| inn + barracks together | Civs exclusive effect | Pick one (barracks won) |
 
-### How to watch / monitor
+### How to watch / recover
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File integration-tests/runner/scripts/launch-viewer.ps1
 ```
 
 ```bash
+bash integration-tests/runner/scripts/recover-npc.sh   # LF-only; *.sh eol=lf in .gitattributes
 tmux attach -t village-npc
 tail -f integration-tests/runner/reports/village-worker.jsonl
 ```
-
-Docs: `docs/NPC-NIGHT-SHIFT.md`.
 
 ### Repo state
 
@@ -75,8 +75,9 @@ Docs: `docs/NPC-NIGHT-SHIFT.md`.
 - Paper + worker left running in WSL tmux
 - Production `Civs_servidor` live world: **not touched** (**FACT**)
 
-### Next
+### Next for parent / later shifts
 
-1. Merge stack hygiene: #50 → #54 (NPC), #55 (arch), #56 (templates); stream #52 when ready  
-2. #38 Codecov once token exists  
-3. Safer placeregion stockpile profiles + optional hamlet evolve experiment on disposable QA only  
+1. Merge stack: #50 → #54, plus #55/#56/#57 when ready  
+2. #37 Stryker (unblocked, no secrets)  
+3. #38/#33 only after secrets  
+4. Optional: prefer inn over barracks on a fresh pad if desired (exclusive)
