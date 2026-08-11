@@ -161,18 +161,18 @@ describe('village jobs planner', () => {
 });
 
 describe('village blueprints player-like (no platforms)', () => {
-  it('cabin shell has walls+roof only — no floor platform', () => {
+  it('cabin shell has floor+walls+roof with door gap for construction IR', () => {
     const origin = { x: 5200, y: 80, z: 5200 };
     const shell = houseShell(origin, { site: 'shelter', dx: -10, dz: 0, tick: 0 });
     const roles = new Set(shell.allBlocks.map((b) => b.role));
+    assert.ok(roles.has('floor'), 'construction IR needs surface floor (not a flatten pad)');
     assert.ok(roles.has('wall'));
     assert.ok(roles.has('roof'));
-    assert.ok(!roles.has('floor'), 'floor platforms are forbidden');
-    assert.ok(shell.allBlocks.length <= 30, 'footprint must stay small');
+    assert.ok(shell.allBlocks.length <= 120, 'footprint must stay small');
     assert.equal(paletteFor('shelter').wall, 'oak_planks');
-    // Door gap: south mid at y+1/+2 absent
+    // Door gap: south mid at y+1/+2 absent (ax=ox-2, door x=ax+2)
     const doorCells = shell.allBlocks.filter(
-      (b) => b.z === 5200 - 8 && b.x === 5200 - 10 - 1 + 1 && b.y >= 81 && b.y <= 82
+      (b) => b.z === 5200 - 8 && b.x === 5200 - 10 - 2 + 2 && b.y >= 81 && b.y <= 82
     );
     assert.equal(doorCells.length, 0);
   });
@@ -180,7 +180,7 @@ describe('village blueprints player-like (no platforms)', () => {
   it('respects groundY for slopes', () => {
     const origin = { x: 5200, y: 80, z: 5200 };
     const shell = houseShell(origin, { site: 'shelter', dx: -10, dz: 0, tick: 0, groundY: 77 });
-    assert.ok(shell.allBlocks.every((b) => b.y >= 78 && b.y <= 80));
+    assert.ok(shell.allBlocks.every((b) => b.y >= 77 && b.y <= 81));
   });
 
   it('blueprintFor farm returns fence posts; housing prefers path over cabin', () => {

@@ -11,7 +11,7 @@ Bots must look and act like **survival players** on **existing natural terrain**
 1. **No platforms** — do not flatten large pads, float houses on plank floors, or scatter decorative platforms that wreck the world.
 2. **No cheats as default** — no creative-mode work ticks, no spawn-then-break mining, no hard `tp` every job, no decorative `fill` terraforming.
 3. **Use the land** — `findSurfaceY` (RCON `execute if block`) adapts stands/blueprints to ground height; walk with `walk_step`.
-4. **Place like a player** — blocks on solid ground / adjacent to existing structures; small footprints (3×3 cabin walls+roof, **no floor pad**); paths replace surface only.
+4. **Place like a player** — blocks on solid ground / adjacent to existing structures; small coherent cabin footprints (floor on natural surface for construction IR — not large flatten pads); paths replace surface only.
 5. **Beautify cleans** — tear historic junk + former house-shell platforms; restore `grass_block`. Never build more pads in beautify.
 6. **Civs first** — prefer existing town/region footprints and rare `cv placeregion` over inventing mega-builds.
 7. **Validate before place** — construction pipeline site + blueprint + foundation + palette gates via `runProject`; never skip.

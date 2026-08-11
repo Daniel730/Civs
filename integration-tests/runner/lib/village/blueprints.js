@@ -51,42 +51,50 @@ function houseShell(origin, step) {
   const oy = surfaceY(origin, step);
   const oz = Math.floor(origin.z + (step.dz || 0));
   const pal = paletteFor(step.site);
-  // South apron, outside footprint — small 3×3
-  const ax = ox - 1;
+  // South apron cabin (outside typical Civs radius 5). Floor sits on natural surface —
+  // not a large flatten pad. Construction IR needs role:floor for doors/foundation.
+  const ax = ox - 2;
   const az = oz - 8;
-  const w = 3;
-  const d = 3;
+  const w = 5;
+  const d = 5;
   const blocks = [];
+  const floorMat = pal.floor || pal.wall;
 
-  // Walls on top of natural ground (y+1..y+2), door on south mid
-  for (let y = 1; y <= 2; y++) {
+  for (let x = 0; x < w; x++) {
+    for (let z = 0; z < d; z++) {
+      blocks.push({ x: ax + x, y: oy, z: az + z, material: floorMat, role: 'floor' });
+    }
+  }
+
+  for (let y = 1; y <= 3; y++) {
     for (let x = 0; x < w; x++) {
       for (let z = 0; z < d; z++) {
         const edge = x === 0 || x === w - 1 || z === 0 || z === d - 1;
         if (!edge) continue;
-        const door = z === 0 && x === 1 && y <= 2;
-        if (door) continue;
+        const door = z === 0 && x === 2 && y <= 2;
+        const winE = x === w - 1 && z === 2 && y === 2;
+        const winW = x === 0 && z === 2 && y === 2;
+        if (door || winE || winW) continue;
         const corner = (x === 0 || x === w - 1) && (z === 0 || z === d - 1);
         blocks.push({
           x: ax + x,
           y: oy + y,
           z: az + z,
-          material: corner ? pal.trim : pal.wall,
-          role: 'wall',
+          material: corner || y === 3 ? pal.trim : pal.wall,
+          role: y === 3 ? 'wall_top' : 'wall',
         });
       }
     }
   }
 
-  // Single-layer slab roof (still small)
   for (let x = 0; x < w; x++) {
     for (let z = 0; z < d; z++) {
-      blocks.push({ x: ax + x, y: oy + 3, z: az + z, material: pal.roof, role: 'roof' });
+      blocks.push({ x: ax + x, y: oy + 4, z: az + z, material: pal.roof, role: 'roof' });
     }
   }
 
   const progress = Math.max(0, Math.floor(step.tick || 0));
-  const chunk = 6;
+  const chunk = 10;
   const start = (progress * chunk) % Math.max(1, blocks.length);
   return {
     id: `cabin_${step.site || 'site'}`,
