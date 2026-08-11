@@ -15,3 +15,14 @@ labels: ["tipo:correção"]
 
 ## Acceptance
 - [ ]
+
+## Área
+- [ ] civs (Java)
+- [ ] integration-tests / runner
+- [ ] agent-platform / UI
+- [ ] docs / CI
+
+## Prioridade
+- [ ] P0
+- [ ] P1
+- [ ] P2

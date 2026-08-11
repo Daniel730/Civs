@@ -11,3 +11,14 @@ labels: ["tipo:nova-função"]
 - [ ]
 
 ## Fora de escopo
+
+## Área
+- [ ] civs (Java)
+- [ ] integration-tests / runner
+- [ ] agent-platform / UI
+- [ ] docs / CI
+
+## Prioridade
+- [ ] P0
+- [ ] P1
+- [ ] P2

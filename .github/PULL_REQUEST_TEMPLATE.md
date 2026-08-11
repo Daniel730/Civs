@@ -11,4 +11,6 @@ Closes #
 
 ## Checklist
 - [ ] Segue `docs/AGENT-WORKFLOW.md`
+- [ ] Um label `tipo:*` no Issue ligado
 - [ ] Sem secrets no diff
+- [ ] CI relevante verde (ou justificado)

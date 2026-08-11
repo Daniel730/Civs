@@ -15,3 +15,8 @@ labels: ["tipo:melhoria"]
 - [ ] integration-tests / runner
 - [ ] agent-platform / UI
 - [ ] docs / CI
+
+## Prioridade
+- [ ] P0
+- [ ] P1
+- [ ] P2
