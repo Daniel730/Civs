@@ -1,0 +1,509 @@
+{
+  "marker": "QA_FAST_153027",
+  "mode": "fast",
+  "timestamp": "2026-07-17T15:31:43.772377+00:00",
+  "wall_clock_s": 76.5,
+  "batch": [
+    "gravel_quarry",
+    "dirt_quarry",
+    "clay_quarry",
+    "ice_maker",
+    "dye_works",
+    "flint_works",
+    "concrete_factory"
+  ],
+  "missing_yaml": [],
+  "town": {
+    "ok": true,
+    "hub": [
+      3000,
+      81,
+      2600
+    ],
+    "town_name": "QATown2",
+    "skipped": "reuse QATown2.yml"
+  },
+  "results": [
+    {
+      "key": "gravel_quarry",
+      "category": "raw",
+      "center": [
+        4259,
+        81,
+        4000
+      ],
+      "build_ok": true,
+      "activated": true,
+      "io_ok": false,
+      "io_detail": "inserted=['tool:stone_shovel'] gained=[] poll=12.18s",
+      "error": null,
+      "elapsed_s": 12.34,
+      "elapsed_ms": 12340,
+      "place_ms": 8,
+      "io_ms": 12182,
+      "notes": "io=FAIL(no output after poll=12.18s; inserted=['tool:stone_shovel']; expected=[{'mat': 'gravel', 'mats': ['gravel'], 'qty': 4}])"
+    },
+    {
+      "key": "dirt_quarry",
+      "category": "raw",
+      "center": [
+        4275,
+        81,
+        4000
+      ],
+      "build_ok": true,
+      "activated": true,
+      "io_ok": false,
+      "io_detail": "inserted=['tool:stone_shovel'] gained=[] poll=12.2s",
+      "error": null,
+      "elapsed_s": 12.32,
+      "elapsed_ms": 12320,
+      "place_ms": 3,
+      "io_ms": 12199,
+      "notes": "io=FAIL(no output after poll=12.2s; inserted=['tool:stone_shovel']; expected=[{'mat': 'dirt', 'mats': ['dirt', 'podzol', 'coarse_dirt', 'mud'], 'qty': 4}, {'mat': 'dirt', 'mats': ['dirt', 'grass_block', 'mycelium'], 'qty': 1}])"
+    },
+    {
+      "key": "clay_quarry",
+      "category": "raw",
+      "center": [
+        2975,
+        81,
+        2575
+      ],
+      "build_ok": true,
+      "activated": true,
+      "io_ok": false,
+      "io_detail": "inserted=['tool:stone_shovel'] gained=[] poll=12.19s",
+      "error": null,
+      "elapsed_s": 12.32,
+      "elapsed_ms": 12320,
+      "place_ms": 8,
+      "io_ms": 12190,
+      "notes": "io=FAIL(no output after poll=12.19s; inserted=['tool:stone_shovel']; expected=[{'mat': 'clay_ball', 'mats': ['clay_ball'], 'qty': 4}])"
+    },
+    {
+      "key": "ice_maker",
+      "category": "factory",
+      "center": [
+        4259,
+        81,
+        4016
+      ],
+      "build_ok": true,
+      "activated": true,
+      "io_ok": false,
+      "io_detail": "inserted=['tool:stone_shovel', 'reagent:snow_blockx64'] gained=[] poll=12.28s",
+      "error": null,
+      "elapsed_s": 12.46,
+      "elapsed_ms": 12460,
+      "place_ms": 8,
+      "io_ms": 12281,
+      "notes": "io=FAIL(no output after poll=12.28s; inserted=['tool:stone_shovel', 'reagent:snow_blockx64']; expected=[{'mat': 'ice', 'mats': ['ice'], 'qty': 9}, {'mat': 'snow_block', 'mats': ['snow_block'], 'qty': 9}])"
+    },
+    {
+      "key": "dye_works",
+      "category": "factory",
+      "center": [
+        4281,
+        81,
+        4018
+      ],
+      "build_ok": true,
+      "activated": true,
+      "io_ok": false,
+      "io_detail": "inserted=['reagent:ink_sacx16', 'reagent:poppyx16', 'reagent:cornflowerx16', 'reagent:bone_mealx16', 'reagent:dandelionx16'] gained=[] poll=12.49s",
+      "error": null,
+      "elapsed_s": 12.65,
+      "elapsed_ms": 12650,
+      "place_ms": 3,
+      "io_ms": 12492,
+      "notes": "io=FAIL(no output after poll=12.49s; inserted=['reagent:ink_sacx16', 'reagent:poppyx16', 'reagent:cornflowerx16', 'reagent:bone_mealx16', 'reagent:dandelionx16']; expected=[{'mat': 'red_dye', 'mats': ['red_dye', 'black_dye', 'blue_dye', 'brown_dye', 'cyan_dye', 'gray_dye', 'green_dye', 'light_blue_dye', 'light_gray_dye', 'lime_dye', 'magenta_dye', 'orange_dye', 'pink_dye', 'purple_dye', 'white_dye', 'yellow_dye'], 'qty': 1}])"
+    },
+    {
+      "key": "flint_works",
+      "category": "factory",
+      "center": [
+        2975,
+        81,
+        2625
+      ],
+      "build_ok": true,
+      "activated": true,
+      "io_ok": true,
+      "io_detail": "inserted=['reagent:gravelx64', 'reagent:stone_shovelx1'] gained=[{'mat': 'flint', 'delta': 1}] poll=0.26s",
+      "error": null,
+      "elapsed_s": 0.42,
+      "elapsed_ms": 420,
+      "place_ms": 7,
+      "io_ms": 266,
+      "notes": "io=PASS"
+    },
+    {
+      "key": "concrete_factory",
+      "category": "factory",
+      "center": [
+        2995,
+        81,
+        2575
+      ],
+      "build_ok": true,
+      "activated": true,
+      "io_ok": false,
+      "io_detail": "inserted=['reagent:sandx64', 'reagent:gravelx64', 'reagent:stone_pickaxex1', 'reagent:cauldronx1'] gained=[] poll=12.62s",
+      "error": null,
+      "elapsed_s": 12.8,
+      "elapsed_ms": 12800,
+      "place_ms": 4,
+      "io_ms": 12626,
+      "notes": "io=FAIL(no output after poll=12.62s; inserted=['reagent:sandx64', 'reagent:gravelx64', 'reagent:stone_pickaxex1', 'reagent:cauldronx1']; expected=[{'mat': 'white_concrete', 'mats': ['white_concrete', 'orange_concrete', 'magenta_concrete', 'light_blue_concrete', 'yellow_concrete', 'lime_concrete', 'pink_concrete', 'gray_concrete', 'light_gray_concrete', 'cyan_concrete', 'purple_concrete', 'blue_concrete', 'brown_concrete', 'green_concrete', 'red_concrete', 'black_concrete'], 'qty': 4}])"
+    }
+  ],
+  "activated": 7,
+  "attempted": 7,
+  "built": 7,
+  "io_pass": 1,
+  "io_fail": 6,
+  "io_skip": 0,
+  "place_details": {
+    "gravel_quarry_build": {
+      "ok": true,
+      "setblocks": 28
+    },
+    "gravel_quarry_placements": 28,
+    "gravel_quarry_give": "\u00a7a[Civs] Gave 1x gravel_quarry to smokeshow",
+    "gravel_quarry_place": "\u00a7a[Civs] placeregion OK gravel_quarry @ 4259,81,4000",
+    "gravel_quarry_io": {
+      "ok": false,
+      "skipped": false,
+      "key": "gravel_quarry",
+      "period_s": 15,
+      "yaml_upkeep": {
+        "tools": [
+          "stone_shovel"
+        ],
+        "reagents": [],
+        "inputs": [],
+        "outputs": [
+          {
+            "mat": "gravel",
+            "mats": [
+              "gravel"
+            ],
+            "qty": 4
+          }
+        ],
+        "period_s": 15
+      },
+      "inserted": [
+        "tool:stone_shovel"
+      ],
+      "wait_s": 12.18,
+      "polls": 47,
+      "gained": [],
+      "error": "no output after poll=12.18s; inserted=['tool:stone_shovel']; expected=[{'mat': 'gravel', 'mats': ['gravel'], 'qty': 4}]"
+    },
+    "dirt_quarry_build": {
+      "ok": true,
+      "setblocks": 28
+    },
+    "dirt_quarry_placements": 28,
+    "dirt_quarry_give": "\u00a7a[Civs] Gave 1x dirt_quarry to smokeshow",
+    "dirt_quarry_place": "\u00a7a[Civs] placeregion OK dirt_quarry @ 4275,81,4000",
+    "dirt_quarry_io": {
+      "ok": false,
+      "skipped": false,
+      "key": "dirt_quarry",
+      "period_s": 15,
+      "yaml_upkeep": {
+        "tools": [
+          "stone_shovel"
+        ],
+        "reagents": [],
+        "inputs": [],
+        "outputs": [
+          {
+            "mat": "dirt",
+            "mats": [
+              "dirt",
+              "podzol",
+              "coarse_dirt",
+              "mud"
+            ],
+            "qty": 4
+          },
+          {
+            "mat": "dirt",
+            "mats": [
+              "dirt",
+              "grass_block",
+              "mycelium"
+            ],
+            "qty": 1
+          }
+        ],
+        "period_s": 15
+      },
+      "inserted": [
+        "tool:stone_shovel"
+      ],
+      "wait_s": 12.2,
+      "polls": 36,
+      "gained": [],
+      "error": "no output after poll=12.2s; inserted=['tool:stone_shovel']; expected=[{'mat': 'dirt', 'mats': ['dirt', 'podzol', 'coarse_dirt', 'mud'], 'qty': 4}, {'mat': 'dirt', 'mats': ['dirt', 'grass_block', 'mycelium'], 'qty': 1}]"
+    },
+    "clay_quarry_build": {
+      "ok": true,
+      "setblocks": 28
+    },
+    "clay_quarry_placements": 28,
+    "clay_quarry_give": "\u00a7a[Civs] Gave 1x clay_quarry to smokeshow",
+    "clay_quarry_place": "\u00a7a[Civs] placeregion OK clay_quarry @ 2975,81,2575",
+    "clay_quarry_io": {
+      "ok": false,
+      "skipped": false,
+      "key": "clay_quarry",
+      "period_s": 15,
+      "yaml_upkeep": {
+        "tools": [
+          "stone_shovel"
+        ],
+        "reagents": [],
+        "inputs": [],
+        "outputs": [
+          {
+            "mat": "clay_ball",
+            "mats": [
+              "clay_ball"
+            ],
+            "qty": 4
+          }
+        ],
+        "period_s": 15
+      },
+      "inserted": [
+        "tool:stone_shovel"
+      ],
+      "wait_s": 12.19,
+      "polls": 47,
+      "gained": [],
+      "error": "no output after poll=12.19s; inserted=['tool:stone_shovel']; expected=[{'mat': 'clay_ball', 'mats': ['clay_ball'], 'qty': 4}]"
+    },
+    "ice_maker_build": {
+      "ok": true,
+      "setblocks": 69
+    },
+    "ice_maker_placements": 69,
+    "ice_maker_give": "\u00a7a[Civs] Gave 1x ice_maker to smokeshow",
+    "ice_maker_place": "\u00a7a[Civs] placeregion OK ice_maker @ 4259,81,4016",
+    "ice_maker_io": {
+      "ok": false,
+      "skipped": false,
+      "key": "ice_maker",
+      "period_s": 15,
+      "yaml_upkeep": {
+        "tools": [
+          "stone_shovel"
+        ],
+        "reagents": [
+          "snow_block"
+        ],
+        "inputs": [],
+        "outputs": [
+          {
+            "mat": "ice",
+            "mats": [
+              "ice"
+            ],
+            "qty": 9
+          },
+          {
+            "mat": "snow_block",
+            "mats": [
+              "snow_block"
+            ],
+            "qty": 9
+          }
+        ],
+        "period_s": 15
+      },
+      "inserted": [
+        "tool:stone_shovel",
+        "reagent:snow_blockx64"
+      ],
+      "wait_s": 12.28,
+      "polls": 45,
+      "gained": [],
+      "error": "no output after poll=12.28s; inserted=['tool:stone_shovel', 'reagent:snow_blockx64']; expected=[{'mat': 'ice', 'mats': ['ice'], 'qty': 9}, {'mat': 'snow_block', 'mats': ['snow_block'], 'qty': 9}]"
+    },
+    "dye_works_build": {
+      "ok": true,
+      "setblocks": 89
+    },
+    "dye_works_placements": 89,
+    "dye_works_give": "\u00a7a[Civs] Gave 1x dye_works to smokeshow",
+    "dye_works_place": "\u00a7a[Civs] placeregion OK dye_works @ 4281,81,4018",
+    "dye_works_io": {
+      "ok": false,
+      "skipped": false,
+      "key": "dye_works",
+      "period_s": 15,
+      "yaml_upkeep": {
+        "tools": [],
+        "reagents": [
+          "ink_sac",
+          "poppy",
+          "cornflower",
+          "bone_meal",
+          "dandelion"
+        ],
+        "inputs": [],
+        "outputs": [
+          {
+            "mat": "red_dye",
+            "mats": [
+              "red_dye",
+              "black_dye",
+              "blue_dye",
+              "brown_dye",
+              "cyan_dye",
+              "gray_dye",
+              "green_dye",
+              "light_blue_dye",
+              "light_gray_dye",
+              "lime_dye",
+              "magenta_dye",
+              "orange_dye",
+              "pink_dye",
+              "purple_dye",
+              "white_dye",
+              "yellow_dye"
+            ],
+            "qty": 1
+          }
+        ],
+        "period_s": 15
+      },
+      "inserted": [
+        "reagent:ink_sacx16",
+        "reagent:poppyx16",
+        "reagent:cornflowerx16",
+        "reagent:bone_mealx16",
+        "reagent:dandelionx16"
+      ],
+      "wait_s": 12.49,
+      "polls": 28,
+      "gained": [],
+      "error": "no output after poll=12.49s; inserted=['reagent:ink_sacx16', 'reagent:poppyx16', 'reagent:cornflowerx16', 'reagent:bone_mealx16', 'reagent:dandelionx16']; expected=[{'mat': 'red_dye', 'mats': ['red_dye', 'black_dye', 'blue_dye', 'brown_dye', 'cyan_dye', 'gray_dye', 'green_dye', 'light_blue_dye', 'light_gray_dye', 'lime_dye', 'magenta_dye', 'orange_dye', 'pink_dye', 'purple_dye', 'white_dye', 'yellow_dye'], 'qty': 1}]"
+    },
+    "flint_works_build": {
+      "ok": true,
+      "setblocks": 95
+    },
+    "flint_works_placements": 95,
+    "flint_works_give": "\u00a7a[Civs] Gave 1x flint_works to smokeshow",
+    "flint_works_place": "\u00a7a[Civs] placeregion OK flint_works @ 2975,81,2625",
+    "flint_works_io": {
+      "ok": true,
+      "skipped": false,
+      "key": "flint_works",
+      "period_s": 15,
+      "yaml_upkeep": {
+        "tools": [],
+        "reagents": [
+          "gravel",
+          "stone_shovel"
+        ],
+        "inputs": [],
+        "outputs": [
+          {
+            "mat": "flint",
+            "mats": [
+              "flint"
+            ],
+            "qty": 4
+          }
+        ],
+        "period_s": 15
+      },
+      "inserted": [
+        "reagent:gravelx64",
+        "reagent:stone_shovelx1"
+      ],
+      "wait_s": 0.26,
+      "polls": 2,
+      "gained": [
+        {
+          "mat": "flint",
+          "delta": 1
+        }
+      ]
+    },
+    "concrete_factory_build": {
+      "ok": true,
+      "setblocks": 101
+    },
+    "concrete_factory_placements": 101,
+    "concrete_factory_give": "\u00a7a[Civs] Gave 1x concrete_factory to smokeshow",
+    "concrete_factory_place": "\u00a7a[Civs] placeregion OK concrete_factory @ 2995,81,2575",
+    "concrete_factory_io": {
+      "ok": false,
+      "skipped": false,
+      "key": "concrete_factory",
+      "period_s": 15,
+      "yaml_upkeep": {
+        "tools": [],
+        "reagents": [
+          "sand",
+          "gravel",
+          "stone_pickaxe",
+          "cauldron"
+        ],
+        "inputs": [],
+        "outputs": [
+          {
+            "mat": "white_concrete",
+            "mats": [
+              "white_concrete",
+              "orange_concrete",
+              "magenta_concrete",
+              "light_blue_concrete",
+              "yellow_concrete",
+              "lime_concrete",
+              "pink_concrete",
+              "gray_concrete",
+              "light_gray_concrete",
+              "cyan_concrete",
+              "purple_concrete",
+              "blue_concrete",
+              "brown_concrete",
+              "green_concrete",
+              "red_concrete",
+              "black_concrete"
+            ],
+            "qty": 4
+          }
+        ],
+        "period_s": 15
+      },
+      "inserted": [
+        "reagent:sandx64",
+        "reagent:gravelx64",
+        "reagent:stone_pickaxex1",
+        "reagent:cauldronx1"
+      ],
+      "wait_s": 12.62,
+      "polls": 28,
+      "gained": [],
+      "error": "no output after poll=12.62s; inserted=['reagent:sandx64', 'reagent:gravelx64', 'reagent:stone_pickaxex1', 'reagent:cauldronx1']; expected=[{'mat': 'white_concrete', 'mats': ['white_concrete', 'orange_concrete', 'magenta_concrete', 'light_blue_concrete', 'yellow_concrete', 'lime_concrete', 'pink_concrete', 'gray_concrete', 'light_gray_concrete', 'cyan_concrete', 'purple_concrete', 'blue_concrete', 'brown_concrete', 'green_concrete', 'red_concrete', 'black_concrete'], 'qty': 4}]"
+    }
+  },
+  "throughput": {
+    "attempts_per_min": 5.49,
+    "target_met": false
+  },
+  "log_errors": [
+    "[16:31:17] [Server thread/INFO]: Region dye_works created ec01bfd3-8525-48ee-b5e5-4d8ecac61630~4281.5~81.5~4018.5.yml",
+    "[16:31:30] [Server thread/INFO]: Region flint_works created ec01bfd3-8525-48ee-b5e5-4d8ecac61630~2975.5~81.5~2625.5.yml",
+    "[16:31:30] [Server thread/INFO]: Region concrete_factory created ec01bfd3-8525-48ee-b5e5-4d8ecac61630~2995.5~81.5~2575.5.yml"
+  ]
+}

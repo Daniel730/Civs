@@ -1,0 +1,107 @@
+{
+  "verdict": "PASS",
+  "results": [
+    {
+      "center": [
+        2360,
+        81,
+        2360
+      ],
+      "exact_cy": true,
+      "neighbors": {
+        "0,0,0": "HIT",
+        "0,-1,0": "",
+        "0,-2,0": "",
+        "0,1,0": "",
+        "0,0,-1": "",
+        "0,0,1": "",
+        "-1,0,0": "",
+        "1,0,0": "",
+        "0,-1,-1": "",
+        "0,0,-2": ""
+      },
+      "grab": {
+        "ok": true,
+        "sky_click": true,
+        "xy": [
+          2880,
+          358
+        ],
+        "borderless": true
+      },
+      "prep": {
+        "ok": true,
+        "error": null
+      },
+      "hotbar": {
+        "ok": true,
+        "civs_key": "shelter",
+        "error": null
+      },
+      "rot_before": "smokeshow has the following entity data: [0.0f, 52.11f]",
+      "hand": "smokeshow has the following entity data: {PublicBukkitValues: {\"civs:civs\": \"shelter\"}}",
+      "rc": {
+        "ok": true,
+        "error": null,
+        "xy": null,
+        "capture_xy": null,
+        "safe_capture_ignored": true,
+        "sneak": false,
+        "move_cursor": false
+      },
+      "rot_after": "smokeshow has the following entity data: [0.0f, 52.11f]",
+      "ok": true
+    },
+    {
+      "center": [
+        2380,
+        81,
+        2380
+      ],
+      "exact_cy": true,
+      "neighbors": {
+        "0,0,0": "HIT",
+        "0,-1,0": "",
+        "0,-2,0": "",
+        "0,1,0": "",
+        "0,0,-1": "",
+        "0,0,1": "",
+        "-1,0,0": "",
+        "1,0,0": "",
+        "0,-1,-1": "",
+        "0,0,-2": ""
+      },
+      "grab": {
+        "ok": true,
+        "sky_click": true,
+        "xy": [
+          2880,
+          358
+        ],
+        "borderless": true
+      },
+      "prep": {
+        "ok": true,
+        "error": null
+      },
+      "hotbar": {
+        "ok": true,
+        "civs_key": "shelter",
+        "error": null
+      },
+      "rot_before": "smokeshow has the following entity data: [0.0f, 52.11f]",
+      "hand": "smokeshow has the following entity data: {PublicBukkitValues: {\"civs:civs\": \"shelter\"}}",
+      "rc": {
+        "ok": true,
+        "error": null,
+        "xy": null,
+        "capture_xy": null,
+        "safe_capture_ignored": true,
+        "sneak": false,
+        "move_cursor": false
+      },
+      "rot_after": "smokeshow has the following entity data: [0.0f, 52.11f]",
+      "ok": true
+    }
+  ]
+}

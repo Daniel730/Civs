@@ -49,6 +49,9 @@ jobs:
       - name: Run tests
         run: mvn -B test
 
+      - name: Checkstyle gate (#43)
+        run: mvn -B -DskipTests checkstyle:check
+
       - name: Upload Surefire reports on failure
         if: failure()
         uses: actions/upload-artifact@v4

@@ -1,0 +1,31 @@
+{
+  "player": "Smokeshow",
+  "selected_slot": 0,
+  "hand": {
+    "slot": 0,
+    "item_id": "minecraft:chest",
+    "count": 1,
+    "civs_key": "coal_mine",
+    "custom_name": "Coal_Mine"
+  },
+  "hotbar": [
+    {
+      "slot": 0,
+      "item_id": "minecraft:chest",
+      "count": 1,
+      "civs_key": "coal_mine",
+      "custom_name": "Coal_Mine"
+    }
+  ],
+  "inventory": [
+    {
+      "slot": 0,
+      "item_id": "minecraft:chest",
+      "count": 1,
+      "civs_key": "coal_mine",
+      "custom_name": "Coal_Mine"
+    }
+  ],
+  "raw_selected": "smokeshow has the following entity data: {id: \"minecraft:chest\", count: 1, components: {\"minecraft:custom_name\": \"Coal_Mine\", \"minecraft:custom_data...",
+  "error": null
+}

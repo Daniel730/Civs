@@ -1,0 +1,124 @@
+{
+  "gravel_quarry": {
+    "ok": false,
+    "skipped": false,
+    "key": "gravel_quarry",
+    "center": [
+      3053,
+      81,
+      2650
+    ],
+    "inserted": [
+      "tool:stone_shovel"
+    ],
+    "expected_outputs": [
+      {
+        "mat": "gravel",
+        "qty": 4
+      }
+    ],
+    "output_before": "3053, 81, 2650 has the following block data: [{Slot: 0b, id: \"minecraft:stone_shovel\", count: 1}]",
+    "output_after": "3053, 81, 2650 has the following block data: [{Slot: 0b, id: \"minecraft:stone_shovel\", count: 1}, {Slot:...",
+    "wrong_item": {
+      "ok": true,
+      "method": "hopper_InventoryMoveItemEvent",
+      "wrong_item": "dirt",
+      "hopper": [
+        3053,
+        82,
+        2650
+      ],
+      "in_hopper": true,
+      "in_chest": false
+    },
+    "error": "no output after wait=47s; inserted=['tool:stone_shovel']; expected=[{'mat': 'gravel', 'qty': 4}]; chests=[(3055, 78, 2650), (3056, 78, 2650), (3053, 81, 2650)]",
+    "period_s": 15,
+    "cycle": 0,
+    "input_chest": [
+      3053,
+      81,
+      2650
+    ],
+    "output_chest": [
+      3053,
+      81,
+      2650
+    ],
+    "is_farm": false,
+    "yaml_upkeep": {
+      "tools": [
+        "stone_shovel"
+      ],
+      "reagents": [],
+      "inputs": [],
+      "outputs": [
+        {
+          "mat": "gravel",
+          "qty": 4
+        }
+      ],
+      "period_s": 15
+    }
+  },
+  "cactus_farm": {
+    "ok": false,
+    "skipped": false,
+    "key": "cactus_farm",
+    "center": [
+      3132,
+      81,
+      2652
+    ],
+    "inserted": [
+      "tool:shears"
+    ],
+    "expected_outputs": [
+      {
+        "mat": "cactus",
+        "qty": 3
+      }
+    ],
+    "output_before": "3129, 77, 2652 has the following block data: []",
+    "output_after": "3129, 77, 2652 has the following block data: []",
+    "wrong_item": {
+      "ok": true,
+      "method": "hopper_InventoryMoveItemEvent",
+      "wrong_item": "dirt",
+      "hopper": [
+        3132,
+        82,
+        2652
+      ],
+      "in_hopper": true,
+      "in_chest": false
+    },
+    "error": "no output after wait=92s; inserted=['tool:shears']; expected=[{'mat': 'cactus', 'qty': 3}]; chests=[(3128, 77, 2652), (3129, 77, 2652), (3132, 81, 2652)]",
+    "period_s": 30,
+    "cycle": 0,
+    "input_chest": [
+      3132,
+      81,
+      2652
+    ],
+    "output_chest": [
+      3129,
+      77,
+      2652
+    ],
+    "is_farm": true,
+    "yaml_upkeep": {
+      "tools": [
+        "shears"
+      ],
+      "reagents": [],
+      "inputs": [],
+      "outputs": [
+        {
+          "mat": "cactus",
+          "qty": 3
+        }
+      ],
+      "period_s": 30
+    }
+  }
+}

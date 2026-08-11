@@ -1,0 +1,95 @@
+# Copy to config.yaml (or set CIVS_QA_CONFIG). Secrets can live in scripts/qa/.env
+server:
+  host: 127.0.0.1          # WSL port-forward or localhost
+  port: 25565
+  rcon:
+    host: 127.0.0.1
+    port: 25575
+    password: ""             # override with RCON_PASSWORD in .env
+
+player:
+  name: Smokeshow
+  window_title: Minecraft  # substring match for pyautogui.getWindowsWithTitle
+
+paths:
+  civs_repo: C:/Users/Danie/Downloads/Civs-1.11.6/Civs-1.11.6
+  item_types: Civs_servidor/item-types
+  server_log: /home/dansilva/civs-testserver/logs/latest.log   # WSL path for log tail via wsl cat
+  blueprints: /home/dansilva/civs-testserver/plugins/Civs/blueprints
+
+qa_platform:
+  x: 2100
+  y: 80
+  z: 2100
+  pad_size: 50
+
+structures:
+  # Activation batch: build-reqs → center Civs-item place (not decorative pads).
+  # Town-gated types use settlement-compatible member=; wheat_farm/bank need upgrade.
+  # Short-period factories/quarries preferred for I/O verification.
+  batch:
+    - gravel_quarry
+    - dirt_quarry
+    - clay_quarry
+    - ice_maker
+    - dye_works
+    - flint_works
+    - concrete_factory
+    - cobble_quarry
+    - coal_mine
+    - cactus_farm
+    - potato_farm
+    - arrow_trap
+    - altar
+    - command_tent
+    - shelter
+    - shack
+    - hovel
+    - purifier
+    - smithy
+    - redstone_mine
+
+window_bot:
+  command_delay_ms: 400
+  chat_open_key: t
+  focus_retries: 5
+  dry_run: false             # true = log commands without sending keystrokes
+  esc_before_chat: true      # Esc closes inventory/menus — chat fails while GUI open
+  esc_retries: 1             # Esc only when GUI tracked open
+  esc_delay_ms: 250
+  dismiss_pause_click: true  # click Back to Game if pause left open
+  pause_resume_rel_x: 0.5
+  pause_resume_rel_y: 0.28   # MC 26.1.2 Back to Game (0.40 hit Statistics)
+  pause_dismiss_method: esc
+  gui_scale: 3               # match Options → Video → GUI Scale (from options.txt)
+  gui_offset_x: 0            # pixel nudge if slot clicks miss
+  gui_offset_y: 0
+
+features:
+  mob_spawns:
+    - guild_thief
+    - wild_boar
+  player_commands:
+    - /cv menu
+    - /cv spells
+    - //wand
+    - /cv mob list
+  rpg_commands:
+    - /rpg hub
+    - /rpg journal
+
+menus:
+  # Civs main.yml buttons to click (re-opens /cv menu between each)
+  main_buttons:
+    - shop
+    - blueprints
+    - towns
+    - auction
+    - language
+
+rcon_only:
+  - list
+  - cv reload
+  - cv newday
+  - gamemode creative {player}
+  - tp {player} {x} {y} {z}

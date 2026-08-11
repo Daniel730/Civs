@@ -1,0 +1,1582 @@
+{
+  "marker": "QA_STRUCT_121950",
+  "timestamp": "2026-07-17T12:26:26.519420+00:00",
+  "batch_requested": [
+    "coal_mine",
+    "shelter"
+  ],
+  "missing_yaml": [],
+  "inventory_before": {
+    "player": "Smokeshow",
+    "selected_slot": 0,
+    "hand": {
+      "slot": 0,
+      "item_id": "minecraft:chest",
+      "count": 1,
+      "civs_key": "shelter",
+      "custom_name": "shelter",
+      "kind": "civs"
+    },
+    "hotbar": [
+      {
+        "slot": 0,
+        "item_id": "minecraft:chest",
+        "count": 1,
+        "civs_key": "shelter",
+        "custom_name": "shelter",
+        "kind": "civs"
+      },
+      {
+        "slot": 8,
+        "item_id": "minecraft:wooden_axe",
+        "count": 1,
+        "civs_key": null,
+        "custom_name": null,
+        "kind": "wand"
+      }
+    ],
+    "inventory": [
+      {
+        "slot": 0,
+        "item_id": "minecraft:chest",
+        "count": 1,
+        "civs_key": "shelter",
+        "custom_name": "shelter",
+        "kind": "civs"
+      },
+      {
+        "slot": 8,
+        "item_id": "minecraft:wooden_axe",
+        "count": 1,
+        "civs_key": null,
+        "custom_name": null,
+        "kind": "wand"
+      }
+    ],
+    "raw_selected": "smokeshow has the following entity data: {id: \"minecraft:chest\", count: 1, components: {\"minecraft:custom_name\": \"shelter\", \"minecraft:custom_data...",
+    "raw_selected_slot": "smokeshow has the following entity data: 0",
+    "error": null
+  },
+  "structures": [
+    {
+      "key": "coal_mine",
+      "name": "Coal_Mine",
+      "category": "mine",
+      "static_ok": true,
+      "static_issues": [],
+      "rcon_pad_ok": true,
+      "build_ok": true,
+      "place_ok": false,
+      "region_registered": false,
+      "center": [
+        2108,
+        81,
+        2108
+      ],
+      "held_before": "slot=0 civs=shelter id=minecraft:chest",
+      "notes": "manual build-reqs | center place missed (no chest)",
+      "chat_hints": []
+    },
+    {
+      "key": "shelter",
+      "name": "Shelter",
+      "category": "admin-invisible",
+      "static_ok": true,
+      "static_issues": [],
+      "rcon_pad_ok": true,
+      "build_ok": true,
+      "place_ok": false,
+      "region_registered": false,
+      "center": [
+        2123,
+        81,
+        2108
+      ],
+      "held_before": "slot=0 civs=coal_mine id=minecraft:chest",
+      "notes": "manual build-reqs | center place missed (no chest)",
+      "chat_hints": []
+    }
+  ],
+  "place_details": {
+    "wand_preflight": {
+      "ok": true,
+      "command": "//wand",
+      "dry_run": false,
+      "focused": true,
+      "menus_closed": true,
+      "error": null,
+      "close_path": "pause_dismiss_only"
+    },
+    "coal_mine_build": {
+      "ok": true,
+      "we_cmds": [
+        {
+          "cmd": "//pos1 2104,77,2104",
+          "ok": true,
+          "err": null
+        },
+        {
+          "cmd": "//pos2 2112,85,2112",
+          "ok": true,
+          "err": null
+        },
+        {
+          "cmd": "//set oak_planks",
+          "ok": true,
+          "err": null
+        },
+        {
+          "cmd": "//pos1 2108,81,2108",
+          "ok": true,
+          "err": null
+        },
+        {
+          "cmd": "//pos2 2108,81,2108",
+          "ok": true,
+          "err": null
+        },
+        {
+          "cmd": "//set air",
+          "ok": true,
+          "err": null
+        }
+      ],
+      "setblocks": 63,
+      "error": null,
+      "hotbar_log": [
+        {
+          "label": "we_before",
+          "SelectedItemSlot": 0,
+          "item_id": "minecraft:chest",
+          "civs_key": "shelter",
+          "kind": "civs",
+          "hotbar": [
+            {
+              "slot": 0,
+              "id": "minecraft:chest",
+              "kind": "civs",
+              "civs": "shelter"
+            },
+            {
+              "slot": 1,
+              "id": "minecraft:wooden_axe",
+              "kind": "wand",
+              "civs": null
+            },
+            {
+              "slot": 8,
+              "id": "minecraft:wooden_axe",
+              "kind": "wand",
+              "civs": null
+            }
+          ]
+        },
+        {
+          "label": "we_wand_selected",
+          "SelectedItemSlot": 8,
+          "item_id": "minecraft:wooden_axe",
+          "civs_key": null,
+          "kind": "wand",
+          "hotbar": [
+            {
+              "slot": 0,
+              "id": "minecraft:chest",
+              "kind": "civs",
+              "civs": "shelter"
+            },
+            {
+              "slot": 8,
+              "id": "minecraft:wooden_axe",
+              "kind": "wand",
+              "civs": null
+            }
+          ]
+        },
+        {
+          "label": "we_cmd://pos1 2104,77,2104",
+          "SelectedItemSlot": 8,
+          "item_id": "minecraft:wooden_axe",
+          "civs_key": null,
+          "kind": "wand",
+          "hotbar": [
+            {
+              "slot": 0,
+              "id": "minecraft:chest",
+              "kind": "civs",
+              "civs": "shelter"
+            },
+            {
+              "slot": 8,
+              "id": "minecraft:wooden_axe",
+              "kind": "wand",
+              "civs": null
+            }
+          ]
+        },
+        {
+          "label": "we_cmd://pos2 2112,85,2112",
+          "SelectedItemSlot": 8,
+          "item_id": "minecraft:wooden_axe",
+          "civs_key": null,
+          "kind": "wand",
+          "hotbar": [
+            {
+              "slot": 0,
+              "id": "minecraft:chest",
+              "kind": "civs",
+              "civs": "shelter"
+            },
+            {
+              "slot": 8,
+              "id": "minecraft:wooden_axe",
+              "kind": "wand",
+              "civs": null
+            }
+          ]
+        },
+        {
+          "label": "we_cmd://set oak_planks",
+          "SelectedItemSlot": 8,
+          "item_id": "minecraft:wooden_axe",
+          "civs_key": null,
+          "kind": "wand",
+          "hotbar": [
+            {
+              "slot": 0,
+              "id": "minecraft:chest",
+              "kind": "civs",
+              "civs": "shelter"
+            },
+            {
+              "slot": 8,
+              "id": "minecraft:wooden_axe",
+              "kind": "wand",
+              "civs": null
+            }
+          ]
+        },
+        {
+          "label": "we_cmd://pos1 2108,81,2108",
+          "SelectedItemSlot": 8,
+          "item_id": "minecraft:wooden_axe",
+          "civs_key": null,
+          "kind": "wand",
+          "hotbar": [
+            {
+              "slot": 0,
+              "id": "minecraft:chest",
+              "kind": "civs",
+              "civs": "shelter"
+            },
+            {
+              "slot": 8,
+              "id": "minecraft:wooden_axe",
+              "kind": "wand",
+              "civs": null
+            }
+          ]
+        },
+        {
+          "label": "we_cmd://pos2 2108,81,2108",
+          "SelectedItemSlot": 8,
+          "item_id": "minecraft:wooden_axe",
+          "civs_key": null,
+          "kind": "wand",
+          "hotbar": [
+            {
+              "slot": 0,
+              "id": "minecraft:chest",
+              "kind": "civs",
+              "civs": "shelter"
+            },
+            {
+              "slot": 8,
+              "id": "minecraft:wooden_axe",
+              "kind": "wand",
+              "civs": null
+            }
+          ]
+        },
+        {
+          "label": "we_cmd://set air",
+          "SelectedItemSlot": 8,
+          "item_id": "minecraft:wooden_axe",
+          "civs_key": null,
+          "kind": "wand",
+          "hotbar": [
+            {
+              "slot": 0,
+              "id": "minecraft:chest",
+              "kind": "civs",
+              "civs": "shelter"
+            },
+            {
+              "slot": 8,
+              "id": "minecraft:wooden_axe",
+              "kind": "wand",
+              "civs": null
+            }
+          ]
+        },
+        {
+          "label": "we_after",
+          "SelectedItemSlot": 8,
+          "item_id": "minecraft:wooden_axe",
+          "civs_key": null,
+          "kind": "wand",
+          "hotbar": [
+            {
+              "slot": 0,
+              "id": "minecraft:chest",
+              "kind": "civs",
+              "civs": "shelter"
+            },
+            {
+              "slot": 8,
+              "id": "minecraft:wooden_axe",
+              "kind": "wand",
+              "civs": null
+            }
+          ]
+        }
+      ],
+      "wand": {
+        "ok": true,
+        "slot": 8,
+        "source": "already_held",
+        "selected": {
+          "ok": true,
+          "slot": 8,
+          "key": "9",
+          "label": "select_wand",
+          "before": {
+            "label": "select_wand_before",
+            "SelectedItemSlot": 0,
+            "item_id": "minecraft:chest",
+            "civs_key": "shelter",
+            "kind": "civs",
+            "hotbar": [
+              {
+                "slot": 0,
+                "id": "minecraft:chest",
+                "kind": "civs",
+                "civs": "shelter"
+              },
+              {
+                "slot": 8,
+                "id": "minecraft:wooden_axe",
+                "kind": "wand",
+                "civs": null
+              }
+            ]
+          },
+          "after": {
+            "label": "select_wand_after",
+            "SelectedItemSlot": 8,
+            "item_id": "minecraft:wooden_axe",
+            "civs_key": null,
+            "kind": "wand",
+            "hotbar": [
+              {
+                "slot": 0,
+                "id": "minecraft:chest",
+                "kind": "civs",
+                "civs": "shelter"
+              },
+              {
+                "slot": 8,
+                "id": "minecraft:wooden_axe",
+                "kind": "wand",
+                "civs": null
+              }
+            ]
+          },
+          "error": null,
+          "selected_slot": 8,
+          "selected_slot_raw": "smokeshow has the following entity data: 8",
+          "hand_raw": "smokeshow has the following entity data: {id: \"minecraft:wooden_axe\", count: 1}",
+          "hand_ok": true,
+          "kind": "wand",
+          "civs_key": null,
+          "item_id": "minecraft:wooden_axe"
+        },
+        "error": null
+      },
+      "dominant": "oak_planks",
+      "material_counts": {
+        "iron_bars": 2,
+        "oak_door": 2,
+        "chest": 2,
+        "furnace": 2,
+        "coal_block": 4,
+        "oak_planks": 45,
+        "cobblestone": 6
+      },
+      "we_ok": true
+    },
+    "coal_mine_place": {
+      "ok": false,
+      "civs_key": "coal_mine",
+      "center": [
+        2108,
+        81,
+        2108
+      ],
+      "item": {
+        "ok": true,
+        "civs_key": "coal_mine",
+        "source": "pdc_replace",
+        "slot": 0,
+        "error": null,
+        "detail": "Replaced a slot on smokeshow with [coal_mine]"
+      },
+      "hygiene": {
+        "ok": true,
+        "civs_key": "coal_mine",
+        "slot": 0,
+        "cleared": [],
+        "dump_preview": "smokeshow has the following entity data: [{Slot: 0b, id: \"minecraft:chest\", count: 1, components: {\"minecraft:custom_name\":...",
+        "key_select": {
+          "ok": true,
+          "slot": 0,
+          "key": "1",
+          "label": "civs:coal_mine",
+          "before": {
+            "label": "civs:coal_mine_before",
+            "SelectedItemSlot": 8,
+            "item_id": "minecraft:wooden_axe",
+            "civs_key": null,
+            "kind": "wand",
+            "hotbar": [
+              {
+                "slot": 0,
+                "id": "minecraft:chest",
+                "kind": "civs",
+                "civs": "coal_mine"
+              },
+              {
+                "slot": 8,
+                "id": "minecraft:wooden_axe",
+                "kind": "wand",
+                "civs": null
+              }
+            ]
+          },
+          "after": {
+            "label": "civs:coal_mine_after",
+            "SelectedItemSlot": 0,
+            "item_id": "minecraft:chest",
+            "civs_key": "coal_mine",
+            "kind": "civs",
+            "hotbar": [
+              {
+                "slot": 0,
+                "id": "minecraft:chest",
+                "kind": "civs",
+                "civs": "coal_mine"
+              },
+              {
+                "slot": 8,
+                "id": "minecraft:wooden_axe",
+                "kind": "wand",
+                "civs": null
+              }
+            ]
+          },
+          "error": null,
+          "selected_slot": 0,
+          "selected_slot_raw": "smokeshow has the following entity data: 0",
+          "hand_raw": "smokeshow has the following entity data: {id: \"minecraft:chest\", count: 1, components: {\"minecraft:custom_name\": \"coal_mine\", \"minecraft:custom_data...",
+          "hand_ok": true,
+          "kind": "civs",
+          "civs_key": "coal_mine",
+          "item_id": "minecraft:chest"
+        },
+        "hand_ok": true,
+        "error": null,
+        "before": {
+          "label": "place_prep:coal_mine",
+          "SelectedItemSlot": 8,
+          "item_id": "minecraft:wooden_axe",
+          "civs_key": null,
+          "kind": "wand",
+          "hotbar": [
+            {
+              "slot": 0,
+              "id": "minecraft:chest",
+              "kind": "civs",
+              "civs": "shelter"
+            },
+            {
+              "slot": 8,
+              "id": "minecraft:wooden_axe",
+              "kind": "wand",
+              "civs": null
+            }
+          ]
+        },
+        "keys_before": [
+          "shelter"
+        ],
+        "selected_before": 8,
+        "ensure": {
+          "ok": true,
+          "civs_key": "coal_mine",
+          "source": "pdc_replace",
+          "slot": 0,
+          "error": null,
+          "detail": "Replaced a slot on smokeshow with [coal_mine]"
+        },
+        "hand_check": "smokeshow has the following entity data: {id: \"minecraft:chest\", count: 1, components: {\"minecraft:custom_name\": \"coal_mine\", \"minecraft:custom_data...",
+        "after": {
+          "label": "place_ready:coal_mine",
+          "SelectedItemSlot": 0,
+          "item_id": "minecraft:chest",
+          "civs_key": "coal_mine",
+          "kind": "civs",
+          "hotbar": [
+            {
+              "slot": 0,
+              "id": "minecraft:chest",
+              "kind": "civs",
+              "civs": "coal_mine"
+            },
+            {
+              "slot": 8,
+              "id": "minecraft:wooden_axe",
+              "kind": "wand",
+              "civs": null
+            }
+          ]
+        }
+      },
+      "vision": [
+        {
+          "kind": "container",
+          "confidence": 0.7360439241486068,
+          "safe": false,
+          "path": "C:\\Users\\Danie\\Downloads\\Civs-1.11.6\\Civs-1.11.6\\scripts\\qa\\reports\\screenshots\\coal_mine_boot_after_esc1_122048_container.png",
+          "source_f2": "C:\\Users\\Danie\\AppData\\Roaming\\.minecraft\\screenshots\\2026-07-17_13.20.47.png",
+          "notes": "mean=67.8 std=45.9 edges=0.059 | f2=2026-07-17_13.20.47.png"
+        },
+        {
+          "kind": "container",
+          "confidence": 0.95,
+          "safe": false,
+          "path": "C:\\Users\\Danie\\Downloads\\Civs-1.11.6\\Civs-1.11.6\\scripts\\qa\\reports\\screenshots\\coal_mine_boot2_after_esc1_122058_container.png",
+          "source_f2": "C:\\Users\\Danie\\AppData\\Roaming\\.minecraft\\screenshots\\2026-07-17_13.20.57.png",
+          "notes": "mean=67.7 std=39.2 edges=0.137 | f2=2026-07-17_13.20.57.png"
+        },
+        {
+          "kind": "container",
+          "confidence": 0.7362777347781218,
+          "safe": false,
+          "path": "C:\\Users\\Danie\\Downloads\\Civs-1.11.6\\Civs-1.11.6\\scripts\\qa\\reports\\screenshots\\coal_mine_overhead_down_post_after_esc1_122131_container.png",
+          "source_f2": "C:\\Users\\Danie\\AppData\\Roaming\\.minecraft\\screenshots\\2026-07-17_13.21.30.png",
+          "notes": "mean=88.7 std=42.7 edges=0.059 | f2=2026-07-17_13.21.30.png"
+        },
+        {
+          "kind": "world",
+          "confidence": 0.55,
+          "safe": true,
+          "path": "C:\\Users\\Danie\\Downloads\\Civs-1.11.6\\Civs-1.11.6\\scripts\\qa\\reports\\screenshots\\coal_mine_daniel_south_floor_pre_122134_world.png",
+          "source_f2": "C:\\Users\\Danie\\AppData\\Roaming\\.minecraft\\screenshots\\2026-07-17_13.21.33.png",
+          "notes": "mean=116.4 std=53.7 edges=0.095 tr=34 | f2=2026-07-17_13.21.33.png"
+        },
+        {
+          "kind": "container",
+          "confidence": 0.736124548503612,
+          "safe": false,
+          "path": "C:\\Users\\Danie\\Downloads\\Civs-1.11.6\\Civs-1.11.6\\scripts\\qa\\reports\\screenshots\\coal_mine_daniel_south_floor_post_after_esc1_122153_container.png",
+          "source_f2": "C:\\Users\\Danie\\AppData\\Roaming\\.minecraft\\screenshots\\2026-07-17_13.21.52.png",
+          "notes": "mean=102.1 std=45.1 edges=0.059 | f2=2026-07-17_13.21.52.png"
+        },
+        {
+          "kind": "world",
+          "confidence": 0.55,
+          "safe": true,
+          "path": "C:\\Users\\Danie\\Downloads\\Civs-1.11.6\\Civs-1.11.6\\scripts\\qa\\reports\\screenshots\\coal_mine_south_farther_floor_pre_122156_world.png",
+          "source_f2": "C:\\Users\\Danie\\AppData\\Roaming\\.minecraft\\screenshots\\2026-07-17_13.21.55.png",
+          "notes": "mean=129.5 std=53.7 edges=0.077 tr=32 | f2=2026-07-17_13.21.55.png"
+        },
+        {
+          "kind": "container",
+          "confidence": 0.7361164860681114,
+          "safe": false,
+          "path": "C:\\Users\\Danie\\Downloads\\Civs-1.11.6\\Civs-1.11.6\\scripts\\qa\\reports\\screenshots\\coal_mine_south_farther_floor_post_after_esc1_122215_container.png",
+          "source_f2": "C:\\Users\\Danie\\AppData\\Roaming\\.minecraft\\screenshots\\2026-07-17_13.22.14.png",
+          "notes": "mean=105.5 std=42.6 edges=0.059 | f2=2026-07-17_13.22.14.png"
+        },
+        {
+          "kind": "container",
+          "confidence": 0.7362777347781218,
+          "safe": false,
+          "path": "C:\\Users\\Danie\\Downloads\\Civs-1.11.6\\Civs-1.11.6\\scripts\\qa\\reports\\screenshots\\coal_mine_north_floor_pre_after_esc1_122224_container.png",
+          "source_f2": "C:\\Users\\Danie\\AppData\\Roaming\\.minecraft\\screenshots\\2026-07-17_13.22.23.png",
+          "notes": "mean=103.4 std=43.1 edges=0.059 | f2=2026-07-17_13.22.23.png"
+        },
+        {
+          "kind": "world",
+          "confidence": 0.55,
+          "safe": true,
+          "path": "C:\\Users\\Danie\\Downloads\\Civs-1.11.6\\Civs-1.11.6\\scripts\\qa\\reports\\screenshots\\coal_mine_north_floor_retry_122227_world.png",
+          "source_f2": "C:\\Users\\Danie\\AppData\\Roaming\\.minecraft\\screenshots\\2026-07-17_13.22.26.png",
+          "notes": "mean=156.4 std=41.3 edges=0.037 tr=22 | f2=2026-07-17_13.22.26.png"
+        },
+        {
+          "kind": "world",
+          "confidence": 0.55,
+          "safe": true,
+          "path": "C:\\Users\\Danie\\Downloads\\Civs-1.11.6\\Civs-1.11.6\\scripts\\qa\\reports\\screenshots\\coal_mine_north_floor_post_122239_world.png",
+          "source_f2": "C:\\Users\\Danie\\AppData\\Roaming\\.minecraft\\screenshots\\2026-07-17_13.22.38.png",
+          "notes": "mean=111.2 std=38.3 edges=0.059 tr=13 | f2=2026-07-17_13.22.38.png"
+        },
+        {
+          "kind": "container",
+          "confidence": 0.7362857972136223,
+          "safe": false,
+          "path": "C:\\Users\\Danie\\Downloads\\Civs-1.11.6\\Civs-1.11.6\\scripts\\qa\\reports\\screenshots\\coal_mine_west_floor_pre_after_esc1_122248_container.png",
+          "source_f2": "C:\\Users\\Danie\\AppData\\Roaming\\.minecraft\\screenshots\\2026-07-17_13.22.48.png",
+          "notes": "mean=98.3 std=46.1 edges=0.059 | f2=2026-07-17_13.22.48.png"
+        },
+        {
+          "kind": "world",
+          "confidence": 0.55,
+          "safe": true,
+          "path": "C:\\Users\\Danie\\Downloads\\Civs-1.11.6\\Civs-1.11.6\\scripts\\qa\\reports\\screenshots\\coal_mine_west_floor_retry_122251_world.png",
+          "source_f2": "C:\\Users\\Danie\\AppData\\Roaming\\.minecraft\\screenshots\\2026-07-17_13.22.51.png",
+          "notes": "mean=141.2 std=57.1 edges=0.058 tr=20 | f2=2026-07-17_13.22.51.png"
+        },
+        {
+          "kind": "world",
+          "confidence": 0.55,
+          "safe": true,
+          "path": "C:\\Users\\Danie\\Downloads\\Civs-1.11.6\\Civs-1.11.6\\scripts\\qa\\reports\\screenshots\\coal_mine_west_floor_post_after_esc1_122310_world.png",
+          "source_f2": "C:\\Users\\Danie\\AppData\\Roaming\\.minecraft\\screenshots\\2026-07-17_13.23.09.png",
+          "notes": "mean=93.7 std=49.6 edges=0.059 tr=11 | f2=2026-07-17_13.23.09.png"
+        },
+        {
+          "kind": "container",
+          "confidence": 0.7362857972136223,
+          "safe": false,
+          "path": "C:\\Users\\Danie\\Downloads\\Civs-1.11.6\\Civs-1.11.6\\scripts\\qa\\reports\\screenshots\\coal_mine_east_floor_pre_after_esc1_122320_container.png",
+          "source_f2": "C:\\Users\\Danie\\AppData\\Roaming\\.minecraft\\screenshots\\2026-07-17_13.23.19.png",
+          "notes": "mean=101.4 std=40.1 edges=0.059 | f2=2026-07-17_13.23.19.png"
+        },
+        {
+          "kind": "world",
+          "confidence": 0.55,
+          "safe": true,
+          "path": "C:\\Users\\Danie\\Downloads\\Civs-1.11.6\\Civs-1.11.6\\scripts\\qa\\reports\\screenshots\\coal_mine_east_floor_retry_122323_world.png",
+          "source_f2": "C:\\Users\\Danie\\AppData\\Roaming\\.minecraft\\screenshots\\2026-07-17_13.23.22.png",
+          "notes": "mean=144.0 std=43.6 edges=0.043 tr=29 | f2=2026-07-17_13.23.22.png"
+        },
+        {
+          "kind": "container",
+          "confidence": 0.7362857972136223,
+          "safe": false,
+          "path": "C:\\Users\\Danie\\Downloads\\Civs-1.11.6\\Civs-1.11.6\\scripts\\qa\\reports\\screenshots\\coal_mine_east_floor_post_after_esc1_122341_container.png",
+          "source_f2": "C:\\Users\\Danie\\AppData\\Roaming\\.minecraft\\screenshots\\2026-07-17_13.23.41.png",
+          "notes": "mean=105.2 std=39.3 edges=0.059 | f2=2026-07-17_13.23.41.png"
+        }
+      ],
+      "right_click": {
+        "ok": true,
+        "error": null,
+        "xy": [
+          2880,
+          516
+        ],
+        "capture_xy": null,
+        "safe_capture_ignored": true
+      },
+      "placement_menu": null,
+      "attempts": [
+        {
+          "pose": "overhead_down",
+          "tp": [
+            2108.5,
+            83.5,
+            2108.5
+          ],
+          "yaw_pitch": [
+            0.0,
+            90.0
+          ],
+          "rotation": "smokeshow has the following entity data: [0.0f, 90.0f]",
+          "right_click_ok": true,
+          "center_has_chest": false,
+          "exact_cy": false,
+          "center_block": "The target block is not a block entity",
+          "neighbors": {
+            "0,0,0": "",
+            "0,-1,0": "",
+            "0,-2,0": "",
+            "0,1,0": "",
+            "0,0,-1": "",
+            "0,0,1": "",
+            "-1,0,0": "",
+            "1,0,0": "",
+            "0,-1,-1": "",
+            "0,0,-2": ""
+          },
+          "hand_preview": [
+            "minecraft:chest",
+            "coal_mine"
+          ],
+          "exact_cy_after_dismiss": false,
+          "opened_gui": "container"
+        },
+        {
+          "pose": "daniel_south_floor",
+          "tp": [
+            2108.5,
+            81.0,
+            2106.0
+          ],
+          "yaw_pitch": [
+            -0.0,
+            40.29794457668384
+          ],
+          "rotation": "smokeshow has the following entity data: [0.0f, 40.3f]",
+          "right_click_ok": true,
+          "center_has_chest": false,
+          "exact_cy": false,
+          "center_block": "The target block is not a block entity",
+          "neighbors": {
+            "0,0,0": "",
+            "0,-1,0": "",
+            "0,-2,0": "",
+            "0,1,0": "",
+            "0,0,-1": "",
+            "0,0,1": "",
+            "-1,0,0": "",
+            "1,0,0": "",
+            "0,-1,-1": "",
+            "0,0,-2": ""
+          },
+          "hand_preview": [
+            "minecraft:chest",
+            "coal_mine"
+          ],
+          "exact_cy_after_dismiss": false,
+          "opened_gui": "container"
+        },
+        {
+          "pose": "south_farther_floor",
+          "tp": [
+            2108.5,
+            81.0,
+            2105.6
+          ],
+          "yaw_pitch": [
+            -0.0,
+            36.1680913490299
+          ],
+          "rotation": "smokeshow has the following entity data: [0.0f, 36.17f]",
+          "right_click_ok": true,
+          "center_has_chest": false,
+          "exact_cy": false,
+          "center_block": "The target block is not a block entity",
+          "neighbors": {
+            "0,0,0": "",
+            "0,-1,0": "",
+            "0,-2,0": "",
+            "0,1,0": "",
+            "0,0,-1": "",
+            "0,0,1": "",
+            "-1,0,0": "",
+            "1,0,0": "",
+            "0,-1,-1": "",
+            "0,0,-2": ""
+          },
+          "hand_preview": [
+            "minecraft:chest",
+            "coal_mine"
+          ],
+          "exact_cy_after_dismiss": false,
+          "opened_gui": "container"
+        },
+        {
+          "pose": "north_floor",
+          "tp": [
+            2108.5,
+            81.0,
+            2110.0
+          ],
+          "yaw_pitch": [
+            -180.0,
+            54.71879220282568
+          ],
+          "rotation": "smokeshow has the following entity data: [-180.0f, 54.72f]",
+          "right_click_ok": true,
+          "center_has_chest": false,
+          "exact_cy": false,
+          "center_block": "The target block is not a block entity",
+          "neighbors": {
+            "0,0,0": "",
+            "0,-1,0": "",
+            "0,-2,0": "",
+            "0,1,0": "",
+            "0,0,-1": "",
+            "0,0,1": "",
+            "-1,0,0": "",
+            "1,0,0": "",
+            "0,-1,-1": "",
+            "0,0,-2": ""
+          },
+          "hand_preview": [
+            "minecraft:chest",
+            "coal_mine"
+          ]
+        },
+        {
+          "pose": "west_floor",
+          "tp": [
+            2106.0,
+            81.0,
+            2108.5
+          ],
+          "yaw_pitch": [
+            -90.0,
+            40.29794457668384
+          ],
+          "rotation": "smokeshow has the following entity data: [-90.0f, 40.3f]",
+          "right_click_ok": true,
+          "center_has_chest": false,
+          "exact_cy": false,
+          "center_block": "The target block is not a block entity",
+          "neighbors": {
+            "0,0,0": "",
+            "0,-1,0": "",
+            "0,-2,0": "",
+            "0,1,0": "",
+            "0,0,-1": "",
+            "0,0,1": "",
+            "-1,0,0": "",
+            "1,0,0": "",
+            "0,-1,-1": "",
+            "0,0,-2": ""
+          },
+          "hand_preview": [
+            "minecraft:chest",
+            "coal_mine"
+          ]
+        },
+        {
+          "pose": "east_floor",
+          "tp": [
+            2110.0,
+            81.0,
+            2108.5
+          ],
+          "yaw_pitch": [
+            90.0,
+            54.71879220282568
+          ],
+          "rotation": "smokeshow has the following entity data: [90.0f, 54.72f]",
+          "right_click_ok": true,
+          "center_has_chest": false,
+          "exact_cy": false,
+          "center_block": "The target block is not a block entity",
+          "neighbors": {
+            "0,0,0": "",
+            "0,-1,0": "",
+            "0,-2,0": "",
+            "0,1,0": "",
+            "0,0,-1": "",
+            "0,0,1": "",
+            "-1,0,0": "",
+            "1,0,0": "",
+            "0,-1,-1": "",
+            "0,0,-2": ""
+          },
+          "hand_preview": [
+            "minecraft:chest",
+            "coal_mine"
+          ],
+          "exact_cy_after_dismiss": false,
+          "opened_gui": "container"
+        }
+      ],
+      "error": "center place missed after chest-safe retries",
+      "hotbar_log": [
+        {
+          "label": "civs:coal_mine_after",
+          "SelectedItemSlot": 0,
+          "item_id": "minecraft:chest",
+          "civs_key": "coal_mine",
+          "kind": "civs",
+          "hotbar": [
+            {
+              "slot": 0,
+              "id": "minecraft:chest",
+              "kind": "civs",
+              "civs": "coal_mine"
+            },
+            {
+              "slot": 8,
+              "id": "minecraft:wooden_axe",
+              "kind": "wand",
+              "civs": null
+            }
+          ]
+        },
+        {
+          "label": "civs:coal_mine_after",
+          "SelectedItemSlot": 0,
+          "item_id": "minecraft:chest",
+          "civs_key": "coal_mine",
+          "kind": "civs",
+          "hotbar": [
+            {
+              "slot": 0,
+              "id": "minecraft:chest",
+              "kind": "civs",
+              "civs": "coal_mine"
+            },
+            {
+              "slot": 8,
+              "id": "minecraft:wooden_axe",
+              "kind": "wand",
+              "civs": null
+            }
+          ]
+        },
+        {
+          "label": "civs:coal_mine_after",
+          "SelectedItemSlot": 0,
+          "item_id": "minecraft:chest",
+          "civs_key": "coal_mine",
+          "kind": "civs",
+          "hotbar": [
+            {
+              "slot": 0,
+              "id": "minecraft:chest",
+              "kind": "civs",
+              "civs": "coal_mine"
+            },
+            {
+              "slot": 8,
+              "id": "minecraft:wooden_axe",
+              "kind": "wand",
+              "civs": null
+            }
+          ]
+        },
+        {
+          "label": "civs:coal_mine_after",
+          "SelectedItemSlot": 0,
+          "item_id": "minecraft:chest",
+          "civs_key": "coal_mine",
+          "kind": "civs",
+          "hotbar": [
+            {
+              "slot": 0,
+              "id": "minecraft:chest",
+              "kind": "civs",
+              "civs": "coal_mine"
+            },
+            {
+              "slot": 8,
+              "id": "minecraft:wooden_axe",
+              "kind": "wand",
+              "civs": null
+            }
+          ]
+        },
+        {
+          "label": "civs:coal_mine_after",
+          "SelectedItemSlot": 0,
+          "item_id": "minecraft:chest",
+          "civs_key": "coal_mine",
+          "kind": "civs",
+          "hotbar": [
+            {
+              "slot": 0,
+              "id": "minecraft:chest",
+              "kind": "civs",
+              "civs": "coal_mine"
+            },
+            {
+              "slot": 8,
+              "id": "minecraft:wooden_axe",
+              "kind": "wand",
+              "civs": null
+            }
+          ]
+        },
+        {
+          "label": "civs:coal_mine_after",
+          "SelectedItemSlot": 0,
+          "item_id": "minecraft:chest",
+          "civs_key": "coal_mine",
+          "kind": "civs",
+          "hotbar": [
+            {
+              "slot": 0,
+              "id": "minecraft:chest",
+              "kind": "civs",
+              "civs": "coal_mine"
+            },
+            {
+              "slot": 8,
+              "id": "minecraft:wooden_axe",
+              "kind": "wand",
+              "civs": null
+            }
+          ]
+        }
+      ],
+      "center_block": "The target block is not a block entity",
+      "center_has_chest": false,
+      "exact_cy": false
+    },
+    "shelter_build": {
+      "ok": true,
+      "we_cmds": [
+        "noop_empty_footprint"
+      ],
+      "setblocks": 0,
+      "error": null,
+      "hotbar_log": []
+    },
+    "shelter_place": {
+      "ok": false,
+      "civs_key": "shelter",
+      "center": [
+        2123,
+        81,
+        2108
+      ],
+      "item": {
+        "ok": true,
+        "civs_key": "shelter",
+        "source": "pdc_replace",
+        "slot": 0,
+        "error": null,
+        "detail": "Replaced a slot on smokeshow with [shelter]"
+      },
+      "hygiene": {
+        "ok": true,
+        "civs_key": "shelter",
+        "slot": 0,
+        "cleared": [],
+        "dump_preview": "smokeshow has the following entity data: [{Slot: 0b, id: \"minecraft:chest\", count: 1, components: {\"minecraft:custom_name\":...",
+        "key_select": {
+          "ok": true,
+          "slot": 0,
+          "key": "1",
+          "label": "civs:shelter",
+          "before": {
+            "label": "civs:shelter_before",
+            "SelectedItemSlot": 0,
+            "item_id": "minecraft:chest",
+            "civs_key": "shelter",
+            "kind": "civs",
+            "hotbar": [
+              {
+                "slot": 0,
+                "id": "minecraft:chest",
+                "kind": "civs",
+                "civs": "shelter"
+              },
+              {
+                "slot": 8,
+                "id": "minecraft:wooden_axe",
+                "kind": "wand",
+                "civs": null
+              }
+            ]
+          },
+          "after": {
+            "label": "civs:shelter_after",
+            "SelectedItemSlot": 0,
+            "item_id": "minecraft:chest",
+            "civs_key": "shelter",
+            "kind": "civs",
+            "hotbar": [
+              {
+                "slot": 0,
+                "id": "minecraft:chest",
+                "kind": "civs",
+                "civs": "shelter"
+              },
+              {
+                "slot": 8,
+                "id": "minecraft:wooden_axe",
+                "kind": "wand",
+                "civs": null
+              }
+            ]
+          },
+          "error": null,
+          "selected_slot": 0,
+          "selected_slot_raw": "smokeshow has the following entity data: 0",
+          "hand_raw": "smokeshow has the following entity data: {id: \"minecraft:chest\", count: 1, components: {\"minecraft:custom_name\": \"shelter\", \"minecraft:custom_data...",
+          "hand_ok": true,
+          "kind": "civs",
+          "civs_key": "shelter",
+          "item_id": "minecraft:chest"
+        },
+        "hand_ok": true,
+        "error": null,
+        "before": {
+          "label": "place_prep:shelter",
+          "SelectedItemSlot": 0,
+          "item_id": "minecraft:chest",
+          "civs_key": "coal_mine",
+          "kind": "civs",
+          "hotbar": [
+            {
+              "slot": 0,
+              "id": "minecraft:chest",
+              "kind": "civs",
+              "civs": "coal_mine"
+            },
+            {
+              "slot": 8,
+              "id": "minecraft:wooden_axe",
+              "kind": "wand",
+              "civs": null
+            }
+          ]
+        },
+        "keys_before": [
+          "coal_mine"
+        ],
+        "selected_before": 0,
+        "ensure": {
+          "ok": true,
+          "civs_key": "shelter",
+          "source": "pdc_replace",
+          "slot": 0,
+          "error": null,
+          "detail": "Replaced a slot on smokeshow with [shelter]"
+        },
+        "hand_check": "smokeshow has the following entity data: {id: \"minecraft:chest\", count: 1, components: {\"minecraft:custom_name\": \"shelter\", \"minecraft:custom_data...",
+        "after": {
+          "label": "place_ready:shelter",
+          "SelectedItemSlot": 0,
+          "item_id": "minecraft:chest",
+          "civs_key": "shelter",
+          "kind": "civs",
+          "hotbar": [
+            {
+              "slot": 0,
+              "id": "minecraft:chest",
+              "kind": "civs",
+              "civs": "shelter"
+            },
+            {
+              "slot": 8,
+              "id": "minecraft:wooden_axe",
+              "kind": "wand",
+              "civs": null
+            }
+          ]
+        }
+      },
+      "vision": [
+        {
+          "kind": "container",
+          "confidence": 0.7362938596491229,
+          "safe": false,
+          "path": "C:\\Users\\Danie\\Downloads\\Civs-1.11.6\\Civs-1.11.6\\scripts\\qa\\reports\\screenshots\\shelter_boot_after_esc1_122353_container.png",
+          "source_f2": "C:\\Users\\Danie\\AppData\\Roaming\\.minecraft\\screenshots\\2026-07-17_13.23.53.png",
+          "notes": "mean=102.1 std=40.0 edges=0.059 | f2=2026-07-17_13.23.53.png"
+        },
+        {
+          "kind": "world",
+          "confidence": 0.55,
+          "safe": true,
+          "path": "C:\\Users\\Danie\\Downloads\\Civs-1.11.6\\Civs-1.11.6\\scripts\\qa\\reports\\screenshots\\shelter_boot2_122356_world.png",
+          "source_f2": "C:\\Users\\Danie\\AppData\\Roaming\\.minecraft\\screenshots\\2026-07-17_13.23.55.png",
+          "notes": "mean=147.3 std=41.5 edges=0.038 tr=31 | f2=2026-07-17_13.23.55.png"
+        },
+        {
+          "kind": "container",
+          "confidence": 0.95,
+          "safe": false,
+          "path": "C:\\Users\\Danie\\Downloads\\Civs-1.11.6\\Civs-1.11.6\\scripts\\qa\\reports\\screenshots\\shelter_overhead_down_post_after_esc1_122426_container.png",
+          "source_f2": "C:\\Users\\Danie\\AppData\\Roaming\\.minecraft\\screenshots\\2026-07-17_13.24.25.png",
+          "notes": "mean=107.1 std=37.7 edges=0.122 | f2=2026-07-17_13.24.25.png"
+        },
+        {
+          "kind": "container",
+          "confidence": 0.7362857972136223,
+          "safe": false,
+          "path": "C:\\Users\\Danie\\Downloads\\Civs-1.11.6\\Civs-1.11.6\\scripts\\qa\\reports\\screenshots\\shelter_daniel_south_floor_pre_after_esc1_122436_container.png",
+          "source_f2": "C:\\Users\\Danie\\AppData\\Roaming\\.minecraft\\screenshots\\2026-07-17_13.24.35.png",
+          "notes": "mean=81.6 std=42.2 edges=0.059 | f2=2026-07-17_13.24.35.png"
+        },
+        {
+          "kind": "container",
+          "confidence": 0.7980279282765738,
+          "safe": false,
+          "path": "C:\\Users\\Danie\\Downloads\\Civs-1.11.6\\Civs-1.11.6\\scripts\\qa\\reports\\screenshots\\shelter_daniel_south_floor_retry_after_esc1_122446_container.png",
+          "source_f2": "C:\\Users\\Danie\\AppData\\Roaming\\.minecraft\\screenshots\\2026-07-17_13.24.45.png",
+          "notes": "mean=105.8 std=42.0 edges=0.075 | f2=2026-07-17_13.24.45.png"
+        },
+        {
+          "kind": "container",
+          "confidence": 0.8174745227038184,
+          "safe": false,
+          "path": "C:\\Users\\Danie\\Downloads\\Civs-1.11.6\\Civs-1.11.6\\scripts\\qa\\reports\\screenshots\\shelter_south_farther_floor_pre_after_esc1_122456_container.png",
+          "source_f2": "C:\\Users\\Danie\\AppData\\Roaming\\.minecraft\\screenshots\\2026-07-17_13.24.55.png",
+          "notes": "mean=109.7 std=42.4 edges=0.079 | f2=2026-07-17_13.24.55.png"
+        },
+        {
+          "kind": "container",
+          "confidence": 0.7362938596491229,
+          "safe": false,
+          "path": "C:\\Users\\Danie\\Downloads\\Civs-1.11.6\\Civs-1.11.6\\scripts\\qa\\reports\\screenshots\\shelter_south_farther_floor_retry_after_esc1_122506_container.png",
+          "source_f2": "C:\\Users\\Danie\\AppData\\Roaming\\.minecraft\\screenshots\\2026-07-17_13.25.05.png",
+          "notes": "mean=93.0 std=41.7 edges=0.059 | f2=2026-07-17_13.25.05.png"
+        },
+        {
+          "kind": "container",
+          "confidence": 0.7362777347781218,
+          "safe": false,
+          "path": "C:\\Users\\Danie\\Downloads\\Civs-1.11.6\\Civs-1.11.6\\scripts\\qa\\reports\\screenshots\\shelter_north_floor_pre_after_esc1_122515_container.png",
+          "source_f2": "C:\\Users\\Danie\\AppData\\Roaming\\.minecraft\\screenshots\\2026-07-17_13.25.15.png",
+          "notes": "mean=103.7 std=40.6 edges=0.059 | f2=2026-07-17_13.25.15.png"
+        },
+        {
+          "kind": "world",
+          "confidence": 0.55,
+          "safe": true,
+          "path": "C:\\Users\\Danie\\Downloads\\Civs-1.11.6\\Civs-1.11.6\\scripts\\qa\\reports\\screenshots\\shelter_north_floor_retry_122519_world.png",
+          "source_f2": "C:\\Users\\Danie\\AppData\\Roaming\\.minecraft\\screenshots\\2026-07-17_13.25.18.png",
+          "notes": "mean=148.1 std=40.9 edges=0.038 tr=25 | f2=2026-07-17_13.25.18.png"
+        },
+        {
+          "kind": "container",
+          "confidence": 0.7362777347781218,
+          "safe": false,
+          "path": "C:\\Users\\Danie\\Downloads\\Civs-1.11.6\\Civs-1.11.6\\scripts\\qa\\reports\\screenshots\\shelter_north_floor_post_after_esc1_122537_container.png",
+          "source_f2": "C:\\Users\\Danie\\AppData\\Roaming\\.minecraft\\screenshots\\2026-07-17_13.25.37.png",
+          "notes": "mean=109.3 std=38.7 edges=0.059 | f2=2026-07-17_13.25.37.png"
+        },
+        {
+          "kind": "world",
+          "confidence": 0.55,
+          "safe": true,
+          "path": "C:\\Users\\Danie\\Downloads\\Civs-1.11.6\\Civs-1.11.6\\scripts\\qa\\reports\\screenshots\\shelter_west_floor_pre_122541_world.png",
+          "source_f2": "C:\\Users\\Danie\\AppData\\Roaming\\.minecraft\\screenshots\\2026-07-17_13.25.40.png",
+          "notes": "mean=125.1 std=60.1 edges=0.081 tr=15 | f2=2026-07-17_13.25.40.png"
+        },
+        {
+          "kind": "container",
+          "confidence": 0.736108423632611,
+          "safe": false,
+          "path": "C:\\Users\\Danie\\Downloads\\Civs-1.11.6\\Civs-1.11.6\\scripts\\qa\\reports\\screenshots\\shelter_west_floor_post_after_esc1_122559_container.png",
+          "source_f2": "C:\\Users\\Danie\\AppData\\Roaming\\.minecraft\\screenshots\\2026-07-17_13.25.59.png",
+          "notes": "mean=99.9 std=46.9 edges=0.059 | f2=2026-07-17_13.25.59.png"
+        },
+        {
+          "kind": "world",
+          "confidence": 0.55,
+          "safe": true,
+          "path": "C:\\Users\\Danie\\Downloads\\Civs-1.11.6\\Civs-1.11.6\\scripts\\qa\\reports\\screenshots\\shelter_east_floor_pre_122602_world.png",
+          "source_f2": "C:\\Users\\Danie\\AppData\\Roaming\\.minecraft\\screenshots\\2026-07-17_13.26.02.png",
+          "notes": "mean=140.0 std=48.0 edges=0.035 tr=23 | f2=2026-07-17_13.26.02.png"
+        },
+        {
+          "kind": "container",
+          "confidence": 0.7364228586171311,
+          "safe": false,
+          "path": "C:\\Users\\Danie\\Downloads\\Civs-1.11.6\\Civs-1.11.6\\scripts\\qa\\reports\\screenshots\\shelter_east_floor_post_after_esc1_122621_container.png",
+          "source_f2": "C:\\Users\\Danie\\AppData\\Roaming\\.minecraft\\screenshots\\2026-07-17_13.26.20.png",
+          "notes": "mean=104.9 std=40.9 edges=0.059 | f2=2026-07-17_13.26.20.png"
+        }
+      ],
+      "right_click": {
+        "ok": true,
+        "error": null,
+        "xy": [
+          2880,
+          516
+        ],
+        "capture_xy": null,
+        "safe_capture_ignored": true
+      },
+      "placement_menu": null,
+      "attempts": [
+        {
+          "pose": "overhead_down",
+          "tp": [
+            2123.5,
+            83.5,
+            2108.5
+          ],
+          "yaw_pitch": [
+            0.0,
+            90.0
+          ],
+          "rotation": "smokeshow has the following entity data: [0.0f, 90.0f]",
+          "right_click_ok": true,
+          "center_has_chest": false,
+          "exact_cy": false,
+          "center_block": "The target block is not a block entity",
+          "neighbors": {
+            "0,0,0": "",
+            "0,-1,0": "",
+            "0,-2,0": "",
+            "0,1,0": "",
+            "0,0,-1": "",
+            "0,0,1": "",
+            "-1,0,0": "",
+            "1,0,0": "",
+            "0,-1,-1": "",
+            "0,0,-2": ""
+          },
+          "hand_preview": [
+            "minecraft:chest",
+            "shelter"
+          ],
+          "exact_cy_after_dismiss": false,
+          "opened_gui": "container"
+        },
+        {
+          "pose": "daniel_south_floor",
+          "skipped": "gui_open",
+          "vision": {
+            "kind": "container",
+            "confidence": 0.7980279282765738,
+            "safe": false,
+            "path": "C:\\Users\\Danie\\Downloads\\Civs-1.11.6\\Civs-1.11.6\\scripts\\qa\\reports\\screenshots\\shelter_daniel_south_floor_retry_after_esc1_122446_container.png",
+            "source_f2": "C:\\Users\\Danie\\AppData\\Roaming\\.minecraft\\screenshots\\2026-07-17_13.24.45.png",
+            "notes": "mean=105.8 std=42.0 edges=0.075 | f2=2026-07-17_13.24.45.png"
+          }
+        },
+        {
+          "pose": "south_farther_floor",
+          "skipped": "gui_open",
+          "vision": {
+            "kind": "container",
+            "confidence": 0.7362938596491229,
+            "safe": false,
+            "path": "C:\\Users\\Danie\\Downloads\\Civs-1.11.6\\Civs-1.11.6\\scripts\\qa\\reports\\screenshots\\shelter_south_farther_floor_retry_after_esc1_122506_container.png",
+            "source_f2": "C:\\Users\\Danie\\AppData\\Roaming\\.minecraft\\screenshots\\2026-07-17_13.25.05.png",
+            "notes": "mean=93.0 std=41.7 edges=0.059 | f2=2026-07-17_13.25.05.png"
+          }
+        },
+        {
+          "pose": "north_floor",
+          "tp": [
+            2123.5,
+            81.0,
+            2110.0
+          ],
+          "yaw_pitch": [
+            -180.0,
+            54.71879220282568
+          ],
+          "rotation": "smokeshow has the following entity data: [-180.0f, 54.72f]",
+          "right_click_ok": true,
+          "center_has_chest": false,
+          "exact_cy": false,
+          "center_block": "The target block is not a block entity",
+          "neighbors": {
+            "0,0,0": "",
+            "0,-1,0": "",
+            "0,-2,0": "",
+            "0,1,0": "",
+            "0,0,-1": "",
+            "0,0,1": "",
+            "-1,0,0": "",
+            "1,0,0": "",
+            "0,-1,-1": "",
+            "0,0,-2": ""
+          },
+          "hand_preview": [
+            "minecraft:chest",
+            "shelter"
+          ],
+          "exact_cy_after_dismiss": false,
+          "opened_gui": "container"
+        },
+        {
+          "pose": "west_floor",
+          "tp": [
+            2121.0,
+            81.0,
+            2108.5
+          ],
+          "yaw_pitch": [
+            -90.0,
+            40.29794457668384
+          ],
+          "rotation": "smokeshow has the following entity data: [-90.0f, 40.3f]",
+          "right_click_ok": true,
+          "center_has_chest": false,
+          "exact_cy": false,
+          "center_block": "The target block is not a block entity",
+          "neighbors": {
+            "0,0,0": "",
+            "0,-1,0": "",
+            "0,-2,0": "",
+            "0,1,0": "",
+            "0,0,-1": "",
+            "0,0,1": "",
+            "-1,0,0": "",
+            "1,0,0": "",
+            "0,-1,-1": "",
+            "0,0,-2": ""
+          },
+          "hand_preview": [
+            "minecraft:chest",
+            "shelter"
+          ],
+          "exact_cy_after_dismiss": false,
+          "opened_gui": "container"
+        },
+        {
+          "pose": "east_floor",
+          "tp": [
+            2125.0,
+            81.0,
+            2108.5
+          ],
+          "yaw_pitch": [
+            90.0,
+            54.71879220282568
+          ],
+          "rotation": "smokeshow has the following entity data: [90.0f, 54.72f]",
+          "right_click_ok": true,
+          "center_has_chest": false,
+          "exact_cy": false,
+          "center_block": "The target block is not a block entity",
+          "neighbors": {
+            "0,0,0": "",
+            "0,-1,0": "",
+            "0,-2,0": "",
+            "0,1,0": "",
+            "0,0,-1": "",
+            "0,0,1": "",
+            "-1,0,0": "",
+            "1,0,0": "",
+            "0,-1,-1": "",
+            "0,0,-2": ""
+          },
+          "hand_preview": [
+            "minecraft:chest",
+            "shelter"
+          ],
+          "exact_cy_after_dismiss": false,
+          "opened_gui": "container"
+        }
+      ],
+      "error": "center place missed after chest-safe retries",
+      "hotbar_log": [
+        {
+          "label": "civs:shelter_after",
+          "SelectedItemSlot": 0,
+          "item_id": "minecraft:chest",
+          "civs_key": "shelter",
+          "kind": "civs",
+          "hotbar": [
+            {
+              "slot": 0,
+              "id": "minecraft:chest",
+              "kind": "civs",
+              "civs": "shelter"
+            },
+            {
+              "slot": 8,
+              "id": "minecraft:wooden_axe",
+              "kind": "wand",
+              "civs": null
+            }
+          ]
+        },
+        {
+          "label": "civs:shelter_after",
+          "SelectedItemSlot": 0,
+          "item_id": "minecraft:chest",
+          "civs_key": "shelter",
+          "kind": "civs",
+          "hotbar": [
+            {
+              "slot": 0,
+              "id": "minecraft:chest",
+              "kind": "civs",
+              "civs": "shelter"
+            },
+            {
+              "slot": 8,
+              "id": "minecraft:wooden_axe",
+              "kind": "wand",
+              "civs": null
+            }
+          ]
+        },
+        {
+          "label": "civs:shelter_after",
+          "SelectedItemSlot": 0,
+          "item_id": "minecraft:chest",
+          "civs_key": "shelter",
+          "kind": "civs",
+          "hotbar": [
+            {
+              "slot": 0,
+              "id": "minecraft:chest",
+              "kind": "civs",
+              "civs": "shelter"
+            },
+            {
+              "slot": 8,
+              "id": "minecraft:wooden_axe",
+              "kind": "wand",
+              "civs": null
+            }
+          ]
+        },
+        {
+          "label": "civs:shelter_after",
+          "SelectedItemSlot": 0,
+          "item_id": "minecraft:chest",
+          "civs_key": "shelter",
+          "kind": "civs",
+          "hotbar": [
+            {
+              "slot": 0,
+              "id": "minecraft:chest",
+              "kind": "civs",
+              "civs": "shelter"
+            },
+            {
+              "slot": 8,
+              "id": "minecraft:wooden_axe",
+              "kind": "wand",
+              "civs": null
+            }
+          ]
+        }
+      ],
+      "center_block": "The target block is not a block entity",
+      "center_has_chest": false,
+      "exact_cy": false
+    }
+  },
+  "rcon_tail": [
+    "",
+    "Nothing changed. The player already is an operator",
+    "",
+    "Teleported smokeshow to 2100.500000, 81.000000, 2100.500000",
+    "Set minecraft:overworld to time marker minecraft:day",
+    "Set the weather to clear",
+    "Successfully filled 288 block(s)",
+    "Too many blocks in the specified area (maximum 32768, but specified 50000)",
+    "INV:shelter"
+  ],
+  "log_errors": [],
+  "passed_static_pad": 2,
+  "built": 2,
+  "activated": 0,
+  "total": 2,
+  "passed": 0,
+  "pipeline": "For each type: parse build-reqs \u2192 WE/fill footprint \u2192 put Civs item in hand \u2192 right-click place at EXACT center \u2192 verify plugins/Civs/regions/*.yml",
+  "item_acquisition": "Uses inventory civs:civs key if present; else item replace with PDC (QA-only, not /cv give). Shop/tutorial still preferred for realism."
+}

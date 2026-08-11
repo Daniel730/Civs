@@ -1,0 +1,603 @@
+{
+  "marker": "QA_STRUCT_103857",
+  "timestamp": "2026-07-17T10:41:41.918327+00:00",
+  "batch_requested": [
+    "coal_mine",
+    "gravel_quarry",
+    "shelter",
+    "arrow_trap",
+    "wheat_farm",
+    "shack"
+  ],
+  "missing_yaml": [],
+  "inventory_before": {
+    "player": "Smokeshow",
+    "selected_slot": 0,
+    "hand": {
+      "slot": 0,
+      "item_id": "minecraft:chest",
+      "count": 1,
+      "civs_key": "coal_mine",
+      "custom_name": "Coal_Mine"
+    },
+    "hotbar": [
+      {
+        "slot": 0,
+        "item_id": "minecraft:chest",
+        "count": 1,
+        "civs_key": "coal_mine",
+        "custom_name": "Coal_Mine"
+      }
+    ],
+    "inventory": [
+      {
+        "slot": 0,
+        "item_id": "minecraft:chest",
+        "count": 1,
+        "civs_key": "coal_mine",
+        "custom_name": "Coal_Mine"
+      }
+    ],
+    "raw_selected": "smokeshow has the following entity data: {id: \"minecraft:chest\", count: 1, components: {\"minecraft:custom_name\": \"Coal_Mine\", \"minecraft:custom_data...",
+    "error": null
+  },
+  "structures": [
+    {
+      "key": "coal_mine",
+      "name": "Coal_Mine",
+      "category": "mine",
+      "static_ok": true,
+      "static_issues": [],
+      "rcon_pad_ok": true,
+      "build_ok": true,
+      "place_ok": true,
+      "region_registered": false,
+      "center": [
+        2108,
+        81,
+        2108
+      ],
+      "held_before": "slot=0 civs=coal_mine id=minecraft:chest",
+      "notes": "manual build-reqs | region YAML not detected (pre-req/build fail?)",
+      "chat_hints": []
+    },
+    {
+      "key": "gravel_quarry",
+      "name": "gravel_quarry",
+      "category": "raw",
+      "static_ok": true,
+      "static_issues": [],
+      "rcon_pad_ok": true,
+      "build_ok": true,
+      "place_ok": true,
+      "region_registered": true,
+      "center": [
+        2120,
+        81,
+        2108
+      ],
+      "held_before": "slot=0 civs=coal_mine id=minecraft:chest",
+      "notes": "manual build-reqs",
+      "chat_hints": []
+    },
+    {
+      "key": "shelter",
+      "name": "Shelter",
+      "category": "admin-invisible",
+      "static_ok": true,
+      "static_issues": [],
+      "rcon_pad_ok": true,
+      "build_ok": true,
+      "place_ok": true,
+      "region_registered": false,
+      "center": [
+        2138,
+        81,
+        2108
+      ],
+      "held_before": "slot=0 civs=gravel_quarry id=minecraft:chest",
+      "notes": "manual build-reqs | region YAML not detected (pre-req/build fail?)",
+      "chat_hints": []
+    },
+    {
+      "key": "arrow_trap",
+      "name": "Arrow_Trap",
+      "category": "defense",
+      "static_ok": true,
+      "static_issues": [],
+      "rcon_pad_ok": true,
+      "build_ok": true,
+      "place_ok": true,
+      "region_registered": false,
+      "center": [
+        2144,
+        81,
+        2108
+      ],
+      "held_before": "slot=0 civs=shelter id=minecraft:chest",
+      "notes": "manual build-reqs | pre-reqs=['member=settlement:hamlet:village:town:city:metropolis:outpost:base'] | region YAML not detected (pre-req/build fail?)",
+      "chat_hints": []
+    },
+    {
+      "key": "wheat_farm",
+      "name": "Wheat_Farm",
+      "category": "farm",
+      "static_ok": true,
+      "static_issues": [],
+      "rcon_pad_ok": true,
+      "build_ok": true,
+      "place_ok": true,
+      "region_registered": false,
+      "center": [
+        2108,
+        81,
+        2121
+      ],
+      "held_before": "slot=0 civs=arrow_trap id=minecraft:chest",
+      "notes": "manual build-reqs | pre-reqs=['member=hamlet:village:town:city:metropolis'] | region YAML not detected (pre-req/build fail?)",
+      "chat_hints": []
+    },
+    {
+      "key": "shack",
+      "name": "Shack",
+      "category": "housing",
+      "static_ok": true,
+      "static_issues": [],
+      "rcon_pad_ok": true,
+      "build_ok": true,
+      "place_ok": true,
+      "region_registered": false,
+      "center": [
+        2120,
+        81,
+        2120
+      ],
+      "held_before": "slot=0 civs=wheat_farm id=minecraft:chest",
+      "notes": "instant-build | pre-reqs=['member=settlement:hamlet:village:town:city:metropolis'] | region YAML not detected (pre-req/build fail?)",
+      "chat_hints": []
+    }
+  ],
+  "place_details": {
+    "wand_preflight": {
+      "ok": true,
+      "command": "//wand",
+      "dry_run": false,
+      "focused": true,
+      "menus_closed": true,
+      "error": null,
+      "close_path": "pause_dismiss_only"
+    },
+    "coal_mine_build": {
+      "ok": true,
+      "we_cmds": [
+        {
+          "cmd": "//wand",
+          "ok": true,
+          "err": null
+        },
+        {
+          "cmd": "//pos1 2104,77,2104",
+          "ok": true,
+          "err": null
+        },
+        {
+          "cmd": "//pos2 2112,85,2112",
+          "ok": true,
+          "err": null
+        },
+        {
+          "cmd": "//set oak_planks",
+          "ok": true,
+          "err": null
+        },
+        {
+          "cmd": "//pos1 2108,81,2108",
+          "ok": true,
+          "err": null
+        },
+        {
+          "cmd": "//pos2 2108,81,2108",
+          "ok": true,
+          "err": null
+        },
+        {
+          "cmd": "//set air",
+          "ok": true,
+          "err": null
+        }
+      ],
+      "setblocks": 36,
+      "error": null,
+      "dominant": "oak_planks",
+      "material_counts": {
+        "iron_bars": 2,
+        "oak_door": 2,
+        "chest": 2,
+        "furnace": 2,
+        "coal_block": 4,
+        "oak_planks": 45,
+        "cobblestone": 6
+      }
+    },
+    "coal_mine_place": {
+      "ok": true,
+      "civs_key": "coal_mine",
+      "center": [
+        2108,
+        81,
+        2108
+      ],
+      "item": {
+        "ok": true,
+        "civs_key": "coal_mine",
+        "source": "inventory",
+        "slot": 0,
+        "error": null
+      },
+      "right_click": {
+        "ok": true,
+        "error": null
+      },
+      "placement_menu": null,
+      "error": null
+    },
+    "gravel_quarry_build": {
+      "ok": true,
+      "we_cmds": [
+        {
+          "cmd": "//wand",
+          "ok": true,
+          "err": null
+        },
+        {
+          "cmd": "//pos1 2117,78,2105",
+          "ok": true,
+          "err": null
+        },
+        {
+          "cmd": "//pos2 2123,84,2111",
+          "ok": true,
+          "err": null
+        },
+        {
+          "cmd": "//set gravel",
+          "ok": true,
+          "err": null
+        },
+        {
+          "cmd": "//pos1 2120,81,2108",
+          "ok": true,
+          "err": null
+        },
+        {
+          "cmd": "//pos2 2120,81,2108",
+          "ok": true,
+          "err": null
+        },
+        {
+          "cmd": "//set air",
+          "ok": true,
+          "err": null
+        }
+      ],
+      "setblocks": 8,
+      "error": null,
+      "dominant": "gravel",
+      "material_counts": {
+        "gravel": 24,
+        "furnace": 2,
+        "chest": 2
+      }
+    },
+    "gravel_quarry_place": {
+      "ok": true,
+      "civs_key": "gravel_quarry",
+      "center": [
+        2120,
+        81,
+        2108
+      ],
+      "item": {
+        "ok": true,
+        "civs_key": "gravel_quarry",
+        "source": "pdc_replace",
+        "slot": 0,
+        "error": null,
+        "detail": "Replaced a slot on smokeshow with [gravel_quarry]"
+      },
+      "right_click": {
+        "ok": true,
+        "error": null
+      },
+      "placement_menu": null,
+      "error": null
+    },
+    "shelter_build": {
+      "ok": true,
+      "we_cmds": [
+        "noop_empty_footprint"
+      ],
+      "setblocks": 0,
+      "error": null
+    },
+    "shelter_place": {
+      "ok": true,
+      "civs_key": "shelter",
+      "center": [
+        2138,
+        81,
+        2108
+      ],
+      "item": {
+        "ok": true,
+        "civs_key": "shelter",
+        "source": "pdc_replace",
+        "slot": 0,
+        "error": null,
+        "detail": "Replaced a slot on smokeshow with [shelter]"
+      },
+      "right_click": {
+        "ok": true,
+        "error": null
+      },
+      "placement_menu": null,
+      "error": null
+    },
+    "arrow_trap_build": {
+      "ok": true,
+      "we_cmds": [
+        {
+          "cmd": "//wand",
+          "ok": true,
+          "err": null
+        },
+        {
+          "cmd": "//pos1 2143,80,2107",
+          "ok": true,
+          "err": null
+        },
+        {
+          "cmd": "//pos2 2145,82,2109",
+          "ok": true,
+          "err": null
+        },
+        {
+          "cmd": "//set oak_fence",
+          "ok": true,
+          "err": null
+        },
+        {
+          "cmd": "//pos1 2144,81,2108",
+          "ok": true,
+          "err": null
+        },
+        {
+          "cmd": "//pos2 2144,81,2108",
+          "ok": true,
+          "err": null
+        },
+        {
+          "cmd": "//set air",
+          "ok": true,
+          "err": null
+        }
+      ],
+      "setblocks": 10,
+      "error": null,
+      "dominant": "oak_fence",
+      "material_counts": {
+        "oak_fence": 4,
+        "redstone_wire": 4,
+        "dispenser": 1
+      }
+    },
+    "arrow_trap_place": {
+      "ok": true,
+      "civs_key": "arrow_trap",
+      "center": [
+        2144,
+        81,
+        2108
+      ],
+      "item": {
+        "ok": true,
+        "civs_key": "arrow_trap",
+        "source": "pdc_replace",
+        "slot": 0,
+        "error": null,
+        "detail": "Replaced a slot on smokeshow with [arrow_trap]"
+      },
+      "right_click": {
+        "ok": true,
+        "error": null
+      },
+      "placement_menu": null,
+      "error": null
+    },
+    "wheat_farm_build": {
+      "ok": true,
+      "we_cmds": [
+        {
+          "cmd": "//wand",
+          "ok": true,
+          "err": null
+        },
+        {
+          "cmd": "//pos1 2104,77,2117",
+          "ok": true,
+          "err": null
+        },
+        {
+          "cmd": "//pos2 2112,85,2125",
+          "ok": true,
+          "err": null
+        },
+        {
+          "cmd": "//set wheat",
+          "ok": true,
+          "err": null
+        },
+        {
+          "cmd": "//pos1 2108,81,2121",
+          "ok": true,
+          "err": null
+        },
+        {
+          "cmd": "//pos2 2108,81,2121",
+          "ok": true,
+          "err": null
+        },
+        {
+          "cmd": "//set air",
+          "ok": true,
+          "err": null
+        }
+      ],
+      "setblocks": 36,
+      "error": null,
+      "dominant": "wheat",
+      "material_counts": {
+        "oak_fence_gate": 1,
+        "oak_fence": 16,
+        "water_cauldron": 1,
+        "wheat": 24
+      }
+    },
+    "wheat_farm_place": {
+      "ok": true,
+      "civs_key": "wheat_farm",
+      "center": [
+        2108,
+        81,
+        2121
+      ],
+      "item": {
+        "ok": true,
+        "civs_key": "wheat_farm",
+        "source": "pdc_replace",
+        "slot": 0,
+        "error": null,
+        "detail": "Replaced a slot on smokeshow with [wheat_farm]"
+      },
+      "right_click": {
+        "ok": true,
+        "error": null
+      },
+      "placement_menu": null,
+      "error": null
+    },
+    "shack_build": {
+      "ok": true,
+      "we_cmds": [
+        {
+          "cmd": "//wand",
+          "ok": true,
+          "err": null
+        },
+        {
+          "cmd": "//pos1 2117,78,2117",
+          "ok": true,
+          "err": null
+        },
+        {
+          "cmd": "//pos2 2123,84,2123",
+          "ok": true,
+          "err": null
+        },
+        {
+          "cmd": "//set oak_planks",
+          "ok": true,
+          "err": null
+        },
+        {
+          "cmd": "//pos1 2120,81,2120",
+          "ok": true,
+          "err": null
+        },
+        {
+          "cmd": "//pos2 2120,81,2120",
+          "ok": true,
+          "err": null
+        },
+        {
+          "cmd": "//set air",
+          "ok": true,
+          "err": null
+        }
+      ],
+      "setblocks": 70,
+      "error": null,
+      "dominant": "oak_planks",
+      "material_counts": {
+        "chest": 2,
+        "oak_door": 2,
+        "glass_pane": 4,
+        "red_bed": 1,
+        "furnace": 1,
+        "crafting_table": 1,
+        "oak_stairs": 16,
+        "cobblestone": 8,
+        "oak_planks": 30
+      }
+    },
+    "shack_place": {
+      "ok": true,
+      "civs_key": "shack",
+      "center": [
+        2120,
+        81,
+        2120
+      ],
+      "item": {
+        "ok": true,
+        "civs_key": "shack",
+        "source": "pdc_replace",
+        "slot": 0,
+        "error": null,
+        "detail": "Replaced a slot on smokeshow with [shack]"
+      },
+      "right_click": {
+        "ok": true,
+        "error": null
+      },
+      "placement_menu": {
+        "instant": true,
+        "confirm": {
+          "ok": true,
+          "slot": 22,
+          "container_rows": 3,
+          "xy": [
+            2883,
+            456
+          ],
+          "dry_run": false,
+          "focused": true,
+          "error": null
+        }
+      },
+      "error": null
+    }
+  },
+  "rcon_tail": [
+    "",
+    "Nothing changed. The player already is an operator",
+    "",
+    "Teleported smokeshow to 2100.500000, 81.000000, 2100.500000",
+    "Set minecraft:overworld to time marker minecraft:day",
+    "Set the weather to clear",
+    "Successfully filled 955 block(s)",
+    "Too many blocks in the specified area (maximum 32768, but specified 50000)",
+    "INV:coal_mine"
+  ],
+  "log_errors": [
+    "[11:39:58] [Server thread/INFO]: Region gravel_quarry created ec01bfd3-8525-48ee-b5e5-4d8ecac61630~2120.5~81.5~2108.5.yml",
+    "[11:40:38] [Server thread/INFO]: [Not Secure] [Rcon] QA_PAD wheat_farm center=2108,81,2121 r=4"
+  ],
+  "passed_static_pad": 6,
+  "built": 6,
+  "activated": 1,
+  "total": 6,
+  "passed": 1,
+  "pipeline": "For each type: parse build-reqs \u2192 WE/fill footprint \u2192 put Civs item in hand \u2192 right-click place at EXACT center \u2192 verify plugins/Civs/regions/*.yml",
+  "item_acquisition": "Uses inventory civs:civs key if present; else item replace with PDC (QA-only, not /cv give). Shop/tutorial still preferred for realism."
+}
