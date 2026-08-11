@@ -303,3 +303,13 @@ with env-driven exporters (`none` default so Minecraft QA never depends on a bac
 JVM plugin spans deferred to a follow-up under the same issue/contract — avoid blocking
 #32 on Paper plugin shading while the agent platform already emits verifiable traces.
 No vendor SDKs (Sentry/Datadog/NR) in this PR; OTLP only.
+
+**D-AP-015 — Biome + commitlint + knip for runner (#35, 2026-08-11).**
+**Decision:** Biome is the sole JS format/lint tool for `integration-tests/runner`
+(`npm run lint`). Commitlint validates conventional **PR titles** in
+`.github/workflows/runner-quality.yml` when the runner changes. Knip gates **critical**
+dead-ends (unused files, unused/unlisted deps); unused **export** reporting is off for
+now because knip under-detects CommonJS `require` + member access (`tel.foo`) false
+positives on intentional public/test APIs. `zod` is a direct dependency (MCP tool schemas).
+`typescript` is a knip peer only (ignored as unused app dep). Broader CI (Maven, merge
+blocking policy) remains #42; arch-contract remains #36.

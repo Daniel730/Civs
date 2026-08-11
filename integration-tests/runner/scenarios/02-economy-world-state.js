@@ -1,4 +1,3 @@
-'use strict';
 /**
  * Economy + world-state assertions in the DSL. Economy/block are arranged as fixtures
  * (not Civs game logic) and then OBSERVED via the harness; `expectNoErrors` scans the
@@ -7,7 +6,9 @@
 const { scenario } = require('../lib/dsl');
 const PLAYER = 'Steve';
 // Near-spawn coordinates: spawn chunks stay loaded, so block ops are fast & reliable.
-const BX = 5, BY = -59, BZ = 5;
+const BX = 5,
+  BY = -59,
+  BZ = 5;
 
 module.exports = scenario('EconomyAndWorldState')
   .arrangeMoney(PLAYER, 5000)

@@ -1,5 +1,4 @@
 #!/usr/bin/env node
-'use strict';
 /**
  * Empirically exercises the Agent Gateway MCP server (list tools + observe + move_to).
  * Does not invoke Hermes. Exit 0 only if tools return status PASS/OBSERVED as expected.
@@ -29,7 +28,10 @@ const { StdioClientTransport } = require('@modelcontextprotocol/sdk/client/stdio
   const names = (tools.tools || []).map((t) => t.name).sort();
   console.log('TOOLS', JSON.stringify(names));
   const need = [
-    'minecraft_observe', 'minecraft_move_to', 'minecraft_rpg_observe', 'minecraft_rpg_accept',
+    'minecraft_observe',
+    'minecraft_move_to',
+    'minecraft_rpg_observe',
+    'minecraft_rpg_accept',
   ];
   for (const n of need) {
     if (!names.includes(n)) throw new Error('missing tool ' + n);
@@ -60,7 +62,11 @@ const { StdioClientTransport } = require('@modelcontextprotocol/sdk/client/stdio
 
   const rpg = await client.callTool({ name: 'minecraft_rpg_observe', arguments: {} });
   const rpgJson = JSON.parse(rpg.content[0].text);
-  console.log('RPG', rpgJson.status, rpgJson.result && rpgJson.result.data && rpgJson.result.data.archetype);
+  console.log(
+    'RPG',
+    rpgJson.status,
+    rpgJson.result && rpgJson.result.data && rpgJson.result.data.archetype
+  );
 
   await client.close();
   console.log('GATEWAY_SMOKE PASS');

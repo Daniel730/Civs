@@ -1,4 +1,3 @@
-'use strict';
 /**
  * Death → respawn → disconnect → reconnect, with RPG profile still observable.
  * Creative mode is switched to survival for the kill (Paper will not kill creatives).
@@ -19,19 +18,31 @@ module.exports = scenario('DeathRespawnReconnect')
     r = await ctx.harness.cap.respawn(ctx.playerName);
     ctx.expectTrue('respawn', r.success === true, r.reason || r._raw);
     const obs = await ctx.harness.cap.observe(ctx.playerName);
-    ctx.expectTrue('alive after respawn', obs.success && obs.data && obs.data.health > 0, JSON.stringify(obs.data));
+    ctx.expectTrue(
+      'alive after respawn',
+      obs.success && obs.data && obs.data.health > 0,
+      JSON.stringify(obs.data)
+    );
   })
   .step('rpg profile survives death', async (ctx) => {
     const r = await ctx.harness.cap.rpgObserve(ctx.playerName);
     ctx.expectTrue('rpg observe after death', r.success === true, r.reason || r._raw);
-    ctx.expectTrue('archetype still set', r.data && r.data.archetype != null, JSON.stringify(r.data));
+    ctx.expectTrue(
+      'archetype still set',
+      r.data && r.data.archetype != null,
+      JSON.stringify(r.data)
+    );
   })
   .step('disconnect + reconnect actor', async (ctx) => {
     const name = ctx.playerName;
     await ctx.actor.disconnect();
     await ctx.wait(800);
     const offline = await ctx.harness.cap.observe(name);
-    ctx.expectTrue('offline after disconnect', offline.success === false && offline.reason === 'player_offline', offline._raw);
+    ctx.expectTrue(
+      'offline after disconnect',
+      offline.success === false && offline.reason === 'player_offline',
+      offline._raw
+    );
     await ctx.actor.reconnect(200);
     ctx.expectTrue('reconnected', ctx.actor.available === true, ctx.actor.reason || 'no login');
     if (ctx.actor.available) await ctx.actor.grantOp();
@@ -45,5 +56,7 @@ module.exports = scenario('DeathRespawnReconnect')
     const r = await ctx.harness.cap.gameMode(ctx.playerName, 'CREATIVE');
     ctx.expectTrue('restore creative', r.success === true, r.reason || r._raw);
   })
-  .expectNoErrors({ ignore: [/\[CivsTestHarness\]/, /lost connection/, /left the game/, /joined the game/] })
+  .expectNoErrors({
+    ignore: [/\[CivsTestHarness\]/, /lost connection/, /left the game/, /joined the game/],
+  })
   .build();

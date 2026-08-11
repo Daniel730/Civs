@@ -1,4 +1,3 @@
-'use strict';
 /**
  * Actor layer — performs PLAYER ACTIONS that exercise Civs production code. This is kept
  * strictly separate from the observation harness: the actor *acts*, the harness *observes*.
@@ -16,106 +15,150 @@
 const { withSpan, recordResultStatus, setSpanAttrs } = require('./telemetry');
 
 class RawKeepAliveActor {
-  constructor({ host = '127.0.0.1', port = 25565, username = 'Steve', version = '26.1.2', sendCommand }) {
-    this.host = host; this.port = port; this.name = username; this.version = version;
+  constructor({
+    host = '127.0.0.1',
+    port = 25565,
+    username = 'Steve',
+    version = '26.1.2',
+    sendCommand,
+  }) {
+    this.host = host;
+    this.port = port;
+    this.name = username;
+    this.version = version;
     this.sendCommand = sendCommand; // async (cmd) => responseText  (RCON)
     this.available = false;
     this.client = null;
   }
 
   connect() {
-    return withSpan('actor.connect', {
-      'minecraft.player': this.name,
-      'minecraft.action': 'connect',
-    }, async (span) => {
-      let mc;
-      try { mc = require('minecraft-protocol'); }
-      catch (_) {
-        this.available = false;
-        this.reason = 'minecraft-protocol not installed';
-        recordResultStatus(span, 'BLOCKED');
-        return this;
-      }
-      return new Promise((resolve) => {
-        this.client = mc.createClient({
-          host: this.host, port: this.port, username: this.name, auth: 'offline',
-          version: this.version, keepAlive: true,
-        });
-        const to = setTimeout(() => {
+    return withSpan(
+      'actor.connect',
+      {
+        'minecraft.player': this.name,
+        'minecraft.action': 'connect',
+      },
+      async (span) => {
+        let mc;
+        try {
+          mc = require('minecraft-protocol');
+        } catch (_) {
           this.available = false;
-          this.reason = 'no login within 15s';
+          this.reason = 'minecraft-protocol not installed';
           recordResultStatus(span, 'BLOCKED');
-          resolve(this);
-        }, 15000);
-        this.client.on('login', () => {
-          clearTimeout(to);
-          this.available = true;
-          recordResultStatus(span, 'PASS');
-          resolve(this);
+          return this;
+        }
+        return new Promise((resolve) => {
+          this.client = mc.createClient({
+            host: this.host,
+            port: this.port,
+            username: this.name,
+            auth: 'offline',
+            version: this.version,
+            keepAlive: true,
+          });
+          const to = setTimeout(() => {
+            this.available = false;
+            this.reason = 'no login within 15s';
+            recordResultStatus(span, 'BLOCKED');
+            resolve(this);
+          }, 15000);
+          this.client.on('login', () => {
+            clearTimeout(to);
+            this.available = true;
+            recordResultStatus(span, 'PASS');
+            resolve(this);
+          });
+          this.client.on('error', (e) => {
+            clearTimeout(to);
+            this.available = false;
+            this.reason = e.message;
+            setSpanAttrs(span, { 'error.type': 'ActorConnectError' });
+            recordResultStatus(span, 'FAIL');
+            resolve(this);
+          });
+          this.client.on('end', () => {
+            this.available = false;
+          });
         });
-        this.client.on('error', (e) => {
-          clearTimeout(to);
-          this.available = false;
-          this.reason = e.message;
-          setSpanAttrs(span, { 'error.type': 'ActorConnectError' });
-          recordResultStatus(span, 'FAIL');
-          resolve(this);
-        });
-        this.client.on('end', () => { this.available = false; });
-      });
-    });
+      }
+    );
   }
 
   /** Run an arbitrary command in the player's context (production sender path). */
   async runCommand(cmd) {
     const c = cmd.replace(/^\//, '');
-    return withSpan('actor.run_command', {
-      'minecraft.player': this.name,
-      'minecraft.action': 'run_command',
-    }, () => this.sendCommand(`execute as ${this.name} at ${this.name} run ${c}`));
+    return withSpan(
+      'actor.run_command',
+      {
+        'minecraft.player': this.name,
+        'minecraft.action': 'run_command',
+      },
+      () => this.sendCommand(`execute as ${this.name} at ${this.name} run ${c}`)
+    );
   }
 
   /** Place a Civs region as this player — hits the real region-creation pipeline. */
   async placeRegion(type, x, y, z) {
-    return withSpan('actor.place_region', {
-      'minecraft.player': this.name,
-      'minecraft.action': 'place_region',
-      'minecraft.capability': 'place_region',
-    }, () => this.sendCommand(`cv placeregion ${this.name} ${type} ${x} ${y} ${z}`));
+    return withSpan(
+      'actor.place_region',
+      {
+        'minecraft.player': this.name,
+        'minecraft.action': 'place_region',
+        'minecraft.capability': 'place_region',
+      },
+      () => this.sendCommand(`cv placeregion ${this.name} ${type} ${x} ${y} ${z}`)
+    );
   }
   /** Receive a Civs item through the real item pipeline. */
   async give(item, qty = 1) {
-    return withSpan('actor.give', {
-      'minecraft.player': this.name,
-      'minecraft.action': 'give',
-    }, () => this.sendCommand(`cv give ${this.name} ${item} ${qty}`));
+    return withSpan(
+      'actor.give',
+      {
+        'minecraft.player': this.name,
+        'minecraft.action': 'give',
+      },
+      () => this.sendCommand(`cv give ${this.name} ${item} ${qty}`)
+    );
   }
   async teleport(x, y, z) {
-    return withSpan('actor.teleport', {
-      'minecraft.player': this.name,
-      'minecraft.action': 'teleport',
-    }, () => this.sendCommand(`tp ${this.name} ${x} ${y} ${z}`));
+    return withSpan(
+      'actor.teleport',
+      {
+        'minecraft.player': this.name,
+        'minecraft.action': 'teleport',
+      },
+      () => this.sendCommand(`tp ${this.name} ${x} ${y} ${z}`)
+    );
   }
   /** Ensure the actor can use admin QA actions (OP grants civs.admin). */
-  async grantOp() { return this.sendCommand(`op ${this.name}`); }
+  async grantOp() {
+    return this.sendCommand(`op ${this.name}`);
+  }
 
   async disconnect() {
-    try { if (this.client) this.client.end(); } catch (_) {}
+    try {
+      if (this.client) this.client.end();
+    } catch (_) {}
     this.client = null;
     this.available = false;
   }
 
   /** Drop and re-login with the same identity (used by death/reconnect scenarios). */
   async reconnect(waitMs = 1000) {
-    return withSpan('actor.reconnect', {
-      'minecraft.player': this.name,
-      'minecraft.action': 'reconnect',
-    }, async () => {
-      await this.disconnect();
-      await new Promise((r) => setTimeout(r, waitMs));
-      await this.connect();
-      return this;
-    });
+    return withSpan(
+      'actor.reconnect',
+      {
+        'minecraft.player': this.name,
+        'minecraft.action': 'reconnect',
+      },
+      async () => {
+        await this.disconnect();
+        await new Promise((r) => setTimeout(r, waitMs));
+        await this.connect();
+        return this;
+      }
+    );
   }
 }
 
