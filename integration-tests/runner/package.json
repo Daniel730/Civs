@@ -18,6 +18,8 @@
     "village-watch": "node scripts/village-watch.js",
     "village-worker": "node scripts/village-worker.js",
     "test:village-unit": "node --test test/village-jobs.test.js",
+    "test:construction-unit": "node --test test/construction-quality.test.js",
+    "construction-scenarios": "node scripts/construction-scenarios.js",
     "lint": "biome check .",
     "lint:fix": "biome check --write .",
     "format": "biome format --write .",

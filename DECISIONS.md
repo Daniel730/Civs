@@ -333,3 +333,16 @@ machine; OTLP HTTP ingest is first-class; keeps one metrics/traces dashboard pat
 Datadog OTLP intake — **no** Datadog tracing SDK alongside OTel. Staging wiring needs
 `DD_API_KEY` / agent endpoint in env or GitHub Secrets (not committed). Minimum
 dashboard: scenario latency + error rate (see `docs/OBSERVABILITY.md` § APM).
+
+**D-AP-018 — Construction quality pipeline in Node village runner (2026-08-11).**
+**Decision:** implement the deterministic construction quality vertical slice under
+`integration-tests/runner/lib/village/construction/` (blueprint IR, site scoring,
+validators, transaction log, inspect/score, repair/rollback, memory). Wire
+`village-worker` builder/farmer through `runProject`; gate `village-builder`
+`preparePad` flatten behind `VILLAGE_ALLOW_PAD_FLATTEN=1`. Do **not** put this in
+Java `civs.npc` (guide-only) and do **not** expand Java FAWE paste undo in V1 —
+document terrain-only `TerrainAdapter` rollback as a known gap. LLM/MCP may only
+express intent; harness capabilities + transactions own block placement.
+**Why:** autonomous NPC builds already run in the Node village stack; world-safety
+invariants (no float, no unexplained changes, rollback) must be testable without
+collapsing planner/validator/engine into one AI builder class. Refs #66.

@@ -7,7 +7,11 @@
  * - Place on apron / path corridors — never scatter junk inside Civs region footprints.
  * - Prefer completing real placeregion stockpiles over decorative spam.
  * - Cleanup targets prior worker junk materials only.
+ *
+ * Structured IR / validation: `./construction` (`compileBlueprint` / `runProject`).
  */
+
+const { PALETTES, paletteFor } = require('./construction/styles');
 
 /** Junk materials previously spammed by workers — safe to tear down. */
 const JUNK_MATERIALS = Object.freeze([
@@ -21,74 +25,6 @@ const JUNK_MATERIALS = Object.freeze([
   'granite',
   'diorite',
 ]);
-
-/** Site-specific palettes for coherent builds. */
-const PALETTES = Object.freeze({
-  shelter: {
-    wall: 'oak_planks',
-    trim: 'oak_log',
-    roof: 'oak_slab',
-    floor: 'oak_planks',
-    path: 'dirt_path',
-  },
-  hovel: {
-    wall: 'oak_planks',
-    trim: 'oak_log',
-    roof: 'oak_slab',
-    floor: 'oak_planks',
-    path: 'dirt_path',
-  },
-  shack: {
-    wall: 'oak_planks',
-    trim: 'oak_log',
-    roof: 'oak_slab',
-    floor: 'oak_planks',
-    path: 'dirt_path',
-  },
-  smithy: {
-    wall: 'stone_bricks',
-    trim: 'oak_log',
-    roof: 'stone_brick_slab',
-    floor: 'stone_bricks',
-    path: 'cobblestone',
-  },
-  quarry: {
-    wall: 'cobblestone',
-    trim: 'oak_log',
-    roof: 'cobblestone_slab',
-    floor: 'cobblestone',
-    path: 'cobblestone',
-  },
-  farm: { wall: 'oak_fence', trim: 'oak_log', roof: 'oak_slab', floor: 'dirt', path: 'dirt_path' },
-  barracks: {
-    wall: 'stone_bricks',
-    trim: 'oak_log',
-    roof: 'stone_brick_slab',
-    floor: 'stone_bricks',
-    path: 'stone_bricks',
-  },
-  inn: {
-    wall: 'oak_planks',
-    trim: 'oak_log',
-    roof: 'oak_slab',
-    floor: 'oak_planks',
-    path: 'dirt_path',
-  },
-  center: {
-    wall: 'stone_bricks',
-    trim: 'oak_log',
-    roof: 'stone_brick_slab',
-    floor: 'stone_bricks',
-    path: 'dirt_path',
-  },
-});
-
-/**
- * @param {string} site
- */
-function paletteFor(site) {
-  return PALETTES[site] || PALETTES.shelter;
-}
 
 /**
  * South-apron house shell: floor, 3-high walls with door gap + two windows, simple roof line.
