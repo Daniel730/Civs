@@ -8,6 +8,26 @@ const { createGoal, setCurrentGoal, reconsiderGoals } = require('./goals');
 const { selectQuest } = require('./quest-eval');
 const { noteGoal } = require('./anti-stupid');
 const { setWorking } = require('./memory');
+const { encodeState, buildExperience } = require('./state-rep');
+const { NeuralPolicy } = require('./neural-policy');
+const { ExperienceStore } = require('./experience-store');
+
+// MVP policy mode: deterministic | neural | shadow. No RL; neural mirrors baseline until trained.
+const POLICY_MODE = (process.env.AIWORLD_POLICY || 'deterministic').toLowerCase();
+
+// One shared store collects experiences for all agents (shared learned policy direction).
+let _experienceStore = null;
+function experienceStore() {
+  if (!_experienceStore) _experienceStore = new ExperienceStore();
+  return _experienceStore;
+}
+
+// One policy instance per process; weights are null (mirror) until an offline training step writes them.
+let _policy = null;
+function policy() {
+  if (!_policy) _policy = new NeuralPolicy({ mode: POLICY_MODE });
+  return _policy;
+}
 
 /**
  * Score standing needs into candidate intents.
@@ -148,6 +168,10 @@ function decide(agent, observation, opts = {}) {
   });
   setCurrentGoal(agent, goal);
   setWorking(agent.memory, { decision: top.id });
+
+  // ---- AI World neural layer (MVP): record, do not replace ----
+  recordDecisionExperience(agent, observation, needScores, top, 'top_need');
+
   return {
     intent: top.id,
     goal,
@@ -155,6 +179,68 @@ function decide(agent, observation, opts = {}) {
     model: 'deterministic',
     needScores,
   };
+}
+
+/**
+ * Build the state vector + record an experience for later offline learning.
+ * Never throws — a logging failure must not derail the citizen loop.
+ * In `shadow`/`neural` modes the neural policy also scores (recorded, not yet controlling).
+ */
+function recordDecisionExperience(agent, observation, needScores, top, reason) {
+  try {
+    const { METRIC, countMetric } = require('../metrics');
+    const stateRep = encodeState(observation, {
+      survival: {
+        state: observation.danger ? 'DANGER' : 'SAFE',
+        distanceFromWork: agent._distWork,
+      },
+    });
+    const candidates = needScores.map((c) => ({ id: c.id, base: c.score, motive: c.motive }));
+    const pol = policy();
+    let neuralScores = null;
+    let usedModel = 'deterministic';
+    if (POLICY_MODE !== 'deterministic') {
+      const res = pol.scoreIntents(stateRep.vec, candidates);
+      neuralScores = res.scores;
+      usedModel = res.usedModel;
+      if (res.fellBack)
+        countMetric(METRIC.AIWORLD_POLICY_FALLBACK, {
+          agent: agent.identity && agent.identity.name,
+        });
+    }
+    experienceStore().recordDecision({
+      agentId: agent.identity && agent.identity.name,
+      observation,
+      stateRep,
+      personality: agent.identity
+        ? { archetype: agent.identity.personality, occupation: agent.identity.occupation }
+        : {},
+      candidates,
+      chosenIntent: top.id,
+      deterministicScores: Object.fromEntries(needScores.map((c) => [c.id, c.score])),
+      neuralScores,
+      policyMode: POLICY_MODE,
+      action: { intent: top.id },
+    });
+    countMetric(METRIC.AIWORLD_EXPERIENCE_RECORDED, {
+      agent: agent.identity && agent.identity.name,
+      mode: POLICY_MODE,
+    });
+    // metric: disagreement between neural and deterministic top pick (future learning signal)
+    if (neuralScores) {
+      const neuroTop = candidates.reduce(
+        (a, b) => (neuralScores[b.id] > neuralScores[a.id] ? b : a),
+        candidates[0]
+      );
+      if (neuroTop && neuroTop.id !== top.id) {
+        countMetric(METRIC.AIWORLD_POLICY_DISAGREEMENT, {
+          agent: agent.identity && agent.identity.name,
+        });
+      }
+    }
+  } catch (_) {
+    /* experience recording is best-effort */
+  }
 }
 
 module.exports = {

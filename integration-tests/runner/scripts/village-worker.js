@@ -166,6 +166,7 @@ async function ensureAlive(harness, actorName, preObserved) {
   }
   const respawn = await harness.cap.respawn(actorName);
   await harness.raw(`gamemode survival ${actorName}`);
+  await equipSurvivalGear(harness, actorName);
   await harness.cap.teleport(actorName, cfg.origin.x, cfg.origin.y + 2, cfg.origin.z);
   obs = await harness.cap.observe(actorName);
   const healthAfter = obs && obs.data ? Number(obs.data.health) : Number.NaN;
@@ -500,6 +501,36 @@ async function runJob(harness, actorName, step, state, ctx = {}) {
   return results;
 }
 
+/**
+ * Equip a worker with armour + weapon + food so it can survive the live world
+ * (spiders/skeletons) instead of dying in the first few minutes. Called on spawn
+ * and after every respawn. Cheap: a handful of give_item RCON calls.
+ */
+async function equipSurvivalGear(harness, actorName) {
+  const cap = harness.cap;
+  const gear = [
+    'DIAMOND_HELMET',
+    'DIAMOND_CHESTPLATE',
+    'DIAMOND_LEGGINGS',
+    'DIAMOND_BOOTS',
+    'DIAMOND_SWORD',
+    'SHIELD',
+    'GOLDEN_APPLE',
+    'GOLDEN_APPLE',
+    'COOKED_BEEF',
+    'COOKED_BEEF',
+  ];
+  for (const mat of gear) {
+    try {
+      await cap.giveItem(actorName, mat, 1);
+    } catch (_) {
+      /* best effort — a missing material should not abort the run */
+    }
+  }
+  // Put the sword in the hotbar so defend() can swing it.
+  await cap.hotbar(actorName, 0).catch(() => {});
+}
+
 async function connectActor(harness, name, attempt = 1) {
   const actor = new RawKeepAliveActor({
     host: cfg.mcHost,
@@ -521,6 +552,7 @@ async function connectActor(harness, name, attempt = 1) {
   await harness.raw(`gamemode creative ${name}`);
   await actor.teleport(cfg.origin.x, cfg.origin.y + 2, cfg.origin.z);
   await harness.raw(`gamemode survival ${name}`);
+  await equipSurvivalGear(harness, name);
   const alive = await ensureAlive(harness, name);
   return { actor, ok: true, alive };
 }

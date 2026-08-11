@@ -32,6 +32,16 @@ const METRIC = Object.freeze({
   CAMERA_TELEPORT: 'camera_teleport_count',
   CAMERA_TARGET_SWITCH: 'camera_target_switch_count',
   CAMERA_FSM_TRANSITION: 'camera_fsm_transition_count',
+  // --- AI World neural layer (MVP) ---
+  AIWORLD_POLICY_DISAGREEMENT: 'aiworld_policy_disagreement_count',
+  AIWORLD_POLICY_FALLBACK: 'aiworld_policy_fallback_count',
+  AIWORLD_GOAL_COMPLETED: 'aiworld_goal_completed_count',
+  AIWORLD_STALL: 'aiworld_stall_count',
+  AIWORLD_RECOVERY_SUCCESS: 'aiworld_recovery_success_count',
+  AIWORLD_UNNECESSARY_DAMAGE: 'aiworld_unnecessary_damage_count',
+  AIWORLD_EXPERIENCE_RECORDED: 'aiworld_experience_recorded_count',
+  AIWORLD_REWARD_PER_EPISODE: 'aiworld_reward_per_episode',
+  AIWORLD_GOAL_COMPLETION_TIME: 'aiworld_goal_completion_time_ms',
 });
 
 const HISTOGRAMS = Object.freeze([
@@ -40,6 +50,8 @@ const HISTOGRAMS = Object.freeze([
   METRIC.MOVEMENT_COMMAND_LATENCY,
   METRIC.NO_PROGRESS,
   METRIC.STUCK_DURATION,
+  METRIC.AIWORLD_REWARD_PER_EPISODE,
+  METRIC.AIWORLD_GOAL_COMPLETION_TIME,
 ]);
 
 const COUNTERS = Object.freeze([
@@ -54,6 +66,13 @@ const COUNTERS = Object.freeze([
   METRIC.CAMERA_TELEPORT,
   METRIC.CAMERA_TARGET_SWITCH,
   METRIC.CAMERA_FSM_TRANSITION,
+  METRIC.AIWORLD_POLICY_DISAGREEMENT,
+  METRIC.AIWORLD_POLICY_FALLBACK,
+  METRIC.AIWORLD_GOAL_COMPLETED,
+  METRIC.AIWORLD_STALL,
+  METRIC.AIWORLD_RECOVERY_SUCCESS,
+  METRIC.AIWORLD_UNNECESSARY_DAMAGE,
+  METRIC.AIWORLD_EXPERIENCE_RECORDED,
 ]);
 
 const GAUGES = Object.freeze([METRIC.DISTANCE_TO_GOAL]);
