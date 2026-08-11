@@ -25,6 +25,7 @@ const { IntentionCache, AntiStall } = require('../lib/ai-world/intention-cache')
 const { ConsultGate, plannerFromEnv } = require('../lib/ai-world/consult-planner');
 const { recordFocusDecision, recordFocusOutcome } = require('../lib/ai-world/decision');
 const rt = require('../lib/ai-world/agent-runtime');
+const { HermesBridge, evaluateTriggers } = require('../lib/ai-world/hermes-bridge');
 const { initTelemetry, shutdownTelemetry } = require('../lib/telemetry');
 const { METRIC, initMetrics, observeMetric, metricsSnapshot } = require('../lib/metrics');
 
@@ -792,6 +793,16 @@ async function main() {
     });
   }
 
+  // Phase 5: Hermes Bridge — bidirectional NPC <-> external intelligence. The ConsultGate
+  // (created below) already owns the *when* policy (anti-stall escalation + cooldown +
+  // per-goalKey cache); the bridge supplies the *what* (a HermesPlanner behind the same
+  // propose() interface). evaluateTriggers() adds the brief §15 signals (confidence /
+  // novelty / goal_conflict / explicit ask) so NPCs can also consult outside anti-stall.
+  const hermesBridge = new HermesBridge({
+    transport: new (require('../lib/ai-world/hermes-bridge').LocalHermesStub)(),
+    onLog: (entry) => log(entry),
+  });
+
   await sleep(2500);
   const camera = new SpectatorCamera({
     harness,
@@ -867,7 +878,12 @@ async function main() {
   const lastEpisode = {};
   // CONSULT_LLM hook: optional planner via AI_WORLD_CONSULT_PLANNER (default off → log only).
   // The gate guarantees at most one consult per goalKey and a per-agent cooldown — never per-tick.
-  const consultGate = new ConsultGate({ planner: plannerFromEnv(), onLog: (entry) => log(entry) });
+  // Phase 5: when AI_WORLD_CONSULT_PLANNER=hermes, the gate's planner is the HermesPlanner
+  // from hermesBridge, so anti-stall escalations consult Hermes (operational answers only).
+  const consultGate = new ConsultGate({
+    planner: plannerFromEnv() || hermesBridge.planner,
+    onLog: (entry) => log(entry),
+  });
 
   let viewerFollow = null;
   if (cfg.enableViewerFollow) {
@@ -934,6 +950,56 @@ async function main() {
       const assessment = monitor
         ? monitor.assess((observed && observed.data) || {})
         : { state: 'SAFE', action: { kind: 'work' }, changed: false };
+
+      // Phase 5: consult Hermes by the brief §15 triggers — evaluated RIGHT AFTER the
+      // assessment (before the survival early-return) so it also fires when the agent is
+      // in danger, not only on safe ticks. Signals are cheap, in-scope facts:
+      //   low health -> low confidence; ESCAPE/RECOVER -> high novelty (unprecedented).
+      try {
+        const ag = agentByName[who];
+        if (ag) {
+          const healthPct = assessment.healthPct != null ? assessment.healthPct : 1;
+          const novelState = assessment.state === 'ESCAPE' || assessment.state === 'RECOVER';
+          const triggers = evaluateTriggers(ag, (observed && observed.data) || {}, {
+            confidence: healthPct < 0.4 ? 0.2 : healthPct < 0.7 ? 0.45 : 0.8,
+            novelty: novelState ? 0.7 : 0.1,
+            failedAttempts: ag._failedAttempts || 0,
+            goalConflict: false,
+            explicitAsk: false,
+          });
+          if (triggers.consult) {
+            const ans = await hermesBridge.ask(
+              who,
+              `state=${assessment.state} health=${Math.round(healthPct * 100)}%`,
+              {
+                focus:
+                  assessment.state !== 'SAFE' && assessment.state !== 'CAUTION'
+                    ? 'survive'
+                    : 'work',
+                job: null,
+                goalKey: `${who}:${assessment.state}:${ag.goals.current ? ag.goals.current.title : 'none'}`,
+                novelty: novelState ? 0.7 : 0.1,
+                confidence: healthPct < 0.4 ? 0.2 : healthPct < 0.7 ? 0.45 : 0.8,
+              }
+            );
+            rt.recordEpisode(ag, {
+              type: 'hermes_consult',
+              summary: `Asked Hermes (${triggers.reasons.join(',')}): ${ans.reasoning_summary || ans.decision}`,
+              importance: 0.7,
+              tags: ['hermes', ...triggers.reasons],
+            });
+            // Flush immediately so the mentor's advice survives a crash/restart (brief §3).
+            try {
+              rt.saveAgent(ag);
+            } catch (_) {
+              /* best-effort */
+            }
+          }
+        }
+      } catch (_) {
+        /* best-effort */
+      }
+
       if (assessment.changed || assessment.state !== 'SAFE') {
         log({
           status: assessment.state === 'SAFE' ? 'PASS' : 'DEGRADED',
@@ -1126,8 +1192,6 @@ async function main() {
       } catch (_) {
         /* best-effort */
       }
-
-      state.agentJobs = state.agentJobs || {};
       const prevJob = state.agentJobs[who] || null;
       if (typeof observation.setActivity === 'function') {
         observation.setActivity(who, step.job);

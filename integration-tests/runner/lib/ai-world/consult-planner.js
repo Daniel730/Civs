@@ -148,7 +148,14 @@ function plannerFromEnv(env = process.env) {
     .toLowerCase();
   if (!kind || kind === 'off' || kind === '0' || kind === 'false') return null;
   if (kind === 'stub') return new StubPlanner();
-  throw new Error(`Unknown AI_WORLD_CONSULT_PLANNER value: ${kind} (supported: off, stub)`);
+  if (kind === 'hermes') {
+    // Phase 5: Hermes Bridge. Uses the local stub transport by default (no external
+    // service required to run/test); swap in a real HTTP/WebSocket transport later
+    // via the same HermesPlanner interface.
+    const { HermesPlanner } = require('./hermes-bridge');
+    return new HermesPlanner({ onLog: () => {} });
+  }
+  throw new Error(`Unknown AI_WORLD_CONSULT_PLANNER value: ${kind} (supported: off, stub, hermes)`);
 }
 
 module.exports = { ConsultGate, StubPlanner, plannerFromEnv, DEFAULT_COOLDOWN_MS };
