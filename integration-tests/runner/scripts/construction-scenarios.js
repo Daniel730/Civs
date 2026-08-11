@@ -30,10 +30,6 @@ const cfg = {
   },
 };
 
-function sleep(ms) {
-  return new Promise((r) => setTimeout(r, ms));
-}
-
 async function scenario(name, fn) {
   const t0 = Date.now();
   try {
