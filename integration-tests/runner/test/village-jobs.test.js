@@ -92,10 +92,22 @@ describe('village jobs planner', () => {
     assert.equal(miner.place, null);
     const lumber = workCoords(origin, { job: 'lumberjack', dx: -14, dz: 14, tick: 2 });
     assert.equal(lumber.place, null);
-    const builder = workCoords(origin, { job: 'builder', site: 'shelter', dx: -10, dz: 0, tick: 3 });
+    const builder = workCoords(origin, {
+      job: 'builder',
+      site: 'shelter',
+      dx: -10,
+      dz: 0,
+      tick: 3,
+    });
     assert.equal(builder.place, null);
     assert.equal(builder.blueprint, true);
-    const beautify = workCoords(origin, { job: 'beautify', site: 'shelter', dx: -10, dz: 0, tick: 4 });
+    const beautify = workCoords(origin, {
+      job: 'beautify',
+      site: 'shelter',
+      dx: -10,
+      dz: 0,
+      tick: 4,
+    });
     assert.equal(beautify.cleanup, true);
     const guard = workCoords(origin, { job: 'guard', dx: 24, dz: -18, tick: 4 });
     assert.ok(guard.stand);
