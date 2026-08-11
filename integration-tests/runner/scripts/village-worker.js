@@ -21,13 +21,9 @@ const {
 } = require('../lib/village');
 const { SurvivalMonitor, executeSurvival } = require('../lib/survival');
 const { IntentionCache, AntiStall } = require('../lib/ai-world/intention-cache');
+const { ConsultGate, plannerFromEnv } = require('../lib/ai-world/consult-planner');
 const { initTelemetry, shutdownTelemetry } = require('../lib/telemetry');
-const {
-  METRIC,
-  initMetrics,
-  observeMetric,
-  metricsSnapshot,
-} = require('../lib/metrics');
+const { METRIC, initMetrics, observeMetric, metricsSnapshot } = require('../lib/metrics');
 
 const REPORTS = path.join(__dirname, '..', 'reports');
 const LOG_JSONL = path.join(REPORTS, 'village-worker.jsonl');
@@ -696,6 +692,9 @@ async function main() {
   }
   const intentions = new IntentionCache();
   const antiStall = new AntiStall({ noProgressMs: Math.max(12000, cfg.intervalMs * 3) });
+  // CONSULT_LLM hook: optional planner via AI_WORLD_CONSULT_PLANNER (default off → log only).
+  // The gate guarantees at most one consult per goalKey and a per-agent cooldown — never per-tick.
+  const consultGate = new ConsultGate({ planner: plannerFromEnv(), onLog: (entry) => log(entry) });
 
   let viewerFollow = null;
   if (cfg.enableViewerFollow) {
@@ -845,7 +844,38 @@ async function main() {
           job: step.job,
         });
         if (stall.stage === 'REPLAN' || stall.stage === 'ABANDON_GOAL') {
-          intentions.applySignals(who, { noProgress: true, goalAbandoned: stall.stage === 'ABANDON_GOAL' });
+          intentions.applySignals(who, {
+            noProgress: true,
+            goalAbandoned: stall.stage === 'ABANDON_GOAL',
+          });
+        }
+        if (stall.stage === 'CONSULT_LLM') {
+          // Optional planner; with none configured this only logs (previous behaviour).
+          const consult = await consultGate.maybeConsult(stall, {
+            agentId: who,
+            goalKey: `${who}:${intention.focus}:${step.job}:${step.site || ''}`,
+            focus: intention.focus,
+            job: step.job,
+          });
+          if (consult.consulted && consult.suggestion && consult.suggestion.focus) {
+            intentions.invalidate(who, 'consult_llm');
+            intentions.set(
+              who,
+              {
+                focus: consult.suggestion.focus,
+                reason: consult.suggestion.reason,
+                contextKey: null,
+              },
+              { ttlMs: consult.suggestion.ttlMs }
+            );
+            log({
+              status: 'PASS',
+              action: 'consult_llm_applied',
+              worker: who,
+              focus: consult.suggestion.focus,
+              reason: consult.suggestion.reason,
+            });
+          }
         }
       }
       state.agentJobs[who] = step.job;
@@ -883,7 +913,11 @@ async function main() {
           observation.noteEvent(who, 'state_transition');
         }
       }
-      if (step.job === 'placeregion' && result.status === 'PASS' && typeof observation.noteEvent === 'function') {
+      if (
+        step.job === 'placeregion' &&
+        result.status === 'PASS' &&
+        typeof observation.noteEvent === 'function'
+      ) {
         observation.noteEvent(who, 'region_placed');
       }
       if (state.tick % 5 === 0) {
@@ -903,6 +937,7 @@ async function main() {
           metrics: metricsSnapshot(),
           intentions: intentions.snapshot(),
           antiStall: antiStall.snapshot(),
+          consultGate: consultGate.snapshot(),
           survival: [...survival.values()].map((m) => m.snapshot()),
         });
       }

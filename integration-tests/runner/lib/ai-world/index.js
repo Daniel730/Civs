@@ -9,6 +9,7 @@ module.exports = {
   ...require('./objective-plan'),
   ...require('./decision'),
   ...require('./intention-cache'),
+  ...require('./consult-planner'),
   ...require('./events'),
   ...require('./quest-loop'),
   ...require('./mine-executor'),
