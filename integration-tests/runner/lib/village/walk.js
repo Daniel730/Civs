@@ -126,7 +126,17 @@ async function walkTo(harness, actorName, stand, opts = {}) {
     const newDist = horizDist(cur, goal);
     if (newDist >= lastDist - 0.05) {
       stalled += 1;
-      if (stalled >= 10) {
+      // Clear feet ahead before declaring stuck — clutter from old builds is common.
+      if (stalled === 4 || stalled === 8) {
+        const ax = Math.floor(cur.x + (goal.x - cur.x) * 0.3);
+        const az = Math.floor(cur.z + (goal.z - cur.z) * 0.3);
+        if (opts.clearFooting) {
+          await opts.clearFooting(ax, goal.y, az);
+          await opts.clearFooting(Math.floor(goal.x), goal.y, Math.floor(goal.z));
+        }
+        actions.push({ clearPath: true, at: { x: ax, z: az } });
+      }
+      if (stalled >= 18) {
         // Soft recover once, then walk again briefly
         if (!recoverTeleport) {
           await cap.teleport(actorName, goal.x, goal.y, goal.z);
