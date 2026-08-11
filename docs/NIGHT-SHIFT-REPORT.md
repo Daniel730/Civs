@@ -40,6 +40,7 @@ Evidence: `integration-tests/runner/reports/village-worker.jsonl` + `village-wor
 | [#36](https://github.com/Daniel730/Civs/issues/36) | [#55](https://github.com/Daniel730/Civs/pull/55) | dependency-cruiser arch-contract | open |
 | [#44](https://github.com/Daniel730/Civs/issues/44) | [#56](https://github.com/Daniel730/Civs/pull/56) | GitHub templates | open |
 | [#43](https://github.com/Daniel730/Civs/issues/43) | [#57](https://github.com/Daniel730/Civs/pull/57) | Java Checkstyle + ArchUnit phase-1 | **GREEN** checks |
+| [#37](https://github.com/Daniel730/Civs/issues/37) | [#58](https://github.com/Daniel730/Civs/pull/58) | Stryker mutation (DSL phase-1) | opened |
 
 Also: PR titles normalized to commitlint `subject-case` (lowercase).
 
@@ -77,7 +78,7 @@ tail -f integration-tests/runner/reports/village-worker.jsonl
 
 ### Next for parent / later shifts
 
-1. Merge stack: #50 → #54, plus #55/#56/#57 when ready  
-2. #37 Stryker (unblocked, no secrets)  
-3. #38/#33 only after secrets  
+1. Merge stack: #50 → #54, plus #55/#56/#57/#58 when ready  
+2. #38/#33 only after secrets  
+3. Expand Stryker to harness/capabilities once offline unit tests exist  
 4. Optional: prefer inn over barracks on a fresh pad if desired (exclusive)
