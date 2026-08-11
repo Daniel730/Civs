@@ -4,7 +4,12 @@ Labels: **FACT** · **OBSERVED** · **INFERRED** · **UNKNOWN** · **TODO**
 
 ## Status
 
-**TODO** — subsystem not present in repo. Documented so work does not invent a parallel stack later.
+**PARTIAL** — full Director FSM still TODO. A **minimal spectator camera** ships with the NPC village builder (issue #49):
+
+- `integration-tests/runner/lib/camera.js` — second `RawKeepAliveActor` (`Cam`) in spectator mode
+- Native follow: `execute as Cam run spectate <builder>` (**PASS** on WSL QA)
+- Optional orbit: `FORCE_ORBIT=1` → capability `teleport` + `look_at`
+- Watch docs: `docs/NPC-NIGHT-SHIFT.md` (viewer launch + OBS)
 
 ## Intent
 
@@ -12,8 +17,8 @@ Independent Director observes world interest, controls a dedicated camera player
 
 ## Dependencies
 
-- P1 camera movement capabilities (smooth look/teleport/orbit) on an online camera player.
-- P5 world agents generating real activity worth filming.
+- P1 camera movement capabilities (smooth look/teleport/orbit) on an online camera player — **partially available** (`look`, `look_at`, `teleport`).
+- P5 world agents generating real activity worth filming — village builder is a first producer.
 - OBS remains external (capture/encode/stream) — FACT preference from mission; no OBS coupling in-plugin yet.
 
 ## Planned states
@@ -25,3 +30,5 @@ Interest scoring and anti-boredom cooldowns: configurable weights; do not hardco
 ## Camera modes (target)
 
 follow, over-shoulder, side track, orbit, establishing, wide, close, action, static, aerial, POV — each implemented as deterministic camera controllers, not LLM tick control.
+
+**Now:** `follow` via vanilla spectate + optional orbit tick.
