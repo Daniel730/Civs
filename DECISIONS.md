@@ -361,3 +361,16 @@ from `/test world nearby`. Disposable QA worlds only for live runs.
 RPGServer `handleMineBlock`). Agents must verify progress via `quest_detail` /
 `completed_quests` before claiming success. QA fixture quest `ai_world_mine_probe`
 is disposable-only (copy into RPGServer/quests).
+
+**D-AP-021 — Server-side continuous motion + survival/cinematic layers (#72, 2026-08-11).**
+**Decision:** replace RCON-per-step village walking with harness `walk_path` /
+`walk_status` (bounded A* + per-tick yaw-limited mover) and camera framing with
+`cam_shot` / `cam_status`. Keep legacy `step`/`move_to` and `ObservationDirector`
+as fallbacks (`CAM_LEGACY=1`). Add Node `lib/metrics.js`, `lib/survival/`,
+intention cache / anti-stall, and `CinematicDirector` shot vocabulary. Teleport
+remains last-resort recovery only (and survival `recover` home return).
+**Why:** Phase-0 log recon showed 44% walk arrive, 81.9% recovery teleports, and
+job-tick-driven camera cuts — structural RCON latency, not tuning. D-AP-011
+(greedy `move_to`) remains for callers that have not migrated; village-worker
+primary path is now `walk_path`. Live before/after quality numbers still need a
+long worker run after harness restart with the new jar.
