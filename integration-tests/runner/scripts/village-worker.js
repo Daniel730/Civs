@@ -11,6 +11,7 @@ const {
   SITES,
   EXCLUSIVE_PAIRS,
   JOB_CAMERA_MODE,
+  approachFrom,
   stockpileMaterials,
 } = require('../lib/village');
 const { initTelemetry, shutdownTelemetry } = require('../lib/telemetry');
@@ -95,6 +96,15 @@ async function sleep(ms) {
   return new Promise((r) => setTimeout(r, ms));
 }
 
+/** Clear head+feet air at an approach tile without cutting the floor. */
+async function clearFooting(harness, x, y, z) {
+  const ix = Math.floor(x);
+  const iy = Math.floor(y);
+  const iz = Math.floor(z);
+  await harness.raw(`setblock ${ix} ${iy} ${iz} air`);
+  await harness.raw(`setblock ${ix} ${iy + 1} ${iz} air`);
+}
+
 /** Honest stockpile fills for placeregion retries (shared with village-builder). */
 async function stockpile(harness, x, y, z, profile) {
   await stockpileMaterials(harness, x, y, z, profile);
@@ -154,11 +164,23 @@ async function runJob(harness, actorName, step, state) {
     return results;
   }
 
-  // Teleport near the site first so move_to can finish a short walk (avoids no_progress).
+  // Approach from a cleared apron tile; recover with teleport if greedy move_to sticks.
   const stand = coords.stand;
-  await cap.teleport(actorName, stand.x - 2, cfg.origin.y + 1, stand.z - 2);
-  const move = await cap.moveTo(actorName, stand.x, stand.y, stand.z, 7000, 1.8, 0.85);
-  results.actions.push({ move });
+  const approach = approachFrom(stand);
+  await clearFooting(harness, approach.x, approach.y, approach.z);
+  await clearFooting(harness, stand.x, stand.y, stand.z);
+  await cap.teleport(actorName, approach.x, approach.y, approach.z);
+  const move = await cap.moveTo(actorName, stand.x, stand.y, stand.z, 7000, 2.2, 0.9);
+  const softFail =
+    move &&
+    move.success === false &&
+    ['stuck', 'no_progress', 'vertical_blocked', 'timeout'].includes(String(move.reason || ''));
+  if (softFail) {
+    await cap.teleport(actorName, stand.x, stand.y, stand.z);
+    results.actions.push({ move, recoverTeleport: true, reason: move.reason });
+  } else {
+    results.actions.push({ move });
+  }
 
   if (coords.target) {
     const look = await cap.lookAt(actorName, coords.target.x, coords.target.y, coords.target.z);

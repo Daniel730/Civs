@@ -3,19 +3,19 @@
 Unattended dual mandate: **NPCs work** on WSL Paper QA + **engineering PRs**.  
 Labels: **FACT** · **OBSERVED** · **BLOCKED** · **INFERRED**.
 
-## NIGHT SHIFT SUMMARY (continuation #2)
+## NIGHT SHIFT SUMMARY (continuation #3)
 
 ### NPC activity (live)
 
 | Check | Result | Label |
 |-------|--------|-------|
 | Paper `civs-qa` tmux | UP | **FACT** |
-| `village-npc` tmux | Running `village-worker.js` (recovered after affinity deploy) | **FACT** |
+| `village-npc` tmux | Running `village-worker.js` (recover after approach deploy) | **FACT** |
 | Players | Steve, Alex, Cam (+ Viewer when watching) | **OBSERVED** |
 | Town `NpcPad` | exists | **FACT** |
 | Pad origin | 5200,80,5200 | **FACT** |
-| Work ticks | ~1000+ continuous PASS; lumberjack/guard live | **FACT** |
-| Director | `director_start` PASS; job→camera mode map shipped (#61) | **FACT** |
+| Work ticks | ~1100+ continuous PASS; lumberjack/guard live | **FACT** |
+| Director | `director_start` PASS; job→camera mode map (#61) | **FACT** |
 | Watch | `launch-viewer.ps1` → WSL IP `192.168.152.149:25565` (not 127.0.0.1) | **FACT** |
 
 Evidence: `integration-tests/runner/reports/village-worker.jsonl` + `village-worker-state.json`.
@@ -35,26 +35,36 @@ Evidence: `integration-tests/runner/reports/village-worker.jsonl` + `village-wor
 
 | Issue | PR | Title | CI |
 |-------|-----|-------|-----|
-| [#60](https://github.com/Daniel730/Civs/issues/60) | [#61](https://github.com/Daniel730/Civs/pull/61) | Job-site affinity + lumberjack/guard + camera modes | opened (stacks on #54) |
-| [#37](https://github.com/Daniel730/Civs/issues/37) | [#58](https://github.com/Daniel730/Civs/pull/58) | Stryker knip false-positive fix | **GREEN** |
-| [#51](https://github.com/Daniel730/Civs/issues/51) | [#52](https://github.com/Daniel730/Civs/pull/52) | Biome format + knip stream entries | pushed fix |
-| [#44](https://github.com/Daniel730/Civs/issues/44) | [#56](https://github.com/Daniel730/Civs/pull/56) | PR title lowercase hygiene | retitled + empty commit |
+| [#62](https://github.com/Daniel730/Civs/issues/62) | [#63](https://github.com/Daniel730/Civs/pull/63) | Approach aprons + footing clear + recover teleport | **GREEN** (prior run; docs push recheck) |
+| [#60](https://github.com/Daniel730/Civs/issues/60) | [#61](https://github.com/Daniel730/Civs/pull/61) | Job-site affinity + lumberjack/guard + camera modes | **GREEN** |
+| [#37](https://github.com/Daniel730/Civs/issues/37) | [#58](https://github.com/Daniel730/Civs/pull/58) | Stryker | **GREEN** |
+| [#51](https://github.com/Daniel730/Civs/issues/51) | [#52](https://github.com/Daniel730/Civs/pull/52) | Stream nightshift | **GREEN** |
+| [#44](https://github.com/Daniel730/Civs/issues/44) | [#56](https://github.com/Daniel730/Civs/pull/56) | GitHub templates | **GREEN** |
+| [#36](https://github.com/Daniel730/Civs/issues/36) | [#55](https://github.com/Daniel730/Civs/pull/55) | Arch-contract | **GREEN** |
+| [#43](https://github.com/Daniel730/Civs/issues/43) | [#57](https://github.com/Daniel730/Civs/pull/57) | Java Checkstyle/ArchUnit | **GREEN** |
+| [#34](https://github.com/Daniel730/Civs/issues/34) | [#59](https://github.com/Daniel730/Civs/pull/59) | Datadog APM choice | **GREEN** |
 
-Prior stack still open: #50→#54 village; #55 arch; #57 java static; #59 datadog; #45 docs (master protection).
+Village stack: #50 → #54 → #61 → #62 (approach). Hygiene PRs #52/#55–#59 all **GREEN** (no CI red left).
+
+### Move reliability evidence
+
+Before apron fix (**FACT** tally of jsonl): ~346 `move_to` fails / ~1099 ticks — farmer `no_progress` 147, patrol `stuck` 88. Root cause: farmer stand at `oz-2` inside potato_farm footprint (radius 4).
+
+After recover-npc with #63 (**FACT** ticks ≥1148): 40 work ticks all **PASS**, **0** move fails, `recoverTeleport` unused (apron walks finished).
 
 ### Worker diversity (live evidence)
 
-- `farmer` → `farm` / farm_pad (**FACT** tick ~1011)
-- `miner` → `quarry` (**FACT** tick ~1010)
-- `lumberjack` → oak_log break + oak_planks place (**FACT** tick ~1013)
-- `guard` → barracks_pad (**FACT** tick ~1014)
+- `farmer` → `farm` / farm_pad (**FACT**)
+- `miner` → `quarry` (**FACT**)
+- `lumberjack` → oak_log break + oak_planks place (**FACT**)
+- `guard` → barracks_pad (**FACT**)
 - State preserved: barracks + potato_farm completed; inn blocked (**FACT**)
 
 ### Tests
 
-- Village jobs unit **11/11** (#61) (**FACT**)
-- Stream planner **7/7** after #52 format fix (**FACT**)
-- #58 Biome+knip + stryker-mutation **GREEN** (**FACT**)
+- Village jobs unit **12/12** (#62 apron + prior affinity) (**FACT**)
+- Stream planner **7/7** (**FACT**)
+- Open hygiene/stream/village PRs CI **GREEN** (**FACT**)
 
 ### Blocked (do not spin)
 
@@ -80,13 +90,13 @@ tail -f integration-tests/runner/reports/village-worker.jsonl
 
 ### Repo state
 
-- Active affinity branch: `feat/worker-job-affinity-60` → PR **#61** (base `#54`)
-- Live worker runs workspace files via WSL mount (affinity loaded after recover-npc)
+- Active approach branch: `feat/worker-approach-reliability-62` (stacks on `feat/worker-job-affinity-60` / #61)
+- Live worker runs workspace files via WSL mount (recover-npc after deploy)
 - Production `Civs_servidor` live world: **not touched** (**FACT**)
 
 ### Next for parent / later shifts
 
-1. Merge stack: #50 → #54 → #61, plus #55/#56/#57/#58/#52/#59 when green  
+1. Merge stack: #50 → #54 → #61 → approach PR, plus #55/#56/#57/#58/#52/#59 when ready  
 2. #38/#33 only after secrets  
-3. Optional: tighten move_to near farm/barracks (occasional `no_progress`/`stuck`, still PASS place/break)  
+3. Re-tally move fails in jsonl after approach deploy (expect farmer `no_progress` drop)  
 4. #31/#45 Issues→PR docs once master protection allows merge
