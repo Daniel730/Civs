@@ -1,4 +1,4 @@
-/** @type {import('@stryker-mutator/api/core').PartialStrykerOptions} */
+// Stryker options (command runner ships with @stryker-mutator/core; no separate package).
 module.exports = {
   packageManager: 'npm',
   reporters: ['clear-text', 'html', 'json'],
