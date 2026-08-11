@@ -14,13 +14,18 @@ const {
   PLACE_ATTEMPTS,
   EXCLUSIVE_PAIRS,
   radiusFor,
+  blueprintFor,
+  houseShell,
+  cleanupTargets,
+  paletteFor,
+  horizDist,
 } = require('../lib/village');
 
 describe('village jobs planner', () => {
-  it('rotates visible work jobs including lumberjack and guard', () => {
+  it('rotates visible work jobs including lumberjack, guard, beautify', () => {
     const seen = new Set();
-    for (let t = 1; t <= 40; t++) {
-      if (t % 8 === 0) continue;
+    for (let t = 0; t <= 80; t++) {
+      if (t > 0 && t % 9 === 0) continue;
       const j = nextJob(t);
       seen.add(j.job);
       assert.ok(JOBS.includes(j.job) || j.job === 'placeregion');
@@ -30,11 +35,12 @@ describe('village jobs planner', () => {
     assert.ok(seen.has('miner'));
     assert.ok(seen.has('lumberjack'));
     assert.ok(seen.has('guard'));
+    assert.ok(seen.has('beautify'));
   });
 
   it('keeps job-site affinity (farmer never at barracks)', () => {
     for (let t = 1; t <= 70; t++) {
-      if (t % 8 === 0) continue;
+      if (t % 9 === 0) continue;
       const j = nextJob(t);
       if (j.job === 'placeregion') continue;
       const allowed = JOB_SITE_AFFINITY[j.job];
@@ -56,10 +62,11 @@ describe('village jobs planner', () => {
     assert.equal(JOB_CAMERA_MODE.guard, 'orbit');
     assert.equal(JOB_CAMERA_MODE.lumberjack, 'follow');
     assert.equal(JOB_CAMERA_MODE.miner, 'poi');
+    assert.equal(JOB_CAMERA_MODE.beautify, 'poi');
   });
 
-  it('schedules placeregion every 8 ticks when attempts remain', () => {
-    const j = nextJob(8, {});
+  it('schedules placeregion every 9 ticks when attempts remain', () => {
+    const j = nextJob(9, {});
     assert.equal(j.job, 'placeregion');
     assert.equal(j.type, PLACE_ATTEMPTS[0].type);
   });
@@ -77,14 +84,31 @@ describe('village jobs planner', () => {
     assert.equal(nextPlaceAttempt({ blocked, completedPlaces: {} }), null);
   });
 
-  it('workCoords yields stand/target for miner, lumberjack, guard, patrol', () => {
+  it('workCoords yields stand/target without scatter place for miner/lumber/builder', () => {
     const origin = { x: 5200, y: 80, z: 5200 };
     const miner = workCoords(origin, { job: 'miner', dx: -14, dz: 14, tick: 1 });
     assert.ok(miner.stand);
     assert.ok(miner.target);
-    assert.ok(miner.place);
+    assert.equal(miner.place, null);
     const lumber = workCoords(origin, { job: 'lumberjack', dx: -14, dz: 14, tick: 2 });
-    assert.equal(lumber.place.material, 'oak_planks');
+    assert.equal(lumber.place, null);
+    const builder = workCoords(origin, {
+      job: 'builder',
+      site: 'shelter',
+      dx: -10,
+      dz: 0,
+      tick: 3,
+    });
+    assert.equal(builder.place, null);
+    assert.equal(builder.blueprint, true);
+    const beautify = workCoords(origin, {
+      job: 'beautify',
+      site: 'shelter',
+      dx: -10,
+      dz: 0,
+      tick: 4,
+    });
+    assert.equal(beautify.cleanup, true);
     const guard = workCoords(origin, { job: 'guard', dx: 24, dz: -18, tick: 4 });
     assert.ok(guard.stand);
     assert.equal(guard.place, null);
@@ -107,6 +131,7 @@ describe('village jobs planner', () => {
     const approach = approachFrom(farm.stand);
     assert.equal(approach.x, farm.stand.x - 2);
     assert.equal(approach.z, farm.stand.z - 2);
+    assert.equal(farm.blueprint, true);
   });
 
   it('uses dedicated inn/barracks stockpile profiles', () => {
@@ -123,5 +148,46 @@ describe('village jobs planner', () => {
     assert.equal(radiusFor('inn'), 9);
     assert.equal(radiusFor('barracks'), 7);
     assert.equal(radiusFor('farm'), 4);
+  });
+});
+
+describe('village blueprints aesthetics', () => {
+  it('house shell has floor walls roof door gap and oak palette for shelter', () => {
+    const origin = { x: 5200, y: 80, z: 5200 };
+    const shell = houseShell(origin, { site: 'shelter', dx: -10, dz: 0, tick: 0 });
+    assert.ok(shell.allBlocks.length > 40);
+    const roles = new Set(shell.allBlocks.map((b) => b.role));
+    assert.ok(roles.has('floor'));
+    assert.ok(roles.has('wall'));
+    assert.ok(roles.has('roof'));
+    assert.equal(paletteFor('shelter').wall, 'oak_planks');
+    // Door gap: south wall mid at y+1/+2 should be absent
+    const doorCells = shell.allBlocks.filter(
+      (b) => b.z === 5200 - 8 && b.x === 5200 - 10 - 2 + 2 && b.y >= 81 && b.y <= 82
+    );
+    assert.equal(doorCells.length, 0);
+  });
+
+  it('blueprintFor farm returns fence edge; housing returns shell or path', () => {
+    const origin = { x: 5200, y: 80, z: 5200 };
+    const farm = blueprintFor(origin, { job: 'farmer', site: 'farm', dx: 0, dz: -14, tick: 1 });
+    assert.equal(farm.id, 'farm_edge');
+    assert.ok(farm.blocks.every((b) => b.material === 'oak_fence'));
+    const path = blueprintFor(origin, { job: 'builder', site: 'shelter', dx: -10, dz: 0, tick: 3 });
+    assert.ok(path.id.startsWith('path_') || path.id.startsWith('house_shell_'));
+  });
+
+  it('cleanupTargets hit historic junk pad at site+6', () => {
+    const origin = { x: 5200, y: 80, z: 5200 };
+    const all = [];
+    for (let tick = 0; tick < 12; tick++) {
+      all.push(...cleanupTargets(origin, { dx: -10, dz: 0, tick }));
+    }
+    assert.ok(all.some((t) => t.x === 5196 && t.z >= 5195 && t.action === 'break'));
+    assert.ok(all.some((t) => t.action === 'set_grass'));
+  });
+
+  it('horizDist is planar', () => {
+    assert.equal(horizDist({ x: 0, z: 0 }, { x: 3, z: 4 }), 5);
   });
 });

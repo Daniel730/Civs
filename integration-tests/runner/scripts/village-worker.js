@@ -11,8 +11,10 @@ const {
   SITES,
   EXCLUSIVE_PAIRS,
   JOB_CAMERA_MODE,
-  approachFrom,
   stockpileMaterials,
+  walkTo,
+  blueprintFor,
+  cleanupTargets,
 } = require('../lib/village');
 const { initTelemetry, shutdownTelemetry } = require('../lib/telemetry');
 
@@ -111,6 +113,33 @@ async function stockpile(harness, x, y, z, profile) {
 }
 
 /**
+ * Place one blueprint block via capability; fall back to setblock for slabs/paths/fences.
+ */
+async function placeAesthetic(harness, actorName, block) {
+  const mat = block.material;
+  await harness.raw(`setblock ${block.x} ${block.y} ${block.z} air`);
+  await harness.cap.giveItem(actorName, mat.toUpperCase(), 8);
+  await harness.cap.lookAt(actorName, block.x, block.y, block.z);
+  const pl = await harness.cap.placeBlock(actorName, block.x, block.y, block.z, mat);
+  if (pl && pl.success) {
+    await harness.cap.swing(actorName);
+    return { via: 'place_block', ...pl, material: mat, role: block.role };
+  }
+  // Honest fallback: RCON setblock (already used for stockpiles). Still grid blueprint.
+  await harness.raw(`setblock ${block.x} ${block.y} ${block.z} ${mat}`);
+  await harness.cap.swing(actorName);
+  return {
+    via: 'setblock',
+    success: true,
+    material: mat,
+    role: block.role,
+    x: block.x,
+    y: block.y,
+    z: block.z,
+  };
+}
+
+/**
  * Execute one visible work tick using only existing capabilities.
  */
 async function runJob(harness, actorName, step, state) {
@@ -125,10 +154,15 @@ async function runJob(harness, actorName, step, state) {
     const pz = cfg.origin.z + (step.dz || 0);
     const py = cfg.origin.y;
     await stockpile(harness, px, py, pz, step.stockpile || 'utility');
-    await cap.moveTo(actorName, px + 1, py + 1, pz + 1, 8000, 2.0, 0.9);
+    const walk = await walkTo(
+      harness,
+      actorName,
+      { x: px + 1, y: py + 1, z: pz + 1 },
+      { clearFooting: (x, y, z) => clearFooting(harness, x, y, z), timeoutMs: 12000 }
+    );
+    results.actions.push({ walk });
     await cap.lookAt(actorName, px, py + 1, pz);
     await cap.swing(actorName);
-    // Official harness path (same as village-builder / RawKeepAliveActor.placeRegion)
     const placeReply = await harness.raw(
       `cv placeregion ${actorName} ${step.type} ${px} ${py} ${pz}`
     );
@@ -153,7 +187,6 @@ async function runJob(harness, actorName, step, state) {
     } else {
       state.failCounts = state.failCounts || {};
       state.failCounts[step.type] = (state.failCounts[step.type] || 0) + 1;
-      // Allow a few honest stockpile retries before permanent block
       if (state.failCounts[step.type] >= 3) {
         state.blocked[step.type] = true;
       }
@@ -164,30 +197,31 @@ async function runJob(harness, actorName, step, state) {
     return results;
   }
 
-  // Approach from a cleared apron tile; recover with teleport if greedy move_to sticks.
+  // Walk (not teleport) to work stand — soft TP only inside walkTo recovery.
   const stand = coords.stand;
-  const approach = approachFrom(stand);
-  await clearFooting(harness, approach.x, approach.y, approach.z);
-  await clearFooting(harness, stand.x, stand.y, stand.z);
-  await cap.teleport(actorName, approach.x, approach.y, approach.z);
-  const move = await cap.moveTo(actorName, stand.x, stand.y, stand.z, 7000, 2.2, 0.9);
-  const softFail =
-    move &&
-    move.success === false &&
-    ['stuck', 'no_progress', 'vertical_blocked', 'timeout'].includes(String(move.reason || ''));
-  if (softFail) {
-    await cap.teleport(actorName, stand.x, stand.y, stand.z);
-    results.actions.push({ move, recoverTeleport: true, reason: move.reason });
-  } else {
-    results.actions.push({ move });
-  }
+  const walk = await walkTo(harness, actorName, stand, {
+    clearFooting: (x, y, z) => clearFooting(harness, x, y, z),
+    timeoutMs: 14000,
+    stepLen: 0.45,
+    pauseMs: 140,
+  });
+  results.actions.push({
+    walk: {
+      success: walk.success,
+      steps: walk.steps,
+      final_distance: walk.final_distance,
+      recoverTeleport: walk.recoverTeleport,
+      navigator: walk.navigator,
+      reason: walk.reason,
+    },
+  });
 
   if (coords.target) {
     const look = await cap.lookAt(actorName, coords.target.x, coords.target.y, coords.target.z);
     results.actions.push({ look });
   }
 
-  if (step.job === 'miner' || step.job === 'builder') {
+  if (step.job === 'miner' || step.job === 'builder' || step.job === 'beautify') {
     await cap.giveItem(actorName, 'STONE_PICKAXE', 1);
     await cap.hotbar(actorName, 0);
   }
@@ -204,7 +238,6 @@ async function runJob(harness, actorName, step, state) {
     await cap.hotbar(actorName, 0);
   }
 
-  // Visible work: prefer place + swing. Only break known filler at dedicated dig spots.
   if (step.job === 'miner') {
     const digX = Math.floor(cfg.origin.x + (step.dx || 0) + 5);
     const digY = cfg.origin.y;
@@ -221,27 +254,56 @@ async function runJob(harness, actorName, step, state) {
     const br = await cap.breakBlock(actorName, digX, digY, digZ);
     results.actions.push({ breakBlock: br });
     await cap.swing(actorName);
-  } else if (step.job === 'builder' || step.job === 'farmer' || step.job === 'stockpile') {
-    await cap.swing(actorName);
   }
 
-  if (coords.place && step.job !== 'patrol' && step.job !== 'guard') {
-    // Place on work apron outside stockpile interiors (site + 6)
-    const mat =
-      step.job === 'farmer'
-        ? 'cobblestone'
-        : step.job === 'lumberjack'
-          ? 'oak_planks'
-          : coords.place.material || 'stone_bricks';
-    const px = Math.floor(cfg.origin.x + (step.dx || 0) + 6);
-    const py = cfg.origin.y + 1;
-    const pz = Math.floor(cfg.origin.z + (step.dz || 0) + 6 + (state.tick % 3));
-    await harness.raw(`setblock ${px} ${py} ${pz} air`);
-    await cap.giveItem(actorName, mat.toUpperCase(), 16);
-    const pl = await cap.placeBlock(actorName, px, py, pz, mat);
-    results.actions.push({ placeBlock: pl });
+  // Beautify / pride: tear down historic junk scatter + restore grass.
+  if (step.job === 'beautify' || coords.cleanup) {
+    const targets = cleanupTargets(cfg.origin, { ...step, tick: state.tick });
+    const cleaned = [];
+    for (const t of targets) {
+      if (t.action === 'break') {
+        const br = await cap.breakBlock(actorName, t.x, t.y, t.z);
+        if (!br || !br.success) {
+          await harness.raw(`setblock ${t.x} ${t.y} ${t.z} air`);
+        }
+        cleaned.push({ ...t, ok: true });
+      } else if (t.action === 'set_grass') {
+        await harness.raw(`setblock ${t.x} ${t.y} ${t.z} grass_block`);
+        cleaned.push({ ...t, ok: true });
+      }
+    }
     await cap.swing(actorName);
-    await cap.jump(actorName);
+    results.actions.push({ beautify: true, cleaned: cleaned.length, sample: cleaned.slice(0, 4) });
+  }
+
+  // Builder / farmer: coherent blueprints (house shell, path, farm fence) — no random spam.
+  if (step.job === 'builder' || step.job === 'farmer' || coords.blueprint) {
+    const bp = blueprintFor(cfg.origin, { ...step, tick: state.tick });
+    const placed = [];
+    for (const block of bp.blocks) {
+      // Walk closer if block is far from current stand (keeps motion visible)
+      const near = {
+        x: block.x,
+        y: Math.max(block.y, cfg.origin.y + 1),
+        z: block.z + (block.role === 'path' ? 0 : 2),
+      };
+      const w2 = await walkTo(harness, actorName, near, {
+        arrive: 2.5,
+        timeoutMs: 8000,
+        stepLen: 0.45,
+        pauseMs: 100,
+      });
+      results.actions.push({
+        walkBlock: { steps: w2.steps, success: w2.success, recoverTeleport: w2.recoverTeleport },
+      });
+      const pr = await placeAesthetic(harness, actorName, block);
+      placed.push(pr);
+    }
+    results.actions.push({
+      blueprint: bp.id,
+      placed: placed.length,
+      materials: [...new Set(placed.map((p) => p.material))],
+    });
   }
 
   if (step.job === 'stockpile') {
@@ -253,7 +315,11 @@ async function runJob(harness, actorName, step, state) {
 
   if (step.job === 'patrol' || step.job === 'guard') {
     await cap.sprint(actorName, true);
-    await cap.step(actorName, 'forward', step.job === 'guard' ? 1.6 : 1.2);
+    // Visible gait: several small forward steps with pauses (not one big teleport step)
+    for (let i = 0; i < 3; i++) {
+      await cap.step(actorName, 'forward', 0.5);
+      await sleep(120);
+    }
     await cap.swing(actorName);
     if (step.job === 'guard') {
       await cap.lookAt(actorName, cfg.origin.x, cfg.origin.y + 1, cfg.origin.z);
