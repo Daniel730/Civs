@@ -3,9 +3,11 @@
  *
  * Uses RCON `execute if block` probes (existing Paper/RCON surface) — no Mineflayer,
  * no invented Paper APIs. Falls back to origin.y when probing fails.
+ *
+ * Keep probes cheap: narrow Y band around fallback, one air check, cache per column.
  */
 
-const AIRISH = Object.freeze(['air', 'cave_air', 'void_air', 'short_grass', 'tall_grass', 'snow']);
+const surfaceCache = new Map();
 
 /**
  * @param {import('../harness').Harness} harness
@@ -29,14 +31,15 @@ async function blockIs(harness, x, y, z, material) {
  * @param {number} z
  */
 async function isAirish(harness, x, y, z) {
-  for (const m of AIRISH) {
-    if (await blockIs(harness, x, y, z, m)) return true;
-  }
+  // air + cave_air + void_air share #minecraft:air in modern versions? Prefer explicit air first.
+  if (await blockIs(harness, x, y, z, 'air')) return true;
+  if (await blockIs(harness, x, y, z, 'cave_air')) return true;
   return false;
 }
 
 /**
- * Highest non-air block Y in [minY, maxY] with air above (walkable surface).
+ * Highest non-air block Y near fallback with air above (walkable surface).
+ * Scans a narrow band to avoid RCON storms.
  *
  * @param {import('../harness').Harness} harness
  * @param {number} x
@@ -45,17 +48,34 @@ async function isAirish(harness, x, y, z) {
  * @returns {Promise<number>}
  */
 async function findSurfaceY(harness, x, z, opts = {}) {
-  const maxY = opts.maxY ?? 120;
-  const minY = opts.minY ?? 40;
-  const fallbackY = opts.fallbackY ?? 80;
+  const fallbackY = Math.floor(opts.fallbackY ?? 80);
+  const maxY = Math.floor(opts.maxY ?? fallbackY + 6);
+  const minY = Math.floor(opts.minY ?? fallbackY - 6);
   const ix = Math.floor(x);
   const iz = Math.floor(z);
+  const key = `${ix},${iz},${minY},${maxY}`;
+  if (surfaceCache.has(key)) return surfaceCache.get(key);
+
+  // Prefer common flat-world / pad height first
+  for (const y of [fallbackY, fallbackY - 1, fallbackY + 1, fallbackY - 2, fallbackY + 2]) {
+    if (y < minY || y > maxY) continue;
+    const solidHere = !(await isAirish(harness, ix, y, iz));
+    if (!solidHere) continue;
+    if (await isAirish(harness, ix, y + 1, iz)) {
+      surfaceCache.set(key, y);
+      return y;
+    }
+  }
+
   for (let y = maxY; y >= minY; y--) {
     const solidHere = !(await isAirish(harness, ix, y, iz));
     if (!solidHere) continue;
-    const airAbove = await isAirish(harness, ix, y + 1, iz);
-    if (airAbove) return y;
+    if (await isAirish(harness, ix, y + 1, iz)) {
+      surfaceCache.set(key, y);
+      return y;
+    }
   }
+  surfaceCache.set(key, fallbackY);
   return fallbackY;
 }
 
@@ -100,6 +120,12 @@ const PLATFORM_JUNK = Object.freeze([
   'dirt',
 ]);
 
+const AIRISH = Object.freeze(['air', 'cave_air', 'void_air', 'short_grass', 'tall_grass', 'snow']);
+
+function clearSurfaceCache() {
+  surfaceCache.clear();
+}
+
 module.exports = {
   AIRISH,
   PLATFORM_JUNK,
@@ -107,4 +133,5 @@ module.exports = {
   isAirish,
   findSurfaceY,
   isNaturalSurface,
+  clearSurfaceCache,
 };
