@@ -10,6 +10,7 @@ const {
   nextJob,
   workCoords,
   SITES,
+  siteForJob,
   EXCLUSIVE_PAIRS,
   stockpileMaterials,
   walkTo,
@@ -22,6 +23,7 @@ const {
 const { SurvivalMonitor, executeSurvival } = require('../lib/survival');
 const { IntentionCache, AntiStall } = require('../lib/ai-world/intention-cache');
 const { ConsultGate, plannerFromEnv } = require('../lib/ai-world/consult-planner');
+const { recordFocusDecision, recordFocusOutcome } = require('../lib/ai-world/decision');
 const { initTelemetry, shutdownTelemetry } = require('../lib/telemetry');
 const { METRIC, initMetrics, observeMetric, metricsSnapshot } = require('../lib/metrics');
 
@@ -162,6 +164,9 @@ async function ensureAlive(harness, actorName, preObserved) {
   let obs = preObserved || (await harness.cap.observe(actorName));
   const health = obs && obs.data ? Number(obs.data.health) : Number.NaN;
   if (obs && obs.success && health > 0) {
+    // Keep survival gear topped up every tick — cheap and idempotent, and prevents the
+    // inventory_full death spiral (armour never lands while carrying blocks).
+    await equipSurvivalGear(harness, actorName).catch(() => {});
     return { status: 'PASS', action: 'ensure_alive', player: actorName, health, revived: false };
   }
   const respawn = await harness.cap.respawn(actorName);
@@ -503,32 +508,48 @@ async function runJob(harness, actorName, step, state, ctx = {}) {
 
 /**
  * Equip a worker with armour + weapon + food so it can survive the live world
- * (spiders/skeletons) instead of dying in the first few minutes. Called on spawn
- * and after every respawn. Cheap: a handful of give_item RCON calls.
+ * (spiders/skeletons) instead of dying in the first few minutes. Cheap: a few RCON calls.
+ *
+ * Root cause of "bots die for free": in Minecraft a plain `give` only drops the item into
+ * the inventory — the bot never auto-equips armour, so it took full damage. We now force the
+ * gear into the armour/weapon slots via `replaceitem`, which equips it directly. We also
+ * `clear` first so leftover blocks from earlier jobs can't block the food/consumables.
  */
 async function equipSurvivalGear(harness, actorName) {
   const cap = harness.cap;
-  const gear = [
-    'DIAMOND_HELMET',
-    'DIAMOND_CHESTPLATE',
-    'DIAMOND_LEGGINGS',
-    'DIAMOND_BOOTS',
-    'DIAMOND_SWORD',
-    'SHIELD',
-    'GOLDEN_APPLE',
-    'GOLDEN_APPLE',
-    'COOKED_BEEF',
-    'COOKED_BEEF',
-  ];
-  for (const mat of gear) {
+  try {
+    await harness.raw(`clear ${actorName}`);
+  } catch (_) {
+    /* best effort */
+  }
+  // Slot mapping: `item replace entity <player> <slot> with <item>` equips directly
+  // (Paper 1.21+ syntax; a plain `give` only drops into the inventory and the bot never
+  // auto-equips armour, so it took full damage).
+  const equipped = {
+    DIAMOND_HELMET: 'armor.head',
+    DIAMOND_CHESTPLATE: 'armor.chest',
+    DIAMOND_LEGGINGS: 'armor.legs',
+    DIAMOND_BOOTS: 'armor.feet',
+    DIAMOND_SWORD: 'weapon.mainhand',
+    SHIELD: 'weapon.offhand',
+  };
+  for (const [mat, slot] of Object.entries(equipped)) {
+    try {
+      await harness.raw(
+        `item replace entity ${actorName} ${slot} with minecraft:${mat.toLowerCase()}`
+      );
+    } catch (_) {
+      /* best effort */
+    }
+  }
+  // Consumables go into the inventory (not equip slots).
+  for (const mat of ['GOLDEN_APPLE', 'GOLDEN_APPLE', 'COOKED_BEEF', 'COOKED_BEEF']) {
     try {
       await cap.giveItem(actorName, mat, 1);
     } catch (_) {
-      /* best effort — a missing material should not abort the run */
+      /* best effort */
     }
   }
-  // Put the sword in the hotbar so defend() can swing it.
-  await cap.hotbar(actorName, 0).catch(() => {});
 }
 
 async function connectActor(harness, name, attempt = 1) {
@@ -613,6 +634,80 @@ function meaningfulProgress(result) {
     if (entry.ok === true) score += 2;
   }
   return score;
+}
+
+/**
+ * Objective / commitment layer.
+ *
+ * The old `nextJob(tick)` rotated jobs every tick, so agents never finished anything —
+ * they walked to a site, did one action, then walked away to the next job. That read as
+ * "walking around like an idiot". This keeps an agent on ONE objective until it makes enough
+ * meaningful progress (or survival escalates), then picks the next objective coherently.
+ *
+ * The chosen objective is still derived from chooseFocus (survive/build/maintain/...) so it
+ * stays compatible with the existing intention cache; only the *commitment* is new.
+ *
+ * @param {object} state worker state (holds state.objective between ticks)
+ * @param {{ state:string }} assessment survival verdict
+ * @param {object} focusCandidate result of chooseFocus({focus,reason,contextKey})
+ * @param {number} progress accumulated meaningful progress for the current objective
+ */
+const OBJECTIVE_GOALS = Object.freeze({
+  miner: 4, // break at least 4 blocks
+  lumberjack: 3,
+  builder: 6, // place ~6 blocks of a structure
+  beautify: 4,
+  farmer: 3,
+  guard: 3, // 3 patrol/guard steps
+  patrol: 3,
+  placeregion: 1, // founding a region counts as done immediately
+});
+
+function chooseObjective(state, assessment, focusCandidate) {
+  const surv = assessment.state || 'SAFE';
+  // Survival always wins the commitment: if in danger, the objective is to survive.
+  if (surv !== 'SAFE' && surv !== 'CAUTION') {
+    return { job: 'guard', focus: 'survive', reason: `survival:${surv}`, committed: true };
+  }
+
+  const cur = state.objective;
+  // Keep the current objective until it makes enough meaningful progress, REGARDLESS of
+  // focus-cache churn — the focus can flip build/maintain every ~30s, but the agent should
+  // finish what it started (e.g. place the farm fence) before switching.
+  // NOTE: objectiveProgress is NOT reset here — it is cleared in the act step (4) once the
+  // goal is actually reached, so the commit log reflects accumulated progress.
+  if (cur) {
+    const goal = OBJECTIVE_GOALS[cur.job] || 3;
+    if ((state.objectiveProgress || 0) < goal) {
+      return { ...cur, committed: true, reason: 'continuing' };
+    }
+    // Goal reached — clear so we can pick a fresh one next tick.
+    state.objective = null;
+  }
+
+  // New objective: prefer a job that serves the chosen focus, else rotate by tick.
+  const focus = focusCandidate.focus;
+  const jobForFocus =
+    {
+      survive: 'guard',
+      found: 'placeregion',
+      build: 'builder',
+      maintain: 'farmer',
+      secure: 'guard',
+    }[focus] || 'builder';
+  const job =
+    jobForFocus === 'placeregion' &&
+    state.completedPlaces &&
+    state.completedPlaces.shack &&
+    state.completedPlaces.potato_farm &&
+    state.completedPlaces.inn &&
+    state.completedPlaces.barracks
+      ? 'beautify'
+      : jobForFocus;
+  const next = { job, focus, reason: `new:${focus}`, committed: false };
+  state.objective = next;
+  state.objectiveProgress = 0;
+  return next;
 }
 
 async function main() {
@@ -724,6 +819,9 @@ async function main() {
   }
   const intentions = new IntentionCache();
   const antiStall = new AntiStall({ noProgressMs: Math.max(12000, cfg.intervalMs * 3) });
+  // AI World neural layer: maps each agent to its most recent experience episodeId,
+  // so a terminal outcome (death / stall / goal) can be attached to the decision later.
+  const lastEpisode = {};
   // CONSULT_LLM hook: optional planner via AI_WORLD_CONSULT_PLANNER (default off → log only).
   // The gate guarantees at most one consult per goalKey and a per-agent cooldown — never per-tick.
   const consultGate = new ConsultGate({ planner: plannerFromEnv(), onLog: (entry) => log(entry) });
@@ -752,6 +850,14 @@ async function main() {
         log({ status: recovery.status, action: 'ensure_town', recovery });
       }
       const who = helper && helper.ok && state.tick % 2 === 0 ? cfg.helperName : cfg.actorName;
+
+      // 0. Keep survival gear topped up BEFORE the survival assessment, so a bot in danger
+      // still gets armour (otherwise it dies before runJob's ensureAlive ever runs).
+      try {
+        await equipSurvivalGear(harness, who);
+      } catch (_) {
+        /* best effort */
+      }
 
       // 1. Perception + survival. Survival always outranks the job rotation.
       const observed = await harness.cap.observe(who);
@@ -782,6 +888,16 @@ async function main() {
           deaths: assessment.deaths,
         });
         if (typeof observation.noteEvent === 'function') observation.noteEvent(who, 'death');
+        // Close the experience loop: attach a death outcome + negative reward.
+        try {
+          recordFocusOutcome(who, lastEpisode[who], {
+            died: true,
+            goalFailed: true,
+            damageTaken: 20,
+          });
+        } catch (_) {
+          /* best-effort */
+        }
       }
       if (assessment.action.kind !== 'work') {
         if (typeof observation.noteEvent === 'function') {
@@ -805,11 +921,24 @@ async function main() {
           state: assessment.state,
           steps: survived.steps,
         });
+        // A successful survival recovery (recover/flee that brought the agent back) is a positive outcome.
+        if (survived.kind === 'recover' || survived.kind === 'flee') {
+          try {
+            recordFocusOutcome(who, lastEpisode[who], {
+              recovered: true,
+              damageTaken: assessment.healthPct != null ? (1 - assessment.healthPct) * 20 : 0,
+            });
+          } catch (_) {
+            /* best-effort */
+          }
+        }
         saveState(state);
         return;
       }
 
-      // 2. Intention (cached 20-60 s) then the deterministic per-tick job.
+      // 2. Intention (cached 20-60 s) then the committed objective for this agent.
+      //    Replaces the old per-tick nextJob() rotation: the agent stays on ONE objective
+      //    until it makes enough meaningful progress, so it actually builds/mines/farms.
       const decisionStart = Date.now();
       const focusCandidate = chooseFocus(state, {
         survivalState: assessment.state,
@@ -828,11 +957,54 @@ async function main() {
           cacheMiss: cached.reason,
         });
       }
-      const step = biasJob(nextJob(state.tick, state), intention.focus, state.tick);
+      const objective = chooseObjective(state, assessment, focusCandidate);
+      const step = biasJob(nextJob(state.tick, state), objective.focus, state.tick);
+      // Override the blind rotation with the committed job so the agent keeps working
+      // the same objective (site + job) until its progress goal is met.
+      step.job = objective.job;
+      step.focus = objective.focus;
+      const siteKey = siteForJob(objective.job, state.tick);
+      step.site = siteKey;
+      Object.assign(step, SITES[siteKey]);
+      log({
+        status: 'PASS',
+        action: 'objective_commit',
+        worker: who,
+        job: step.job,
+        site: siteKey,
+        focus: objective.focus,
+        reason: objective.reason,
+        committed: objective.committed,
+        progress: state.objectiveProgress || 0,
+        goal: OBJECTIVE_GOALS[step.job] || 3,
+      });
       observeMetric(METRIC.DECISION_LATENCY, Date.now() - decisionStart, {
         actor: who,
         cached: String(cached.hit),
       });
+
+      // AI World neural layer (MVP): record every real focus decision into the experience
+      // dataset. In shadow/neural mode the policy also scores (recorded, not controlling).
+      // Purely additive — never changes what the agent actually does.
+      try {
+        const { FOCUSES } = require('../lib/village/focus');
+        const ep = recordFocusDecision({
+          agentId: who,
+          observation: (observed && observed.data) || {},
+          focus: focusCandidate.focus,
+          candidates: FOCUSES.map((f) => ({
+            id: f,
+            base: f === focusCandidate.focus ? 1 : 0.5,
+            motive: 'focus',
+          })),
+          survivalState: assessment.state,
+          distWork: assessment.distanceFromWork,
+          personality: { occupation: cfg.actorName === who ? 'builder' : 'helper' },
+        });
+        if (ep) lastEpisode[who] = ep;
+      } catch (_) {
+        /* experience recording must never break the work tick */
+      }
 
       state.agentJobs = state.agentJobs || {};
       const prevJob = state.agentJobs[who] || null;
@@ -858,7 +1030,18 @@ async function main() {
       } catch (_) {}
 
       // 4. Stall detection on real progress, not on tick count.
-      state.progress += meaningfulProgress(result);
+      const tickProgress = meaningfulProgress(result);
+      state.progress += tickProgress;
+      // Accumulate progress toward the current objective's completion goal.
+      state.objectiveProgress = (state.objectiveProgress || 0) + tickProgress;
+      // Once the committed objective reaches its goal, clear it so next tick picks a fresh one.
+      if (
+        state.objective &&
+        state.objectiveProgress >= (OBJECTIVE_GOALS[state.objective.job] || 3)
+      ) {
+        state.objective = null;
+        state.objectiveProgress = 0;
+      }
       const stall = antiStall.report(who, {
         goalKey: `${who}:${intention.focus}:${step.job}:${step.site || ''}`,
         progressValue: state.progress,
@@ -875,6 +1058,15 @@ async function main() {
           reason: stall.reason,
           job: step.job,
         });
+        // Close the experience loop: a stall/abandon is a negative outcome for the last decision.
+        try {
+          recordFocusOutcome(who, lastEpisode[who], {
+            stalled: true,
+            abandonedUseful: stall.stage === 'ABANDON_GOAL',
+          });
+        } catch (_) {
+          /* best-effort */
+        }
         if (stall.stage === 'REPLAN' || stall.stage === 'ABANDON_GOAL') {
           intentions.applySignals(who, {
             noProgress: true,

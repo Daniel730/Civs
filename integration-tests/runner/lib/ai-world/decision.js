@@ -182,10 +182,61 @@ function decide(agent, observation, opts = {}) {
 }
 
 /**
- * Build the state vector + record an experience for later offline learning.
- * Never throws — a logging failure must not derail the citizen loop.
- * In `shadow`/`neural` modes the neural policy also scores (recorded, not yet controlling).
+ * Record a focus-level decision (used by village-worker's tick loop, which drives the
+ * settlement via chooseFocus rather than the full quest decide()). Same dataset schema,
+ * same safety rules. Keeps the neural layer recording every real decision without
+ * replacing chooseFocus.
+ *
+ * @param {{ agentId:string, observation:object, focus:string, candidates:Array<{id:string,base:number,motive?:string}>,
+ *   survivalState?:string, distWork?:number, personality?:object }} rec
  */
+function recordFocusDecision(rec = {}) {
+  try {
+    const { METRIC, countMetric } = require('../metrics');
+    const stateRep = encodeState(rec.observation || {}, {
+      survival: { state: rec.survivalState || 'SAFE', distanceFromWork: rec.distWork },
+    });
+    const candidates =
+      rec.candidates && rec.candidates.length
+        ? rec.candidates
+        : rec.focus
+          ? [{ id: rec.focus, base: 1, motive: 'focus' }]
+          : [];
+    const pol = policy();
+    let neuralScores = null;
+    if (POLICY_MODE !== 'deterministic') {
+      const res = pol.scoreIntents(stateRep.vec, candidates);
+      neuralScores = res.scores;
+      if (res.fellBack) countMetric(METRIC.AIWORLD_POLICY_FALLBACK, { agent: rec.agentId });
+    }
+    const episodeId = experienceStore().recordDecision({
+      agentId: rec.agentId,
+      observation: rec.observation,
+      stateRep,
+      personality: rec.personality || {},
+      candidates,
+      chosenIntent: rec.focus,
+      deterministicScores: Object.fromEntries(candidates.map((c) => [c.id, c.base])),
+      neuralScores,
+      policyMode: POLICY_MODE,
+      action: { intent: rec.focus },
+    });
+    countMetric(METRIC.AIWORLD_EXPERIENCE_RECORDED, { agent: rec.agentId, mode: POLICY_MODE });
+    if (neuralScores) {
+      const neuroTop = candidates.reduce(
+        (a, b) => (neuralScores[b.id] > neuralScores[a.id] ? b : a),
+        candidates[0]
+      );
+      if (neuroTop && neuroTop.id !== rec.focus) {
+        countMetric(METRIC.AIWORLD_POLICY_DISAGREEMENT, { agent: rec.agentId });
+      }
+    }
+    return episodeId;
+  } catch (_) {
+    /* best-effort */
+  }
+}
+
 function recordDecisionExperience(agent, observation, needScores, top, reason) {
   try {
     const { METRIC, countMetric } = require('../metrics');
@@ -243,7 +294,42 @@ function recordDecisionExperience(agent, observation, needScores, top, reason) {
   }
 }
 
+/**
+ * Attach a terminal outcome + computed reward to a previously recorded focus decision.
+ * Best-effort: a missing episodeId must never crash the work tick.
+ * @param {string} agentId
+ * @param {string} episodeId
+ * @param {object} outcome see state-rep computeReward (died, goalCompleted, stalled, ...)
+ * @param {object} [rewardWeights]
+ */
+function recordFocusOutcome(agentId, episodeId, outcome = {}, rewardWeights) {
+  if (!episodeId) return null;
+  try {
+    const { METRIC, countMetric, observeMetric } = require('../metrics');
+    const exp = experienceStore().recordOutcome(episodeId, outcome, rewardWeights);
+    if (exp && exp.outcome) {
+      const r = exp.outcome.reward;
+      countMetric(METRIC.AIWORLD_EXPERIENCE_RECORDED, { agent: agentId, mode: POLICY_MODE });
+      if (outcome.died) countMetric(METRIC.DEATH, { agent: agentId });
+      if (outcome.goalCompleted) countMetric(METRIC.AIWORLD_GOAL_COMPLETED, { agent: agentId });
+      if (outcome.stalled) countMetric(METRIC.AIWORLD_STALL, { agent: agentId });
+      if (outcome.recovered) countMetric(METRIC.AIWORLD_RECOVERY_SUCCESS, { agent: agentId });
+      if (typeof outcome.damageTaken === 'number' && outcome.damageTaken > 0) {
+        countMetric(METRIC.AIWORLD_UNNECESSARY_DAMAGE, { agent: agentId });
+      }
+      observeMetric(METRIC.AIWORLD_REWARD_PER_EPISODE, r, { agent: agentId, mode: POLICY_MODE });
+    }
+    return exp;
+  } catch (_) {
+    /* best-effort */
+    return null;
+  }
+}
+
 module.exports = {
   scoreNeeds,
   decide,
+  recordFocusDecision,
+  recordFocusOutcome,
+  recordDecisionExperience,
 };
