@@ -17,6 +17,7 @@
 
 const { SubjectDirector } = require('./subject-scoring');
 const { selectShot, shotArgs } = require('./shots');
+const { DirectorFSM, coverageState } = require('./director-fsm');
 const { METRIC, countMetric, observeMetric, gaugeMetric } = require('../metrics');
 
 const DEFAULT_SUBJECTS = Object.freeze(['Steve', 'Alex']);
@@ -55,6 +56,13 @@ class CinematicDirector {
       now: this.now,
     });
 
+    /** Explicit editorial state machine (issue #72). Deterministic — no LLM in the tick. */
+    this.fsm = new DirectorFSM({
+      camera: this.camera && this.camera.name,
+      onLog: this.onLog,
+      now: this.now,
+    });
+
     this._timer = null;
     this._positions = new Map();
     this._shotIndex = new Map();
@@ -83,6 +91,7 @@ class CinematicDirector {
   start() {
     if (this._timer) return { status: 'DEGRADED', reason: 'already_running' };
     this.status = 'HEALTHY';
+    this.fsm.transition('SEARCHING', 'director_started');
     this._timer = setInterval(() => {
       this.tick().catch((err) => {
         this.lastError = String(err && err.message ? err.message : err);
@@ -103,6 +112,7 @@ class CinematicDirector {
     if (this._timer) clearInterval(this._timer);
     this._timer = null;
     this.status = 'IDLE';
+    this.fsm.transition('IDLE', 'director_stopped');
   }
 
   /** What an agent is doing right now — drives shot choice and interest scoring. */
@@ -138,9 +148,11 @@ class CinematicDirector {
   async tick() {
     if (!this.camera || !this.camera.actor || !this.camera.actor.available) {
       this.status = 'FAILED';
+      this.fsm.transition('RECOVERING', 'camera_offline');
       return { status: 'FAILED', reason: 'camera_offline' };
     }
     this._ticks += 1;
+    if (this.fsm.is('IDLE')) this.fsm.transition('SEARCHING', 'first_tick');
     const now = this.now();
 
     // Perception: one observe per subject, with a velocity estimate for look-ahead framing.
@@ -165,8 +177,10 @@ class CinematicDirector {
     if (onlineCount === 0) {
       countMetric(METRIC.CAMERA_SUBJECT_LOSS, { camera: this.camera.name });
       this.status = 'DEGRADED';
+      this.fsm.transition('RECOVERING', 'no_subjects_online');
       return this._fallbackShot('no_subjects_online');
     }
+    if (this.fsm.is('RECOVERING')) this.fsm.transition('SEARCHING', 'subjects_back_online');
 
     // Editorial decision.
     let subject = this.currentSubject;
@@ -185,7 +199,10 @@ class CinematicDirector {
         subject = decision.subject;
         isNewSubject = true;
         this.lastSwitch = { at: now, from, to: subject, reason: decision.reason };
-        countMetric(METRIC.CAMERA_TARGET_SWITCH, { camera: this.camera.name, reason: decision.reason });
+        countMetric(METRIC.CAMERA_TARGET_SWITCH, {
+          camera: this.camera.name,
+          reason: decision.reason,
+        });
         this.onLog({
           status: 'PASS',
           action: 'camera_target_switch',
@@ -201,7 +218,10 @@ class CinematicDirector {
         isNewSubject = true;
       }
     }
-    if (!subject) return this._fallbackShot('no_subject_selected');
+    if (!subject) {
+      this.fsm.transition('SEARCHING', 'no_subject_selected');
+      return this._fallbackShot('no_subject_selected');
+    }
 
     const info = this.subjectDirector.subjects.get(subject);
     const shotElapsed = now - this.planStartedAt;
@@ -212,8 +232,19 @@ class CinematicDirector {
       (shotElapsed >= this.plan.minMs && this.plan.activity !== (info && info.activity));
 
     if (needShot) {
+      const cutReason = isNewSubject
+        ? this.lastSwitch && this.lastSwitch.at === now
+          ? this.lastSwitch.reason
+          : 'new_subject'
+        : !this.plan
+          ? 'first_shot'
+          : shotElapsed >= this.plan.maxMs
+            ? 'dwell_expired'
+            : 'activity_changed';
+      this.fsm.transition('TRANSITIONING', cutReason);
       const index = (this._shotIndex.get(subject) || 0) + (isNewSubject ? 0 : 1);
       this._shotIndex.set(subject, index);
+      const activeEvent = this.subjectDirector.activeEvent(subject);
       const plan = selectShot({
         subject,
         activity: info && info.activity,
@@ -221,12 +252,16 @@ class CinematicDirector {
         isNewSubject,
         shotIndex: index,
         previousShot: this.plan && this.plan.shot,
-        event: this.subjectDirector.activeEvent(subject),
+        event: activeEvent,
       });
       const applied = await this._applyShot(subject, plan);
       this.plan = { ...plan, activity: info && info.activity, applied: applied.status };
       this.planStartedAt = now;
       this.shotCount += 1;
+      this.fsm.transition(
+        coverageState({ event: activeEvent, activity: info && info.activity, isNewSubject }),
+        `shot:${plan.shot}`
+      );
       this.onLog({
         status: applied.status === 'PASS' ? 'PASS' : 'DEGRADED',
         action: 'camera_shot',
@@ -242,11 +277,22 @@ class CinematicDirector {
       await this._collectCamStatus();
     }
 
+    // Steady coverage: ESTABLISHING settles into FOLLOWING/OBSERVING; event states decay when
+    // their event expires.
+    if (!needShot) {
+      const steady = coverageState({
+        event: this.subjectDirector.activeEvent(subject),
+        activity: info && info.activity,
+      });
+      if (this.fsm.state !== steady) this.fsm.transition(steady, 'coverage_settled');
+    }
+
     this.status = 'HEALTHY';
     const pos = this._positions.get(subject);
     if (pos) gaugeMetric(METRIC.DISTANCE_TO_GOAL, 0, { camera: this.camera.name, subject });
     return {
       status: this.status,
+      state: this.fsm.state,
       subject,
       shot: this.plan && this.plan.shot,
       position: pos ? { x: pos.x, y: pos.y, z: pos.z } : null,
@@ -272,8 +318,10 @@ class CinematicDirector {
           this.camera.setSubject(subject);
         }
         const d = (res && res.data) || {};
-        if (d.occluded) countMetric(METRIC.CAMERA_OCCLUSION, { camera: this.camera.name, shot: plan.shot });
-        if (d.repositioned) countMetric(METRIC.CAMERA_REPOSITION, { camera: this.camera.name, shot: plan.shot });
+        if (d.occluded)
+          countMetric(METRIC.CAMERA_OCCLUSION, { camera: this.camera.name, shot: plan.shot });
+        if (d.repositioned)
+          countMetric(METRIC.CAMERA_REPOSITION, { camera: this.camera.name, shot: plan.shot });
         if (res && !res.success && res.reason === 'subject_offline') {
           countMetric(METRIC.CAMERA_SUBJECT_LOSS, { camera: this.camera.name });
         }
@@ -309,7 +357,8 @@ class CinematicDirector {
     if (repDelta) countMetric(METRIC.CAMERA_REPOSITION, { camera: this.camera.name }, repDelta);
     if (lostDelta) countMetric(METRIC.CAMERA_SUBJECT_LOSS, { camera: this.camera.name }, lostDelta);
     // A server-side hard cut is a teleport: count it rather than pretend the rig glided.
-    if (cutDelta) countMetric(METRIC.CAMERA_TELEPORT, { camera: this.camera.name, path: 'shot_cut' }, cutDelta);
+    if (cutDelta)
+      countMetric(METRIC.CAMERA_TELEPORT, { camera: this.camera.name, path: 'shot_cut' }, cutDelta);
     this.lastCamStatus = d;
     return d;
   }
@@ -356,6 +405,7 @@ class CinematicDirector {
   snapshot() {
     return {
       status: this.status,
+      fsm: this.fsm.snapshot(),
       currentSubject: this.currentSubject,
       shot: this.plan && this.plan.shot,
       shotCount: this.shotCount,

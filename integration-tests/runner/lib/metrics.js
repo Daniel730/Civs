@@ -31,6 +31,7 @@ const METRIC = Object.freeze({
   CAMERA_REPOSITION: 'camera_reposition_count',
   CAMERA_TELEPORT: 'camera_teleport_count',
   CAMERA_TARGET_SWITCH: 'camera_target_switch_count',
+  CAMERA_FSM_TRANSITION: 'camera_fsm_transition_count',
 });
 
 const HISTOGRAMS = Object.freeze([
@@ -52,6 +53,7 @@ const COUNTERS = Object.freeze([
   METRIC.CAMERA_REPOSITION,
   METRIC.CAMERA_TELEPORT,
   METRIC.CAMERA_TARGET_SWITCH,
+  METRIC.CAMERA_FSM_TRANSITION,
 ]);
 
 const GAUGES = Object.freeze([METRIC.DISTANCE_TO_GOAL]);

@@ -19,7 +19,7 @@
     "village-worker": "node scripts/village-worker.js",
     "test:village-unit": "node --test test/village-jobs.test.js",
     "test:observation-unit": "node --test test/observation-director.test.js test/cinematic.test.js",
-    "test:nightshift-unit": "node --test test/cinematic.test.js test/metrics.test.js test/motion.test.js test/survival.test.js test/focus.test.js",
+    "test:nightshift-unit": "node --test test/cinematic.test.js test/director-fsm.test.js test/metrics.test.js test/motion.test.js test/survival.test.js test/focus.test.js",
     "observe-e2e": "node scripts/observe-e2e.js",
     "test:ai-world-unit": "node --test test/ai-world.test.js",
     "test:construction-unit": "node --test test/construction-quality.test.js",
