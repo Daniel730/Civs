@@ -63,6 +63,15 @@ function loadState() {
       s.stockpileV2 = true;
       s.failCounts = {};
     }
+    // If barracks completed, keep inn blocked (Civs exclusive:inn/barracks)
+    if (s.completedPlaces?.barracks) {
+      s.blocked = s.blocked || {};
+      s.blocked.inn = true;
+    }
+    if (s.completedPlaces?.inn) {
+      s.blocked = s.blocked || {};
+      s.blocked.barracks = true;
+    }
     return s;
   } catch (_) {
     return {

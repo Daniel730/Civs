@@ -8,8 +8,8 @@ const SITES = Object.freeze({
   quarry: { dx: -14, dz: 14, label: 'cobble_quarry' },
   smithy: { dx: -14, dz: -10, label: 'smithy' },
   farm: { dx: 0, dz: -14, label: 'farm_pad' },
-  inn: { dx: 14, dz: 14, label: 'inn_pad' },
-  barracks: { dx: 14, dz: -10, label: 'barracks_pad' },
+  inn: { dx: 24, dz: 24, label: 'inn_pad' },
+  barracks: { dx: 24, dz: -18, label: 'barracks_pad' },
   shack: { dx: 10, dz: 0, label: 'shack_pad' },
 });
 
