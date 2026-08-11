@@ -1,0 +1,12 @@
+{
+  "verdict": "FAIL",
+  "reason": "pause_trap",
+  "vision": {
+    "kind": "pause",
+    "confidence": 0.98,
+    "safe": false,
+    "path": "reports\\screenshots\\overhead_world_5_esc_recover_120738_pause.png",
+    "source_f2": "C:\\Users\\Danie\\AppData\\Roaming\\.minecraft\\screenshots\\2026-07-17_13.07.37.png",
+    "notes": "button_stack tr=31 btn_frac=0.24 full_mean=104.4 detail=49.5 | f2=2026-07-17_13.07.37.png"
+  }
+}

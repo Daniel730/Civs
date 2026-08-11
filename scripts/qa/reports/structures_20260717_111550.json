@@ -1,0 +1,350 @@
+{
+  "marker": "QA_STRUCT_111423",
+  "timestamp": "2026-07-17T11:15:50.456509+00:00",
+  "batch_requested": [
+    "gravel_quarry"
+  ],
+  "missing_yaml": [],
+  "inventory_before": {
+    "player": "Smokeshow",
+    "selected_slot": 0,
+    "hand": {
+      "slot": 0,
+      "item_id": "minecraft:chest",
+      "count": 1,
+      "civs_key": "gravel_quarry",
+      "custom_name": "gravel_quarry"
+    },
+    "hotbar": [
+      {
+        "slot": 0,
+        "item_id": "minecraft:chest",
+        "count": 1,
+        "civs_key": "gravel_quarry",
+        "custom_name": "gravel_quarry"
+      }
+    ],
+    "inventory": [
+      {
+        "slot": 0,
+        "item_id": "minecraft:chest",
+        "count": 1,
+        "civs_key": "gravel_quarry",
+        "custom_name": "gravel_quarry"
+      }
+    ],
+    "raw_selected": "smokeshow has the following entity data: {id: \"minecraft:chest\", count: 1, components: {\"minecraft:custom_name\": \"gravel_quarry\", \"minecraft:custom_data...",
+    "error": null
+  },
+  "structures": [
+    {
+      "key": "gravel_quarry",
+      "name": "gravel_quarry",
+      "category": "raw",
+      "static_ok": true,
+      "static_issues": [],
+      "rcon_pad_ok": true,
+      "build_ok": true,
+      "place_ok": false,
+      "region_registered": false,
+      "center": [
+        2108,
+        81,
+        2108
+      ],
+      "held_before": "slot=0 civs=gravel_quarry id=minecraft:chest",
+      "notes": "manual build-reqs | center place missed (no chest)",
+      "chat_hints": []
+    }
+  ],
+  "place_details": {
+    "wand_preflight": {
+      "ok": true,
+      "command": "//wand",
+      "dry_run": false,
+      "focused": true,
+      "menus_closed": true,
+      "error": null,
+      "close_path": "pause_dismiss_only"
+    },
+    "gravel_quarry_build": {
+      "ok": true,
+      "we_cmds": [
+        {
+          "cmd": "//wand",
+          "ok": true,
+          "err": null
+        },
+        {
+          "cmd": "//pos1 2105,78,2105",
+          "ok": true,
+          "err": null
+        },
+        {
+          "cmd": "//pos2 2111,84,2111",
+          "ok": true,
+          "err": null
+        },
+        {
+          "cmd": "//set gravel",
+          "ok": true,
+          "err": null
+        },
+        {
+          "cmd": "//pos1 2108,81,2108",
+          "ok": true,
+          "err": null
+        },
+        {
+          "cmd": "//pos2 2108,81,2108",
+          "ok": true,
+          "err": null
+        },
+        {
+          "cmd": "//set air",
+          "ok": true,
+          "err": null
+        }
+      ],
+      "setblocks": 28,
+      "error": null,
+      "dominant": "gravel",
+      "material_counts": {
+        "gravel": 24,
+        "furnace": 2,
+        "chest": 2
+      },
+      "we_ok": true
+    },
+    "gravel_quarry_place": {
+      "ok": false,
+      "civs_key": "gravel_quarry",
+      "center": [
+        2108,
+        81,
+        2108
+      ],
+      "item": {
+        "ok": true,
+        "source": "already_hotbar",
+        "slot": 0
+      },
+      "hygiene": {
+        "ok": true,
+        "civs_key": "gravel_quarry",
+        "slot": 0,
+        "cleared": [],
+        "dump_preview": "smokeshow has the following entity data: [{Slot: 0b, id: \"minecraft:chest\", count: 1, components: {\"minecraft:custom_name\":...",
+        "key_select": {
+          "ok": true,
+          "slot": 0,
+          "key": "1",
+          "keypress": {
+            "ok": true,
+            "slot": 0,
+            "key": "1"
+          },
+          "selected_slot": 0,
+          "hand_check": "smokeshow has the following entity data: {PublicBukkitValues: {\"civs:civs\": \"gravel_quarry\"}}",
+          "error": null,
+          "keypress2": {
+            "ok": true,
+            "slot": 0,
+            "key": "1"
+          },
+          "selected_slot_raw": "smokeshow has the following entity data: 0",
+          "hand_ok": true,
+          "slot_ok": true
+        },
+        "hand_ok": true,
+        "error": null,
+        "keys_before": [
+          "gravel_quarry"
+        ],
+        "selected_before": 0,
+        "ensure": {
+          "ok": true,
+          "source": "already_hotbar",
+          "slot": 0
+        },
+        "hand_check": "smokeshow has the following entity data: {PublicBukkitValues: {\"civs:civs\": \"gravel_quarry\"}}"
+      },
+      "vision": [
+        {
+          "kind": "pause",
+          "confidence": 0.73,
+          "safe": false,
+          "path": "C:\\Users\\Danie\\Downloads\\Civs-1.11.6\\Civs-1.11.6\\scripts\\qa\\reports\\screenshots\\gravel_quarry_daniel_south_floor_pre_after_pause_111500_pause.png",
+          "notes": "transitions=6 btn_frac=0.22 full_mean=39.8"
+        },
+        {
+          "kind": "pause",
+          "confidence": 0.65,
+          "safe": false,
+          "path": "C:\\Users\\Danie\\Downloads\\Civs-1.11.6\\Civs-1.11.6\\scripts\\qa\\reports\\screenshots\\gravel_quarry_daniel_south_floor_retry_after_pause_111505_pause.png",
+          "notes": "dark_overlay full_mean=20.8 mean=10.3"
+        },
+        {
+          "kind": "pause",
+          "confidence": 0.65,
+          "safe": false,
+          "path": "C:\\Users\\Danie\\Downloads\\Civs-1.11.6\\Civs-1.11.6\\scripts\\qa\\reports\\screenshots\\gravel_quarry_south_closer_floor_pre_after_pause_111512_pause.png",
+          "notes": "dark_overlay full_mean=18.4 mean=11.0"
+        },
+        {
+          "kind": "pause",
+          "confidence": 0.67,
+          "safe": false,
+          "path": "C:\\Users\\Danie\\Downloads\\Civs-1.11.6\\Civs-1.11.6\\scripts\\qa\\reports\\screenshots\\gravel_quarry_south_closer_floor_retry_after_pause_111517_pause.png",
+          "notes": "transitions=4 btn_frac=0.16 full_mean=23.9"
+        },
+        {
+          "kind": "pause",
+          "confidence": 0.67,
+          "safe": false,
+          "path": "C:\\Users\\Danie\\Downloads\\Civs-1.11.6\\Civs-1.11.6\\scripts\\qa\\reports\\screenshots\\gravel_quarry_south_steeper_pre_after_pause_111519_pause.png",
+          "notes": "transitions=4 btn_frac=0.16 full_mean=24.1"
+        },
+        {
+          "kind": "pause",
+          "confidence": 0.65,
+          "safe": false,
+          "path": "C:\\Users\\Danie\\Downloads\\Civs-1.11.6\\Civs-1.11.6\\scripts\\qa\\reports\\screenshots\\gravel_quarry_south_steeper_retry_after_pause_111524_pause.png",
+          "notes": "dark_overlay full_mean=18.3 mean=10.3"
+        },
+        {
+          "kind": "pause",
+          "confidence": 0.65,
+          "safe": false,
+          "path": "C:\\Users\\Danie\\Downloads\\Civs-1.11.6\\Civs-1.11.6\\scripts\\qa\\reports\\screenshots\\gravel_quarry_north_floor_pre_after_pause_111527_pause.png",
+          "notes": "dark_overlay full_mean=19.2 mean=10.5"
+        },
+        {
+          "kind": "pause",
+          "confidence": 0.67,
+          "safe": false,
+          "path": "C:\\Users\\Danie\\Downloads\\Civs-1.11.6\\Civs-1.11.6\\scripts\\qa\\reports\\screenshots\\gravel_quarry_north_floor_retry_after_pause_111532_pause.png",
+          "notes": "transitions=4 btn_frac=0.16 full_mean=24.9"
+        },
+        {
+          "kind": "pause",
+          "confidence": 0.67,
+          "safe": false,
+          "path": "C:\\Users\\Danie\\Downloads\\Civs-1.11.6\\Civs-1.11.6\\scripts\\qa\\reports\\screenshots\\gravel_quarry_west_floor_pre_after_pause_111534_pause.png",
+          "notes": "transitions=4 btn_frac=0.16 full_mean=27.0"
+        },
+        {
+          "kind": "pause",
+          "confidence": 0.65,
+          "safe": false,
+          "path": "C:\\Users\\Danie\\Downloads\\Civs-1.11.6\\Civs-1.11.6\\scripts\\qa\\reports\\screenshots\\gravel_quarry_west_floor_retry_after_pause_111539_pause.png",
+          "notes": "dark_overlay full_mean=27.6 mean=15.2"
+        },
+        {
+          "kind": "pause",
+          "confidence": 0.65,
+          "safe": false,
+          "path": "C:\\Users\\Danie\\Downloads\\Civs-1.11.6\\Civs-1.11.6\\scripts\\qa\\reports\\screenshots\\gravel_quarry_east_floor_pre_after_pause_111541_pause.png",
+          "notes": "dark_overlay full_mean=28.7 mean=16.7"
+        },
+        {
+          "kind": "pause",
+          "confidence": 0.73,
+          "safe": false,
+          "path": "C:\\Users\\Danie\\Downloads\\Civs-1.11.6\\Civs-1.11.6\\scripts\\qa\\reports\\screenshots\\gravel_quarry_east_floor_retry_after_pause_111546_pause.png",
+          "notes": "transitions=6 btn_frac=0.22 full_mean=37.9"
+        }
+      ],
+      "right_click": null,
+      "placement_menu": null,
+      "attempts": [
+        {
+          "pose": "daniel_south_floor",
+          "skipped": "gui_open",
+          "vision": {
+            "kind": "pause",
+            "confidence": 0.65,
+            "safe": false,
+            "path": "C:\\Users\\Danie\\Downloads\\Civs-1.11.6\\Civs-1.11.6\\scripts\\qa\\reports\\screenshots\\gravel_quarry_daniel_south_floor_retry_after_pause_111505_pause.png",
+            "notes": "dark_overlay full_mean=20.8 mean=10.3"
+          }
+        },
+        {
+          "pose": "south_closer_floor",
+          "skipped": "gui_open",
+          "vision": {
+            "kind": "pause",
+            "confidence": 0.67,
+            "safe": false,
+            "path": "C:\\Users\\Danie\\Downloads\\Civs-1.11.6\\Civs-1.11.6\\scripts\\qa\\reports\\screenshots\\gravel_quarry_south_closer_floor_retry_after_pause_111517_pause.png",
+            "notes": "transitions=4 btn_frac=0.16 full_mean=23.9"
+          }
+        },
+        {
+          "pose": "south_steeper",
+          "skipped": "gui_open",
+          "vision": {
+            "kind": "pause",
+            "confidence": 0.65,
+            "safe": false,
+            "path": "C:\\Users\\Danie\\Downloads\\Civs-1.11.6\\Civs-1.11.6\\scripts\\qa\\reports\\screenshots\\gravel_quarry_south_steeper_retry_after_pause_111524_pause.png",
+            "notes": "dark_overlay full_mean=18.3 mean=10.3"
+          }
+        },
+        {
+          "pose": "north_floor",
+          "skipped": "gui_open",
+          "vision": {
+            "kind": "pause",
+            "confidence": 0.67,
+            "safe": false,
+            "path": "C:\\Users\\Danie\\Downloads\\Civs-1.11.6\\Civs-1.11.6\\scripts\\qa\\reports\\screenshots\\gravel_quarry_north_floor_retry_after_pause_111532_pause.png",
+            "notes": "transitions=4 btn_frac=0.16 full_mean=24.9"
+          }
+        },
+        {
+          "pose": "west_floor",
+          "skipped": "gui_open",
+          "vision": {
+            "kind": "pause",
+            "confidence": 0.65,
+            "safe": false,
+            "path": "C:\\Users\\Danie\\Downloads\\Civs-1.11.6\\Civs-1.11.6\\scripts\\qa\\reports\\screenshots\\gravel_quarry_west_floor_retry_after_pause_111539_pause.png",
+            "notes": "dark_overlay full_mean=27.6 mean=15.2"
+          }
+        },
+        {
+          "pose": "east_floor",
+          "skipped": "gui_open",
+          "vision": {
+            "kind": "pause",
+            "confidence": 0.73,
+            "safe": false,
+            "path": "C:\\Users\\Danie\\Downloads\\Civs-1.11.6\\Civs-1.11.6\\scripts\\qa\\reports\\screenshots\\gravel_quarry_east_floor_retry_after_pause_111546_pause.png",
+            "notes": "transitions=6 btn_frac=0.22 full_mean=37.9"
+          }
+        }
+      ],
+      "error": "center place missed after chest-safe retries"
+    }
+  },
+  "rcon_tail": [
+    "",
+    "Nothing changed. The player already is an operator",
+    "",
+    "Teleported smokeshow to 2100.500000, 81.000000, 2100.500000",
+    "Set minecraft:overworld to time marker minecraft:day",
+    "Set the weather to clear",
+    "Successfully filled 152 block(s)",
+    "Too many blocks in the specified area (maximum 32768, but specified 50000)",
+    "INV:gravel_quarry"
+  ],
+  "log_errors": [],
+  "passed_static_pad": 1,
+  "built": 1,
+  "activated": 0,
+  "total": 1,
+  "passed": 0,
+  "pipeline": "For each type: parse build-reqs \u2192 WE/fill footprint \u2192 put Civs item in hand \u2192 right-click place at EXACT center \u2192 verify plugins/Civs/regions/*.yml",
+  "item_acquisition": "Uses inventory civs:civs key if present; else item replace with PDC (QA-only, not /cv give). Shop/tutorial still preferred for realism."
+}

@@ -1,0 +1,162 @@
+{
+  "marker": "QA_STRUCT_100217",
+  "timestamp": "2026-07-17T10:02:26.172580+00:00",
+  "batch_requested": [
+    "wheat_farm",
+    "pumpkin_farm",
+    "bank",
+    "smithy",
+    "house",
+    "shack",
+    "coal_mine",
+    "gravel_quarry",
+    "bakery",
+    "catapult",
+    "hospital",
+    "hamlet"
+  ],
+  "missing_yaml": [],
+  "structures": [
+    {
+      "key": "wheat_farm",
+      "name": "Wheat_Farm",
+      "category": "farm",
+      "static_ok": true,
+      "static_issues": [],
+      "rcon_pad_ok": true,
+      "notes": "manual build-reqs"
+    },
+    {
+      "key": "pumpkin_farm",
+      "name": "Pumpkin_Farm",
+      "category": "farm",
+      "static_ok": true,
+      "static_issues": [],
+      "rcon_pad_ok": true,
+      "notes": "manual build-reqs"
+    },
+    {
+      "key": "bank",
+      "name": "Bank",
+      "category": "utility",
+      "static_ok": true,
+      "static_issues": [],
+      "rcon_pad_ok": true,
+      "notes": "manual build-reqs"
+    },
+    {
+      "key": "smithy",
+      "name": "Smithy",
+      "category": "utility",
+      "static_ok": true,
+      "static_issues": [],
+      "rcon_pad_ok": true,
+      "notes": "manual build-reqs"
+    },
+    {
+      "key": "house",
+      "name": "House",
+      "category": "housing",
+      "static_ok": true,
+      "static_issues": [],
+      "rcon_pad_ok": true,
+      "notes": "instant-build"
+    },
+    {
+      "key": "shack",
+      "name": "Shack",
+      "category": "housing",
+      "static_ok": true,
+      "static_issues": [],
+      "rcon_pad_ok": true,
+      "notes": "instant-build"
+    },
+    {
+      "key": "coal_mine",
+      "name": "Coal_Mine",
+      "category": "mine",
+      "static_ok": true,
+      "static_issues": [],
+      "rcon_pad_ok": true,
+      "notes": "manual build-reqs"
+    },
+    {
+      "key": "gravel_quarry",
+      "name": "gravel_quarry",
+      "category": "raw",
+      "static_ok": true,
+      "static_issues": [],
+      "rcon_pad_ok": true,
+      "notes": "manual build-reqs"
+    },
+    {
+      "key": "bakery",
+      "name": "Bakery",
+      "category": "factory",
+      "static_ok": true,
+      "static_issues": [],
+      "rcon_pad_ok": true,
+      "notes": "manual build-reqs"
+    },
+    {
+      "key": "catapult",
+      "name": "Catapult",
+      "category": "offense",
+      "static_ok": true,
+      "static_issues": [],
+      "rcon_pad_ok": true,
+      "notes": "manual build-reqs"
+    },
+    {
+      "key": "hospital",
+      "name": "Hospital",
+      "category": "defense",
+      "static_ok": true,
+      "static_issues": [],
+      "rcon_pad_ok": true,
+      "notes": "manual build-reqs"
+    },
+    {
+      "key": "hamlet",
+      "name": "Hamlet",
+      "category": "superregion",
+      "static_ok": true,
+      "static_issues": [],
+      "rcon_pad_ok": true,
+      "notes": "manual build-reqs"
+    }
+  ],
+  "pad_results": {
+    "wheat_farm": true,
+    "pumpkin_farm": true,
+    "bank": true,
+    "smithy": true,
+    "house": true,
+    "shack": true,
+    "coal_mine": true,
+    "gravel_quarry": true,
+    "bakery": true,
+    "catapult": true,
+    "hospital": true,
+    "hamlet": true
+  },
+  "rcon_tail": [
+    "Set minecraft:overworld to time marker minecraft:day",
+    "Set the weather to clear",
+    "Successfully filled 993 block(s)",
+    "Successfully filled 6 block(s)",
+    "",
+    "",
+    "",
+    "\u00a7a[Civs] reloaded"
+  ],
+  "log_errors": [
+    "[11:00:00] [Server thread/INFO]: [RPGServer] [error-reporting] Ativo \u00e2\u20ac\u201d dedupe 15 min, Local=true, GitHub=false, Webhook=false",
+    "[11:02:19] [Server thread/INFO]: [RPGServer] [error-reporting] Ativo \u00e2\u20ac\u201d dedupe 15 min, Local=true, GitHub=false, Webhook=false",
+    "[11:02:23] [Server thread/INFO]: [Not Secure] [Rcon] QA_PAD wheat_farm at 2102 80 2102 radius=4",
+    "[11:02:23] [Server thread/INFO]: [Not Secure] [Rcon] QA_PAD pumpkin_farm at 2112 80 2102 radius=5"
+  ],
+  "passed": 12,
+  "total": 12,
+  "item_acquisition": "No /cv give command \u2014 use /cv menu \u2192 Shop (TestEconomy balance 1M) or cv advancetut for town/tutorial items. Window bot required for placement."
+}

@@ -1,0 +1,263 @@
+{
+  "marker": "QA_MENU_103655",
+  "timestamp": "2026-07-17T10:38:14.341748+00:00",
+  "gui_scale": 3,
+  "gui_offset": [
+    0,
+    0
+  ],
+  "steps": [
+    {
+      "name": "esc_close",
+      "action": "ensure_menus_closed",
+      "ok": true,
+      "detail": "path=esc_then_dismiss esc=1",
+      "error": null,
+      "xy": null
+    },
+    {
+      "name": "wand_after_reset",
+      "action": "chat",
+      "ok": true,
+      "detail": "must not open Achievements",
+      "error": null,
+      "xy": null
+    },
+    {
+      "name": "open_cv_menu",
+      "action": "chat",
+      "ok": true,
+      "detail": "/cv menu",
+      "error": null,
+      "xy": null
+    },
+    {
+      "name": "reopen_before_shop",
+      "action": "chat",
+      "ok": true,
+      "detail": "/cv menu",
+      "error": null,
+      "xy": null
+    },
+    {
+      "name": "main_click_shop",
+      "action": "slot:13",
+      "ok": true,
+      "detail": "button=shop",
+      "error": null,
+      "xy": [
+        2883,
+        402
+      ]
+    },
+    {
+      "name": "reopen_before_blueprints",
+      "action": "chat",
+      "ok": true,
+      "detail": "/cv menu",
+      "error": null,
+      "xy": null
+    },
+    {
+      "name": "main_click_blueprints",
+      "action": "slot:12",
+      "ok": true,
+      "detail": "button=blueprints",
+      "error": null,
+      "xy": [
+        2829,
+        402
+      ]
+    },
+    {
+      "name": "reopen_before_towns",
+      "action": "chat",
+      "ok": true,
+      "detail": "/cv menu",
+      "error": null,
+      "xy": null
+    },
+    {
+      "name": "main_click_towns",
+      "action": "slot:10",
+      "ok": true,
+      "detail": "button=towns",
+      "error": null,
+      "xy": [
+        2721,
+        402
+      ]
+    },
+    {
+      "name": "reopen_before_auction",
+      "action": "chat",
+      "ok": true,
+      "detail": "/cv menu",
+      "error": null,
+      "xy": null
+    },
+    {
+      "name": "main_click_auction",
+      "action": "slot:14",
+      "ok": true,
+      "detail": "button=auction",
+      "error": null,
+      "xy": [
+        2937,
+        402
+      ]
+    },
+    {
+      "name": "reopen_before_language",
+      "action": "chat",
+      "ok": true,
+      "detail": "/cv menu",
+      "error": null,
+      "xy": null
+    },
+    {
+      "name": "main_click_language",
+      "action": "slot:26",
+      "ok": true,
+      "detail": "button=language",
+      "error": null,
+      "xy": [
+        3099,
+        456
+      ]
+    },
+    {
+      "name": "esc_back_then_menu",
+      "action": "chat",
+      "ok": true,
+      "detail": "shop\u2192Esc\u2192/cv menu",
+      "error": null,
+      "xy": null
+    },
+    {
+      "name": "wand_after_menus",
+      "action": "chat",
+      "ok": true,
+      "detail": "wand must still work",
+      "error": null,
+      "xy": null
+    },
+    {
+      "name": "open_rpg_hub",
+      "action": "chat",
+      "ok": true,
+      "detail": "/rpg hub",
+      "error": null,
+      "xy": null
+    },
+    {
+      "name": "hub_civs_tab",
+      "action": "slot:2",
+      "ok": true,
+      "detail": "",
+      "error": null,
+      "xy": [
+        2775,
+        264
+      ]
+    },
+    {
+      "name": "hub_magias",
+      "action": "slot:21",
+      "ok": true,
+      "detail": "expect Civs class menu",
+      "error": null,
+      "xy": [
+        2829,
+        372
+      ]
+    },
+    {
+      "name": "open_rpg_hub_2",
+      "action": "chat",
+      "ok": true,
+      "detail": "/rpg hub",
+      "error": null,
+      "xy": null
+    },
+    {
+      "name": "hub_combate",
+      "action": "slot:25",
+      "ok": true,
+      "detail": "expect class-list",
+      "error": null,
+      "xy": [
+        3045,
+        372
+      ]
+    },
+    {
+      "name": "class_list_first",
+      "action": "slot:9",
+      "ok": true,
+      "detail": "open/switch class",
+      "error": null,
+      "xy": [
+        2667,
+        318
+      ]
+    },
+    {
+      "name": "wand_final",
+      "action": "chat",
+      "ok": true,
+      "detail": "//wand",
+      "error": null,
+      "xy": null
+    },
+    {
+      "name": "final_esc",
+      "action": "ensure_menus_closed",
+      "ok": true,
+      "detail": "clean state",
+      "error": null,
+      "xy": null
+    }
+  ],
+  "passed": 23,
+  "total": 23,
+  "failed": [],
+  "window_skipped": false,
+  "log_errors": [
+    "[11:03:31] [Server thread/INFO]: [RPGServer] ChestShop ausente \u00e2\u20ac\u201d objetivos shop_* inativos.",
+    "[11:03:31] [Server thread/INFO]: [RPGServer] [error-reporting] Ativo \u00e2\u20ac\u201d dedupe 15 min, Local=true, GitHub=false, Webhook=false",
+    "[11:03:34] [Server thread/INFO]: smokeshow issued server command: /cv menu",
+    "[11:17:01] [Server thread/INFO]: [Not Secure] [Rcon] QA_MENU_101701 menu GUI QA",
+    "[11:17:15] [Server thread/INFO]: smokeshow issued server command: /cv menu",
+    "[11:17:22] [Server thread/INFO]: smokeshow issued server command: /cv menu",
+    "[11:17:28] [Server thread/INFO]: smokeshow issued server command: /cv menu",
+    "[11:17:34] [Server thread/INFO]: smokeshow issued server command: /cv menu",
+    "[11:17:41] [Server thread/INFO]: smokeshow issued server command: /cv menu",
+    "[11:17:47] [Server thread/INFO]: smokeshow issued server command: /cv menu",
+    "[11:18:00] [Server thread/INFO]: smokeshow issued server command: /rpg hub",
+    "[11:20:54] [Server thread/INFO]: smokeshow issued server command: /cv menu",
+    "[11:21:28] [Server thread/INFO]: [Not Secure] [Rcon] QA_MENU_102128 menu GUI QA",
+    "[11:21:32] [Server thread/INFO]: smokeshow issued server command: /cv menu",
+    "[11:21:36] [Server thread/INFO]: smokeshow issued server command: /cv menu",
+    "[11:21:49] [Server thread/INFO]: smokeshow issued server command: /cv menu",
+    "[11:22:02] [Server thread/INFO]: smokeshow issued server command: /cv menu",
+    "[11:22:20] [Server thread/INFO]: smokeshow issued server command: /rpg hub",
+    "[11:22:29] [Server thread/INFO]: smokeshow issued server command: /rpg hub",
+    "[11:36:55] [Server thread/INFO]: [Not Secure] [Rcon] QA_MENU_103655 menu GUI QA",
+    "[11:37:01] [Server thread/INFO]: smokeshow issued server command: /cv menu",
+    "[11:37:05] [Server thread/INFO]: smokeshow issued server command: /cv menu",
+    "[11:37:12] [Server thread/INFO]: smokeshow issued server command: /cv menu",
+    "[11:37:18] [Server thread/INFO]: smokeshow issued server command: /cv menu",
+    "[11:37:25] [Server thread/INFO]: smokeshow issued server command: /cv menu",
+    "[11:37:31] [Server thread/INFO]: smokeshow issued server command: /cv menu",
+    "[11:37:38] [Server thread/INFO]: smokeshow issued server command: /cv menu",
+    "[11:37:44] [Server thread/INFO]: smokeshow issued server command: /cv menu",
+    "[11:37:51] [Server thread/INFO]: smokeshow issued server command: /rpg hub",
+    "[11:38:00] [Server thread/INFO]: smokeshow issued server command: /rpg hub"
+  ],
+  "calibration_hint": "If clicks miss icons, set window_bot.gui_scale (1\u20134) and gui_offset_x/y in config.yaml. Slot math assumes centered vanilla chest GUI.",
+  "notes": [
+    "Chat commands fail while any inventory/Civs/RPG menu is open \u2014 Esc before T.",
+    "Main menu buttons from Civs_servidor/menus/main.yml; hub Magias=slot21, Combate=slot25."
+  ]
+}

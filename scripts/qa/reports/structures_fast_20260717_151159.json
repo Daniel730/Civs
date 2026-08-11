@@ -1,0 +1,159 @@
+{
+  "marker": "QA_FAST_151145",
+  "mode": "fast",
+  "timestamp": "2026-07-17T15:11:59.239488+00:00",
+  "wall_clock_s": 13.9,
+  "batch": [
+    "arrow_trap",
+    "potato_farm",
+    "concrete_factory"
+  ],
+  "missing_yaml": [],
+  "town": {
+    "ok": true,
+    "hub": [
+      3000,
+      81,
+      2600
+    ],
+    "town_name": "QATown2",
+    "skipped": "reuse QATown2.yml"
+  },
+  "results": [
+    {
+      "key": "arrow_trap",
+      "category": "defense",
+      "center": [
+        3016,
+        81,
+        2623
+      ],
+      "build_ok": true,
+      "activated": true,
+      "io_ok": null,
+      "io_detail": "SKIP: no item outputs in upkeep",
+      "error": null,
+      "elapsed_s": 0.2,
+      "elapsed_ms": 200,
+      "place_ms": 7,
+      "io_ms": 0,
+      "notes": "io=SKIP(no item outputs in upkeep)"
+    },
+    {
+      "key": "potato_farm",
+      "category": "farm",
+      "center": [
+        3026,
+        81,
+        2598
+      ],
+      "build_ok": true,
+      "activated": true,
+      "io_ok": null,
+      "io_detail": "SKIP period=300s",
+      "error": null,
+      "elapsed_s": 0.14,
+      "elapsed_ms": 140,
+      "place_ms": 8,
+      "io_ms": 0,
+      "notes": "io=SKIP(long period)"
+    },
+    {
+      "key": "concrete_factory",
+      "category": "factory",
+      "center": [
+        3030,
+        81,
+        2630
+      ],
+      "build_ok": true,
+      "activated": true,
+      "io_ok": false,
+      "io_detail": "inserted=['reagent:sandx64', 'reagent:gravelx64', 'reagent:stone_pickaxex1', 'reagent:cauldronx16'] gained=[] poll=12.22s",
+      "error": null,
+      "elapsed_s": 12.41,
+      "elapsed_ms": 12410,
+      "place_ms": 8,
+      "io_ms": 12263,
+      "notes": "io=FAIL(no output after poll=12.22s; inserted=['reagent:sandx64', 'reagent:gravelx64', 'reagent:stone_pickaxex1', 'reagent:cauldronx16']; expected=[{'mat': 'white_concrete', 'qty': 1}])"
+    }
+  ],
+  "activated": 3,
+  "attempted": 3,
+  "built": 3,
+  "io_pass": 0,
+  "io_fail": 1,
+  "io_skip": 2,
+  "place_details": {
+    "arrow_trap_build": {
+      "ok": true,
+      "setblocks": 9
+    },
+    "arrow_trap_placements": 9,
+    "potato_farm_build": {
+      "ok": true,
+      "setblocks": 42
+    },
+    "potato_farm_placements": 42,
+    "concrete_factory_build": {
+      "ok": true,
+      "setblocks": 101
+    },
+    "concrete_factory_placements": 101,
+    "arrow_trap_give": "\u00a7a[Civs] Gave 1x arrow_trap to smokeshow",
+    "arrow_trap_place": "\u00a7a[Civs] placeregion OK arrow_trap @ 3016,81,2623",
+    "arrow_trap_io": {
+      "ok": false,
+      "skipped": true,
+      "key": "arrow_trap",
+      "period_s": 0,
+      "error": "no item outputs in upkeep"
+    },
+    "potato_farm_give": "\u00a7a[Civs] Gave 1x potato_farm to smokeshow",
+    "potato_farm_place": "\u00a7a[Civs] placeregion OK potato_farm @ 3026,81,2598",
+    "concrete_factory_give": "\u00a7a[Civs] Gave 1x concrete_factory to smokeshow",
+    "concrete_factory_place": "\u00a7a[Civs] placeregion OK concrete_factory @ 3030,81,2630",
+    "concrete_factory_io": {
+      "ok": false,
+      "skipped": false,
+      "key": "concrete_factory",
+      "period_s": 15,
+      "yaml_upkeep": {
+        "tools": [],
+        "reagents": [
+          "sand",
+          "gravel",
+          "stone_pickaxe",
+          "cauldron"
+        ],
+        "inputs": [],
+        "outputs": [
+          {
+            "mat": "white_concrete",
+            "qty": 1
+          }
+        ],
+        "period_s": 15
+      },
+      "inserted": [
+        "reagent:sandx64",
+        "reagent:gravelx64",
+        "reagent:stone_pickaxex1",
+        "reagent:cauldronx16"
+      ],
+      "wait_s": 12.22,
+      "polls": 47,
+      "gained": [],
+      "error": "no output after poll=12.22s; inserted=['reagent:sandx64', 'reagent:gravelx64', 'reagent:stone_pickaxex1', 'reagent:cauldronx16']; expected=[{'mat': 'white_concrete', 'qty': 1}]"
+    }
+  },
+  "throughput": {
+    "attempts_per_min": 12.95,
+    "target_met": false
+  },
+  "log_errors": [
+    "[16:11:46] [Server thread/INFO]: Region arrow_trap created ec01bfd3-8525-48ee-b5e5-4d8ecac61630~3016.5~81.5~2623.5.yml",
+    "[16:11:46] [Server thread/INFO]: Region potato_farm created ec01bfd3-8525-48ee-b5e5-4d8ecac61630~3026.5~81.5~2598.5.yml",
+    "[16:11:46] [Server thread/INFO]: Region concrete_factory created ec01bfd3-8525-48ee-b5e5-4d8ecac61630~3030.5~81.5~2630.5.yml"
+  ]
+}

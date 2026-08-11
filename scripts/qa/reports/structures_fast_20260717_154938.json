@@ -1,0 +1,923 @@
+{
+  "marker": "QA_FAST_154920",
+  "mode": "fast",
+  "timestamp": "2026-07-17T15:49:38.761796+00:00",
+  "wall_clock_s": 17.8,
+  "batch": [
+    "gravel_quarry",
+    "dirt_quarry",
+    "clay_quarry",
+    "ice_maker",
+    "dye_works",
+    "flint_works",
+    "concrete_factory",
+    "cobble_quarry",
+    "coal_mine",
+    "cactus_farm",
+    "potato_farm",
+    "arrow_trap",
+    "catapult",
+    "command_tent",
+    "shelter",
+    "shack",
+    "hovel",
+    "purifier",
+    "smithy"
+  ],
+  "missing_yaml": [],
+  "town": {
+    "ok": true,
+    "hub": [
+      3000,
+      81,
+      2600
+    ],
+    "town_name": "QATown2",
+    "skipped": "reuse QATown2.yml"
+  },
+  "results": [
+    {
+      "key": "gravel_quarry",
+      "category": "raw",
+      "center": [
+        4361,
+        81,
+        4000
+      ],
+      "build_ok": true,
+      "activated": true,
+      "io_ok": true,
+      "io_detail": "inserted=['tool:stone_shovel'] gained=[{'mat': 'gravel', 'delta': 4}] poll=1.89s",
+      "error": null,
+      "elapsed_s": 2.07,
+      "elapsed_ms": 2070,
+      "place_ms": 7,
+      "io_ms": 1897,
+      "notes": "io=PASS"
+    },
+    {
+      "key": "dirt_quarry",
+      "category": "raw",
+      "center": [
+        4377,
+        81,
+        4000
+      ],
+      "build_ok": true,
+      "activated": true,
+      "io_ok": true,
+      "io_detail": "inserted=['tool:stone_shovel'] gained=[{'mat': 'dirt', 'delta': 6}, {'mat': 'dirt', 'delta': 6}] poll=1.88s",
+      "error": null,
+      "elapsed_s": 2.02,
+      "elapsed_ms": 2020,
+      "place_ms": 4,
+      "io_ms": 1885,
+      "notes": "io=PASS"
+    },
+    {
+      "key": "clay_quarry",
+      "category": "raw",
+      "center": [
+        2975,
+        81,
+        2575
+      ],
+      "build_ok": true,
+      "activated": true,
+      "io_ok": true,
+      "io_detail": "inserted=['tool:stone_shovel'] gained=[{'mat': 'clay_ball', 'delta': 4}] poll=1.61s",
+      "error": null,
+      "elapsed_s": 1.74,
+      "elapsed_ms": 1740,
+      "place_ms": 10,
+      "io_ms": 1610,
+      "notes": "io=PASS"
+    },
+    {
+      "key": "ice_maker",
+      "category": "factory",
+      "center": [
+        4393,
+        81,
+        4000
+      ],
+      "build_ok": true,
+      "activated": true,
+      "io_ok": true,
+      "io_detail": "inserted=['tool:stone_shovel', 'reagent:snow_blockx64'] gained=[{'mat': 'ice', 'delta': 9}] poll=1.89s",
+      "error": null,
+      "elapsed_s": 2.08,
+      "elapsed_ms": 2080,
+      "place_ms": 11,
+      "io_ms": 1889,
+      "notes": "io=PASS"
+    },
+    {
+      "key": "dye_works",
+      "category": "factory",
+      "center": [
+        4415,
+        81,
+        4000
+      ],
+      "build_ok": true,
+      "activated": true,
+      "io_ok": true,
+      "io_detail": "inserted=['reagent:ink_sacx16', 'reagent:poppyx16', 'reagent:cornflowerx16', 'reagent:bone_mealx16', 'reagent:dandelionx16'] gained=[{'mat': 'blue_dye', 'delta': 1}] poll=1.53s",
+      "error": null,
+      "elapsed_s": 1.74,
+      "elapsed_ms": 1740,
+      "place_ms": 5,
+      "io_ms": 1544,
+      "notes": "io=PASS"
+    },
+    {
+      "key": "flint_works",
+      "category": "factory",
+      "center": [
+        2975,
+        81,
+        2625
+      ],
+      "build_ok": true,
+      "activated": true,
+      "io_ok": true,
+      "io_detail": "inserted=['reagent:gravelx64', 'reagent:stone_shovelx1'] gained=[{'mat': 'flint', 'delta': 4}] poll=1.87s",
+      "error": null,
+      "elapsed_s": 2.05,
+      "elapsed_ms": 2050,
+      "place_ms": 8,
+      "io_ms": 1873,
+      "notes": "io=PASS"
+    },
+    {
+      "key": "concrete_factory",
+      "category": "factory",
+      "center": [
+        2995,
+        81,
+        2575
+      ],
+      "build_ok": true,
+      "activated": true,
+      "io_ok": true,
+      "io_detail": "inserted=['reagent:sandx64', 'reagent:gravelx64', 'reagent:stone_pickaxex1', 'reagent:cauldronx1'] gained=[{'mat': 'white_concrete', 'delta': 4}] poll=1.98s",
+      "error": null,
+      "elapsed_s": 2.18,
+      "elapsed_ms": 2180,
+      "place_ms": 5,
+      "io_ms": 1996,
+      "notes": "io=PASS"
+    },
+    {
+      "key": "cobble_quarry",
+      "category": "raw",
+      "center": [
+        4361,
+        81,
+        4016
+      ],
+      "build_ok": true,
+      "activated": true,
+      "io_ok": null,
+      "io_detail": "SKIP period=30s",
+      "error": null,
+      "elapsed_s": 0.13,
+      "elapsed_ms": 130,
+      "place_ms": 9,
+      "io_ms": 0,
+      "notes": "io=SKIP(long period)"
+    },
+    {
+      "key": "coal_mine",
+      "category": "mine",
+      "center": [
+        4379,
+        81,
+        4018
+      ],
+      "build_ok": true,
+      "activated": true,
+      "io_ok": null,
+      "io_detail": "SKIP period=600s",
+      "error": null,
+      "elapsed_s": 0.16,
+      "elapsed_ms": 160,
+      "place_ms": 4,
+      "io_ms": 0,
+      "notes": "io=SKIP(long period)"
+    },
+    {
+      "key": "cactus_farm",
+      "category": "farm",
+      "center": [
+        4397,
+        81,
+        4018
+      ],
+      "build_ok": true,
+      "activated": true,
+      "io_ok": null,
+      "io_detail": "SKIP period=30s",
+      "error": null,
+      "elapsed_s": 0.31,
+      "elapsed_ms": 310,
+      "place_ms": 4,
+      "io_ms": 0,
+      "notes": "io=SKIP(long period)"
+    },
+    {
+      "key": "potato_farm",
+      "category": "farm",
+      "center": [
+        2992,
+        81,
+        2626
+      ],
+      "build_ok": true,
+      "activated": true,
+      "io_ok": null,
+      "io_detail": "SKIP period=300s",
+      "error": null,
+      "elapsed_s": 0.18,
+      "elapsed_ms": 180,
+      "place_ms": 8,
+      "io_ms": 0,
+      "notes": "io=SKIP(long period)"
+    },
+    {
+      "key": "arrow_trap",
+      "category": "defense",
+      "center": [
+        3007,
+        81,
+        2623
+      ],
+      "build_ok": true,
+      "activated": true,
+      "io_ok": null,
+      "io_detail": "SKIP: no item outputs in upkeep",
+      "error": null,
+      "elapsed_s": 0.13,
+      "elapsed_ms": 130,
+      "place_ms": 5,
+      "io_ms": 0,
+      "notes": "io=SKIP(no item outputs in upkeep)"
+    },
+    {
+      "key": "catapult",
+      "category": "offense",
+      "center": [
+        4361,
+        81,
+        4032
+      ],
+      "build_ok": true,
+      "activated": false,
+      "io_ok": null,
+      "io_detail": "",
+      "error": "\u00a7a[Civs] placeregion FAIL catapult (check pre-reqs / build-reqs / town / overlap)",
+      "elapsed_s": 0.03,
+      "elapsed_ms": 30,
+      "place_ms": 9,
+      "io_ms": 0,
+      "notes": ""
+    },
+    {
+      "key": "command_tent",
+      "category": "offense",
+      "center": [
+        4361,
+        81,
+        4048
+      ],
+      "build_ok": true,
+      "activated": true,
+      "io_ok": null,
+      "io_detail": "",
+      "error": null,
+      "elapsed_s": 0.14,
+      "elapsed_ms": 140,
+      "place_ms": 5,
+      "io_ms": 0,
+      "notes": ""
+    },
+    {
+      "key": "shelter",
+      "category": "admin-invisible",
+      "center": [
+        4421,
+        81,
+        4020
+      ],
+      "build_ok": true,
+      "activated": true,
+      "io_ok": null,
+      "io_detail": "SKIP period=600s",
+      "error": null,
+      "elapsed_s": 0.13,
+      "elapsed_ms": 130,
+      "place_ms": 20,
+      "io_ms": 0,
+      "notes": "io=SKIP(long period)"
+    },
+    {
+      "key": "shack",
+      "category": "housing",
+      "center": [
+        3015,
+        81,
+        2575
+      ],
+      "build_ok": true,
+      "activated": true,
+      "io_ok": null,
+      "io_detail": "SKIP period=3600s",
+      "error": null,
+      "elapsed_s": 0.15,
+      "elapsed_ms": 150,
+      "place_ms": 9,
+      "io_ms": 0,
+      "notes": "io=SKIP(long period)"
+    },
+    {
+      "key": "hovel",
+      "category": "housing",
+      "center": [
+        3022,
+        81,
+        2626
+      ],
+      "build_ok": true,
+      "activated": true,
+      "io_ok": null,
+      "io_detail": "SKIP period=3600s",
+      "error": null,
+      "elapsed_s": 0.21,
+      "elapsed_ms": 210,
+      "place_ms": 7,
+      "io_ms": 0,
+      "notes": "io=SKIP(long period)"
+    },
+    {
+      "key": "purifier",
+      "category": "utility",
+      "center": [
+        4379,
+        81,
+        4036
+      ],
+      "build_ok": true,
+      "activated": true,
+      "io_ok": null,
+      "io_detail": "SKIP period=900s",
+      "error": null,
+      "elapsed_s": 0.21,
+      "elapsed_ms": 210,
+      "place_ms": 11,
+      "io_ms": 0,
+      "notes": "io=SKIP(long period)"
+    },
+    {
+      "key": "smithy",
+      "category": "utility",
+      "center": [
+        2974,
+        81,
+        2592
+      ],
+      "build_ok": true,
+      "activated": true,
+      "io_ok": null,
+      "io_detail": "",
+      "error": null,
+      "elapsed_s": 0.23,
+      "elapsed_ms": 230,
+      "place_ms": 20,
+      "io_ms": 0,
+      "notes": ""
+    }
+  ],
+  "activated": 18,
+  "attempted": 19,
+  "built": 19,
+  "io_pass": 7,
+  "io_fail": 0,
+  "io_skip": 11,
+  "place_details": {
+    "gravel_quarry_build": {
+      "ok": true,
+      "setblocks": 28
+    },
+    "gravel_quarry_placements": 28,
+    "gravel_quarry_give": "\u00a7a[Civs] Gave 1x gravel_quarry to smokeshow",
+    "gravel_quarry_place": "\u00a7a[Civs] placeregion OK gravel_quarry @ 4361,81,4000",
+    "gravel_quarry_io": {
+      "ok": true,
+      "skipped": false,
+      "key": "gravel_quarry",
+      "period_s": 15,
+      "yaml_upkeep": {
+        "tools": [
+          "stone_shovel"
+        ],
+        "reagents": [],
+        "inputs": [],
+        "outputs": [
+          {
+            "mat": "gravel",
+            "mats": [
+              "gravel"
+            ],
+            "qty": 4
+          }
+        ],
+        "period_s": 15
+      },
+      "inserted": [
+        "tool:stone_shovel"
+      ],
+      "before_counts": {
+        "gravel": 0
+      },
+      "wait_s": 1.89,
+      "polls": 8,
+      "gained": [
+        {
+          "mat": "gravel",
+          "delta": 4
+        }
+      ]
+    },
+    "dirt_quarry_build": {
+      "ok": true,
+      "setblocks": 28
+    },
+    "dirt_quarry_placements": 28,
+    "dirt_quarry_give": "\u00a7a[Civs] Gave 1x dirt_quarry to smokeshow",
+    "dirt_quarry_place": "\u00a7a[Civs] placeregion OK dirt_quarry @ 4377,81,4000",
+    "dirt_quarry_io": {
+      "ok": true,
+      "skipped": false,
+      "key": "dirt_quarry",
+      "period_s": 15,
+      "yaml_upkeep": {
+        "tools": [
+          "stone_shovel"
+        ],
+        "reagents": [],
+        "inputs": [],
+        "outputs": [
+          {
+            "mat": "dirt",
+            "mats": [
+              "dirt",
+              "podzol",
+              "coarse_dirt",
+              "mud"
+            ],
+            "qty": 4
+          },
+          {
+            "mat": "dirt",
+            "mats": [
+              "dirt",
+              "grass_block",
+              "mycelium"
+            ],
+            "qty": 1
+          }
+        ],
+        "period_s": 15
+      },
+      "inserted": [
+        "tool:stone_shovel"
+      ],
+      "before_counts": {
+        "dirt": 0,
+        "podzol": 0,
+        "coarse_dirt": 0,
+        "mud": 0,
+        "grass_block": 0,
+        "mycelium": 0
+      },
+      "wait_s": 1.88,
+      "polls": 6,
+      "gained": [
+        {
+          "mat": "dirt",
+          "delta": 6
+        },
+        {
+          "mat": "dirt",
+          "delta": 6
+        }
+      ]
+    },
+    "clay_quarry_build": {
+      "ok": true,
+      "setblocks": 28
+    },
+    "clay_quarry_placements": 28,
+    "clay_quarry_give": "\u00a7a[Civs] Gave 1x clay_quarry to smokeshow",
+    "clay_quarry_place": "\u00a7a[Civs] placeregion OK clay_quarry @ 2975,81,2575",
+    "clay_quarry_io": {
+      "ok": true,
+      "skipped": false,
+      "key": "clay_quarry",
+      "period_s": 15,
+      "yaml_upkeep": {
+        "tools": [
+          "stone_shovel"
+        ],
+        "reagents": [],
+        "inputs": [],
+        "outputs": [
+          {
+            "mat": "clay_ball",
+            "mats": [
+              "clay_ball"
+            ],
+            "qty": 4
+          }
+        ],
+        "period_s": 15
+      },
+      "inserted": [
+        "tool:stone_shovel"
+      ],
+      "before_counts": {
+        "clay_ball": 0
+      },
+      "wait_s": 1.61,
+      "polls": 7,
+      "gained": [
+        {
+          "mat": "clay_ball",
+          "delta": 4
+        }
+      ]
+    },
+    "ice_maker_build": {
+      "ok": true,
+      "setblocks": 69
+    },
+    "ice_maker_placements": 69,
+    "ice_maker_give": "\u00a7a[Civs] Gave 1x ice_maker to smokeshow",
+    "ice_maker_place": "\u00a7a[Civs] placeregion OK ice_maker @ 4393,81,4000",
+    "ice_maker_io": {
+      "ok": true,
+      "skipped": false,
+      "key": "ice_maker",
+      "period_s": 15,
+      "yaml_upkeep": {
+        "tools": [
+          "stone_shovel"
+        ],
+        "reagents": [
+          "snow_block"
+        ],
+        "inputs": [],
+        "outputs": [
+          {
+            "mat": "ice",
+            "mats": [
+              "ice"
+            ],
+            "qty": 9
+          },
+          {
+            "mat": "snow_block",
+            "mats": [
+              "snow_block"
+            ],
+            "qty": 9
+          }
+        ],
+        "period_s": 15
+      },
+      "inserted": [
+        "tool:stone_shovel",
+        "reagent:snow_blockx64"
+      ],
+      "before_counts": {
+        "ice": 0,
+        "snow_block": 64
+      },
+      "wait_s": 1.89,
+      "polls": 8,
+      "gained": [
+        {
+          "mat": "ice",
+          "delta": 9
+        }
+      ]
+    },
+    "dye_works_build": {
+      "ok": true,
+      "setblocks": 89
+    },
+    "dye_works_placements": 89,
+    "dye_works_give": "\u00a7a[Civs] Gave 1x dye_works to smokeshow",
+    "dye_works_place": "\u00a7a[Civs] placeregion OK dye_works @ 4415,81,4000",
+    "dye_works_io": {
+      "ok": true,
+      "skipped": false,
+      "key": "dye_works",
+      "period_s": 15,
+      "yaml_upkeep": {
+        "tools": [],
+        "reagents": [
+          "ink_sac",
+          "poppy",
+          "cornflower",
+          "bone_meal",
+          "dandelion"
+        ],
+        "inputs": [],
+        "outputs": [
+          {
+            "mat": "red_dye",
+            "mats": [
+              "red_dye",
+              "black_dye",
+              "blue_dye",
+              "brown_dye",
+              "cyan_dye",
+              "gray_dye",
+              "green_dye",
+              "light_blue_dye",
+              "light_gray_dye",
+              "lime_dye",
+              "magenta_dye",
+              "orange_dye",
+              "pink_dye",
+              "purple_dye",
+              "white_dye",
+              "yellow_dye"
+            ],
+            "qty": 1
+          }
+        ],
+        "period_s": 15
+      },
+      "inserted": [
+        "reagent:ink_sacx16",
+        "reagent:poppyx16",
+        "reagent:cornflowerx16",
+        "reagent:bone_mealx16",
+        "reagent:dandelionx16"
+      ],
+      "before_counts": {
+        "red_dye": 0,
+        "black_dye": 0,
+        "blue_dye": 0,
+        "brown_dye": 0,
+        "cyan_dye": 0,
+        "gray_dye": 0,
+        "green_dye": 0,
+        "light_blue_dye": 0,
+        "light_gray_dye": 0,
+        "lime_dye": 0,
+        "magenta_dye": 0,
+        "orange_dye": 0,
+        "pink_dye": 0,
+        "purple_dye": 0,
+        "white_dye": 0,
+        "yellow_dye": 0
+      },
+      "wait_s": 1.53,
+      "polls": 4,
+      "gained": [
+        {
+          "mat": "blue_dye",
+          "delta": 1
+        }
+      ]
+    },
+    "flint_works_build": {
+      "ok": true,
+      "setblocks": 95
+    },
+    "flint_works_placements": 95,
+    "flint_works_give": "\u00a7a[Civs] Gave 1x flint_works to smokeshow",
+    "flint_works_place": "\u00a7a[Civs] placeregion OK flint_works @ 2975,81,2625",
+    "flint_works_io": {
+      "ok": true,
+      "skipped": false,
+      "key": "flint_works",
+      "period_s": 15,
+      "yaml_upkeep": {
+        "tools": [],
+        "reagents": [
+          "gravel",
+          "stone_shovel"
+        ],
+        "inputs": [],
+        "outputs": [
+          {
+            "mat": "flint",
+            "mats": [
+              "flint"
+            ],
+            "qty": 4
+          }
+        ],
+        "period_s": 15
+      },
+      "inserted": [
+        "reagent:gravelx64",
+        "reagent:stone_shovelx1"
+      ],
+      "before_counts": {
+        "flint": 0
+      },
+      "wait_s": 1.87,
+      "polls": 8,
+      "gained": [
+        {
+          "mat": "flint",
+          "delta": 4
+        }
+      ]
+    },
+    "concrete_factory_build": {
+      "ok": true,
+      "setblocks": 101
+    },
+    "concrete_factory_placements": 101,
+    "concrete_factory_give": "\u00a7a[Civs] Gave 1x concrete_factory to smokeshow",
+    "concrete_factory_place": "\u00a7a[Civs] placeregion OK concrete_factory @ 2995,81,2575",
+    "concrete_factory_io": {
+      "ok": true,
+      "skipped": false,
+      "key": "concrete_factory",
+      "period_s": 15,
+      "yaml_upkeep": {
+        "tools": [],
+        "reagents": [
+          "sand",
+          "gravel",
+          "stone_pickaxe",
+          "cauldron"
+        ],
+        "inputs": [],
+        "outputs": [
+          {
+            "mat": "white_concrete",
+            "mats": [
+              "white_concrete",
+              "orange_concrete",
+              "magenta_concrete",
+              "light_blue_concrete",
+              "yellow_concrete",
+              "lime_concrete",
+              "pink_concrete",
+              "gray_concrete",
+              "light_gray_concrete",
+              "cyan_concrete",
+              "purple_concrete",
+              "blue_concrete",
+              "brown_concrete",
+              "green_concrete",
+              "red_concrete",
+              "black_concrete"
+            ],
+            "qty": 4
+          }
+        ],
+        "period_s": 15
+      },
+      "inserted": [
+        "reagent:sandx64",
+        "reagent:gravelx64",
+        "reagent:stone_pickaxex1",
+        "reagent:cauldronx1"
+      ],
+      "before_counts": {
+        "white_concrete": 0,
+        "orange_concrete": 0,
+        "magenta_concrete": 0,
+        "light_blue_concrete": 0,
+        "yellow_concrete": 0,
+        "lime_concrete": 0,
+        "pink_concrete": 0,
+        "gray_concrete": 0,
+        "light_gray_concrete": 0,
+        "cyan_concrete": 0,
+        "purple_concrete": 0,
+        "blue_concrete": 0,
+        "brown_concrete": 0,
+        "green_concrete": 0,
+        "red_concrete": 0,
+        "black_concrete": 0
+      },
+      "wait_s": 1.98,
+      "polls": 5,
+      "gained": [
+        {
+          "mat": "white_concrete",
+          "delta": 4
+        }
+      ]
+    },
+    "cobble_quarry_build": {
+      "ok": true,
+      "setblocks": 4
+    },
+    "cobble_quarry_placements": 4,
+    "cobble_quarry_give": "\u00a7a[Civs] Gave 1x cobble_quarry to smokeshow",
+    "cobble_quarry_place": "\u00a7a[Civs] placeregion OK cobble_quarry @ 4361,81,4016",
+    "coal_mine_build": {
+      "ok": true,
+      "setblocks": 63
+    },
+    "coal_mine_placements": 63,
+    "coal_mine_give": "\u00a7a[Civs] Gave 1x coal_mine to smokeshow",
+    "coal_mine_place": "\u00a7a[Civs] placeregion OK coal_mine @ 4379,81,4018",
+    "cactus_farm_build": {
+      "ok": true,
+      "setblocks": 64
+    },
+    "cactus_farm_placements": 64,
+    "cactus_farm_give": "\u00a7a[Civs] Gave 1x cactus_farm to smokeshow",
+    "cactus_farm_place": "\u00a7a[Civs] placeregion OK cactus_farm @ 4397,81,4018",
+    "potato_farm_build": {
+      "ok": true,
+      "setblocks": 42
+    },
+    "potato_farm_placements": 42,
+    "potato_farm_give": "\u00a7a[Civs] Gave 1x potato_farm to smokeshow",
+    "potato_farm_place": "\u00a7a[Civs] placeregion OK potato_farm @ 2992,81,2626",
+    "arrow_trap_build": {
+      "ok": true,
+      "setblocks": 9
+    },
+    "arrow_trap_placements": 9,
+    "arrow_trap_give": "\u00a7a[Civs] Gave 1x arrow_trap to smokeshow",
+    "arrow_trap_place": "\u00a7a[Civs] placeregion OK arrow_trap @ 3007,81,2623",
+    "arrow_trap_io": {
+      "ok": false,
+      "skipped": true,
+      "key": "arrow_trap",
+      "period_s": 0,
+      "error": "no item outputs in upkeep"
+    },
+    "catapult_build": {
+      "ok": true,
+      "setblocks": 22
+    },
+    "catapult_placements": 22,
+    "catapult_give": "\u00a7a[Civs] Gave 1x catapult to smokeshow",
+    "catapult_place": "\u00a7a[Civs] placeregion FAIL catapult (check pre-reqs / build-reqs / town / overlap)",
+    "command_tent_build": {
+      "ok": true,
+      "setblocks": 34
+    },
+    "command_tent_placements": 34,
+    "command_tent_give": "\u00a7a[Civs] Gave 1x command_tent to smokeshow",
+    "command_tent_place": "\u00a7a[Civs] placeregion OK command_tent @ 4361,81,4048",
+    "shelter_build": {
+      "ok": true,
+      "setblocks": 0
+    },
+    "shelter_placements": 0,
+    "shelter_give": "\u00a7a[Civs] Gave 1x shelter to smokeshow",
+    "shelter_place": "\u00a7a[Civs] placeregion OK shelter @ 4421,81,4020",
+    "shack_build": {
+      "ok": true,
+      "setblocks": 65
+    },
+    "shack_placements": 65,
+    "shack_give": "\u00a7a[Civs] Gave 1x shack to smokeshow",
+    "shack_place": "\u00a7a[Civs] placeregion OK shack @ 3015,81,2575",
+    "hovel_build": {
+      "ok": true,
+      "setblocks": 104
+    },
+    "hovel_placements": 104,
+    "hovel_give": "\u00a7a[Civs] Gave 1x hovel to smokeshow",
+    "hovel_place": "\u00a7a[Civs] placeregion OK hovel @ 3022,81,2626",
+    "purifier_build": {
+      "ok": true,
+      "setblocks": 90
+    },
+    "purifier_placements": 90,
+    "purifier_give": "\u00a7a[Civs] Gave 1x purifier to smokeshow",
+    "purifier_place": "\u00a7a[Civs] placeregion OK purifier @ 4379,81,4036",
+    "smithy_build": {
+      "ok": true,
+      "setblocks": 126
+    },
+    "smithy_placements": 126,
+    "smithy_give": "\u00a7a[Civs] Gave 1x smithy to smokeshow",
+    "smithy_place": "\u00a7a[Civs] placeregion OK smithy @ 2974,81,2592"
+  },
+  "throughput": {
+    "attempts_per_min": 64.04,
+    "target_met": true
+  },
+  "log_errors": [
+    "[16:49:38] [Server thread/INFO]: Region smithy created ec01bfd3-8525-48ee-b5e5-4d8ecac61630~2974.5~81.5~2592.5.yml"
+  ]
+}

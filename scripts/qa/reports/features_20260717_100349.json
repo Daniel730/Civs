@@ -1,0 +1,157 @@
+{
+  "marker": "QA_FEAT_100329",
+  "timestamp": "2026-07-17T10:03:49.713777+00:00",
+  "steps": [
+    {
+      "kind": "rcon",
+      "command": "list",
+      "ok": true,
+      "output": "There are 1 of a max of 10 players online: smokeshow",
+      "error": null,
+      "needs_window": false
+    },
+    {
+      "kind": "rcon",
+      "command": "tp Smokeshow 2100 81 2100",
+      "ok": true,
+      "output": "Teleported smokeshow to 2100.500000, 81.000000, 2100.500000",
+      "error": null,
+      "needs_window": false
+    },
+    {
+      "kind": "rcon",
+      "command": "cv reload",
+      "ok": true,
+      "output": "\u00a7a[Civs] reloaded",
+      "error": null,
+      "needs_window": false
+    },
+    {
+      "kind": "rcon",
+      "command": "rpg reload",
+      "ok": true,
+      "output": "\u00a77[\u00a76RPG\u00a77]\u00a7r \u00a7aConfigura\u00e7\u00e3o recarregada.",
+      "error": null,
+      "needs_window": false
+    },
+    {
+      "kind": "rcon",
+      "command": "cv newday",
+      "ok": true,
+      "output": "\u00a7a[Civs] new day started",
+      "error": null,
+      "needs_window": false
+    },
+    {
+      "kind": "rcon",
+      "command": "cv mob spawn guild_thief Smokeshow",
+      "ok": true,
+      "output": "\u00a7a[Civs] Players only.",
+      "error": null,
+      "needs_window": false
+    },
+    {
+      "kind": "rcon",
+      "command": "cv mob spawn wild_boar Smokeshow",
+      "ok": true,
+      "output": "\u00a7a[Civs] Players only.",
+      "error": null,
+      "needs_window": false
+    },
+    {
+      "kind": "rcon",
+      "command": "gamemode creative Smokeshow",
+      "ok": true,
+      "output": "",
+      "error": null,
+      "needs_window": false
+    },
+    {
+      "kind": "window",
+      "command": "/cv menu",
+      "ok": true,
+      "output": "focused",
+      "error": null,
+      "needs_window": true
+    },
+    {
+      "kind": "window",
+      "command": "/cv spells",
+      "ok": true,
+      "output": "focused",
+      "error": null,
+      "needs_window": true
+    },
+    {
+      "kind": "window",
+      "command": "//wand",
+      "ok": true,
+      "output": "focused",
+      "error": null,
+      "needs_window": true
+    },
+    {
+      "kind": "window",
+      "command": "/cv mob list",
+      "ok": true,
+      "output": "focused",
+      "error": null,
+      "needs_window": true
+    },
+    {
+      "kind": "window",
+      "command": "/rpg hub",
+      "ok": true,
+      "output": "focused",
+      "error": null,
+      "needs_window": true
+    },
+    {
+      "kind": "window",
+      "command": "/rpg journal",
+      "ok": true,
+      "output": "focused",
+      "error": null,
+      "needs_window": true
+    }
+  ],
+  "rcon_passed": 8,
+  "window_passed": 6,
+  "window_skipped": false,
+  "log_errors": [
+    "[11:00:00] [Server thread/INFO]: [RPGServer] RPGServer habilitado (v0.1.2).",
+    "[11:02:18] [Server thread/INFO]: Loaded 7 custom mob definition(s)",
+    "[11:02:19] [Server thread/INFO]: [RPGServer] Carregadas 56 quests.",
+    "[11:02:19] [Server thread/INFO]: [RPGServer] Carregados 37 perks.",
+    "[11:02:19] [Server thread/INFO]: [RPGServer] Carregados 27 POIs.",
+    "[11:02:19] [Server thread/INFO]: [RPGServer] Carregadas 3 loot tables.",
+    "[11:02:19] [Server thread/INFO]: [RPGServer] Vault Economy conectada.",
+    "[11:02:19] [Server thread/INFO]: [RPGServer] Civs detectado \u00e2\u20ac\u201d regi\u00c3\u00a3o, skills internas, leil\u00c3\u00a3o e StatManager habilitados.",
+    "[11:02:19] [Server thread/INFO]: [RPGServer] Essentials ausente \u00e2\u20ac\u201d recompensas kit/warp e balance_min via Vault apenas.",
+    "[11:02:19] [Server thread/WARN]: [RPGServer] PlaceholderAPI n\u00c3\u00a3o encontrado.",
+    "[11:02:19] [Server thread/INFO]: [RPGServer] HUD composto desligado (hud.composed.enabled=false).",
+    "[11:02:19] [Server thread/INFO]: [RPGServer] Pacote hide-hearts desligado \u00e2\u20ac\u201d cora\u00c3\u00a7\u00c3\u00b5es vanilla restaurados.",
+    "[11:02:19] [Server thread/INFO]: [RPGServer] ChestShop ausente \u00e2\u20ac\u201d objetivos shop_* inativos.",
+    "[11:02:19] [Server thread/INFO]: [RPGServer] Civs custom mob hook ativo (CustomMobKillEvent via reflex\u00c3\u00a3o).",
+    "[11:02:19] [Server thread/INFO]: [RPGServer] VeinMiner ausente \u00e2\u20ac\u201d objetivo vein_mine inativo.",
+    "[11:02:19] [Server thread/INFO]: [RPGServer] [error-reporting] Ativo \u00e2\u20ac\u201d dedupe 15 min, Local=true, GitHub=false, Webhook=false",
+    "[11:02:23] [Server thread/INFO]: Loaded 7 custom mob definition(s)",
+    "[11:03:30] [Server thread/INFO]: Loaded 7 custom mob definition(s)",
+    "[11:03:31] [Server thread/INFO]: [RPGServer] Carregadas 56 quests.",
+    "[11:03:31] [Server thread/INFO]: [RPGServer] Carregados 37 perks.",
+    "[11:03:31] [Server thread/INFO]: [RPGServer] Carregados 27 POIs.",
+    "[11:03:31] [Server thread/INFO]: [RPGServer] Carregadas 3 loot tables.",
+    "[11:03:31] [Server thread/INFO]: [RPGServer] Vault Economy conectada.",
+    "[11:03:31] [Server thread/INFO]: [RPGServer] Civs detectado \u00e2\u20ac\u201d regi\u00c3\u00a3o, skills internas, leil\u00c3\u00a3o e StatManager habilitados.",
+    "[11:03:31] [Server thread/INFO]: [RPGServer] Essentials ausente \u00e2\u20ac\u201d recompensas kit/warp e balance_min via Vault apenas.",
+    "[11:03:31] [Server thread/WARN]: [RPGServer] PlaceholderAPI n\u00c3\u00a3o encontrado.",
+    "[11:03:31] [Server thread/INFO]: [RPGServer] HUD composto desligado (hud.composed.enabled=false).",
+    "[11:03:31] [Server thread/INFO]: [RPGServer] Pacote hide-hearts desligado \u00e2\u20ac\u201d cora\u00c3\u00a7\u00c3\u00b5es vanilla restaurados.",
+    "[11:03:31] [Server thread/INFO]: [RPGServer] ChestShop ausente \u00e2\u20ac\u201d objetivos shop_* inativos.",
+    "[11:03:31] [Server thread/INFO]: [RPGServer] Civs custom mob hook ativo (CustomMobKillEvent via reflex\u00c3\u00a3o).",
+    "[11:03:31] [Server thread/INFO]: [RPGServer] VeinMiner ausente \u00e2\u20ac\u201d objetivo vein_mine inativo.",
+    "[11:03:31] [Server thread/INFO]: [RPGServer] [error-reporting] Ativo \u00e2\u20ac\u201d dedupe 15 min, Local=true, GitHub=false, Webhook=false",
+    "[11:03:34] [Server thread/INFO]: smokeshow issued server command: /cv menu"
+  ],
+  "needs_focus": []
+}

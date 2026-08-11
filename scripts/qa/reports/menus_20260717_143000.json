@@ -1,0 +1,35 @@
+{
+  "marker": "QA_MENU_142959",
+  "timestamp": "2026-07-17T14:30:00.644068+00:00",
+  "gui_scale": 3,
+  "gui_offset": [
+    0,
+    0
+  ],
+  "steps": [
+    {
+      "name": "window",
+      "action": "skip",
+      "ok": false,
+      "detail": "",
+      "error": "skipped (--skip-window)",
+      "xy": null
+    }
+  ],
+  "passed": 0,
+  "total": 1,
+  "failed": [
+    "window"
+  ],
+  "window_skipped": true,
+  "log_errors": [
+    "[15:29:54] [Server thread/INFO]: [RPGServer] ChestShop ausente \u00e2\u20ac\u201d objetivos shop_* inativos.",
+    "[15:29:54] [Server thread/INFO]: [RPGServer] [error-reporting] Ativo \u00e2\u20ac\u201d dedupe 15 min, Local=true, GitHub=false, Webhook=false",
+    "[15:29:59] [Server thread/INFO]: [Not Secure] [Rcon] QA_MENU_142959 menu GUI QA"
+  ],
+  "calibration_hint": "If clicks miss icons, set window_bot.gui_scale (1\u20134) and gui_offset_x/y in config.yaml. Slot math assumes centered vanilla chest GUI.",
+  "notes": [
+    "Chat commands fail while any inventory/Civs/RPG menu is open \u2014 Esc before T.",
+    "Main menu buttons from Civs_servidor/menus/main.yml; hub Magias=slot21, Combate=slot25."
+  ]
+}

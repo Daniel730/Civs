@@ -93,12 +93,15 @@ CI: `.github/workflows/runner-quality.yml` (Biome + knip + arch + unit + convent
 
 ### Java (Civs plugin)
 
-| Tool | Role |
-|------|------|
-| `javac` + `mvn test` | Current gate (**FACT**) — CI job `maven-test` (#42) |
-| Checkstyle / SpotBugs / Error Prone | Static quality (**TODO** #43) |
-| ArchUnit | Package architecture contracts (**TODO** #43) |
-| PIT / other Java mutation (optional) | Parallel to Stryker for Java hotspots (**TODO**) |
+| Tool | Role | Status |
+|------|------|--------|
+| `javac` + `mvn test` | Current gate (**FACT**) — CI job `maven-test` (#42) | **DONE** |
+| Checkstyle (minimal ruleset) | Unused/redundant/star imports, modifier order | **DONE** (#43) — `mvn -B -DskipTests checkstyle:check` |
+| ArchUnit | Package contracts (main ↛ junit/mockito/sun internals) | **DONE** (#43 phase 1) |
+| SpotBugs / Error Prone | Deeper static quality | **TODO** (follow-up) |
+| PIT / other Java mutation (optional) | Parallel to Stryker for Java hotspots | **TODO** |
+
+Config: `config/checkstyle/checkstyle.xml`. Rules start strict-but-narrow so the legacy tree stays mergeable; expand via `tipo:melhoria` issues.
 
 Agents must not weaken these gates in CI without an issue of type `tipo:melhoria` explaining why.
 

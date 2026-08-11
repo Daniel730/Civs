@@ -1,0 +1,483 @@
+{
+  "marker": "QA_FAST_145851",
+  "mode": "fast",
+  "timestamp": "2026-07-17T14:59:31.681943+00:00",
+  "wall_clock_s": 40.4,
+  "batch": [
+    "gravel_quarry",
+    "dirt_quarry",
+    "coal_mine",
+    "cactus_farm",
+    "shelter",
+    "purifier",
+    "ice_maker",
+    "dye_works",
+    "flint_works",
+    "clay_quarry",
+    "smithy",
+    "arrow_trap"
+  ],
+  "missing_yaml": [],
+  "town": {
+    "ok": true,
+    "hub": [
+      3000,
+      81,
+      2600
+    ],
+    "town_name": "QATown2",
+    "skipped": "reuse QATown2.yml"
+  },
+  "results": [
+    {
+      "key": "gravel_quarry",
+      "category": "raw",
+      "center": [
+        3053,
+        81,
+        2792
+      ],
+      "build_ok": true,
+      "activated": true,
+      "io_ok": false,
+      "io_detail": "inserted=['tool:stone_shovel'] gained=[] poll=12.2s",
+      "error": null,
+      "elapsed_s": 12.35,
+      "elapsed_ms": 12350,
+      "place_ms": 9,
+      "io_ms": 12226,
+      "notes": "io=FAIL(no output after poll=12.2s; inserted=['tool:stone_shovel']; expected=[{'mat': 'gravel', 'qty': 4}])"
+    },
+    {
+      "key": "dirt_quarry",
+      "category": "raw",
+      "center": [
+        3069,
+        81,
+        2792
+      ],
+      "build_ok": true,
+      "activated": true,
+      "io_ok": false,
+      "io_detail": "inserted=['tool:stone_shovel'] gained=[] poll=12.23s",
+      "error": null,
+      "elapsed_s": 12.43,
+      "elapsed_ms": 12430,
+      "place_ms": 7,
+      "io_ms": 12263,
+      "notes": "io=FAIL(no output after poll=12.23s; inserted=['tool:stone_shovel']; expected=[{'mat': 'dirt', 'qty': 1}, {'mat': 'dirt%93,grass_block%5,mycelium%2', 'qty': 1}])"
+    },
+    {
+      "key": "coal_mine",
+      "category": "mine",
+      "center": [
+        3090,
+        81,
+        2798
+      ],
+      "build_ok": true,
+      "activated": true,
+      "io_ok": null,
+      "io_detail": "SKIP period=600s",
+      "error": null,
+      "elapsed_s": 0.12,
+      "elapsed_ms": 120,
+      "place_ms": 10,
+      "io_ms": 0,
+      "notes": "io=SKIP(long period)"
+    },
+    {
+      "key": "cactus_farm",
+      "category": "farm",
+      "center": [
+        3108,
+        81,
+        2798
+      ],
+      "build_ok": true,
+      "activated": true,
+      "io_ok": null,
+      "io_detail": "SKIP period=30s",
+      "error": null,
+      "elapsed_s": 0.12,
+      "elapsed_ms": 120,
+      "place_ms": 6,
+      "io_ms": 0,
+      "notes": "io=SKIP(long period)"
+    },
+    {
+      "key": "shelter",
+      "category": "admin-invisible",
+      "center": [
+        3055,
+        81,
+        2820
+      ],
+      "build_ok": true,
+      "activated": true,
+      "io_ok": null,
+      "io_detail": "SKIP period=600s",
+      "error": null,
+      "elapsed_s": 0.11,
+      "elapsed_ms": 110,
+      "place_ms": 6,
+      "io_ms": 0,
+      "notes": "io=SKIP(long period)"
+    },
+    {
+      "key": "purifier",
+      "category": "utility",
+      "center": [
+        3089,
+        81,
+        2816
+      ],
+      "build_ok": true,
+      "activated": false,
+      "io_ok": null,
+      "io_detail": "",
+      "error": "\u00a7a[Civs] placeregion FAIL purifier (check pre-reqs / build-reqs / town / overlap)",
+      "elapsed_s": 0.01,
+      "elapsed_ms": 10,
+      "place_ms": 10,
+      "io_ms": 0,
+      "notes": ""
+    },
+    {
+      "key": "ice_maker",
+      "category": "factory",
+      "center": [
+        3107,
+        81,
+        2816
+      ],
+      "build_ok": true,
+      "activated": false,
+      "io_ok": null,
+      "io_detail": "",
+      "error": "\u00a7a[Civs] placeregion FAIL ice_maker (check pre-reqs / build-reqs / town / overlap)",
+      "elapsed_s": 0.01,
+      "elapsed_ms": 10,
+      "place_ms": 10,
+      "io_ms": 0,
+      "notes": ""
+    },
+    {
+      "key": "dye_works",
+      "category": "factory",
+      "center": [
+        3054,
+        81,
+        2847
+      ],
+      "build_ok": true,
+      "activated": false,
+      "io_ok": null,
+      "io_detail": "",
+      "error": "\u00a7a[Civs] placeregion FAIL dye_works (check pre-reqs / build-reqs / town / overlap)",
+      "elapsed_s": 0.01,
+      "elapsed_ms": 10,
+      "place_ms": 12,
+      "io_ms": 0,
+      "notes": ""
+    },
+    {
+      "key": "flint_works",
+      "category": "factory",
+      "center": [
+        2970,
+        81,
+        2570
+      ],
+      "build_ok": true,
+      "activated": true,
+      "io_ok": true,
+      "io_detail": "inserted=['reagent:gravelx64', 'reagent:stone_shovelx1'] gained=[{'mat': 'flint', 'delta': 1}] poll=0.53s",
+      "error": null,
+      "elapsed_s": 0.67,
+      "elapsed_ms": 670,
+      "place_ms": 9,
+      "io_ms": 554,
+      "notes": "io=PASS"
+    },
+    {
+      "key": "clay_quarry",
+      "category": "raw",
+      "center": [
+        3035,
+        81,
+        2565
+      ],
+      "build_ok": true,
+      "activated": true,
+      "io_ok": false,
+      "io_detail": "inserted=['tool:stone_shovel'] gained=[] poll=12.21s",
+      "error": null,
+      "elapsed_s": 12.36,
+      "elapsed_ms": 12360,
+      "place_ms": 7,
+      "io_ms": 12243,
+      "notes": "io=FAIL(no output after poll=12.21s; inserted=['tool:stone_shovel']; expected=[{'mat': 'clay_ball', 'qty': 4}])"
+    },
+    {
+      "key": "smithy",
+      "category": "utility",
+      "center": [
+        3000,
+        81,
+        2657
+      ],
+      "build_ok": true,
+      "activated": false,
+      "io_ok": null,
+      "io_detail": "",
+      "error": "\u00a7a[Civs] placeregion FAIL smithy (check pre-reqs / build-reqs / town / overlap)",
+      "elapsed_s": 0.0,
+      "elapsed_ms": 0,
+      "place_ms": 4,
+      "io_ms": 0,
+      "notes": ""
+    },
+    {
+      "key": "arrow_trap",
+      "category": "defense",
+      "center": [
+        3029,
+        81,
+        2580
+      ],
+      "build_ok": true,
+      "activated": false,
+      "io_ok": null,
+      "io_detail": "",
+      "error": "\u00a7a[Civs] placeregion FAIL arrow_trap (check pre-reqs / build-reqs / town / overlap)",
+      "elapsed_s": 0.01,
+      "elapsed_ms": 10,
+      "place_ms": 8,
+      "io_ms": 0,
+      "notes": ""
+    }
+  ],
+  "activated": 7,
+  "attempted": 12,
+  "built": 12,
+  "io_pass": 1,
+  "io_fail": 3,
+  "io_skip": 3,
+  "place_details": {
+    "gravel_quarry_build": {
+      "ok": true,
+      "setblocks": 28
+    },
+    "gravel_quarry_placements": 28,
+    "dirt_quarry_build": {
+      "ok": true,
+      "setblocks": 28
+    },
+    "dirt_quarry_placements": 28,
+    "coal_mine_build": {
+      "ok": true,
+      "setblocks": 63
+    },
+    "coal_mine_placements": 63,
+    "cactus_farm_build": {
+      "ok": true,
+      "setblocks": 39
+    },
+    "cactus_farm_placements": 39,
+    "shelter_build": {
+      "ok": true,
+      "setblocks": 0
+    },
+    "shelter_placements": 0,
+    "purifier_build": {
+      "ok": true,
+      "setblocks": 90
+    },
+    "purifier_placements": 90,
+    "ice_maker_build": {
+      "ok": true,
+      "setblocks": 69
+    },
+    "ice_maker_placements": 69,
+    "dye_works_build": {
+      "ok": true,
+      "setblocks": 89
+    },
+    "dye_works_placements": 89,
+    "flint_works_build": {
+      "ok": true,
+      "setblocks": 95
+    },
+    "flint_works_placements": 95,
+    "clay_quarry_build": {
+      "ok": true,
+      "setblocks": 28
+    },
+    "clay_quarry_placements": 28,
+    "smithy_build": {
+      "ok": true,
+      "setblocks": 126
+    },
+    "smithy_placements": 126,
+    "arrow_trap_build": {
+      "ok": true,
+      "setblocks": 9
+    },
+    "arrow_trap_placements": 9,
+    "gravel_quarry_give": "\u00a7a[Civs] Gave 1x gravel_quarry to smokeshow",
+    "gravel_quarry_place": "\u00a7a[Civs] placeregion OK gravel_quarry @ 3053,81,2792",
+    "gravel_quarry_io": {
+      "ok": false,
+      "skipped": false,
+      "key": "gravel_quarry",
+      "period_s": 15,
+      "yaml_upkeep": {
+        "tools": [
+          "stone_shovel"
+        ],
+        "reagents": [],
+        "inputs": [],
+        "outputs": [
+          {
+            "mat": "gravel",
+            "qty": 4
+          }
+        ],
+        "period_s": 15
+      },
+      "inserted": [
+        "tool:stone_shovel"
+      ],
+      "wait_s": 12.2,
+      "polls": 47,
+      "gained": [],
+      "error": "no output after poll=12.2s; inserted=['tool:stone_shovel']; expected=[{'mat': 'gravel', 'qty': 4}]"
+    },
+    "dirt_quarry_give": "\u00a7a[Civs] Gave 1x dirt_quarry to smokeshow",
+    "dirt_quarry_place": "\u00a7a[Civs] placeregion OK dirt_quarry @ 3069,81,2792",
+    "dirt_quarry_io": {
+      "ok": false,
+      "skipped": false,
+      "key": "dirt_quarry",
+      "period_s": 15,
+      "yaml_upkeep": {
+        "tools": [
+          "stone_shovel"
+        ],
+        "reagents": [],
+        "inputs": [],
+        "outputs": [
+          {
+            "mat": "dirt",
+            "qty": 1
+          },
+          {
+            "mat": "dirt%93,grass_block%5,mycelium%2",
+            "qty": 1
+          }
+        ],
+        "period_s": 15
+      },
+      "inserted": [
+        "tool:stone_shovel"
+      ],
+      "wait_s": 12.23,
+      "polls": 45,
+      "gained": [],
+      "error": "no output after poll=12.23s; inserted=['tool:stone_shovel']; expected=[{'mat': 'dirt', 'qty': 1}, {'mat': 'dirt%93,grass_block%5,mycelium%2', 'qty': 1}]"
+    },
+    "coal_mine_give": "\u00a7a[Civs] Gave 1x coal_mine to smokeshow",
+    "coal_mine_place": "\u00a7a[Civs] placeregion OK coal_mine @ 3090,81,2798",
+    "cactus_farm_give": "\u00a7a[Civs] Gave 1x cactus_farm to smokeshow",
+    "cactus_farm_place": "\u00a7a[Civs] placeregion OK cactus_farm @ 3108,81,2798",
+    "shelter_give": "\u00a7a[Civs] Gave 1x shelter to smokeshow",
+    "shelter_place": "\u00a7a[Civs] placeregion OK shelter @ 3055,81,2820",
+    "purifier_give": "\u00a7a[Civs] Gave 1x purifier to smokeshow",
+    "purifier_place": "\u00a7a[Civs] placeregion FAIL purifier (check pre-reqs / build-reqs / town / overlap)",
+    "ice_maker_give": "\u00a7a[Civs] Gave 1x ice_maker to smokeshow",
+    "ice_maker_place": "\u00a7a[Civs] placeregion FAIL ice_maker (check pre-reqs / build-reqs / town / overlap)",
+    "dye_works_give": "\u00a7a[Civs] Gave 1x dye_works to smokeshow",
+    "dye_works_place": "\u00a7a[Civs] placeregion FAIL dye_works (check pre-reqs / build-reqs / town / overlap)",
+    "flint_works_give": "\u00a7a[Civs] Gave 1x flint_works to smokeshow",
+    "flint_works_place": "\u00a7a[Civs] placeregion OK flint_works @ 2970,81,2570",
+    "flint_works_io": {
+      "ok": true,
+      "skipped": false,
+      "key": "flint_works",
+      "period_s": 15,
+      "yaml_upkeep": {
+        "tools": [],
+        "reagents": [
+          "gravel",
+          "stone_shovel"
+        ],
+        "inputs": [],
+        "outputs": [
+          {
+            "mat": "flint",
+            "qty": 4
+          }
+        ],
+        "period_s": 15
+      },
+      "inserted": [
+        "reagent:gravelx64",
+        "reagent:stone_shovelx1"
+      ],
+      "wait_s": 0.53,
+      "polls": 3,
+      "gained": [
+        {
+          "mat": "flint",
+          "delta": 1
+        }
+      ]
+    },
+    "clay_quarry_give": "\u00a7a[Civs] Gave 1x clay_quarry to smokeshow",
+    "clay_quarry_place": "\u00a7a[Civs] placeregion OK clay_quarry @ 3035,81,2565",
+    "clay_quarry_io": {
+      "ok": false,
+      "skipped": false,
+      "key": "clay_quarry",
+      "period_s": 15,
+      "yaml_upkeep": {
+        "tools": [
+          "stone_shovel"
+        ],
+        "reagents": [],
+        "inputs": [],
+        "outputs": [
+          {
+            "mat": "clay_ball",
+            "qty": 4
+          }
+        ],
+        "period_s": 15
+      },
+      "inserted": [
+        "tool:stone_shovel"
+      ],
+      "wait_s": 12.21,
+      "polls": 47,
+      "gained": [],
+      "error": "no output after poll=12.21s; inserted=['tool:stone_shovel']; expected=[{'mat': 'clay_ball', 'qty': 4}]"
+    },
+    "smithy_give": "\u00a7a[Civs] Gave 1x smithy to smokeshow",
+    "smithy_place": "\u00a7a[Civs] placeregion FAIL smithy (check pre-reqs / build-reqs / town / overlap)",
+    "arrow_trap_give": "\u00a7a[Civs] Gave 1x arrow_trap to smokeshow",
+    "arrow_trap_place": "\u00a7a[Civs] placeregion FAIL arrow_trap (check pre-reqs / build-reqs / town / overlap)"
+  },
+  "throughput": {
+    "attempts_per_min": 17.82,
+    "target_met": true
+  },
+  "log_errors": [
+    "[15:59:05] [Server thread/INFO]: Region dirt_quarry created ec01bfd3-8525-48ee-b5e5-4d8ecac61630~3069.5~81.5~2792.5.yml",
+    "[15:59:17] [Server thread/INFO]: Region coal_mine created ec01bfd3-8525-48ee-b5e5-4d8ecac61630~3090.5~81.5~2798.5.yml",
+    "[15:59:17] [Server thread/INFO]: Region cactus_farm created ec01bfd3-8525-48ee-b5e5-4d8ecac61630~3108.5~81.5~2798.5.yml",
+    "[15:59:18] [Server thread/INFO]: Region shelter created ec01bfd3-8525-48ee-b5e5-4d8ecac61630~3055.5~81.5~2820.5.yml",
+    "[15:59:18] [Server thread/INFO]: Region flint_works created ec01bfd3-8525-48ee-b5e5-4d8ecac61630~2970.5~81.5~2570.5.yml",
+    "[15:59:19] [Server thread/INFO]: Region clay_quarry created ec01bfd3-8525-48ee-b5e5-4d8ecac61630~3035.5~81.5~2565.5.yml"
+  ]
+}
