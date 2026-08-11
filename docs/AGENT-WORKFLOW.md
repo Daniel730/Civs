@@ -79,7 +79,7 @@ Java equivalents while JVM OTel lands: structured logging with correlation ids; 
 | **commitlint** | Conventional commits on PR titles / commit messages | **DONE** (#35) — CI on PRs touching the runner; local: pipe title into `npx commitlint` |
 | **knip** | Dead files / unused & unlisted deps | **DONE** (#35) — `npm run knip` (CJS export-member noise off; see D-AP-015) |
 | **arch-contract** (dependency-cruiser or eslint-plugin-boundaries) | Forbidden import edges (runner ↛ plugin internals, UI ↛ secrets) | **TODO** (#36) |
-| **Stryker** | Mutation testing on critical runner libs (`harness`, `capabilities`, `dsl`) | **TODO** (#37) |
+| **Stryker** | Mutation testing on critical runner libs (`harness`, `capabilities`, `dsl`) | **DONE** (#37 phase 1) — mutates `lib/dsl.js` now (`npm run test:mutation`); harness/capabilities deferred until offline unit coverage; break threshold **10%** (measured ~46% on dsl) |
 
 **Runner quality scripts (FACT):** from `integration-tests/runner`:
 
@@ -87,6 +87,7 @@ Java equivalents while JVM OTel lands: structured logging with correlation ids; 
 - `npm run lint:fix` / `npm run format` — apply Biome fixes / format only
 - `npm run knip` — unused files & dependency graph (CI fails on critical dead-ends)
 - `npm run test:unit` — also re-run after lint/format changes
+- `npm run test:mutation` — Stryker on harness/capabilities/dsl (#37); not a required PR gate
 
 CI: `.github/workflows/runner-quality.yml` (Biome + knip + unit + conventional PR title; always reports on PRs). Maven: `.github/workflows/maven-ci.yml` (`maven-test`). Broader notes: `docs/TESTING.md` § CI gates. Merge on `master` requires the named checks via branch protection (#42).
 
