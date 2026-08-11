@@ -13,6 +13,7 @@ import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.Location;
 import org.bukkit.Material;
+import org.bukkit.block.Chest;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.event.player.PlayerJoinEvent;
@@ -44,11 +45,20 @@ public class ItemsTests extends TestUtil {
     public void onBefore() {
         TownManager.getInstance().reload();
         RegionManager.getInstance().reload();
+        clearOriginChest();
     }
 
     @After
     public void after() {
+        clearOriginChest();
         TestUtil.world.setChunkLoaded(true);
+    }
+
+    /** Shared TestUtil chest at (0,0,0) retains items across classes; clear for CVInventory tests. */
+    private static void clearOriginChest() {
+        if (TestUtil.block != null && TestUtil.block.getState() instanceof Chest) {
+            ((Chest) TestUtil.block.getState()).getInventory().clear();
+        }
     }
 
     @Test

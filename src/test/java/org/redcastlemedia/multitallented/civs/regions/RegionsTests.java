@@ -812,20 +812,28 @@ public class RegionsTests extends TestUtil {
     @Test
     public void dailyRegionShouldUpkeepDaily() {
         loadRegionTypeDaily();
+        TownTests.loadTownTypeHamlet2();
+        GovernmentManager.getInstance().reload();
+        String govType = GovernmentType.DICTATORSHIP.name();
+        assertNotNull(
+                "DICTATORSHIP must be loaded for daily power buff math",
+                GovernmentManager.getInstance().getGovernment(govType));
         HashMap<UUID, String> owners = new HashMap<>();
         owners.put(new UUID(1, 4), Constants.OWNER);
         Location location1 = new Location(Bukkit.getWorld("world"), 3, 100, 0);
         Region region = new Region("daily", owners, location1, getRadii(), new HashMap<>(),0);
         RegionManager.getInstance().addRegion(region);
-        TownTests.loadTownTypeHamlet2();
         Town town = new Town("townname", "hamlet2", location1,
                 owners, 300, 500, 2, 0, -1);
+        // Explicit fixture: do not rely on whatever defaultGovType ItemManager last wrote.
+        town.setGovernmentType(govType);
         TownManager.getInstance().addTown(town);
         try {
             new DailyScheduler().run();
         } catch (SuccessException se) {
 
         }
+        // 300 start + 10 daily region power-output + 110 dictatorship POWER buff (100 * 1.1)
         assertEquals(420, town.getPower());
     }
 

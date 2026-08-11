@@ -1,0 +1,11 @@
+{
+  "mode": "fast",
+  "timestamp": "2026-07-17T15:51:16.764690+00:00",
+  "structures_exit": 0,
+  "features_rcon": 10,
+  "features_report": "C:\\Users\\Danie\\Downloads\\Civs-1.11.6\\Civs-1.11.6\\scripts\\qa\\reports\\features_20260717_155134.json",
+  "softhook": [
+    "AuraSkills=absent; RPGServer=present; expect Civs SoftHook path without AuraSkills",
+    "[16:51:33] [Server thread/INFO]: [RPGServer] Civs detectado \u00e2\u20ac\u201d regi\u00c3\u00a3o, skills internas, leil\u00c3\u00a3o e StatManager habilitados."
+  ]
+}

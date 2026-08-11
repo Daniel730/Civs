@@ -1,0 +1,167 @@
+{
+  "marker": "QA_FEAT_151616",
+  "timestamp": "2026-07-17T15:16:18.145768+00:00",
+  "steps": [
+    {
+      "kind": "rcon",
+      "command": "list",
+      "ok": true,
+      "output": "There are 1 of a max of 10 players online: smokeshow",
+      "error": null,
+      "needs_window": false
+    },
+    {
+      "kind": "rcon",
+      "command": "tp Smokeshow 2100 81 2100",
+      "ok": true,
+      "output": "Teleported smokeshow to 2100.500000, 81.000000, 2100.500000",
+      "error": null,
+      "needs_window": false
+    },
+    {
+      "kind": "rcon",
+      "command": "cv reload",
+      "ok": true,
+      "output": "\u00a7a[Civs] reloaded",
+      "error": null,
+      "needs_window": false
+    },
+    {
+      "kind": "rcon",
+      "command": "rpg reload",
+      "ok": true,
+      "output": "\u00a77[\u00a76RPG\u00a77]\u00a7r \u00a7aConfigura\u00e7\u00e3o recarregada.",
+      "error": null,
+      "needs_window": false
+    },
+    {
+      "kind": "rcon",
+      "command": "cv newday",
+      "ok": true,
+      "output": "\u00a7a[Civs] new day started",
+      "error": null,
+      "needs_window": false
+    },
+    {
+      "kind": "rcon",
+      "command": "say QA_FEAT probe rpg journal / cv leave deferred to dedicated cases",
+      "ok": true,
+      "output": "",
+      "error": null,
+      "needs_window": false
+    },
+    {
+      "kind": "rcon",
+      "command": "cv mob spawn guild_thief Smokeshow",
+      "ok": true,
+      "output": "\u00a7a[Civs] Players only.",
+      "error": null,
+      "needs_window": false
+    },
+    {
+      "kind": "rcon",
+      "command": "cv mob spawn wild_boar Smokeshow",
+      "ok": true,
+      "output": "\u00a7a[Civs] Players only.",
+      "error": null,
+      "needs_window": false
+    },
+    {
+      "kind": "rcon",
+      "command": "gamemode creative Smokeshow",
+      "ok": true,
+      "output": "",
+      "error": null,
+      "needs_window": false
+    },
+    {
+      "kind": "rcon",
+      "command": "softhook_auraskills_probe",
+      "ok": true,
+      "output": "AuraSkills=absent; RPGServer=present; expect Civs SoftHook path without AuraSkills",
+      "error": null,
+      "needs_window": false
+    },
+    {
+      "kind": "window",
+      "command": "/cv menu",
+      "ok": false,
+      "output": "",
+      "error": "skipped (--skip-window)",
+      "needs_window": true
+    },
+    {
+      "kind": "window",
+      "command": "/cv spells",
+      "ok": false,
+      "output": "",
+      "error": "skipped (--skip-window)",
+      "needs_window": true
+    },
+    {
+      "kind": "window",
+      "command": "//wand",
+      "ok": false,
+      "output": "",
+      "error": "skipped (--skip-window)",
+      "needs_window": true
+    },
+    {
+      "kind": "window",
+      "command": "/cv mob list",
+      "ok": false,
+      "output": "",
+      "error": "skipped (--skip-window)",
+      "needs_window": true
+    },
+    {
+      "kind": "window",
+      "command": "/rpg hub",
+      "ok": false,
+      "output": "",
+      "error": "skipped (--skip-window)",
+      "needs_window": true
+    },
+    {
+      "kind": "window",
+      "command": "/rpg journal",
+      "ok": false,
+      "output": "",
+      "error": "skipped (--skip-window)",
+      "needs_window": true
+    }
+  ],
+  "rcon_passed": 10,
+  "window_passed": 0,
+  "window_skipped": true,
+  "log_errors": [
+    "[16:16:17] [Server thread/INFO]: Loaded 7 custom mob definition(s)",
+    "[16:16:17] [Server thread/INFO]: [RPGServer] Carregadas 56 quests.",
+    "[16:16:17] [Server thread/INFO]: [RPGServer] Carregados 37 perks.",
+    "[16:16:17] [Server thread/INFO]: [RPGServer] Carregados 27 POIs.",
+    "[16:16:17] [Server thread/INFO]: [RPGServer] Carregadas 3 loot tables.",
+    "[16:16:17] [Server thread/INFO]: [RPGServer] Vault Economy conectada.",
+    "[16:16:17] [Server thread/INFO]: [RPGServer] Civs detectado \u00e2\u20ac\u201d regi\u00c3\u00a3o, skills internas, leil\u00c3\u00a3o e StatManager habilitados.",
+    "[16:16:17] [Server thread/INFO]: [RPGServer] Essentials ausente \u00e2\u20ac\u201d recompensas kit/warp e balance_min via Vault apenas.",
+    "[16:16:17] [Server thread/WARN]: [RPGServer] PlaceholderAPI n\u00c3\u00a3o encontrado.",
+    "[16:16:17] [Server thread/INFO]: [RPGServer] HUD composto desligado (hud.composed.enabled=false).",
+    "[16:16:17] [Server thread/INFO]: [RPGServer] Pacote hide-hearts desligado \u00e2\u20ac\u201d cora\u00c3\u00a7\u00c3\u00b5es vanilla restaurados.",
+    "[16:16:17] [Server thread/INFO]: [RPGServer] ChestShop ausente \u00e2\u20ac\u201d objetivos shop_* inativos.",
+    "[16:16:17] [Server thread/INFO]: [RPGServer] Civs custom mob hook ativo (CustomMobKillEvent via reflex\u00c3\u00a3o).",
+    "[16:16:17] [Server thread/INFO]: [RPGServer] VeinMiner ausente \u00e2\u20ac\u201d objetivo vein_mine inativo.",
+    "[16:16:17] [Server thread/INFO]: [RPGServer] [error-reporting] Ativo \u00e2\u20ac\u201d dedupe 15 min, Local=true, GitHub=false, Webhook=false",
+    "[16:16:17] [Server thread/INFO]: [Not Secure] [Rcon] QA_FEAT probe rpg journal / cv leave deferred to dedicated cases"
+  ],
+  "softhook_notes": [
+    "AuraSkills=absent; RPGServer=present; expect Civs SoftHook path without AuraSkills",
+    "[16:16:17] [Server thread/INFO]: [RPGServer] Civs detectado \u00e2\u20ac\u201d regi\u00c3\u00a3o, skills internas, leil\u00c3\u00a3o e StatManager habilitados."
+  ],
+  "needs_focus": [
+    "/cv menu",
+    "/cv spells",
+    "//wand",
+    "/cv mob list",
+    "/rpg hub",
+    "/rpg journal"
+  ]
+}

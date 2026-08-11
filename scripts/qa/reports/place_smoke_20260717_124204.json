@@ -1,0 +1,24 @@
+{
+  "verdict": "FAIL",
+  "center": [
+    2220,
+    81,
+    2220
+  ],
+  "exact_cy": false,
+  "neighbors": {
+    "0,0,0": "",
+    "0,-1,0": "",
+    "0,-2,0": "",
+    "0,1,0": "",
+    "0,0,-1": "",
+    "0,0,1": "",
+    "-1,0,0": "",
+    "1,0,0": "",
+    "0,-1,-1": "",
+    "0,0,-2": ""
+  },
+  "f2": "reports\\screenshots\\place_smoke_cy_f2_124236_world.png",
+  "method": "overhead+grab+sneak",
+  "hotbar_ok": true
+}

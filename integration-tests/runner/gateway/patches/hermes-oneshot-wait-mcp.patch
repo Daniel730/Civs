@@ -1,0 +1,25 @@
+--- a/hermes_cli/oneshot.py
++++ b/hermes_cli/oneshot.py
+@@ -394,6 +394,16 @@ def _run_agent(
+     if toolsets_list is None and use_config_toolsets:
+         toolsets_list = sorted(_get_platform_tools(cfg, "cli"))
+ 
++    # Wait for background MCP discovery before the first tool snapshot.
++    # Without this, oneshot races WSL stdio MCP (minecraft-qa ~1.5s+) and the
++    # model only sees built-in toolsets (clarify/memory/todo). OBSERVED 2026-08-10.
++    try:
++        from hermes_cli.mcp_startup import wait_for_mcp_discovery
++
++        wait_for_mcp_discovery()
++    except Exception:
++        logging.debug("oneshot wait_for_mcp_discovery failed", exc_info=True)
++
+     session_db = _create_session_db_for_oneshot()
+ 
+Apply under Hermes install, e.g.:
+  cd %LOCALAPPDATA%\hermes\hermes-agent
+  git apply <path-to-this-patch>
+(or manually insert the block before session_db = _create_session_db_for_oneshot())
+
+Also set in config.yaml:
+  mcp_discovery_timeout: 60

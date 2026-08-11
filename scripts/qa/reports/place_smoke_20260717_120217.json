@@ -1,0 +1,536 @@
+{
+  "verdict": "FAIL",
+  "center": [
+    2160,
+    81,
+    2160
+  ],
+  "dirt_baseline_exact_cy": true,
+  "civs_exact_cy": false,
+  "reconfirm_chest": false,
+  "neighbors": {
+    "0,0,0": "",
+    "0,-1,0": "",
+    "0,-2,0": "",
+    "0,1,0": "",
+    "0,0,-1": "",
+    "0,0,1": "",
+    "-1,0,0": "",
+    "1,0,0": "",
+    "0,-1,-1": "",
+    "0,0,-2": ""
+  },
+  "place": {
+    "ok": false,
+    "civs_key": "shelter",
+    "center": [
+      2160,
+      81,
+      2160
+    ],
+    "item": {
+      "ok": true,
+      "civs_key": "shelter",
+      "source": "pdc_replace",
+      "slot": 0,
+      "error": null,
+      "detail": "Replaced a slot on smokeshow with [shelter]"
+    },
+    "hygiene": {
+      "ok": true,
+      "civs_key": "shelter",
+      "slot": 0,
+      "cleared": [],
+      "dump_preview": "smokeshow has the following entity data: [{Slot: 0b, id: \"minecraft:dirt\", count: 64}, {Slot: 8b,...",
+      "key_select": {
+        "ok": true,
+        "slot": 0,
+        "key": "1",
+        "label": "civs:shelter",
+        "before": {
+          "label": "civs:shelter_before",
+          "SelectedItemSlot": 0,
+          "item_id": "minecraft:chest",
+          "civs_key": "shelter",
+          "kind": "civs",
+          "hotbar": [
+            {
+              "slot": 0,
+              "id": "minecraft:chest",
+              "kind": "civs",
+              "civs": "shelter"
+            },
+            {
+              "slot": 8,
+              "id": "minecraft:wooden_axe",
+              "kind": "wand",
+              "civs": null
+            }
+          ]
+        },
+        "after": {
+          "label": "civs:shelter_after",
+          "SelectedItemSlot": 0,
+          "item_id": "minecraft:chest",
+          "civs_key": "shelter",
+          "kind": "civs",
+          "hotbar": [
+            {
+              "slot": 0,
+              "id": "minecraft:chest",
+              "kind": "civs",
+              "civs": "shelter"
+            },
+            {
+              "slot": 8,
+              "id": "minecraft:wooden_axe",
+              "kind": "wand",
+              "civs": null
+            }
+          ]
+        },
+        "error": null,
+        "selected_slot": 0,
+        "selected_slot_raw": "smokeshow has the following entity data: 0",
+        "hand_raw": "smokeshow has the following entity data: {id: \"minecraft:chest\", count: 1, components: {\"minecraft:custom_name\": \"shelter\", \"minecraft:custom_data...",
+        "hand_ok": true,
+        "kind": "civs",
+        "civs_key": "shelter",
+        "item_id": "minecraft:chest"
+      },
+      "hand_ok": true,
+      "error": null,
+      "before": {
+        "label": "place_prep:shelter",
+        "SelectedItemSlot": 0,
+        "item_id": "minecraft:dirt",
+        "civs_key": null,
+        "kind": "junk",
+        "hotbar": [
+          {
+            "slot": 0,
+            "id": "minecraft:dirt",
+            "kind": "junk",
+            "civs": null
+          },
+          {
+            "slot": 8,
+            "id": "minecraft:wooden_axe",
+            "kind": "wand",
+            "civs": null
+          }
+        ]
+      },
+      "keys_before": [],
+      "selected_before": 0,
+      "ensure": {
+        "ok": true,
+        "civs_key": "shelter",
+        "source": "pdc_replace",
+        "slot": 0,
+        "error": null,
+        "detail": "Replaced a slot on smokeshow with [shelter]"
+      },
+      "hand_check": "smokeshow has the following entity data: {id: \"minecraft:chest\", count: 1, components: {\"minecraft:custom_name\": \"shelter\", \"minecraft:custom_data...",
+      "after": {
+        "label": "place_ready:shelter",
+        "SelectedItemSlot": 0,
+        "item_id": "minecraft:chest",
+        "civs_key": "shelter",
+        "kind": "civs",
+        "hotbar": [
+          {
+            "slot": 0,
+            "id": "minecraft:chest",
+            "kind": "civs",
+            "civs": "shelter"
+          },
+          {
+            "slot": 8,
+            "id": "minecraft:wooden_axe",
+            "kind": "wand",
+            "civs": null
+          }
+        ]
+      }
+    },
+    "vision": [
+      {
+        "kind": "pause",
+        "confidence": 0.98,
+        "safe": false,
+        "path": "reports\\screenshots\\shelter_boot_esc_recover_120240_pause.png",
+        "source_f2": "C:\\Users\\Danie\\AppData\\Roaming\\.minecraft\\screenshots\\2026-07-17_13.02.39.png",
+        "notes": "button_stack tr=32 btn_frac=0.62 full_mean=96.5 detail=47.9 | f2=2026-07-17_13.02.39.png"
+      },
+      {
+        "kind": "pause",
+        "confidence": 0.98,
+        "safe": false,
+        "path": "reports\\screenshots\\shelter_boot2_esc_recover_120254_pause.png",
+        "source_f2": "C:\\Users\\Danie\\AppData\\Roaming\\.minecraft\\screenshots\\2026-07-17_13.02.53.png",
+        "notes": "button_stack tr=42 btn_frac=0.54 full_mean=98.0 detail=48.5 | f2=2026-07-17_13.02.53.png"
+      },
+      {
+        "kind": "pause",
+        "confidence": 0.98,
+        "safe": false,
+        "path": "reports\\screenshots\\shelter_overhead_down_pre_esc_recover_120314_pause.png",
+        "source_f2": "C:\\Users\\Danie\\AppData\\Roaming\\.minecraft\\screenshots\\2026-07-17_13.03.13.png",
+        "notes": "button_stack tr=13 btn_frac=0.74 full_mean=70.5 detail=32.3 | f2=2026-07-17_13.03.13.png"
+      },
+      {
+        "kind": "pause",
+        "confidence": 0.98,
+        "safe": false,
+        "path": "reports\\screenshots\\shelter_overhead_down_retry_esc_recover_120328_pause.png",
+        "source_f2": "C:\\Users\\Danie\\AppData\\Roaming\\.minecraft\\screenshots\\2026-07-17_13.03.28.png",
+        "notes": "button_stack tr=13 btn_frac=0.73 full_mean=71.8 detail=32.6 | f2=2026-07-17_13.03.28.png"
+      },
+      {
+        "kind": "world",
+        "confidence": 0.55,
+        "safe": true,
+        "path": "reports\\screenshots\\shelter_daniel_south_floor_pre_after_pause0_120333_world.png",
+        "source_f2": "C:\\Users\\Danie\\AppData\\Roaming\\.minecraft\\screenshots\\2026-07-17_13.03.32.png",
+        "notes": "mean=132.3 std=52.0 edges=0.094 tr=29 | f2=2026-07-17_13.03.32.png"
+      },
+      {
+        "kind": "world",
+        "confidence": 0.55,
+        "safe": true,
+        "path": "reports\\screenshots\\shelter_daniel_south_floor_post_120342_world.png",
+        "source_f2": "C:\\Users\\Danie\\AppData\\Roaming\\.minecraft\\screenshots\\2026-07-17_13.03.41.png",
+        "notes": "mean=133.0 std=51.2 edges=0.101 tr=29 | f2=2026-07-17_13.03.41.png"
+      },
+      {
+        "kind": "world",
+        "confidence": 0.55,
+        "safe": true,
+        "path": "reports\\screenshots\\shelter_south_farther_floor_pre_120344_world.png",
+        "source_f2": "C:\\Users\\Danie\\AppData\\Roaming\\.minecraft\\screenshots\\2026-07-17_13.03.44.png",
+        "notes": "mean=125.6 std=51.0 edges=0.105 tr=31 | f2=2026-07-17_13.03.44.png"
+      },
+      {
+        "kind": "world",
+        "confidence": 0.55,
+        "safe": true,
+        "path": "reports\\screenshots\\shelter_south_farther_floor_post_120353_world.png",
+        "source_f2": "C:\\Users\\Danie\\AppData\\Roaming\\.minecraft\\screenshots\\2026-07-17_13.03.53.png",
+        "notes": "mean=137.4 std=51.8 edges=0.102 tr=32 | f2=2026-07-17_13.03.53.png"
+      },
+      {
+        "kind": "pause",
+        "confidence": 0.98,
+        "safe": false,
+        "path": "reports\\screenshots\\shelter_north_floor_pre_esc_recover_120407_pause.png",
+        "source_f2": "C:\\Users\\Danie\\AppData\\Roaming\\.minecraft\\screenshots\\2026-07-17_13.04.06.png",
+        "notes": "button_stack tr=13 btn_frac=0.93 full_mean=78.5 detail=38.3 | f2=2026-07-17_13.04.06.png"
+      },
+      {
+        "kind": "pause",
+        "confidence": 0.98,
+        "safe": false,
+        "path": "reports\\screenshots\\shelter_north_floor_retry_esc_recover_120422_pause.png",
+        "source_f2": "C:\\Users\\Danie\\AppData\\Roaming\\.minecraft\\screenshots\\2026-07-17_13.04.21.png",
+        "notes": "button_stack tr=13 btn_frac=0.94 full_mean=79.4 detail=38.6 | f2=2026-07-17_13.04.21.png"
+      },
+      {
+        "kind": "world",
+        "confidence": 0.55,
+        "safe": true,
+        "path": "reports\\screenshots\\shelter_west_floor_pre_after_pause0_120427_world.png",
+        "source_f2": "C:\\Users\\Danie\\AppData\\Roaming\\.minecraft\\screenshots\\2026-07-17_13.04.26.png",
+        "notes": "mean=140.0 std=57.2 edges=0.075 tr=14 | f2=2026-07-17_13.04.26.png"
+      },
+      {
+        "kind": "world",
+        "confidence": 0.55,
+        "safe": true,
+        "path": "reports\\screenshots\\shelter_west_floor_post_120436_world.png",
+        "source_f2": "C:\\Users\\Danie\\AppData\\Roaming\\.minecraft\\screenshots\\2026-07-17_13.04.35.png",
+        "notes": "mean=141.7 std=56.9 edges=0.074 tr=16 | f2=2026-07-17_13.04.35.png"
+      },
+      {
+        "kind": "world",
+        "confidence": 0.55,
+        "safe": true,
+        "path": "reports\\screenshots\\shelter_east_floor_pre_120438_world.png",
+        "source_f2": "C:\\Users\\Danie\\AppData\\Roaming\\.minecraft\\screenshots\\2026-07-17_13.04.37.png",
+        "notes": "mean=148.7 std=45.2 edges=0.047 tr=22 | f2=2026-07-17_13.04.37.png"
+      },
+      {
+        "kind": "world",
+        "confidence": 0.55,
+        "safe": true,
+        "path": "reports\\screenshots\\shelter_east_floor_post_120447_world.png",
+        "source_f2": "C:\\Users\\Danie\\AppData\\Roaming\\.minecraft\\screenshots\\2026-07-17_13.04.46.png",
+        "notes": "mean=155.8 std=42.0 edges=0.042 tr=14 | f2=2026-07-17_13.04.46.png"
+      }
+    ],
+    "right_click": {
+      "ok": true,
+      "error": null,
+      "xy": [
+        2880,
+        516
+      ],
+      "capture_xy": null,
+      "safe_capture_ignored": true
+    },
+    "placement_menu": null,
+    "attempts": [
+      {
+        "pose": "overhead_down",
+        "skipped": "gui_open",
+        "vision": {
+          "kind": "pause",
+          "confidence": 0.98,
+          "safe": false,
+          "path": "reports\\screenshots\\shelter_overhead_down_retry_esc_recover_120328_pause.png",
+          "source_f2": "C:\\Users\\Danie\\AppData\\Roaming\\.minecraft\\screenshots\\2026-07-17_13.03.28.png",
+          "notes": "button_stack tr=13 btn_frac=0.73 full_mean=71.8 detail=32.6 | f2=2026-07-17_13.03.28.png"
+        }
+      },
+      {
+        "pose": "daniel_south_floor",
+        "tp": [
+          2160.5,
+          81.0,
+          2158.0
+        ],
+        "yaw_pitch": [
+          -0.0,
+          40.29794457668384
+        ],
+        "rotation": "smokeshow has the following entity data: [0.0f, 40.3f]",
+        "right_click_ok": true,
+        "center_has_chest": false,
+        "exact_cy": false,
+        "center_block": "The target block is not a block entity",
+        "neighbors": {
+          "0,0,0": "",
+          "0,-1,0": "",
+          "0,-2,0": "",
+          "0,1,0": "",
+          "0,0,-1": "",
+          "0,0,1": "",
+          "-1,0,0": "",
+          "1,0,0": "",
+          "0,-1,-1": "HIT",
+          "0,0,-2": ""
+        },
+        "hand_preview": [
+          "minecraft:chest",
+          "shelter"
+        ]
+      },
+      {
+        "pose": "south_farther_floor",
+        "tp": [
+          2160.5,
+          81.0,
+          2157.6
+        ],
+        "yaw_pitch": [
+          -0.0,
+          36.1680913490299
+        ],
+        "rotation": "smokeshow has the following entity data: [0.0f, 36.17f]",
+        "right_click_ok": true,
+        "center_has_chest": false,
+        "exact_cy": false,
+        "center_block": "The target block is not a block entity",
+        "neighbors": {
+          "0,0,0": "",
+          "0,-1,0": "",
+          "0,-2,0": "",
+          "0,1,0": "",
+          "0,0,-1": "",
+          "0,0,1": "",
+          "-1,0,0": "",
+          "1,0,0": "",
+          "0,-1,-1": "",
+          "0,0,-2": ""
+        },
+        "hand_preview": [
+          "minecraft:chest",
+          "shelter"
+        ]
+      },
+      {
+        "pose": "north_floor",
+        "skipped": "gui_open",
+        "vision": {
+          "kind": "pause",
+          "confidence": 0.98,
+          "safe": false,
+          "path": "reports\\screenshots\\shelter_north_floor_retry_esc_recover_120422_pause.png",
+          "source_f2": "C:\\Users\\Danie\\AppData\\Roaming\\.minecraft\\screenshots\\2026-07-17_13.04.21.png",
+          "notes": "button_stack tr=13 btn_frac=0.94 full_mean=79.4 detail=38.6 | f2=2026-07-17_13.04.21.png"
+        }
+      },
+      {
+        "pose": "west_floor",
+        "tp": [
+          2158.0,
+          81.0,
+          2160.5
+        ],
+        "yaw_pitch": [
+          -90.0,
+          40.29794457668384
+        ],
+        "rotation": "smokeshow has the following entity data: [-90.0f, 40.3f]",
+        "right_click_ok": true,
+        "center_has_chest": false,
+        "exact_cy": false,
+        "center_block": "The target block is not a block entity",
+        "neighbors": {
+          "0,0,0": "",
+          "0,-1,0": "",
+          "0,-2,0": "",
+          "0,1,0": "",
+          "0,0,-1": "",
+          "0,0,1": "",
+          "-1,0,0": "",
+          "1,0,0": "",
+          "0,-1,-1": "",
+          "0,0,-2": ""
+        },
+        "hand_preview": [
+          "minecraft:chest",
+          "shelter"
+        ]
+      },
+      {
+        "pose": "east_floor",
+        "tp": [
+          2162.0,
+          81.0,
+          2160.5
+        ],
+        "yaw_pitch": [
+          90.0,
+          54.71879220282568
+        ],
+        "rotation": "smokeshow has the following entity data: [90.0f, 54.72f]",
+        "right_click_ok": true,
+        "center_has_chest": false,
+        "exact_cy": false,
+        "center_block": "The target block is not a block entity",
+        "neighbors": {
+          "0,0,0": "",
+          "0,-1,0": "",
+          "0,-2,0": "",
+          "0,1,0": "",
+          "0,0,-1": "",
+          "0,0,1": "",
+          "-1,0,0": "",
+          "1,0,0": "",
+          "0,-1,-1": "",
+          "0,0,-2": ""
+        },
+        "hand_preview": [
+          "minecraft:chest",
+          "shelter"
+        ]
+      }
+    ],
+    "error": "center place missed after chest-safe retries",
+    "hotbar_log": [
+      {
+        "label": "civs:shelter_after",
+        "SelectedItemSlot": 0,
+        "item_id": "minecraft:chest",
+        "civs_key": "shelter",
+        "kind": "civs",
+        "hotbar": [
+          {
+            "slot": 0,
+            "id": "minecraft:chest",
+            "kind": "civs",
+            "civs": "shelter"
+          },
+          {
+            "slot": 8,
+            "id": "minecraft:wooden_axe",
+            "kind": "wand",
+            "civs": null
+          }
+        ]
+      },
+      {
+        "label": "civs:shelter_after",
+        "SelectedItemSlot": 0,
+        "item_id": "minecraft:chest",
+        "civs_key": "shelter",
+        "kind": "civs",
+        "hotbar": [
+          {
+            "slot": 0,
+            "id": "minecraft:chest",
+            "kind": "civs",
+            "civs": "shelter"
+          },
+          {
+            "slot": 8,
+            "id": "minecraft:wooden_axe",
+            "kind": "wand",
+            "civs": null
+          }
+        ]
+      },
+      {
+        "label": "civs:shelter_after",
+        "SelectedItemSlot": 0,
+        "item_id": "minecraft:chest",
+        "civs_key": "shelter",
+        "kind": "civs",
+        "hotbar": [
+          {
+            "slot": 0,
+            "id": "minecraft:chest",
+            "kind": "civs",
+            "civs": "shelter"
+          },
+          {
+            "slot": 8,
+            "id": "minecraft:wooden_axe",
+            "kind": "wand",
+            "civs": null
+          }
+        ]
+      },
+      {
+        "label": "civs:shelter_after",
+        "SelectedItemSlot": 0,
+        "item_id": "minecraft:chest",
+        "civs_key": "shelter",
+        "kind": "civs",
+        "hotbar": [
+          {
+            "slot": 0,
+            "id": "minecraft:chest",
+            "kind": "civs",
+            "civs": "shelter"
+          },
+          {
+            "slot": 8,
+            "id": "minecraft:wooden_axe",
+            "kind": "wand",
+            "civs": null
+          }
+        ]
+      }
+    ],
+    "center_block": "The target block is not a block entity",
+    "center_has_chest": false,
+    "exact_cy": false,
+    "chat_hints": [
+      "chest_offset_on_daniel_south_floor:{'0,0,0': '', '0,-1,0': '', '0,-2,0': '', '0,1,0': '', '0,0,-1': '', '0,0,1': '', '-1,0,0': '', '1,0,0': '', '0,-1,-1': 'HIT', '0,0,-2': ''}"
+    ]
+  },
+  "f2": "reports\\screenshots\\place_smoke_f2_120451_pause.png",
+  "hotbar_preserved": true
+}

@@ -1,0 +1,25 @@
+{
+  "verdict": "PASS",
+  "center": [
+    2170,
+    81,
+    2170
+  ],
+  "exact_cy": true,
+  "neighbors": {
+    "0,0,0": "HIT",
+    "0,-1,0": "",
+    "0,-2,0": "",
+    "0,1,0": "",
+    "0,0,-1": "",
+    "0,0,1": "",
+    "-1,0,0": "",
+    "1,0,0": "",
+    "0,-1,-1": "",
+    "0,0,-2": ""
+  },
+  "f2": "reports\\screenshots\\place_smoke_cy_f2_120903_pause.png",
+  "pitch": 90.0,
+  "hotbar_ok": true,
+  "vision_bypassed": "topdown_false_pause"
+}

@@ -1,0 +1,912 @@
+{
+  "marker": "QA_STRUCT_110208",
+  "timestamp": "2026-07-17T11:04:26.666398+00:00",
+  "batch_requested": [
+    "coal_mine",
+    "gravel_quarry",
+    "shelter"
+  ],
+  "missing_yaml": [],
+  "inventory_before": {
+    "player": "Smokeshow",
+    "selected_slot": 0,
+    "hand": {
+      "slot": 0,
+      "item_id": "minecraft:chest",
+      "count": 1,
+      "civs_key": "coal_mine",
+      "custom_name": "coal_mine"
+    },
+    "hotbar": [
+      {
+        "slot": 0,
+        "item_id": "minecraft:chest",
+        "count": 1,
+        "civs_key": "coal_mine",
+        "custom_name": "coal_mine"
+      }
+    ],
+    "inventory": [
+      {
+        "slot": 0,
+        "item_id": "minecraft:chest",
+        "count": 1,
+        "civs_key": "coal_mine",
+        "custom_name": "coal_mine"
+      }
+    ],
+    "raw_selected": "smokeshow has the following entity data: {id: \"minecraft:chest\", count: 1, components: {\"minecraft:custom_name\": \"coal_mine\", \"minecraft:custom_data...",
+    "error": null
+  },
+  "structures": [
+    {
+      "key": "coal_mine",
+      "name": "Coal_Mine",
+      "category": "mine",
+      "static_ok": true,
+      "static_issues": [],
+      "rcon_pad_ok": true,
+      "build_ok": true,
+      "place_ok": false,
+      "region_registered": false,
+      "center": [
+        2108,
+        81,
+        2108
+      ],
+      "held_before": "slot=0 civs=coal_mine id=minecraft:chest",
+      "notes": "manual build-reqs | center place missed (no chest)",
+      "chat_hints": []
+    },
+    {
+      "key": "gravel_quarry",
+      "name": "gravel_quarry",
+      "category": "raw",
+      "static_ok": true,
+      "static_issues": [],
+      "rcon_pad_ok": true,
+      "build_ok": true,
+      "place_ok": false,
+      "region_registered": false,
+      "center": [
+        2120,
+        81,
+        2108
+      ],
+      "held_before": "slot=0 civs=coal_mine id=minecraft:chest",
+      "notes": "manual build-reqs | center place missed (no chest)",
+      "chat_hints": []
+    },
+    {
+      "key": "shelter",
+      "name": "Shelter",
+      "category": "admin-invisible",
+      "static_ok": true,
+      "static_issues": [],
+      "rcon_pad_ok": true,
+      "build_ok": true,
+      "place_ok": false,
+      "region_registered": false,
+      "center": [
+        2138,
+        81,
+        2108
+      ],
+      "held_before": "slot=0 civs=gravel_quarry id=minecraft:chest",
+      "notes": "manual build-reqs | center place missed (no chest)",
+      "chat_hints": []
+    }
+  ],
+  "place_details": {
+    "wand_preflight": {
+      "ok": true,
+      "command": "//wand",
+      "dry_run": false,
+      "focused": true,
+      "menus_closed": true,
+      "error": null,
+      "close_path": "pause_dismiss_only"
+    },
+    "coal_mine_build": {
+      "ok": true,
+      "we_cmds": [
+        {
+          "cmd": "//wand",
+          "ok": true,
+          "err": null
+        },
+        {
+          "cmd": "//pos1 2104,77,2104",
+          "ok": true,
+          "err": null
+        },
+        {
+          "cmd": "//pos2 2112,85,2112",
+          "ok": true,
+          "err": null
+        },
+        {
+          "cmd": "//set oak_planks",
+          "ok": true,
+          "err": null
+        },
+        {
+          "cmd": "//pos1 2108,81,2108",
+          "ok": true,
+          "err": null
+        },
+        {
+          "cmd": "//pos2 2108,81,2108",
+          "ok": true,
+          "err": null
+        },
+        {
+          "cmd": "//set air",
+          "ok": true,
+          "err": null
+        }
+      ],
+      "setblocks": 63,
+      "error": null,
+      "dominant": "oak_planks",
+      "material_counts": {
+        "iron_bars": 2,
+        "oak_door": 2,
+        "chest": 2,
+        "furnace": 2,
+        "coal_block": 4,
+        "oak_planks": 45,
+        "cobblestone": 6
+      },
+      "we_ok": true
+    },
+    "coal_mine_place": {
+      "ok": false,
+      "civs_key": "coal_mine",
+      "center": [
+        2108,
+        81,
+        2108
+      ],
+      "item": {
+        "ok": true,
+        "civs_key": "coal_mine",
+        "source": "pdc_replace",
+        "slot": 0,
+        "error": null,
+        "detail": "Replaced a slot on smokeshow with [coal_mine]"
+      },
+      "hygiene": {
+        "ok": true,
+        "civs_key": "coal_mine",
+        "slot": 0,
+        "cleared": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "dump_preview": "smokeshow has the following entity data: [{Slot: 0b, id: \"minecraft:chest\", count: 1, components: {\"minecraft:custom_name\":...",
+        "hand_ok": true,
+        "error": null,
+        "keys_before": [
+          "coal_mine"
+        ],
+        "ensure": {
+          "ok": true,
+          "civs_key": "coal_mine",
+          "source": "pdc_replace",
+          "slot": 0,
+          "error": null,
+          "detail": "Replaced a slot on smokeshow with [coal_mine]"
+        },
+        "hand_check": "smokeshow has the following entity data: {PublicBukkitValues: {\"civs:civs\": \"coal_mine\"}}"
+      },
+      "vision": [
+        {
+          "kind": "world",
+          "confidence": 0.55,
+          "safe": true,
+          "path": "C:\\Users\\Danie\\Downloads\\Civs-1.11.6\\Civs-1.11.6\\scripts\\qa\\reports\\screenshots\\coal_mine_daniel_south_pre_110240_world.png",
+          "notes": "mean=44.6 std=56.0 edges=0.045"
+        },
+        {
+          "kind": "world",
+          "confidence": 0.55,
+          "safe": true,
+          "path": "C:\\Users\\Danie\\Downloads\\Civs-1.11.6\\Civs-1.11.6\\scripts\\qa\\reports\\screenshots\\coal_mine_daniel_south_post_110244_world.png",
+          "notes": "mean=68.7 std=61.6 edges=0.096"
+        },
+        {
+          "kind": "world",
+          "confidence": 0.55,
+          "safe": true,
+          "path": "C:\\Users\\Danie\\Downloads\\Civs-1.11.6\\Civs-1.11.6\\scripts\\qa\\reports\\screenshots\\coal_mine_south_farther_pre_110244_world.png",
+          "notes": "mean=67.7 std=62.5 edges=0.093"
+        },
+        {
+          "kind": "world",
+          "confidence": 0.55,
+          "safe": true,
+          "path": "C:\\Users\\Danie\\Downloads\\Civs-1.11.6\\Civs-1.11.6\\scripts\\qa\\reports\\screenshots\\coal_mine_south_farther_post_110248_world.png",
+          "notes": "mean=42.8 std=56.8 edges=0.045"
+        },
+        {
+          "kind": "world",
+          "confidence": 0.55,
+          "safe": true,
+          "path": "C:\\Users\\Danie\\Downloads\\Civs-1.11.6\\Civs-1.11.6\\scripts\\qa\\reports\\screenshots\\coal_mine_north_mirror_pre_110249_world.png",
+          "notes": "mean=43.5 std=56.2 edges=0.045"
+        },
+        {
+          "kind": "world",
+          "confidence": 0.55,
+          "safe": true,
+          "path": "C:\\Users\\Danie\\Downloads\\Civs-1.11.6\\Civs-1.11.6\\scripts\\qa\\reports\\screenshots\\coal_mine_north_mirror_post_110252_world.png",
+          "notes": "mean=67.6 std=62.4 edges=0.090"
+        },
+        {
+          "kind": "world",
+          "confidence": 0.55,
+          "safe": true,
+          "path": "C:\\Users\\Danie\\Downloads\\Civs-1.11.6\\Civs-1.11.6\\scripts\\qa\\reports\\screenshots\\coal_mine_west_pre_110253_world.png",
+          "notes": "mean=68.5 std=61.6 edges=0.092"
+        },
+        {
+          "kind": "world",
+          "confidence": 0.55,
+          "safe": true,
+          "path": "C:\\Users\\Danie\\Downloads\\Civs-1.11.6\\Civs-1.11.6\\scripts\\qa\\reports\\screenshots\\coal_mine_west_post_110257_world.png",
+          "notes": "mean=44.4 std=55.7 edges=0.045"
+        },
+        {
+          "kind": "world",
+          "confidence": 0.55,
+          "safe": true,
+          "path": "C:\\Users\\Danie\\Downloads\\Civs-1.11.6\\Civs-1.11.6\\scripts\\qa\\reports\\screenshots\\coal_mine_east_pre_110258_world.png",
+          "notes": "mean=44.6 std=55.6 edges=0.045"
+        },
+        {
+          "kind": "world",
+          "confidence": 0.55,
+          "safe": true,
+          "path": "C:\\Users\\Danie\\Downloads\\Civs-1.11.6\\Civs-1.11.6\\scripts\\qa\\reports\\screenshots\\coal_mine_east_post_110301_world.png",
+          "notes": "mean=67.6 std=62.4 edges=0.091"
+        }
+      ],
+      "right_click": {
+        "ok": true,
+        "error": null,
+        "xy": [
+          2523,
+          528
+        ],
+        "capture_xy": [
+          2523,
+          289
+        ]
+      },
+      "placement_menu": null,
+      "attempts": [
+        {
+          "pose": "daniel_south",
+          "tp": [
+            2108.5,
+            82.62,
+            2106.0
+          ],
+          "facing": [
+            2108.5,
+            81.5,
+            2108.5
+          ],
+          "right_click_ok": true,
+          "center_has_chest": false,
+          "center_block": "The target block is not a block entity",
+          "hand_preview": "smokeshow has the following entity data: {PublicBukkitValues: {\"civs:civs\": \"coal_mine\"}}"
+        },
+        {
+          "pose": "south_farther",
+          "tp": [
+            2108.5,
+            82.62,
+            2105.5
+          ],
+          "facing": [
+            2108.5,
+            81.5,
+            2108.5
+          ],
+          "right_click_ok": true,
+          "center_has_chest": false,
+          "center_block": "The target block is not a block entity",
+          "hand_preview": "smokeshow has the following entity data: {PublicBukkitValues: {\"civs:civs\": \"coal_mine\"}}"
+        },
+        {
+          "pose": "north_mirror",
+          "tp": [
+            2108.5,
+            82.62,
+            2110.0
+          ],
+          "facing": [
+            2108.5,
+            81.5,
+            2108.5
+          ],
+          "right_click_ok": true,
+          "center_has_chest": false,
+          "center_block": "The target block is not a block entity",
+          "hand_preview": "smokeshow has the following entity data: {PublicBukkitValues: {\"civs:civs\": \"coal_mine\"}}"
+        },
+        {
+          "pose": "west",
+          "tp": [
+            2106.0,
+            82.62,
+            2108.5
+          ],
+          "facing": [
+            2108.5,
+            81.5,
+            2108.5
+          ],
+          "right_click_ok": true,
+          "center_has_chest": false,
+          "center_block": "The target block is not a block entity",
+          "hand_preview": "smokeshow has the following entity data: {PublicBukkitValues: {\"civs:civs\": \"coal_mine\"}}"
+        },
+        {
+          "pose": "east",
+          "tp": [
+            2110.0,
+            82.62,
+            2108.5
+          ],
+          "facing": [
+            2108.5,
+            81.5,
+            2108.5
+          ],
+          "right_click_ok": true,
+          "center_has_chest": false,
+          "center_block": "The target block is not a block entity",
+          "hand_preview": "smokeshow has the following entity data: {PublicBukkitValues: {\"civs:civs\": \"coal_mine\"}}"
+        }
+      ],
+      "error": "center place missed after chest-safe retries",
+      "center_block": "The target block is not a block entity",
+      "center_has_chest": false
+    },
+    "gravel_quarry_build": {
+      "ok": true,
+      "we_cmds": [
+        {
+          "cmd": "//wand",
+          "ok": true,
+          "err": null
+        },
+        {
+          "cmd": "//pos1 2117,78,2105",
+          "ok": true,
+          "err": null
+        },
+        {
+          "cmd": "//pos2 2123,84,2111",
+          "ok": true,
+          "err": null
+        },
+        {
+          "cmd": "//set gravel",
+          "ok": true,
+          "err": null
+        },
+        {
+          "cmd": "//pos1 2120,81,2108",
+          "ok": true,
+          "err": null
+        },
+        {
+          "cmd": "//pos2 2120,81,2108",
+          "ok": true,
+          "err": null
+        },
+        {
+          "cmd": "//set air",
+          "ok": true,
+          "err": null
+        }
+      ],
+      "setblocks": 28,
+      "error": null,
+      "dominant": "gravel",
+      "material_counts": {
+        "gravel": 24,
+        "furnace": 2,
+        "chest": 2
+      },
+      "we_ok": true
+    },
+    "gravel_quarry_place": {
+      "ok": false,
+      "civs_key": "gravel_quarry",
+      "center": [
+        2120,
+        81,
+        2108
+      ],
+      "item": {
+        "ok": true,
+        "civs_key": "gravel_quarry",
+        "source": "pdc_replace",
+        "slot": 0,
+        "error": null,
+        "detail": "Replaced a slot on smokeshow with [gravel_quarry]"
+      },
+      "hygiene": {
+        "ok": true,
+        "civs_key": "gravel_quarry",
+        "slot": 0,
+        "cleared": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "dump_preview": "smokeshow has the following entity data: [{Slot: 0b, id: \"minecraft:chest\", count: 1, components: {\"minecraft:custom_name\":...",
+        "hand_ok": true,
+        "error": null,
+        "keys_before": [
+          "coal_mine"
+        ],
+        "ensure": {
+          "ok": true,
+          "civs_key": "gravel_quarry",
+          "source": "pdc_replace",
+          "slot": 0,
+          "error": null,
+          "detail": "Replaced a slot on smokeshow with [gravel_quarry]"
+        },
+        "hand_check": "smokeshow has the following entity data: {PublicBukkitValues: {\"civs:civs\": \"gravel_quarry\"}}"
+      },
+      "vision": [
+        {
+          "kind": "world",
+          "confidence": 0.55,
+          "safe": true,
+          "path": "C:\\Users\\Danie\\Downloads\\Civs-1.11.6\\Civs-1.11.6\\scripts\\qa\\reports\\screenshots\\gravel_quarry_daniel_south_pre_110329_world.png",
+          "notes": "mean=72.6 std=49.3 edges=0.058"
+        },
+        {
+          "kind": "world",
+          "confidence": 0.55,
+          "safe": true,
+          "path": "C:\\Users\\Danie\\Downloads\\Civs-1.11.6\\Civs-1.11.6\\scripts\\qa\\reports\\screenshots\\gravel_quarry_daniel_south_post_110333_world.png",
+          "notes": "mean=88.3 std=52.7 edges=0.110"
+        },
+        {
+          "kind": "world",
+          "confidence": 0.55,
+          "safe": true,
+          "path": "C:\\Users\\Danie\\Downloads\\Civs-1.11.6\\Civs-1.11.6\\scripts\\qa\\reports\\screenshots\\gravel_quarry_south_farther_pre_110333_world.png",
+          "notes": "mean=88.4 std=55.5 edges=0.105"
+        },
+        {
+          "kind": "world",
+          "confidence": 0.55,
+          "safe": true,
+          "path": "C:\\Users\\Danie\\Downloads\\Civs-1.11.6\\Civs-1.11.6\\scripts\\qa\\reports\\screenshots\\gravel_quarry_south_farther_post_110337_world.png",
+          "notes": "mean=77.0 std=51.3 edges=0.056"
+        },
+        {
+          "kind": "container",
+          "confidence": 0.7344971443556734,
+          "safe": false,
+          "path": "C:\\Users\\Danie\\Downloads\\Civs-1.11.6\\Civs-1.11.6\\scripts\\qa\\reports\\screenshots\\gravel_quarry_north_mirror_pre_110338_container.png",
+          "notes": "mean=76.6 std=43.6 edges=0.059"
+        },
+        {
+          "kind": "container",
+          "confidence": 0.95,
+          "safe": false,
+          "path": "C:\\Users\\Danie\\Downloads\\Civs-1.11.6\\Civs-1.11.6\\scripts\\qa\\reports\\screenshots\\gravel_quarry_north_mirror_retry_110340_container.png",
+          "notes": "mean=77.4 std=44.4 edges=0.128"
+        },
+        {
+          "kind": "container",
+          "confidence": 0.7025643362804971,
+          "safe": false,
+          "path": "C:\\Users\\Danie\\Downloads\\Civs-1.11.6\\Civs-1.11.6\\scripts\\qa\\reports\\screenshots\\gravel_quarry_west_pre_110341_container.png",
+          "notes": "mean=47.3 std=31.8 edges=0.051"
+        },
+        {
+          "kind": "world",
+          "confidence": 0.55,
+          "safe": true,
+          "path": "C:\\Users\\Danie\\Downloads\\Civs-1.11.6\\Civs-1.11.6\\scripts\\qa\\reports\\screenshots\\gravel_quarry_west_retry_110343_world.png",
+          "notes": "mean=77.7 std=54.3 edges=0.103"
+        },
+        {
+          "kind": "container",
+          "confidence": 0.7344651146962087,
+          "safe": false,
+          "path": "C:\\Users\\Danie\\Downloads\\Civs-1.11.6\\Civs-1.11.6\\scripts\\qa\\reports\\screenshots\\gravel_quarry_west_post_110346_container.png",
+          "notes": "mean=67.1 std=47.1 edges=0.059"
+        },
+        {
+          "kind": "world",
+          "confidence": 0.55,
+          "safe": true,
+          "path": "C:\\Users\\Danie\\Downloads\\Civs-1.11.6\\Civs-1.11.6\\scripts\\qa\\reports\\screenshots\\gravel_quarry_east_pre_110349_world.png",
+          "notes": "mean=91.9 std=53.0 edges=0.126"
+        },
+        {
+          "kind": "world",
+          "confidence": 0.55,
+          "safe": true,
+          "path": "C:\\Users\\Danie\\Downloads\\Civs-1.11.6\\Civs-1.11.6\\scripts\\qa\\reports\\screenshots\\gravel_quarry_east_post_110352_world.png",
+          "notes": "mean=130.4 std=60.5 edges=0.102"
+        }
+      ],
+      "right_click": {
+        "ok": true,
+        "error": null,
+        "xy": [
+          2523,
+          528
+        ],
+        "capture_xy": [
+          2523,
+          289
+        ]
+      },
+      "placement_menu": null,
+      "attempts": [
+        {
+          "pose": "daniel_south",
+          "tp": [
+            2120.5,
+            82.62,
+            2106.0
+          ],
+          "facing": [
+            2120.5,
+            81.5,
+            2108.5
+          ],
+          "right_click_ok": true,
+          "center_has_chest": false,
+          "center_block": "The target block is not a block entity",
+          "hand_preview": "smokeshow has the following entity data: {PublicBukkitValues: {\"civs:civs\": \"gravel_quarry\"}}"
+        },
+        {
+          "pose": "south_farther",
+          "tp": [
+            2120.5,
+            82.62,
+            2105.5
+          ],
+          "facing": [
+            2120.5,
+            81.5,
+            2108.5
+          ],
+          "right_click_ok": true,
+          "center_has_chest": false,
+          "center_block": "The target block is not a block entity",
+          "hand_preview": "smokeshow has the following entity data: {PublicBukkitValues: {\"civs:civs\": \"gravel_quarry\"}}"
+        },
+        {
+          "pose": "north_mirror",
+          "skipped": "gui_open",
+          "vision": {
+            "kind": "container",
+            "confidence": 0.95,
+            "safe": false,
+            "path": "C:\\Users\\Danie\\Downloads\\Civs-1.11.6\\Civs-1.11.6\\scripts\\qa\\reports\\screenshots\\gravel_quarry_north_mirror_retry_110340_container.png",
+            "notes": "mean=77.4 std=44.4 edges=0.128"
+          }
+        },
+        {
+          "pose": "west",
+          "opened_container": true,
+          "vision": {
+            "kind": "container",
+            "confidence": 0.7344651146962087,
+            "safe": false,
+            "path": "C:\\Users\\Danie\\Downloads\\Civs-1.11.6\\Civs-1.11.6\\scripts\\qa\\reports\\screenshots\\gravel_quarry_west_post_110346_container.png",
+            "notes": "mean=67.1 std=47.1 edges=0.059"
+          },
+          "shot": "C:\\Users\\Danie\\Downloads\\Civs-1.11.6\\Civs-1.11.6\\scripts\\qa\\reports\\screenshots\\gravel_quarry_west_post_110346_container.png"
+        },
+        {
+          "pose": "east",
+          "tp": [
+            2122.0,
+            82.62,
+            2108.5
+          ],
+          "facing": [
+            2120.5,
+            81.5,
+            2108.5
+          ],
+          "right_click_ok": true,
+          "center_has_chest": false,
+          "center_block": "The target block is not a block entity",
+          "hand_preview": "smokeshow has the following entity data: {PublicBukkitValues: {\"civs:civs\": \"gravel_quarry\"}}"
+        }
+      ],
+      "error": "center place missed after chest-safe retries",
+      "center_block": "The target block is not a block entity",
+      "center_has_chest": false
+    },
+    "shelter_build": {
+      "ok": true,
+      "we_cmds": [
+        "noop_empty_footprint"
+      ],
+      "setblocks": 0,
+      "error": null
+    },
+    "shelter_place": {
+      "ok": false,
+      "civs_key": "shelter",
+      "center": [
+        2138,
+        81,
+        2108
+      ],
+      "item": {
+        "ok": true,
+        "civs_key": "shelter",
+        "source": "pdc_replace",
+        "slot": 0,
+        "error": null,
+        "detail": "Replaced a slot on smokeshow with [shelter]"
+      },
+      "hygiene": {
+        "ok": true,
+        "civs_key": "shelter",
+        "slot": 0,
+        "cleared": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "dump_preview": "smokeshow has the following entity data: [{Slot: 0b, id: \"minecraft:chest\", count: 1, components: {\"minecraft:custom_name\":...",
+        "hand_ok": true,
+        "error": null,
+        "keys_before": [
+          "gravel_quarry"
+        ],
+        "ensure": {
+          "ok": true,
+          "civs_key": "shelter",
+          "source": "pdc_replace",
+          "slot": 0,
+          "error": null,
+          "detail": "Replaced a slot on smokeshow with [shelter]"
+        },
+        "hand_check": "smokeshow has the following entity data: {PublicBukkitValues: {\"civs:civs\": \"shelter\"}}"
+      },
+      "vision": [
+        {
+          "kind": "world",
+          "confidence": 0.55,
+          "safe": true,
+          "path": "C:\\Users\\Danie\\Downloads\\Civs-1.11.6\\Civs-1.11.6\\scripts\\qa\\reports\\screenshots\\shelter_daniel_south_pre_110358_world.png",
+          "notes": "mean=75.6 std=54.4 edges=0.057"
+        },
+        {
+          "kind": "world",
+          "confidence": 0.55,
+          "safe": true,
+          "path": "C:\\Users\\Danie\\Downloads\\Civs-1.11.6\\Civs-1.11.6\\scripts\\qa\\reports\\screenshots\\shelter_daniel_south_post_110402_world.png",
+          "notes": "mean=94.2 std=55.5 edges=0.104"
+        },
+        {
+          "kind": "world",
+          "confidence": 0.55,
+          "safe": true,
+          "path": "C:\\Users\\Danie\\Downloads\\Civs-1.11.6\\Civs-1.11.6\\scripts\\qa\\reports\\screenshots\\shelter_south_farther_pre_110403_world.png",
+          "notes": "mean=98.7 std=58.0 edges=0.109"
+        },
+        {
+          "kind": "world",
+          "confidence": 0.55,
+          "safe": true,
+          "path": "C:\\Users\\Danie\\Downloads\\Civs-1.11.6\\Civs-1.11.6\\scripts\\qa\\reports\\screenshots\\shelter_south_farther_post_110406_world.png",
+          "notes": "mean=78.7 std=59.3 edges=0.056"
+        },
+        {
+          "kind": "container",
+          "confidence": 0.7344971443556734,
+          "safe": false,
+          "path": "C:\\Users\\Danie\\Downloads\\Civs-1.11.6\\Civs-1.11.6\\scripts\\qa\\reports\\screenshots\\shelter_north_mirror_pre_110407_container.png",
+          "notes": "mean=81.9 std=44.6 edges=0.059"
+        },
+        {
+          "kind": "world",
+          "confidence": 0.55,
+          "safe": true,
+          "path": "C:\\Users\\Danie\\Downloads\\Civs-1.11.6\\Civs-1.11.6\\scripts\\qa\\reports\\screenshots\\shelter_north_mirror_retry_110409_world.png",
+          "notes": "mean=96.8 std=48.6 edges=0.169"
+        },
+        {
+          "kind": "world",
+          "confidence": 0.55,
+          "safe": true,
+          "path": "C:\\Users\\Danie\\Downloads\\Civs-1.11.6\\Civs-1.11.6\\scripts\\qa\\reports\\screenshots\\shelter_north_mirror_post_110413_world.png",
+          "notes": "mean=108.8 std=64.3 edges=0.080"
+        },
+        {
+          "kind": "world",
+          "confidence": 0.55,
+          "safe": true,
+          "path": "C:\\Users\\Danie\\Downloads\\Civs-1.11.6\\Civs-1.11.6\\scripts\\qa\\reports\\screenshots\\shelter_west_pre_110414_world.png",
+          "notes": "mean=102.3 std=71.0 edges=0.086"
+        },
+        {
+          "kind": "world",
+          "confidence": 0.55,
+          "safe": true,
+          "path": "C:\\Users\\Danie\\Downloads\\Civs-1.11.6\\Civs-1.11.6\\scripts\\qa\\reports\\screenshots\\shelter_west_post_110417_world.png",
+          "notes": "mean=102.3 std=71.0 edges=0.084"
+        },
+        {
+          "kind": "world",
+          "confidence": 0.55,
+          "safe": true,
+          "path": "C:\\Users\\Danie\\Downloads\\Civs-1.11.6\\Civs-1.11.6\\scripts\\qa\\reports\\screenshots\\shelter_east_pre_110418_world.png",
+          "notes": "mean=100.9 std=72.3 edges=0.084"
+        },
+        {
+          "kind": "world",
+          "confidence": 0.55,
+          "safe": true,
+          "path": "C:\\Users\\Danie\\Downloads\\Civs-1.11.6\\Civs-1.11.6\\scripts\\qa\\reports\\screenshots\\shelter_east_post_110422_world.png",
+          "notes": "mean=100.9 std=72.4 edges=0.084"
+        }
+      ],
+      "right_click": {
+        "ok": true,
+        "error": null,
+        "xy": [
+          2880,
+          516
+        ],
+        "capture_xy": [
+          2880,
+          75
+        ]
+      },
+      "placement_menu": null,
+      "attempts": [
+        {
+          "pose": "daniel_south",
+          "tp": [
+            2138.5,
+            82.62,
+            2106.0
+          ],
+          "facing": [
+            2138.5,
+            81.5,
+            2108.5
+          ],
+          "right_click_ok": true,
+          "center_has_chest": false,
+          "center_block": "The target block is not a block entity",
+          "hand_preview": "smokeshow has the following entity data: {PublicBukkitValues: {\"civs:civs\": \"shelter\"}}"
+        },
+        {
+          "pose": "south_farther",
+          "tp": [
+            2138.5,
+            82.62,
+            2105.5
+          ],
+          "facing": [
+            2138.5,
+            81.5,
+            2108.5
+          ],
+          "right_click_ok": true,
+          "center_has_chest": false,
+          "center_block": "The target block is not a block entity",
+          "hand_preview": "smokeshow has the following entity data: {PublicBukkitValues: {\"civs:civs\": \"shelter\"}}"
+        },
+        {
+          "pose": "north_mirror",
+          "tp": [
+            2138.5,
+            82.62,
+            2110.0
+          ],
+          "facing": [
+            2138.5,
+            81.5,
+            2108.5
+          ],
+          "right_click_ok": true,
+          "center_has_chest": false,
+          "center_block": "The target block is not a block entity",
+          "hand_preview": "smokeshow has the following entity data: {PublicBukkitValues: {\"civs:civs\": \"shelter\"}}"
+        },
+        {
+          "pose": "west",
+          "tp": [
+            2136.0,
+            82.62,
+            2108.5
+          ],
+          "facing": [
+            2138.5,
+            81.5,
+            2108.5
+          ],
+          "right_click_ok": true,
+          "center_has_chest": false,
+          "center_block": "The target block is not a block entity",
+          "hand_preview": "smokeshow has the following entity data: {PublicBukkitValues: {\"civs:civs\": \"shelter\"}}"
+        },
+        {
+          "pose": "east",
+          "tp": [
+            2140.0,
+            82.62,
+            2108.5
+          ],
+          "facing": [
+            2138.5,
+            81.5,
+            2108.5
+          ],
+          "right_click_ok": true,
+          "center_has_chest": false,
+          "center_block": "The target block is not a block entity",
+          "hand_preview": "smokeshow has the following entity data: {PublicBukkitValues: {\"civs:civs\": \"shelter\"}}"
+        }
+      ],
+      "error": "center place missed after chest-safe retries",
+      "center_block": "The target block is not a block entity",
+      "center_has_chest": false
+    }
+  },
+  "rcon_tail": [
+    "",
+    "Nothing changed. The player already is an operator",
+    "",
+    "Teleported smokeshow to 2100.500000, 81.000000, 2100.500000",
+    "Set minecraft:overworld to time marker minecraft:day",
+    "Set the weather to clear",
+    "Successfully filled 304 block(s)",
+    "Too many blocks in the specified area (maximum 32768, but specified 50000)",
+    "INV:coal_mine"
+  ],
+  "log_errors": [],
+  "passed_static_pad": 3,
+  "built": 3,
+  "activated": 0,
+  "total": 3,
+  "passed": 0,
+  "pipeline": "For each type: parse build-reqs \u2192 WE/fill footprint \u2192 put Civs item in hand \u2192 right-click place at EXACT center \u2192 verify plugins/Civs/regions/*.yml",
+  "item_acquisition": "Uses inventory civs:civs key if present; else item replace with PDC (QA-only, not /cv give). Shop/tutorial still preferred for realism."
+}

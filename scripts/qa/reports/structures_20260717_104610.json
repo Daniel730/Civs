@@ -1,0 +1,231 @@
+{
+  "marker": "QA_STRUCT_104520",
+  "timestamp": "2026-07-17T10:46:10.435643+00:00",
+  "batch_requested": [
+    "coal_mine",
+    "shelter"
+  ],
+  "missing_yaml": [],
+  "inventory_before": {
+    "player": "Smokeshow",
+    "selected_slot": 0,
+    "hand": {
+      "slot": 0,
+      "item_id": "minecraft:chest",
+      "count": 1,
+      "civs_key": "shack",
+      "custom_name": "shack"
+    },
+    "hotbar": [
+      {
+        "slot": 0,
+        "item_id": "minecraft:chest",
+        "count": 1,
+        "civs_key": "shack",
+        "custom_name": "shack"
+      }
+    ],
+    "inventory": [
+      {
+        "slot": 0,
+        "item_id": "minecraft:chest",
+        "count": 1,
+        "civs_key": "shack",
+        "custom_name": "shack"
+      }
+    ],
+    "raw_selected": "smokeshow has the following entity data: {id: \"minecraft:chest\", count: 1, components: {\"minecraft:custom_name\": \"shack\", \"minecraft:custom_data...",
+    "error": null
+  },
+  "structures": [
+    {
+      "key": "coal_mine",
+      "name": "Coal_Mine",
+      "category": "mine",
+      "static_ok": true,
+      "static_issues": [],
+      "rcon_pad_ok": true,
+      "build_ok": true,
+      "place_ok": true,
+      "region_registered": false,
+      "center": [
+        2108,
+        81,
+        2108
+      ],
+      "held_before": "slot=0 civs=shack id=minecraft:chest",
+      "notes": "manual build-reqs | region YAML not detected (pre-req/build fail?)",
+      "chat_hints": []
+    },
+    {
+      "key": "shelter",
+      "name": "Shelter",
+      "category": "admin-invisible",
+      "static_ok": true,
+      "static_issues": [],
+      "rcon_pad_ok": true,
+      "build_ok": true,
+      "place_ok": true,
+      "region_registered": false,
+      "center": [
+        2123,
+        81,
+        2108
+      ],
+      "held_before": "slot=0 civs=coal_mine id=minecraft:chest",
+      "notes": "manual build-reqs | region YAML not detected (pre-req/build fail?)",
+      "chat_hints": []
+    }
+  ],
+  "place_details": {
+    "wand_preflight": {
+      "ok": true,
+      "command": "//wand",
+      "dry_run": false,
+      "focused": true,
+      "menus_closed": true,
+      "error": null,
+      "close_path": "pause_dismiss_only"
+    },
+    "coal_mine_build": {
+      "ok": true,
+      "we_cmds": [
+        {
+          "cmd": "//wand",
+          "ok": true,
+          "err": null
+        },
+        {
+          "cmd": "//pos1 2104,77,2104",
+          "ok": true,
+          "err": null
+        },
+        {
+          "cmd": "//pos2 2112,85,2112",
+          "ok": true,
+          "err": null
+        },
+        {
+          "cmd": "//set oak_planks",
+          "ok": true,
+          "err": null
+        },
+        {
+          "cmd": "//pos1 2108,81,2108",
+          "ok": true,
+          "err": null
+        },
+        {
+          "cmd": "//pos2 2108,81,2108",
+          "ok": true,
+          "err": null
+        },
+        {
+          "cmd": "//set air",
+          "ok": true,
+          "err": null
+        }
+      ],
+      "setblocks": 63,
+      "error": null,
+      "dominant": "oak_planks",
+      "material_counts": {
+        "iron_bars": 2,
+        "oak_door": 2,
+        "chest": 2,
+        "furnace": 2,
+        "coal_block": 4,
+        "oak_planks": 45,
+        "cobblestone": 6
+      },
+      "we_ok": true
+    },
+    "coal_mine_place": {
+      "ok": true,
+      "civs_key": "coal_mine",
+      "center": [
+        2108,
+        81,
+        2108
+      ],
+      "item": {
+        "ok": true,
+        "civs_key": "coal_mine",
+        "source": "pdc_replace",
+        "slot": 0,
+        "error": null,
+        "detail": "Replaced a slot on smokeshow with [coal_mine]"
+      },
+      "right_click": {
+        "ok": true,
+        "error": null
+      },
+      "placement_menu": null,
+      "error": null,
+      "hand_check": "smokeshow has the following entity data: {PublicBukkitValues: {\"civs:civs\": \"coal_mine\"}}",
+      "center_block": "The target block is not a block entity",
+      "right_click_retry": {
+        "ok": true,
+        "error": null
+      },
+      "center_has_chest": false
+    },
+    "shelter_build": {
+      "ok": true,
+      "we_cmds": [
+        "noop_empty_footprint"
+      ],
+      "setblocks": 0,
+      "error": null
+    },
+    "shelter_place": {
+      "ok": true,
+      "civs_key": "shelter",
+      "center": [
+        2123,
+        81,
+        2108
+      ],
+      "item": {
+        "ok": true,
+        "civs_key": "shelter",
+        "source": "pdc_replace",
+        "slot": 0,
+        "error": null,
+        "detail": "Replaced a slot on smokeshow with [shelter]"
+      },
+      "right_click": {
+        "ok": true,
+        "error": null
+      },
+      "placement_menu": null,
+      "error": null,
+      "hand_check": "smokeshow has the following entity data: {PublicBukkitValues: {\"civs:civs\": \"shelter\"}}",
+      "center_block": "The target block is not a block entity",
+      "right_click_retry": {
+        "ok": true,
+        "error": null
+      },
+      "center_has_chest": false
+    }
+  },
+  "rcon_tail": [
+    "",
+    "Nothing changed. The player already is an operator",
+    "",
+    "Teleported smokeshow to 2100.500000, 81.000000, 2100.500000",
+    "Set minecraft:overworld to time marker minecraft:day",
+    "Set the weather to clear",
+    "Successfully filled 387 block(s)",
+    "Too many blocks in the specified area (maximum 32768, but specified 50000)",
+    "INV:shack"
+  ],
+  "log_errors": [],
+  "passed_static_pad": 2,
+  "built": 2,
+  "activated": 0,
+  "total": 2,
+  "passed": 0,
+  "pipeline": "For each type: parse build-reqs \u2192 WE/fill footprint \u2192 put Civs item in hand \u2192 right-click place at EXACT center \u2192 verify plugins/Civs/regions/*.yml",
+  "item_acquisition": "Uses inventory civs:civs key if present; else item replace with PDC (QA-only, not /cv give). Shop/tutorial still preferred for realism."
+}

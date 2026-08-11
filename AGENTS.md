@@ -8,6 +8,10 @@ Paper server. Target runtime: **Paper 26.1.2 / Java 25**.
 For architecture, workflow, and migration status see `.cursor/skills/civs-paper-migration/SKILL.md`,
 `docs/MIGRATION-STATUS.md`, and `README.md`.
 
+**Mandatory agent process** (issues → PRs, observability, lint, tests, UI motion):
+see **`docs/AGENT-WORKFLOW.md`**. Motion skill: `.cursor/skills/design-motion-principles/`.
+Prefer Hermes (forge `hermes_delegate.py`) for cheap surveys/drafts; parent agent reviews and applies.
+
 ## Cursor Cloud specific instructions
 
 The startup update script only refreshes Maven dependencies. The toolchain and a

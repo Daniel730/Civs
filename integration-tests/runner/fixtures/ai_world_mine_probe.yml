@@ -1,0 +1,12 @@
+id: ai_world_mine_probe
+name: "[QA] AI World Mine Probe"
+archetype: neutral
+description: "Disposable QA fixture for AI World physical mine vertical slice. Not for production story progression."
+objectives:
+  - id: mine_stone
+    type: mine_block
+    block: stone
+    amount: 10
+    description: "Mine 10 stone blocks"
+rewards:
+  money: 5

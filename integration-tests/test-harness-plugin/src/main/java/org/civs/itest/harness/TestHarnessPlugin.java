@@ -61,7 +61,19 @@ public class TestHarnessPlugin extends JavaPlugin implements CommandExecutor {
         }
         getCommand("test").setExecutor(this);
         getLogger().info("CivsTestHarness enabled (economy=" + (economy != null) + ", civs="
-                + (getServer().getPluginManager().getPlugin("Civs") != null) + ")");
+                + (getServer().getPluginManager().getPlugin("Civs") != null)
+                + ", capabilities=act/observe)");
+    }
+
+    /**
+     * Run a capability callable on the primary thread (RCON may already be primary — avoid deadlock).
+     */
+    boolean syncCap(java.util.concurrent.Callable<Boolean> callable) throws Exception {
+        if (Bukkit.isPrimaryThread()) {
+            return Boolean.TRUE.equals(callable.call());
+        }
+        return Boolean.TRUE.equals(
+                Bukkit.getScheduler().callSyncMethod(this, callable).get(10, java.util.concurrent.TimeUnit.SECONDS));
     }
 
     // ---- reply helpers ------------------------------------------------------------
@@ -91,12 +103,13 @@ public class TestHarnessPlugin extends JavaPlugin implements CommandExecutor {
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] a) {
         try {
-            if (a.length == 0) return err(sender, "usage: /test <ping|money|assert|region|held|inventory|permission|block|spawnentity|scheduler>");
+            if (a.length == 0) return err(sender, "usage: /test <ping|money|assert|region|held|inventory|permission|block|spawnentity|scheduler|act|observe|world>");
             String sub = a[0].toLowerCase(Locale.ROOT);
             switch (sub) {
                 case "ping":       return ping(sender);
                 case "money":      return money(sender, a);
                 case "region":     return region(sender, a);
+                case "world":      return WorldObserve.handle(sender, a);
                 case "held":       return held(sender, a);
                 case "inventory":  return inventory(sender, a);
                 case "permission": return permission(sender, a);
@@ -110,6 +123,10 @@ public class TestHarnessPlugin extends JavaPlugin implements CommandExecutor {
                 case "saveregions":  return saveRegions(sender);
                 case "reloadregions":return reloadRegions(sender);
                 case "assert":     return assertion(sender, a);
+                // server-side player capabilities (actor layer for Paper 26.1.2)
+                case "act":
+                case "observe":    return CapabilityActions.handle(sender, a, this);
+                case "rpg":        return RpgBridge.handle(sender, a);
                 default:           return err(sender, "unknown subcommand: " + sub);
             }
         } catch (Exception e) {

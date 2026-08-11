@@ -1,0 +1,119 @@
+{
+  "marker": "QA_FAST_155036",
+  "mode": "fast",
+  "timestamp": "2026-07-17T15:50:38.266166+00:00",
+  "wall_clock_s": 1.5,
+  "batch": [
+    "altar",
+    "redstone_mine",
+    "command_tent"
+  ],
+  "missing_yaml": [],
+  "town": {
+    "ok": true,
+    "hub": [
+      3000,
+      81,
+      2600
+    ],
+    "town_name": "QATown2",
+    "skipped": "reuse QATown2.yml"
+  },
+  "results": [
+    {
+      "key": "altar",
+      "category": "offense",
+      "center": [
+        4437,
+        81,
+        4000
+      ],
+      "build_ok": true,
+      "activated": true,
+      "io_ok": null,
+      "io_detail": "SKIP period=3600s",
+      "error": null,
+      "elapsed_s": 0.13,
+      "elapsed_ms": 130,
+      "place_ms": 17,
+      "io_ms": 0,
+      "notes": "io=SKIP(long period)"
+    },
+    {
+      "key": "redstone_mine",
+      "category": "mine",
+      "center": [
+        4455,
+        81,
+        4000
+      ],
+      "build_ok": true,
+      "activated": true,
+      "io_ok": null,
+      "io_detail": "SKIP period=3600s",
+      "error": null,
+      "elapsed_s": 0.2,
+      "elapsed_ms": 200,
+      "place_ms": 8,
+      "io_ms": 0,
+      "notes": "io=SKIP(long period)"
+    },
+    {
+      "key": "command_tent",
+      "category": "offense",
+      "center": [
+        4485,
+        81,
+        4000
+      ],
+      "build_ok": true,
+      "activated": true,
+      "io_ok": null,
+      "io_detail": "",
+      "error": null,
+      "elapsed_s": 0.17,
+      "elapsed_ms": 170,
+      "place_ms": 17,
+      "io_ms": 0,
+      "notes": ""
+    }
+  ],
+  "activated": 3,
+  "attempted": 3,
+  "built": 3,
+  "io_pass": 0,
+  "io_fail": 0,
+  "io_skip": 3,
+  "place_details": {
+    "altar_build": {
+      "ok": true,
+      "setblocks": 3
+    },
+    "altar_placements": 3,
+    "altar_give": "\u00a7a[Civs] Gave 1x altar to smokeshow",
+    "altar_place": "\u00a7a[Civs] placeregion OK altar @ 4437,81,4000",
+    "redstone_mine_build": {
+      "ok": true,
+      "setblocks": 73
+    },
+    "redstone_mine_placements": 73,
+    "redstone_mine_give": "\u00a7a[Civs] Gave 1x redstone_mine to smokeshow",
+    "redstone_mine_place": "\u00a7a[Civs] placeregion OK redstone_mine @ 4455,81,4000",
+    "command_tent_build": {
+      "ok": true,
+      "setblocks": 34
+    },
+    "command_tent_placements": 34,
+    "command_tent_give": "\u00a7a[Civs] Gave 1x command_tent to smokeshow",
+    "command_tent_place": "\u00a7a[Civs] placeregion OK command_tent @ 4485,81,4000"
+  },
+  "throughput": {
+    "attempts_per_min": 120.0,
+    "target_met": false
+  },
+  "log_errors": [
+    "[16:50:37] [Server thread/INFO]: Region altar created ec01bfd3-8525-48ee-b5e5-4d8ecac61630~4437.5~81.5~4000.5.yml",
+    "[16:50:37] [Server thread/INFO]: Region redstone_mine created ec01bfd3-8525-48ee-b5e5-4d8ecac61630~4455.5~81.5~4000.5.yml",
+    "[16:50:38] [Server thread/INFO]: Region command_tent created ec01bfd3-8525-48ee-b5e5-4d8ecac61630~4485.5~81.5~4000.5.yml"
+  ]
+}

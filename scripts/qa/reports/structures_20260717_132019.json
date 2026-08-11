@@ -1,0 +1,750 @@
+{
+  "marker": "QA_STRUCT_131842",
+  "timestamp": "2026-07-17T13:20:19.003290+00:00",
+  "batch_requested": [
+    "gravel_quarry"
+  ],
+  "missing_yaml": [],
+  "inventory_before": {
+    "player": "Smokeshow",
+    "selected_slot": 0,
+    "hand": {
+      "slot": 0,
+      "item_id": "minecraft:chest",
+      "count": 1,
+      "civs_key": "shelter",
+      "custom_name": "shelter",
+      "kind": "civs"
+    },
+    "hotbar": [
+      {
+        "slot": 0,
+        "item_id": "minecraft:chest",
+        "count": 1,
+        "civs_key": "shelter",
+        "custom_name": "shelter",
+        "kind": "civs"
+      },
+      {
+        "slot": 8,
+        "item_id": "minecraft:wooden_axe",
+        "count": 1,
+        "civs_key": null,
+        "custom_name": null,
+        "kind": "wand"
+      }
+    ],
+    "inventory": [
+      {
+        "slot": 0,
+        "item_id": "minecraft:chest",
+        "count": 1,
+        "civs_key": "shelter",
+        "custom_name": "shelter",
+        "kind": "civs"
+      },
+      {
+        "slot": 8,
+        "item_id": "minecraft:wooden_axe",
+        "count": 1,
+        "civs_key": null,
+        "custom_name": null,
+        "kind": "wand"
+      }
+    ],
+    "raw_selected": "smokeshow has the following entity data: {id: \"minecraft:chest\", count: 1, components: {\"minecraft:custom_name\": \"shelter\", \"minecraft:custom_data...",
+    "raw_selected_slot": "smokeshow has the following entity data: 0",
+    "error": null
+  },
+  "structures": [
+    {
+      "key": "gravel_quarry",
+      "name": "gravel_quarry",
+      "category": "raw",
+      "static_ok": true,
+      "static_issues": [],
+      "rcon_pad_ok": true,
+      "build_ok": true,
+      "place_ok": false,
+      "region_registered": false,
+      "center": [
+        3160,
+        81,
+        2920
+      ],
+      "held_before": "slot=0 civs=shelter id=minecraft:chest",
+      "notes": "manual build-reqs | pad r=3 sep_origin=(3160,2920) | center place missed (no chest)",
+      "chat_hints": []
+    }
+  ],
+  "place_details": {
+    "pad_origin": [
+      3160,
+      81,
+      2920
+    ],
+    "pad_margin": 10,
+    "existing_regions_blocked": 10,
+    "pad_zones": {
+      "gravel_quarry": "outer"
+    },
+    "pads": [
+      {
+        "key": "gravel_quarry",
+        "center": [
+          3160,
+          81,
+          2920
+        ],
+        "radius": 3,
+        "zone": "outer"
+      }
+    ],
+    "town_claim_radius": null,
+    "wand_preflight": {
+      "ok": true,
+      "command": "//wand",
+      "dry_run": false,
+      "focused": true,
+      "menus_closed": true,
+      "error": null,
+      "close_path": "pause_dismiss_only"
+    },
+    "gravel_quarry_build": {
+      "ok": true,
+      "we_cmds": [
+        {
+          "cmd": "//pos1 3157,78,2917",
+          "ok": true,
+          "err": null
+        },
+        {
+          "cmd": "//pos2 3163,84,2923",
+          "ok": true,
+          "err": null
+        },
+        {
+          "cmd": "//set gravel",
+          "ok": true,
+          "err": null
+        },
+        {
+          "cmd": "//pos1 3160,81,2920",
+          "ok": true,
+          "err": null
+        },
+        {
+          "cmd": "//pos2 3160,81,2920",
+          "ok": true,
+          "err": null
+        },
+        {
+          "cmd": "//set air",
+          "ok": true,
+          "err": null
+        }
+      ],
+      "setblocks": 28,
+      "error": null,
+      "hotbar_log": [
+        {
+          "label": "we_before",
+          "SelectedItemSlot": 0,
+          "item_id": "minecraft:chest",
+          "civs_key": "shelter",
+          "kind": "civs",
+          "hotbar": [
+            {
+              "slot": 0,
+              "id": "minecraft:chest",
+              "kind": "civs",
+              "civs": "shelter"
+            },
+            {
+              "slot": 8,
+              "id": "minecraft:wooden_axe",
+              "kind": "wand",
+              "civs": null
+            }
+          ]
+        },
+        {
+          "label": "we_wand_selected",
+          "SelectedItemSlot": 8,
+          "item_id": "minecraft:wooden_axe",
+          "civs_key": null,
+          "kind": "wand",
+          "hotbar": [
+            {
+              "slot": 0,
+              "id": "minecraft:chest",
+              "kind": "civs",
+              "civs": "shelter"
+            },
+            {
+              "slot": 8,
+              "id": "minecraft:wooden_axe",
+              "kind": "wand",
+              "civs": null
+            }
+          ]
+        },
+        {
+          "label": "we_cmd://pos1 3157,78,2917",
+          "SelectedItemSlot": 8,
+          "item_id": "minecraft:wooden_axe",
+          "civs_key": null,
+          "kind": "wand",
+          "hotbar": [
+            {
+              "slot": 0,
+              "id": "minecraft:chest",
+              "kind": "civs",
+              "civs": "shelter"
+            },
+            {
+              "slot": 8,
+              "id": "minecraft:wooden_axe",
+              "kind": "wand",
+              "civs": null
+            }
+          ]
+        },
+        {
+          "label": "we_cmd://pos2 3163,84,2923",
+          "SelectedItemSlot": 8,
+          "item_id": "minecraft:wooden_axe",
+          "civs_key": null,
+          "kind": "wand",
+          "hotbar": [
+            {
+              "slot": 0,
+              "id": "minecraft:chest",
+              "kind": "civs",
+              "civs": "shelter"
+            },
+            {
+              "slot": 8,
+              "id": "minecraft:wooden_axe",
+              "kind": "wand",
+              "civs": null
+            }
+          ]
+        },
+        {
+          "label": "we_cmd://set gravel",
+          "SelectedItemSlot": 8,
+          "item_id": "minecraft:wooden_axe",
+          "civs_key": null,
+          "kind": "wand",
+          "hotbar": [
+            {
+              "slot": 0,
+              "id": "minecraft:chest",
+              "kind": "civs",
+              "civs": "shelter"
+            },
+            {
+              "slot": 8,
+              "id": "minecraft:wooden_axe",
+              "kind": "wand",
+              "civs": null
+            }
+          ]
+        },
+        {
+          "label": "we_cmd://pos1 3160,81,2920",
+          "SelectedItemSlot": 8,
+          "item_id": "minecraft:wooden_axe",
+          "civs_key": null,
+          "kind": "wand",
+          "hotbar": [
+            {
+              "slot": 0,
+              "id": "minecraft:chest",
+              "kind": "civs",
+              "civs": "shelter"
+            },
+            {
+              "slot": 8,
+              "id": "minecraft:wooden_axe",
+              "kind": "wand",
+              "civs": null
+            }
+          ]
+        },
+        {
+          "label": "we_cmd://pos2 3160,81,2920",
+          "SelectedItemSlot": 8,
+          "item_id": "minecraft:wooden_axe",
+          "civs_key": null,
+          "kind": "wand",
+          "hotbar": [
+            {
+              "slot": 0,
+              "id": "minecraft:chest",
+              "kind": "civs",
+              "civs": "shelter"
+            },
+            {
+              "slot": 8,
+              "id": "minecraft:wooden_axe",
+              "kind": "wand",
+              "civs": null
+            }
+          ]
+        },
+        {
+          "label": "we_cmd://set air",
+          "SelectedItemSlot": 8,
+          "item_id": "minecraft:wooden_axe",
+          "civs_key": null,
+          "kind": "wand",
+          "hotbar": [
+            {
+              "slot": 0,
+              "id": "minecraft:chest",
+              "kind": "civs",
+              "civs": "shelter"
+            },
+            {
+              "slot": 8,
+              "id": "minecraft:wooden_axe",
+              "kind": "wand",
+              "civs": null
+            }
+          ]
+        },
+        {
+          "label": "we_after",
+          "SelectedItemSlot": 8,
+          "item_id": "minecraft:wooden_axe",
+          "civs_key": null,
+          "kind": "wand",
+          "hotbar": [
+            {
+              "slot": 0,
+              "id": "minecraft:chest",
+              "kind": "civs",
+              "civs": "shelter"
+            },
+            {
+              "slot": 8,
+              "id": "minecraft:wooden_axe",
+              "kind": "wand",
+              "civs": null
+            }
+          ]
+        }
+      ],
+      "wand": {
+        "ok": true,
+        "slot": 8,
+        "source": "already_held",
+        "selected": {
+          "ok": true,
+          "slot": 8,
+          "key": "9",
+          "label": "select_wand",
+          "before": {
+            "label": "select_wand_before",
+            "SelectedItemSlot": 0,
+            "item_id": "minecraft:chest",
+            "civs_key": "shelter",
+            "kind": "civs",
+            "hotbar": [
+              {
+                "slot": 0,
+                "id": "minecraft:chest",
+                "kind": "civs",
+                "civs": "shelter"
+              },
+              {
+                "slot": 8,
+                "id": "minecraft:wooden_axe",
+                "kind": "wand",
+                "civs": null
+              }
+            ]
+          },
+          "after": {
+            "label": "select_wand_after",
+            "SelectedItemSlot": 8,
+            "item_id": "minecraft:wooden_axe",
+            "civs_key": null,
+            "kind": "wand",
+            "hotbar": [
+              {
+                "slot": 0,
+                "id": "minecraft:chest",
+                "kind": "civs",
+                "civs": "shelter"
+              },
+              {
+                "slot": 8,
+                "id": "minecraft:wooden_axe",
+                "kind": "wand",
+                "civs": null
+              }
+            ]
+          },
+          "error": null,
+          "selected_slot": 8,
+          "selected_slot_raw": "smokeshow has the following entity data: 8",
+          "hand_raw": "smokeshow has the following entity data: {id: \"minecraft:wooden_axe\", count: 1}",
+          "hand_ok": true,
+          "kind": "wand",
+          "civs_key": null,
+          "item_id": "minecraft:wooden_axe"
+        },
+        "error": null
+      },
+      "dominant": "gravel",
+      "material_counts": {
+        "gravel": 24,
+        "furnace": 2,
+        "chest": 2
+      },
+      "we_ok": true
+    },
+    "gravel_quarry_place": {
+      "ok": false,
+      "civs_key": "gravel_quarry",
+      "center": [
+        3160,
+        81,
+        2920
+      ],
+      "item": {
+        "ok": true,
+        "civs_key": "gravel_quarry",
+        "source": "pdc_replace",
+        "slot": 0,
+        "error": null,
+        "detail": "Replaced a slot on smokeshow with [gravel_quarry]"
+      },
+      "hygiene": {
+        "ok": true,
+        "civs_key": "gravel_quarry",
+        "slot": 0,
+        "cleared": [],
+        "dump_preview": "smokeshow has the following entity data: [{Slot: 0b, id: \"minecraft:chest\", count: 1, components: {\"minecraft:custom_name\":...",
+        "key_select": {
+          "ok": true,
+          "slot": 0,
+          "key": "1",
+          "label": "civs:gravel_quarry",
+          "before": {
+            "label": "civs:gravel_quarry_before",
+            "SelectedItemSlot": 8,
+            "item_id": "minecraft:wooden_axe",
+            "civs_key": null,
+            "kind": "wand",
+            "hotbar": [
+              {
+                "slot": 0,
+                "id": "minecraft:chest",
+                "kind": "civs",
+                "civs": "gravel_quarry"
+              },
+              {
+                "slot": 8,
+                "id": "minecraft:wooden_axe",
+                "kind": "wand",
+                "civs": null
+              }
+            ]
+          },
+          "after": {
+            "label": "civs:gravel_quarry_after",
+            "SelectedItemSlot": 0,
+            "item_id": "minecraft:chest",
+            "civs_key": "gravel_quarry",
+            "kind": "civs",
+            "hotbar": [
+              {
+                "slot": 0,
+                "id": "minecraft:chest",
+                "kind": "civs",
+                "civs": "gravel_quarry"
+              },
+              {
+                "slot": 8,
+                "id": "minecraft:wooden_axe",
+                "kind": "wand",
+                "civs": null
+              }
+            ]
+          },
+          "error": null,
+          "selected_slot": 0,
+          "selected_slot_raw": "smokeshow has the following entity data: 0",
+          "hand_raw": "smokeshow has the following entity data: {id: \"minecraft:chest\", count: 1, components: {\"minecraft:custom_name\": \"gravel_quarry\", \"minecraft:custom_data...",
+          "hand_ok": true,
+          "kind": "civs",
+          "civs_key": "gravel_quarry",
+          "item_id": "minecraft:chest"
+        },
+        "hand_ok": true,
+        "error": null,
+        "before": {
+          "label": "place_prep:gravel_quarry",
+          "SelectedItemSlot": 8,
+          "item_id": "minecraft:wooden_axe",
+          "civs_key": null,
+          "kind": "wand",
+          "hotbar": [
+            {
+              "slot": 0,
+              "id": "minecraft:chest",
+              "kind": "civs",
+              "civs": "shelter"
+            },
+            {
+              "slot": 8,
+              "id": "minecraft:wooden_axe",
+              "kind": "wand",
+              "civs": null
+            }
+          ]
+        },
+        "keys_before": [
+          "shelter"
+        ],
+        "selected_before": 8,
+        "ensure": {
+          "ok": true,
+          "civs_key": "gravel_quarry",
+          "source": "pdc_replace",
+          "slot": 0,
+          "error": null,
+          "detail": "Replaced a slot on smokeshow with [gravel_quarry]"
+        },
+        "hand_check": "smokeshow has the following entity data: {id: \"minecraft:chest\", count: 1, components: {\"minecraft:custom_name\": \"gravel_quarry\", \"minecraft:custom_data...",
+        "after": {
+          "label": "place_ready:gravel_quarry",
+          "SelectedItemSlot": 0,
+          "item_id": "minecraft:chest",
+          "civs_key": "gravel_quarry",
+          "kind": "civs",
+          "hotbar": [
+            {
+              "slot": 0,
+              "id": "minecraft:chest",
+              "kind": "civs",
+              "civs": "gravel_quarry"
+            },
+            {
+              "slot": 8,
+              "id": "minecraft:wooden_axe",
+              "kind": "wand",
+              "civs": null
+            }
+          ]
+        }
+      },
+      "vision": [
+        {
+          "kind": "container",
+          "confidence": 0.736108423632611,
+          "safe": false,
+          "path": "C:\\Users\\Danie\\Downloads\\Civs-1.11.6\\Civs-1.11.6\\scripts\\qa\\reports\\screenshots\\gravel_quarry_boot_after_esc1_131938_container.png",
+          "source_f2": "C:\\Users\\Danie\\AppData\\Roaming\\.minecraft\\screenshots\\2026-07-17_14.19.38.png",
+          "notes": "mean=104.7 std=37.8 edges=0.059 | f2=2026-07-17_14.19.38.png"
+        },
+        {
+          "kind": "world",
+          "confidence": 0.55,
+          "safe": true,
+          "path": "C:\\Users\\Danie\\Downloads\\Civs-1.11.6\\Civs-1.11.6\\scripts\\qa\\reports\\screenshots\\gravel_quarry_boot2_131941_world.png",
+          "source_f2": "C:\\Users\\Danie\\AppData\\Roaming\\.minecraft\\screenshots\\2026-07-17_14.19.40.png",
+          "notes": "mean=153.8 std=32.7 edges=0.035 tr=12 | f2=2026-07-17_14.19.40.png"
+        },
+        {
+          "kind": "world",
+          "confidence": 0.55,
+          "safe": true,
+          "path": "C:\\Users\\Danie\\Downloads\\Civs-1.11.6\\Civs-1.11.6\\scripts\\qa\\reports\\screenshots\\gravel_quarry_daniel_south_close_pre_131950_world.png",
+          "source_f2": "C:\\Users\\Danie\\AppData\\Roaming\\.minecraft\\screenshots\\2026-07-17_14.19.49.png",
+          "notes": "mean=152.1 std=36.0 edges=0.025 tr=13 | f2=2026-07-17_14.19.49.png"
+        },
+        {
+          "kind": "world",
+          "confidence": 0.55,
+          "safe": true,
+          "path": "C:\\Users\\Danie\\Downloads\\Civs-1.11.6\\Civs-1.11.6\\scripts\\qa\\reports\\screenshots\\gravel_quarry_daniel_south_close_post_132001_world.png",
+          "source_f2": "C:\\Users\\Danie\\AppData\\Roaming\\.minecraft\\screenshots\\2026-07-17_14.20.00.png",
+          "notes": "mean=118.3 std=64.7 edges=0.075 tr=21 | f2=2026-07-17_14.20.00.png"
+        },
+        {
+          "kind": "world",
+          "confidence": 0.55,
+          "safe": true,
+          "path": "C:\\Users\\Danie\\Downloads\\Civs-1.11.6\\Civs-1.11.6\\scripts\\qa\\reports\\screenshots\\gravel_quarry_daniel_south_floor_pre_132003_world.png",
+          "source_f2": "C:\\Users\\Danie\\AppData\\Roaming\\.minecraft\\screenshots\\2026-07-17_14.20.03.png",
+          "notes": "mean=118.7 std=64.4 edges=0.076 tr=21 | f2=2026-07-17_14.20.03.png"
+        },
+        {
+          "kind": "world",
+          "confidence": 0.55,
+          "safe": true,
+          "path": "C:\\Users\\Danie\\Downloads\\Civs-1.11.6\\Civs-1.11.6\\scripts\\qa\\reports\\screenshots\\gravel_quarry_daniel_south_floor_post_132015_world.png",
+          "source_f2": "C:\\Users\\Danie\\AppData\\Roaming\\.minecraft\\screenshots\\2026-07-17_14.20.14.png",
+          "notes": "mean=118.9 std=64.2 edges=0.076 tr=21 | f2=2026-07-17_14.20.14.png"
+        }
+      ],
+      "right_click": {
+        "ok": true,
+        "error": null,
+        "xy": null,
+        "capture_xy": null,
+        "safe_capture_ignored": true,
+        "sneak": false,
+        "move_cursor": false
+      },
+      "placement_menu": null,
+      "attempts": [
+        {
+          "pose": "daniel_south_close",
+          "tp": [
+            3160.5,
+            81.0,
+            2918.85
+          ],
+          "yaw_pitch": [
+            -0.0,
+            52.10631057760506
+          ],
+          "rotation": "smokeshow has the following entity data: [0.0f, 52.11f]",
+          "right_click_ok": true,
+          "center_has_chest": false,
+          "exact_cy": false,
+          "center_block": "The target block is not a block entity",
+          "neighbors": {
+            "0,0,0": "",
+            "0,-1,0": "",
+            "0,-2,0": "",
+            "0,1,0": "",
+            "0,0,-1": "",
+            "0,0,1": "",
+            "-1,0,0": "",
+            "1,0,0": "",
+            "0,-1,-1": "",
+            "0,0,-2": ""
+          },
+          "hand_preview": [
+            "minecraft:chest",
+            "gravel_quarry"
+          ]
+        },
+        {
+          "pose": "daniel_south_floor",
+          "tp": [
+            3160.5,
+            81.0,
+            2918.0
+          ],
+          "yaw_pitch": [
+            -0.0,
+            40.29794457668384
+          ],
+          "rotation": "smokeshow has the following entity data: [0.0f, 40.3f]",
+          "right_click_ok": true,
+          "center_has_chest": false,
+          "exact_cy": false,
+          "center_block": "The target block is not a block entity",
+          "neighbors": {
+            "0,0,0": "",
+            "0,-1,0": "",
+            "0,-2,0": "",
+            "0,1,0": "",
+            "0,0,-1": "",
+            "0,0,1": "",
+            "-1,0,0": "",
+            "1,0,0": "",
+            "0,-1,-1": "",
+            "0,0,-2": ""
+          },
+          "hand_preview": [
+            "minecraft:chest",
+            "gravel_quarry"
+          ]
+        }
+      ],
+      "error": "center place missed after chest-safe retries",
+      "hotbar_log": [
+        {
+          "label": "civs:gravel_quarry_after",
+          "SelectedItemSlot": 0,
+          "item_id": "minecraft:chest",
+          "civs_key": "gravel_quarry",
+          "kind": "civs",
+          "hotbar": [
+            {
+              "slot": 0,
+              "id": "minecraft:chest",
+              "kind": "civs",
+              "civs": "gravel_quarry"
+            },
+            {
+              "slot": 8,
+              "id": "minecraft:wooden_axe",
+              "kind": "wand",
+              "civs": null
+            }
+          ]
+        },
+        {
+          "label": "civs:gravel_quarry_after",
+          "SelectedItemSlot": 0,
+          "item_id": "minecraft:chest",
+          "civs_key": "gravel_quarry",
+          "kind": "civs",
+          "hotbar": [
+            {
+              "slot": 0,
+              "id": "minecraft:chest",
+              "kind": "civs",
+              "civs": "gravel_quarry"
+            },
+            {
+              "slot": 8,
+              "id": "minecraft:wooden_axe",
+              "kind": "wand",
+              "civs": null
+            }
+          ]
+        }
+      ],
+      "center_block": "The target block is not a block entity",
+      "center_has_chest": false,
+      "exact_cy": false
+    }
+  },
+  "rcon_tail": [
+    "",
+    "Nothing changed. The player already is an operator",
+    "",
+    "Teleported smokeshow to 3160.500000, 81.000000, 2918.500000",
+    "Set minecraft:overworld to time marker minecraft:day",
+    "Set the weather to clear",
+    "That position is not loaded",
+    "No blocks were filled",
+    "Successfully filled 93 block(s)",
+    "No blocks were filled",
+    "PAD_ORIGIN:3160,81,2920 pads=1 blocked_existing=10",
+    "PAD_PLAN:gravel_quarry@3160,81,2920 r=3",
+    "INV:shelter"
+  ],
+  "log_errors": [
+    "[14:12:51] [Server thread/INFO]: Region coal_mine created ec01bfd3-8525-48ee-b5e5-4d8ecac61630~2858.5~81.5~2920.5.yml",
+    "[14:13:33] [Server thread/INFO]: Region shelter created ec01bfd3-8525-48ee-b5e5-4d8ecac61630~2880.5~81.5~2920.5.yml"
+  ],
+  "passed_static_pad": 1,
+  "built": 1,
+  "activated": 0,
+  "total": 1,
+  "passed": 0,
+  "pipeline": "For each type: allocate NON-OVERLAPPING pad (r_a+r_b+margin) on a fresh origin \u2192 parse build-reqs \u2192 WE/fill \u2192 Civs place at center \u2192 region YAML",
+  "item_acquisition": "Uses inventory civs:civs key if present; else item replace with PDC (QA-only, not /cv give). Shop/tutorial still preferred for realism."
+}

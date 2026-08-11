@@ -1,0 +1,355 @@
+{
+  "marker": "QA_STRUCT_104937",
+  "timestamp": "2026-07-17T10:51:02.857789+00:00",
+  "batch_requested": [
+    "gravel_quarry",
+    "coal_mine",
+    "shelter"
+  ],
+  "missing_yaml": [],
+  "inventory_before": {
+    "player": "Smokeshow",
+    "selected_slot": 0,
+    "hand": {
+      "slot": 0,
+      "item_id": "minecraft:chest",
+      "count": 1,
+      "civs_key": "gravel_quarry",
+      "custom_name": "gravel_quarry"
+    },
+    "hotbar": [
+      {
+        "slot": 0,
+        "item_id": "minecraft:chest",
+        "count": 1,
+        "civs_key": "gravel_quarry",
+        "custom_name": "gravel_quarry"
+      }
+    ],
+    "inventory": [
+      {
+        "slot": 0,
+        "item_id": "minecraft:chest",
+        "count": 1,
+        "civs_key": "gravel_quarry",
+        "custom_name": "gravel_quarry"
+      }
+    ],
+    "raw_selected": "smokeshow has the following entity data: {id: \"minecraft:chest\", count: 1, components: {\"minecraft:custom_name\": \"gravel_quarry\", \"minecraft:custom_data...",
+    "error": null
+  },
+  "structures": [
+    {
+      "key": "gravel_quarry",
+      "name": "gravel_quarry",
+      "category": "raw",
+      "static_ok": true,
+      "static_issues": [],
+      "rcon_pad_ok": true,
+      "build_ok": true,
+      "place_ok": false,
+      "region_registered": true,
+      "center": [
+        2108,
+        81,
+        2108
+      ],
+      "held_before": "slot=0 civs=gravel_quarry id=minecraft:chest",
+      "notes": "manual build-reqs",
+      "chat_hints": []
+    },
+    {
+      "key": "coal_mine",
+      "name": "Coal_Mine",
+      "category": "mine",
+      "static_ok": true,
+      "static_issues": [],
+      "rcon_pad_ok": true,
+      "build_ok": true,
+      "place_ok": false,
+      "region_registered": false,
+      "center": [
+        2121,
+        81,
+        2108
+      ],
+      "held_before": "slot=0 civs=gravel_quarry id=minecraft:chest",
+      "notes": "manual build-reqs | center place missed (no chest)",
+      "chat_hints": []
+    },
+    {
+      "key": "shelter",
+      "name": "Shelter",
+      "category": "admin-invisible",
+      "static_ok": true,
+      "static_issues": [],
+      "rcon_pad_ok": true,
+      "build_ok": true,
+      "place_ok": false,
+      "region_registered": false,
+      "center": [
+        2138,
+        81,
+        2108
+      ],
+      "held_before": "slot=0 civs=coal_mine id=minecraft:chest",
+      "notes": "manual build-reqs | center place missed (no chest)",
+      "chat_hints": []
+    }
+  ],
+  "place_details": {
+    "wand_preflight": {
+      "ok": true,
+      "command": "//wand",
+      "dry_run": false,
+      "focused": true,
+      "menus_closed": true,
+      "error": null,
+      "close_path": "pause_dismiss_only"
+    },
+    "gravel_quarry_build": {
+      "ok": true,
+      "we_cmds": [
+        {
+          "cmd": "//wand",
+          "ok": true,
+          "err": null
+        },
+        {
+          "cmd": "//pos1 2105,78,2105",
+          "ok": true,
+          "err": null
+        },
+        {
+          "cmd": "//pos2 2111,84,2111",
+          "ok": true,
+          "err": null
+        },
+        {
+          "cmd": "//set gravel",
+          "ok": true,
+          "err": null
+        },
+        {
+          "cmd": "//pos1 2108,81,2108",
+          "ok": true,
+          "err": null
+        },
+        {
+          "cmd": "//pos2 2108,81,2108",
+          "ok": true,
+          "err": null
+        },
+        {
+          "cmd": "//set air",
+          "ok": true,
+          "err": null
+        }
+      ],
+      "setblocks": 28,
+      "error": null,
+      "dominant": "gravel",
+      "material_counts": {
+        "gravel": 24,
+        "furnace": 2,
+        "chest": 2
+      },
+      "we_ok": true
+    },
+    "gravel_quarry_place": {
+      "ok": false,
+      "civs_key": "gravel_quarry",
+      "center": [
+        2108,
+        81,
+        2108
+      ],
+      "item": {
+        "ok": true,
+        "civs_key": "gravel_quarry",
+        "source": "inventory",
+        "slot": 0,
+        "error": null
+      },
+      "right_click": {
+        "ok": true,
+        "error": null,
+        "xy": [
+          2880,
+          516
+        ]
+      },
+      "placement_menu": null,
+      "error": null,
+      "hand_check": "smokeshow has the following entity data: {PublicBukkitValues: {\"civs:civs\": \"gravel_quarry\"}}",
+      "center_block": "The target block is not a block entity",
+      "center_has_chest": false,
+      "right_click_retry": {
+        "ok": true,
+        "error": null,
+        "xy": [
+          2880,
+          516
+        ]
+      }
+    },
+    "coal_mine_build": {
+      "ok": true,
+      "we_cmds": [
+        {
+          "cmd": "//wand",
+          "ok": true,
+          "err": null
+        },
+        {
+          "cmd": "//pos1 2117,77,2104",
+          "ok": true,
+          "err": null
+        },
+        {
+          "cmd": "//pos2 2125,85,2112",
+          "ok": true,
+          "err": null
+        },
+        {
+          "cmd": "//set oak_planks",
+          "ok": true,
+          "err": null
+        },
+        {
+          "cmd": "//pos1 2121,81,2108",
+          "ok": true,
+          "err": null
+        },
+        {
+          "cmd": "//pos2 2121,81,2108",
+          "ok": true,
+          "err": null
+        },
+        {
+          "cmd": "//set air",
+          "ok": true,
+          "err": null
+        }
+      ],
+      "setblocks": 63,
+      "error": null,
+      "dominant": "oak_planks",
+      "material_counts": {
+        "iron_bars": 2,
+        "oak_door": 2,
+        "chest": 2,
+        "furnace": 2,
+        "coal_block": 4,
+        "oak_planks": 45,
+        "cobblestone": 6
+      },
+      "we_ok": true
+    },
+    "coal_mine_place": {
+      "ok": false,
+      "civs_key": "coal_mine",
+      "center": [
+        2121,
+        81,
+        2108
+      ],
+      "item": {
+        "ok": true,
+        "civs_key": "coal_mine",
+        "source": "pdc_replace",
+        "slot": 0,
+        "error": null,
+        "detail": "Replaced a slot on smokeshow with [coal_mine]"
+      },
+      "right_click": {
+        "ok": true,
+        "error": null,
+        "xy": [
+          2880,
+          516
+        ]
+      },
+      "placement_menu": null,
+      "error": null,
+      "hand_check": "smokeshow has the following entity data: {PublicBukkitValues: {\"civs:civs\": \"coal_mine\"}}",
+      "center_block": "The target block is not a block entity",
+      "center_has_chest": false,
+      "right_click_retry": {
+        "ok": true,
+        "error": null,
+        "xy": [
+          2880,
+          516
+        ]
+      }
+    },
+    "shelter_build": {
+      "ok": true,
+      "we_cmds": [
+        "noop_empty_footprint"
+      ],
+      "setblocks": 0,
+      "error": null
+    },
+    "shelter_place": {
+      "ok": false,
+      "civs_key": "shelter",
+      "center": [
+        2138,
+        81,
+        2108
+      ],
+      "item": {
+        "ok": true,
+        "civs_key": "shelter",
+        "source": "pdc_replace",
+        "slot": 0,
+        "error": null,
+        "detail": "Replaced a slot on smokeshow with [shelter]"
+      },
+      "right_click": {
+        "ok": true,
+        "error": null,
+        "xy": [
+          2880,
+          516
+        ]
+      },
+      "placement_menu": null,
+      "error": null,
+      "hand_check": "smokeshow has the following entity data: {PublicBukkitValues: {\"civs:civs\": \"shelter\"}}",
+      "center_block": "The target block is not a block entity",
+      "center_has_chest": false,
+      "right_click_retry": {
+        "ok": true,
+        "error": null,
+        "xy": [
+          2880,
+          516
+        ]
+      }
+    }
+  },
+  "rcon_tail": [
+    "",
+    "Nothing changed. The player already is an operator",
+    "",
+    "Teleported smokeshow to 2100.500000, 81.000000, 2100.500000",
+    "Set minecraft:overworld to time marker minecraft:day",
+    "Set the weather to clear",
+    "Successfully filled 295 block(s)",
+    "Too many blocks in the specified area (maximum 32768, but specified 50000)",
+    "INV:gravel_quarry"
+  ],
+  "log_errors": [
+    "[11:50:09] [Server thread/INFO]: Region gravel_quarry created ec01bfd3-8525-48ee-b5e5-4d8ecac61630~2108.5~80.5~2104.5.yml"
+  ],
+  "passed_static_pad": 3,
+  "built": 3,
+  "activated": 1,
+  "total": 3,
+  "passed": 1,
+  "pipeline": "For each type: parse build-reqs \u2192 WE/fill footprint \u2192 put Civs item in hand \u2192 right-click place at EXACT center \u2192 verify plugins/Civs/regions/*.yml",
+  "item_acquisition": "Uses inventory civs:civs key if present; else item replace with PDC (QA-only, not /cv give). Shop/tutorial still preferred for realism."
+}

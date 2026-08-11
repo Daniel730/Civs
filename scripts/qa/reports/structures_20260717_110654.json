@@ -1,0 +1,442 @@
+{
+  "marker": "QA_STRUCT_110549",
+  "timestamp": "2026-07-17T11:06:54.302785+00:00",
+  "batch_requested": [
+    "gravel_quarry"
+  ],
+  "missing_yaml": [],
+  "inventory_before": {
+    "player": "Smokeshow",
+    "selected_slot": 0,
+    "hand": {
+      "slot": 0,
+      "item_id": "minecraft:chest",
+      "count": 1,
+      "civs_key": "shelter",
+      "custom_name": "shelter"
+    },
+    "hotbar": [
+      {
+        "slot": 0,
+        "item_id": "minecraft:chest",
+        "count": 1,
+        "civs_key": "shelter",
+        "custom_name": "shelter"
+      }
+    ],
+    "inventory": [
+      {
+        "slot": 0,
+        "item_id": "minecraft:chest",
+        "count": 1,
+        "civs_key": "shelter",
+        "custom_name": "shelter"
+      }
+    ],
+    "raw_selected": "smokeshow has the following entity data: {id: \"minecraft:chest\", count: 1, components: {\"minecraft:custom_name\": \"shelter\", \"minecraft:custom_data...",
+    "error": null
+  },
+  "structures": [
+    {
+      "key": "gravel_quarry",
+      "name": "gravel_quarry",
+      "category": "raw",
+      "static_ok": true,
+      "static_issues": [],
+      "rcon_pad_ok": true,
+      "build_ok": true,
+      "place_ok": false,
+      "region_registered": false,
+      "center": [
+        2108,
+        81,
+        2108
+      ],
+      "held_before": "slot=0 civs=shelter id=minecraft:chest",
+      "notes": "manual build-reqs | center place missed (no chest)",
+      "chat_hints": []
+    }
+  ],
+  "place_details": {
+    "wand_preflight": {
+      "ok": true,
+      "command": "//wand",
+      "dry_run": false,
+      "focused": true,
+      "menus_closed": true,
+      "error": null,
+      "close_path": "pause_dismiss_only"
+    },
+    "gravel_quarry_build": {
+      "ok": true,
+      "we_cmds": [
+        {
+          "cmd": "//wand",
+          "ok": true,
+          "err": null
+        },
+        {
+          "cmd": "//pos1 2105,78,2105",
+          "ok": true,
+          "err": null
+        },
+        {
+          "cmd": "//pos2 2111,84,2111",
+          "ok": true,
+          "err": null
+        },
+        {
+          "cmd": "//set gravel",
+          "ok": true,
+          "err": null
+        },
+        {
+          "cmd": "//pos1 2108,81,2108",
+          "ok": true,
+          "err": null
+        },
+        {
+          "cmd": "//pos2 2108,81,2108",
+          "ok": true,
+          "err": null
+        },
+        {
+          "cmd": "//set air",
+          "ok": true,
+          "err": null
+        }
+      ],
+      "setblocks": 28,
+      "error": null,
+      "dominant": "gravel",
+      "material_counts": {
+        "gravel": 24,
+        "furnace": 2,
+        "chest": 2
+      },
+      "we_ok": true
+    },
+    "gravel_quarry_place": {
+      "ok": false,
+      "civs_key": "gravel_quarry",
+      "center": [
+        2108,
+        81,
+        2108
+      ],
+      "item": {
+        "ok": true,
+        "civs_key": "gravel_quarry",
+        "source": "pdc_replace",
+        "slot": 0,
+        "error": null,
+        "detail": "Replaced a slot on smokeshow with [gravel_quarry]"
+      },
+      "hygiene": {
+        "ok": true,
+        "civs_key": "gravel_quarry",
+        "slot": 0,
+        "cleared": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7,
+          8
+        ],
+        "dump_preview": "smokeshow has the following entity data: [{Slot: 0b, id: \"minecraft:chest\", count: 1, components: {\"minecraft:custom_name\":...",
+        "hand_ok": true,
+        "error": null,
+        "keys_before": [
+          "shelter"
+        ],
+        "ensure": {
+          "ok": true,
+          "civs_key": "gravel_quarry",
+          "source": "pdc_replace",
+          "slot": 0,
+          "error": null,
+          "detail": "Replaced a slot on smokeshow with [gravel_quarry]"
+        },
+        "hand_check": "smokeshow has the following entity data: {PublicBukkitValues: {\"civs:civs\": \"gravel_quarry\"}}"
+      },
+      "vision": [
+        {
+          "kind": "pause",
+          "confidence": 0.7,
+          "safe": false,
+          "path": "C:\\Users\\Danie\\Downloads\\Civs-1.11.6\\Civs-1.11.6\\scripts\\qa\\reports\\screenshots\\gravel_quarry_daniel_south_floor_pre_110622_pause.png",
+          "notes": "full_mean=31.4 mean=24.9"
+        },
+        {
+          "kind": "world",
+          "confidence": 0.55,
+          "safe": true,
+          "path": "C:\\Users\\Danie\\Downloads\\Civs-1.11.6\\Civs-1.11.6\\scripts\\qa\\reports\\screenshots\\gravel_quarry_daniel_south_floor_retry_110624_world.png",
+          "notes": "mean=50.1 std=53.2 edges=0.046"
+        },
+        {
+          "kind": "world",
+          "confidence": 0.55,
+          "safe": true,
+          "path": "C:\\Users\\Danie\\Downloads\\Civs-1.11.6\\Civs-1.11.6\\scripts\\qa\\reports\\screenshots\\gravel_quarry_daniel_south_floor_post_110627_world.png",
+          "notes": "mean=70.9 std=59.8 edges=0.098"
+        },
+        {
+          "kind": "world",
+          "confidence": 0.55,
+          "safe": true,
+          "path": "C:\\Users\\Danie\\Downloads\\Civs-1.11.6\\Civs-1.11.6\\scripts\\qa\\reports\\screenshots\\gravel_quarry_south_closer_floor_pre_110628_world.png",
+          "notes": "mean=71.1 std=59.6 edges=0.099"
+        },
+        {
+          "kind": "world",
+          "confidence": 0.55,
+          "safe": true,
+          "path": "C:\\Users\\Danie\\Downloads\\Civs-1.11.6\\Civs-1.11.6\\scripts\\qa\\reports\\screenshots\\gravel_quarry_south_closer_floor_post_110632_world.png",
+          "notes": "mean=47.9 std=53.7 edges=0.048"
+        },
+        {
+          "kind": "world",
+          "confidence": 0.55,
+          "safe": true,
+          "path": "C:\\Users\\Danie\\Downloads\\Civs-1.11.6\\Civs-1.11.6\\scripts\\qa\\reports\\screenshots\\gravel_quarry_south_steeper_pre_110633_world.png",
+          "notes": "mean=49.3 std=52.9 edges=0.048"
+        },
+        {
+          "kind": "world",
+          "confidence": 0.55,
+          "safe": true,
+          "path": "C:\\Users\\Danie\\Downloads\\Civs-1.11.6\\Civs-1.11.6\\scripts\\qa\\reports\\screenshots\\gravel_quarry_south_steeper_post_110636_world.png",
+          "notes": "mean=70.3 std=60.1 edges=0.093"
+        },
+        {
+          "kind": "world",
+          "confidence": 0.55,
+          "safe": true,
+          "path": "C:\\Users\\Danie\\Downloads\\Civs-1.11.6\\Civs-1.11.6\\scripts\\qa\\reports\\screenshots\\gravel_quarry_north_floor_pre_110637_world.png",
+          "notes": "mean=70.5 std=59.7 edges=0.090"
+        },
+        {
+          "kind": "world",
+          "confidence": 0.55,
+          "safe": true,
+          "path": "C:\\Users\\Danie\\Downloads\\Civs-1.11.6\\Civs-1.11.6\\scripts\\qa\\reports\\screenshots\\gravel_quarry_north_floor_post_110641_world.png",
+          "notes": "mean=50.3 std=52.4 edges=0.053"
+        },
+        {
+          "kind": "world",
+          "confidence": 0.55,
+          "safe": true,
+          "path": "C:\\Users\\Danie\\Downloads\\Civs-1.11.6\\Civs-1.11.6\\scripts\\qa\\reports\\screenshots\\gravel_quarry_west_floor_pre_110642_world.png",
+          "notes": "mean=48.3 std=53.6 edges=0.045"
+        },
+        {
+          "kind": "world",
+          "confidence": 0.55,
+          "safe": true,
+          "path": "C:\\Users\\Danie\\Downloads\\Civs-1.11.6\\Civs-1.11.6\\scripts\\qa\\reports\\screenshots\\gravel_quarry_west_floor_post_110645_world.png",
+          "notes": "mean=68.7 std=61.4 edges=0.089"
+        },
+        {
+          "kind": "world",
+          "confidence": 0.55,
+          "safe": true,
+          "path": "C:\\Users\\Danie\\Downloads\\Civs-1.11.6\\Civs-1.11.6\\scripts\\qa\\reports\\screenshots\\gravel_quarry_east_floor_pre_110646_world.png",
+          "notes": "mean=71.2 std=59.1 edges=0.091"
+        },
+        {
+          "kind": "world",
+          "confidence": 0.55,
+          "safe": true,
+          "path": "C:\\Users\\Danie\\Downloads\\Civs-1.11.6\\Civs-1.11.6\\scripts\\qa\\reports\\screenshots\\gravel_quarry_east_floor_post_110649_world.png",
+          "notes": "mean=50.3 std=52.1 edges=0.056"
+        }
+      ],
+      "right_click": {
+        "ok": true,
+        "error": null,
+        "xy": [
+          2880,
+          516
+        ],
+        "capture_xy": [
+          2880,
+          75
+        ]
+      },
+      "placement_menu": null,
+      "attempts": [
+        {
+          "pose": "daniel_south_floor",
+          "tp": [
+            2108.5,
+            82.62,
+            2106.0
+          ],
+          "facing": [
+            2108.5,
+            80.5,
+            2108.5
+          ],
+          "right_click_ok": true,
+          "center_has_chest": false,
+          "center_block": "The target block is not a block entity",
+          "neighbors": {
+            "0,0": "",
+            "0,-1": "",
+            "0,1": "",
+            "-1,0": "",
+            "1,0": ""
+          },
+          "hand_preview": "smokeshow has the following entity data: {PublicBukkitValues: {\"civs:civs\": \"gravel_quarry\"}}"
+        },
+        {
+          "pose": "south_closer_floor",
+          "tp": [
+            2108.5,
+            82.62,
+            2106.5
+          ],
+          "facing": [
+            2108.5,
+            80.5,
+            2108.5
+          ],
+          "right_click_ok": true,
+          "center_has_chest": false,
+          "center_block": "The target block is not a block entity",
+          "neighbors": {
+            "0,0": "",
+            "0,-1": "",
+            "0,1": "",
+            "-1,0": "",
+            "1,0": ""
+          },
+          "hand_preview": "smokeshow has the following entity data: {PublicBukkitValues: {\"civs:civs\": \"gravel_quarry\"}}"
+        },
+        {
+          "pose": "south_steeper",
+          "tp": [
+            2108.5,
+            83.0,
+            2106.0
+          ],
+          "facing": [
+            2108.5,
+            80.2,
+            2108.5
+          ],
+          "right_click_ok": true,
+          "center_has_chest": false,
+          "center_block": "The target block is not a block entity",
+          "neighbors": {
+            "0,0": "",
+            "0,-1": "",
+            "0,1": "",
+            "-1,0": "",
+            "1,0": ""
+          },
+          "hand_preview": "smokeshow has the following entity data: {PublicBukkitValues: {\"civs:civs\": \"gravel_quarry\"}}"
+        },
+        {
+          "pose": "north_floor",
+          "tp": [
+            2108.5,
+            82.62,
+            2110.0
+          ],
+          "facing": [
+            2108.5,
+            80.5,
+            2108.5
+          ],
+          "right_click_ok": true,
+          "center_has_chest": false,
+          "center_block": "The target block is not a block entity",
+          "neighbors": {
+            "0,0": "",
+            "0,-1": "",
+            "0,1": "",
+            "-1,0": "",
+            "1,0": ""
+          },
+          "hand_preview": "smokeshow has the following entity data: {PublicBukkitValues: {\"civs:civs\": \"gravel_quarry\"}}"
+        },
+        {
+          "pose": "west_floor",
+          "tp": [
+            2106.0,
+            82.62,
+            2108.5
+          ],
+          "facing": [
+            2108.5,
+            80.5,
+            2108.5
+          ],
+          "right_click_ok": true,
+          "center_has_chest": false,
+          "center_block": "The target block is not a block entity",
+          "neighbors": {
+            "0,0": "",
+            "0,-1": "",
+            "0,1": "",
+            "-1,0": "",
+            "1,0": ""
+          },
+          "hand_preview": "smokeshow has the following entity data: {PublicBukkitValues: {\"civs:civs\": \"gravel_quarry\"}}"
+        },
+        {
+          "pose": "east_floor",
+          "tp": [
+            2110.0,
+            82.62,
+            2108.5
+          ],
+          "facing": [
+            2108.5,
+            80.5,
+            2108.5
+          ],
+          "right_click_ok": true,
+          "center_has_chest": false,
+          "center_block": "The target block is not a block entity",
+          "neighbors": {
+            "0,0": "",
+            "0,-1": "",
+            "0,1": "",
+            "-1,0": "",
+            "1,0": ""
+          },
+          "hand_preview": "smokeshow has the following entity data: {PublicBukkitValues: {\"civs:civs\": \"gravel_quarry\"}}"
+        }
+      ],
+      "error": "center place missed after chest-safe retries",
+      "center_block": "The target block is not a block entity",
+      "center_has_chest": false
+    }
+  },
+  "rcon_tail": [
+    "",
+    "Nothing changed. The player already is an operator",
+    "",
+    "Teleported smokeshow to 2100.500000, 81.000000, 2100.500000",
+    "Set minecraft:overworld to time marker minecraft:day",
+    "Set the weather to clear",
+    "Successfully filled 317 block(s)",
+    "Too many blocks in the specified area (maximum 32768, but specified 50000)",
+    "INV:shelter"
+  ],
+  "log_errors": [],
+  "passed_static_pad": 1,
+  "built": 1,
+  "activated": 0,
+  "total": 1,
+  "passed": 0,
+  "pipeline": "For each type: parse build-reqs \u2192 WE/fill footprint \u2192 put Civs item in hand \u2192 right-click place at EXACT center \u2192 verify plugins/Civs/regions/*.yml",
+  "item_acquisition": "Uses inventory civs:civs key if present; else item replace with PDC (QA-only, not /cv give). Shop/tutorial still preferred for realism."
+}

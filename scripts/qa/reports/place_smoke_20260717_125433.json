@@ -1,0 +1,65 @@
+{
+  "verdict": "FAIL",
+  "results": [
+    {
+      "center": [
+        2260,
+        81,
+        2260
+      ],
+      "exact_cy": false,
+      "neighbors": {
+        "0,0,0": "",
+        "0,-1,0": "",
+        "0,-2,0": "",
+        "0,1,0": "",
+        "0,0,-1": "",
+        "0,0,1": "",
+        "-1,0,0": "",
+        "1,0,0": "",
+        "0,-1,-1": "",
+        "0,0,-2": ""
+      },
+      "grab": {
+        "ok": true,
+        "sky_click": true,
+        "xy": [
+          2880,
+          358
+        ],
+        "borderless": true
+      },
+      "prep": {
+        "ok": true,
+        "error": null
+      },
+      "hotbar": {
+        "ok": true,
+        "civs_key": "shelter",
+        "error": null
+      },
+      "grab2": {
+        "ok": true,
+        "sky_click": true,
+        "xy": [
+          2880,
+          358
+        ],
+        "borderless": true
+      },
+      "rot": "smokeshow has the following entity data: [0.0f, 90.0f]",
+      "rc": {
+        "ok": true,
+        "error": null,
+        "xy": [
+          2880,
+          516
+        ],
+        "capture_xy": null,
+        "safe_capture_ignored": true,
+        "sneak": true
+      },
+      "ok": false
+    }
+  ]
+}

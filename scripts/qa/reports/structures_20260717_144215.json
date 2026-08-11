@@ -1,0 +1,3131 @@
+{
+  "marker": "QA_STRUCT_143627",
+  "timestamp": "2026-07-17T14:42:15.509228+00:00",
+  "batch_requested": [
+    "arrow_trap",
+    "shack",
+    "smithy",
+    "potato_farm"
+  ],
+  "missing_yaml": [],
+  "inventory_before": {
+    "player": "Smokeshow",
+    "selected_slot": 0,
+    "hand": {
+      "slot": 0,
+      "item_id": "minecraft:chest",
+      "count": 1,
+      "civs_key": "cactus_farm",
+      "custom_name": "cactus_farm",
+      "kind": "civs"
+    },
+    "hotbar": [
+      {
+        "slot": 0,
+        "item_id": "minecraft:chest",
+        "count": 1,
+        "civs_key": "cactus_farm",
+        "custom_name": "cactus_farm",
+        "kind": "civs"
+      },
+      {
+        "slot": 1,
+        "item_id": "minecraft:redstone",
+        "count": 1,
+        "civs_key": null,
+        "custom_name": null,
+        "kind": "junk"
+      },
+      {
+        "slot": 8,
+        "item_id": "minecraft:wooden_axe",
+        "count": 1,
+        "civs_key": null,
+        "custom_name": null,
+        "kind": "wand"
+      }
+    ],
+    "inventory": [
+      {
+        "slot": 0,
+        "item_id": "minecraft:chest",
+        "count": 1,
+        "civs_key": "cactus_farm",
+        "custom_name": "cactus_farm",
+        "kind": "civs"
+      },
+      {
+        "slot": 1,
+        "item_id": "minecraft:redstone",
+        "count": 1,
+        "civs_key": null,
+        "custom_name": null,
+        "kind": "junk"
+      },
+      {
+        "slot": 8,
+        "item_id": "minecraft:wooden_axe",
+        "count": 1,
+        "civs_key": null,
+        "custom_name": null,
+        "kind": "wand"
+      }
+    ],
+    "raw_selected": "smokeshow has the following entity data: {id: \"minecraft:chest\", count: 1, components: {\"minecraft:custom_name\": \"cactus_farm\", \"minecraft:custom_data...",
+    "raw_selected_slot": "smokeshow has the following entity data: 0",
+    "error": null
+  },
+  "structures": [
+    {
+      "key": "arrow_trap",
+      "name": "Arrow_Trap",
+      "category": "defense",
+      "static_ok": true,
+      "static_issues": [],
+      "rcon_pad_ok": true,
+      "build_ok": true,
+      "place_ok": false,
+      "region_registered": false,
+      "io_ok": null,
+      "io_detail": "",
+      "center": [
+        2977,
+        81,
+        2623
+      ],
+      "held_before": "slot=0 civs=cactus_farm id=minecraft:chest",
+      "notes": "manual build-reqs | pad r=1 sep_origin=(3000,2600) | pre-reqs=['member=settlement:hamlet:village:town:city:metropolis:outpost:base'] | center place missed (no chest)",
+      "chat_hints": []
+    },
+    {
+      "key": "shack",
+      "name": "Shack",
+      "category": "housing",
+      "static_ok": true,
+      "static_issues": [],
+      "rcon_pad_ok": true,
+      "build_ok": true,
+      "place_ok": false,
+      "region_registered": false,
+      "io_ok": null,
+      "io_detail": "",
+      "center": [
+        2995,
+        81,
+        2625
+      ],
+      "held_before": "slot=0 civs=arrow_trap id=minecraft:chest",
+      "notes": "instant-build | pad r=3 sep_origin=(3000,2600) | pre-reqs=['member=settlement:hamlet:village:town:city:metropolis'] | center place missed (no chest)",
+      "chat_hints": []
+    },
+    {
+      "key": "smithy",
+      "name": "Smithy",
+      "category": "utility",
+      "static_ok": true,
+      "static_issues": [],
+      "rcon_pad_ok": true,
+      "build_ok": true,
+      "place_ok": false,
+      "region_registered": false,
+      "io_ok": null,
+      "io_detail": "",
+      "center": [
+        3016,
+        81,
+        2626
+      ],
+      "held_before": "slot=0 civs=shack id=minecraft:chest",
+      "notes": "manual build-reqs | pad r=4 sep_origin=(3000,2600) | pre-reqs=['member=settlement:hamlet:village:town:city:metropolis'] | center place missed (no chest)",
+      "chat_hints": []
+    },
+    {
+      "key": "potato_farm",
+      "name": "Potato_Farm",
+      "category": "farm",
+      "static_ok": true,
+      "static_issues": [],
+      "rcon_pad_ok": true,
+      "build_ok": true,
+      "place_ok": false,
+      "region_registered": false,
+      "io_ok": null,
+      "io_detail": "",
+      "center": [
+        2974,
+        81,
+        2598
+      ],
+      "held_before": "slot=0 civs=smithy id=minecraft:chest",
+      "notes": "manual build-reqs | pad r=4 sep_origin=(3000,2600) | pre-reqs=['member=settlement:hamlet:village:town:city:metropolis'] | center place missed (no chest)",
+      "chat_hints": []
+    }
+  ],
+  "place_details": {
+    "pad_origin": [
+      3000,
+      81,
+      2600
+    ],
+    "pad_margin": 10,
+    "existing_regions_blocked": 30,
+    "pad_zones": {
+      "arrow_trap": "in_town",
+      "shack": "in_town",
+      "smithy": "in_town",
+      "potato_farm": "in_town"
+    },
+    "pads": [
+      {
+        "key": "town_hub_council_room",
+        "center": [
+          3000,
+          81,
+          2600
+        ],
+        "radius": 12,
+        "zone": "town_hub"
+      },
+      {
+        "key": "arrow_trap",
+        "center": [
+          2977,
+          81,
+          2623
+        ],
+        "radius": 1,
+        "zone": "in_town"
+      },
+      {
+        "key": "shack",
+        "center": [
+          2995,
+          81,
+          2625
+        ],
+        "radius": 3,
+        "zone": "in_town"
+      },
+      {
+        "key": "smithy",
+        "center": [
+          3016,
+          81,
+          2626
+        ],
+        "radius": 4,
+        "zone": "in_town"
+      },
+      {
+        "key": "potato_farm",
+        "center": [
+          2974,
+          81,
+          2598
+        ],
+        "radius": 4,
+        "zone": "in_town"
+      }
+    ],
+    "town_claim_radius": 40,
+    "wand_preflight": {
+      "ok": true,
+      "command": "//wand",
+      "dry_run": false,
+      "focused": true,
+      "menus_closed": true,
+      "error": null,
+      "close_path": "pause_dismiss_only"
+    },
+    "town_bootstrap": {
+      "ok": true,
+      "hub": [
+        3000,
+        81,
+        2600
+      ],
+      "town_name": "QATown2",
+      "council_room": null,
+      "town_cmd": null,
+      "towns_before": [
+        "QATown2.yml"
+      ],
+      "towns_after": [
+        "QATown2.yml"
+      ],
+      "error": null,
+      "skipped": "reuse existing QATown2.yml",
+      "settlement_hand": "skipped_reuse"
+    },
+    "arrow_trap_build": {
+      "ok": true,
+      "we_cmds": [
+        {
+          "cmd": "//pos1 2976,80,2622",
+          "ok": true,
+          "err": null
+        },
+        {
+          "cmd": "//pos2 2978,82,2624",
+          "ok": true,
+          "err": null
+        },
+        {
+          "cmd": "//set oak_fence",
+          "ok": true,
+          "err": null
+        },
+        {
+          "cmd": "//pos1 2977,81,2623",
+          "ok": true,
+          "err": null
+        },
+        {
+          "cmd": "//pos2 2977,81,2623",
+          "ok": true,
+          "err": null
+        },
+        {
+          "cmd": "//set air",
+          "ok": true,
+          "err": null
+        }
+      ],
+      "setblocks": 9,
+      "error": null,
+      "hotbar_log": [
+        {
+          "label": "we_before",
+          "SelectedItemSlot": 0,
+          "item_id": "minecraft:chest",
+          "civs_key": "cactus_farm",
+          "kind": "civs",
+          "hotbar": [
+            {
+              "slot": 0,
+              "id": "minecraft:chest",
+              "kind": "civs",
+              "civs": "cactus_farm"
+            },
+            {
+              "slot": 1,
+              "id": "minecraft:redstone",
+              "kind": "junk",
+              "civs": null
+            },
+            {
+              "slot": 8,
+              "id": "minecraft:wooden_axe",
+              "kind": "wand",
+              "civs": null
+            }
+          ]
+        },
+        {
+          "label": "we_wand_selected",
+          "SelectedItemSlot": 8,
+          "item_id": "minecraft:wooden_axe",
+          "civs_key": null,
+          "kind": "wand",
+          "hotbar": [
+            {
+              "slot": 0,
+              "id": "minecraft:chest",
+              "kind": "civs",
+              "civs": "cactus_farm"
+            },
+            {
+              "slot": 1,
+              "id": "minecraft:redstone",
+              "kind": "junk",
+              "civs": null
+            },
+            {
+              "slot": 8,
+              "id": "minecraft:wooden_axe",
+              "kind": "wand",
+              "civs": null
+            }
+          ]
+        },
+        {
+          "label": "we_cmd://pos1 2976,80,2622",
+          "SelectedItemSlot": 8,
+          "item_id": "minecraft:wooden_axe",
+          "civs_key": null,
+          "kind": "wand",
+          "hotbar": [
+            {
+              "slot": 0,
+              "id": "minecraft:chest",
+              "kind": "civs",
+              "civs": "cactus_farm"
+            },
+            {
+              "slot": 1,
+              "id": "minecraft:redstone",
+              "kind": "junk",
+              "civs": null
+            },
+            {
+              "slot": 8,
+              "id": "minecraft:wooden_axe",
+              "kind": "wand",
+              "civs": null
+            }
+          ]
+        },
+        {
+          "label": "we_cmd://pos2 2978,82,2624",
+          "SelectedItemSlot": 8,
+          "item_id": "minecraft:wooden_axe",
+          "civs_key": null,
+          "kind": "wand",
+          "hotbar": [
+            {
+              "slot": 0,
+              "id": "minecraft:chest",
+              "kind": "civs",
+              "civs": "cactus_farm"
+            },
+            {
+              "slot": 1,
+              "id": "minecraft:redstone",
+              "kind": "junk",
+              "civs": null
+            },
+            {
+              "slot": 8,
+              "id": "minecraft:wooden_axe",
+              "kind": "wand",
+              "civs": null
+            }
+          ]
+        },
+        {
+          "label": "we_cmd://set oak_fence",
+          "SelectedItemSlot": 8,
+          "item_id": "minecraft:wooden_axe",
+          "civs_key": null,
+          "kind": "wand",
+          "hotbar": [
+            {
+              "slot": 0,
+              "id": "minecraft:chest",
+              "kind": "civs",
+              "civs": "cactus_farm"
+            },
+            {
+              "slot": 1,
+              "id": "minecraft:redstone",
+              "kind": "junk",
+              "civs": null
+            },
+            {
+              "slot": 8,
+              "id": "minecraft:wooden_axe",
+              "kind": "wand",
+              "civs": null
+            }
+          ]
+        },
+        {
+          "label": "we_cmd://pos1 2977,81,2623",
+          "SelectedItemSlot": 8,
+          "item_id": "minecraft:wooden_axe",
+          "civs_key": null,
+          "kind": "wand",
+          "hotbar": [
+            {
+              "slot": 0,
+              "id": "minecraft:chest",
+              "kind": "civs",
+              "civs": "cactus_farm"
+            },
+            {
+              "slot": 1,
+              "id": "minecraft:redstone",
+              "kind": "junk",
+              "civs": null
+            },
+            {
+              "slot": 8,
+              "id": "minecraft:wooden_axe",
+              "kind": "wand",
+              "civs": null
+            }
+          ]
+        },
+        {
+          "label": "we_cmd://pos2 2977,81,2623",
+          "SelectedItemSlot": 8,
+          "item_id": "minecraft:wooden_axe",
+          "civs_key": null,
+          "kind": "wand",
+          "hotbar": [
+            {
+              "slot": 0,
+              "id": "minecraft:chest",
+              "kind": "civs",
+              "civs": "cactus_farm"
+            },
+            {
+              "slot": 1,
+              "id": "minecraft:redstone",
+              "kind": "junk",
+              "civs": null
+            },
+            {
+              "slot": 8,
+              "id": "minecraft:wooden_axe",
+              "kind": "wand",
+              "civs": null
+            }
+          ]
+        },
+        {
+          "label": "we_cmd://set air",
+          "SelectedItemSlot": 8,
+          "item_id": "minecraft:wooden_axe",
+          "civs_key": null,
+          "kind": "wand",
+          "hotbar": [
+            {
+              "slot": 0,
+              "id": "minecraft:chest",
+              "kind": "civs",
+              "civs": "cactus_farm"
+            },
+            {
+              "slot": 1,
+              "id": "minecraft:redstone",
+              "kind": "junk",
+              "civs": null
+            },
+            {
+              "slot": 8,
+              "id": "minecraft:wooden_axe",
+              "kind": "wand",
+              "civs": null
+            }
+          ]
+        },
+        {
+          "label": "we_after",
+          "SelectedItemSlot": 8,
+          "item_id": "minecraft:wooden_axe",
+          "civs_key": null,
+          "kind": "wand",
+          "hotbar": [
+            {
+              "slot": 0,
+              "id": "minecraft:chest",
+              "kind": "civs",
+              "civs": "cactus_farm"
+            },
+            {
+              "slot": 1,
+              "id": "minecraft:redstone",
+              "kind": "junk",
+              "civs": null
+            },
+            {
+              "slot": 8,
+              "id": "minecraft:wooden_axe",
+              "kind": "wand",
+              "civs": null
+            }
+          ]
+        }
+      ],
+      "wand": {
+        "ok": true,
+        "slot": 8,
+        "source": "already_held",
+        "selected": {
+          "ok": true,
+          "slot": 8,
+          "key": "9",
+          "label": "select_wand",
+          "before": {
+            "label": "select_wand_before",
+            "SelectedItemSlot": 0,
+            "item_id": "minecraft:chest",
+            "civs_key": "cactus_farm",
+            "kind": "civs",
+            "hotbar": [
+              {
+                "slot": 0,
+                "id": "minecraft:chest",
+                "kind": "civs",
+                "civs": "cactus_farm"
+              },
+              {
+                "slot": 1,
+                "id": "minecraft:redstone",
+                "kind": "junk",
+                "civs": null
+              },
+              {
+                "slot": 8,
+                "id": "minecraft:wooden_axe",
+                "kind": "wand",
+                "civs": null
+              }
+            ]
+          },
+          "after": {
+            "label": "select_wand_after",
+            "SelectedItemSlot": 8,
+            "item_id": "minecraft:wooden_axe",
+            "civs_key": null,
+            "kind": "wand",
+            "hotbar": [
+              {
+                "slot": 0,
+                "id": "minecraft:chest",
+                "kind": "civs",
+                "civs": "cactus_farm"
+              },
+              {
+                "slot": 1,
+                "id": "minecraft:redstone",
+                "kind": "junk",
+                "civs": null
+              },
+              {
+                "slot": 8,
+                "id": "minecraft:wooden_axe",
+                "kind": "wand",
+                "civs": null
+              }
+            ]
+          },
+          "error": null,
+          "selected_slot": 8,
+          "selected_slot_raw": "smokeshow has the following entity data: 8",
+          "hand_raw": "smokeshow has the following entity data: {id: \"minecraft:wooden_axe\", count: 1}",
+          "hand_ok": true,
+          "kind": "wand",
+          "civs_key": null,
+          "item_id": "minecraft:wooden_axe"
+        },
+        "error": null
+      },
+      "dominant": "oak_fence",
+      "material_counts": {
+        "oak_fence": 4,
+        "redstone_wire": 4,
+        "dispenser": 1
+      },
+      "we_ok": true,
+      "gravity_restamp": 4
+    },
+    "arrow_trap_place": {
+      "ok": false,
+      "civs_key": "arrow_trap",
+      "center": [
+        2977,
+        81,
+        2623
+      ],
+      "item": {
+        "ok": true,
+        "civs_key": "arrow_trap",
+        "source": "pdc_replace",
+        "slot": 0,
+        "error": null,
+        "detail": "Replaced a slot on smokeshow with [arrow_trap]"
+      },
+      "hygiene": {
+        "ok": true,
+        "civs_key": "arrow_trap",
+        "slot": 0,
+        "cleared": [],
+        "dump_preview": "smokeshow has the following entity data: [{Slot: 0b, id: \"minecraft:chest\", count: 1, components: {\"minecraft:custom_name\":...",
+        "key_select": {
+          "ok": true,
+          "slot": 0,
+          "key": "1",
+          "label": "civs:arrow_trap",
+          "before": {
+            "label": "civs:arrow_trap_before",
+            "SelectedItemSlot": 8,
+            "item_id": "minecraft:wooden_axe",
+            "civs_key": null,
+            "kind": "wand",
+            "hotbar": [
+              {
+                "slot": 0,
+                "id": "minecraft:chest",
+                "kind": "civs",
+                "civs": "arrow_trap"
+              },
+              {
+                "slot": 1,
+                "id": "minecraft:redstone",
+                "kind": "junk",
+                "civs": null
+              },
+              {
+                "slot": 8,
+                "id": "minecraft:wooden_axe",
+                "kind": "wand",
+                "civs": null
+              }
+            ]
+          },
+          "after": {
+            "label": "civs:arrow_trap_after",
+            "SelectedItemSlot": 0,
+            "item_id": "minecraft:chest",
+            "civs_key": "arrow_trap",
+            "kind": "civs",
+            "hotbar": [
+              {
+                "slot": 0,
+                "id": "minecraft:chest",
+                "kind": "civs",
+                "civs": "arrow_trap"
+              },
+              {
+                "slot": 1,
+                "id": "minecraft:redstone",
+                "kind": "junk",
+                "civs": null
+              },
+              {
+                "slot": 8,
+                "id": "minecraft:wooden_axe",
+                "kind": "wand",
+                "civs": null
+              }
+            ]
+          },
+          "error": null,
+          "selected_slot": 0,
+          "selected_slot_raw": "smokeshow has the following entity data: 0",
+          "hand_raw": "smokeshow has the following entity data: {id: \"minecraft:chest\", count: 1, components: {\"minecraft:custom_name\": \"arrow_trap\", \"minecraft:custom_data...",
+          "hand_ok": true,
+          "kind": "civs",
+          "civs_key": "arrow_trap",
+          "item_id": "minecraft:chest"
+        },
+        "hand_ok": true,
+        "error": null,
+        "before": {
+          "label": "place_prep:arrow_trap",
+          "SelectedItemSlot": 8,
+          "item_id": "minecraft:wooden_axe",
+          "civs_key": null,
+          "kind": "wand",
+          "hotbar": [
+            {
+              "slot": 0,
+              "id": "minecraft:chest",
+              "kind": "civs",
+              "civs": "cactus_farm"
+            },
+            {
+              "slot": 1,
+              "id": "minecraft:redstone",
+              "kind": "junk",
+              "civs": null
+            },
+            {
+              "slot": 8,
+              "id": "minecraft:wooden_axe",
+              "kind": "wand",
+              "civs": null
+            }
+          ]
+        },
+        "keys_before": [
+          "cactus_farm"
+        ],
+        "selected_before": 8,
+        "ensure": {
+          "ok": true,
+          "civs_key": "arrow_trap",
+          "source": "pdc_replace",
+          "slot": 0,
+          "error": null,
+          "detail": "Replaced a slot on smokeshow with [arrow_trap]"
+        },
+        "hand_check": "smokeshow has the following entity data: {id: \"minecraft:chest\", count: 1, components: {\"minecraft:custom_name\": \"arrow_trap\", \"minecraft:custom_data...",
+        "after": {
+          "label": "place_ready:arrow_trap",
+          "SelectedItemSlot": 0,
+          "item_id": "minecraft:chest",
+          "civs_key": "arrow_trap",
+          "kind": "civs",
+          "hotbar": [
+            {
+              "slot": 0,
+              "id": "minecraft:chest",
+              "kind": "civs",
+              "civs": "arrow_trap"
+            },
+            {
+              "slot": 1,
+              "id": "minecraft:redstone",
+              "kind": "junk",
+              "civs": null
+            },
+            {
+              "slot": 8,
+              "id": "minecraft:wooden_axe",
+              "kind": "wand",
+              "civs": null
+            }
+          ]
+        }
+      },
+      "vision": [
+        {
+          "kind": "world",
+          "confidence": 0.55,
+          "safe": true,
+          "path": "C:\\Users\\Danie\\Downloads\\Civs-1.11.6\\Civs-1.11.6\\scripts\\qa\\reports\\screenshots\\arrow_trap_boot_143716_world.png",
+          "source_f2": "C:\\Users\\Danie\\AppData\\Roaming\\.minecraft\\screenshots\\2026-07-17_15.37.16.png",
+          "notes": "mean=116.1 std=49.5 edges=0.071 tr=11 | f2=2026-07-17_15.37.16.png"
+        },
+        {
+          "kind": "world",
+          "confidence": 0.55,
+          "safe": true,
+          "path": "C:\\Users\\Danie\\Downloads\\Civs-1.11.6\\Civs-1.11.6\\scripts\\qa\\reports\\screenshots\\arrow_trap_daniel_south_close_pre_143728_world.png",
+          "source_f2": "C:\\Users\\Danie\\AppData\\Roaming\\.minecraft\\screenshots\\2026-07-17_15.37.28.png",
+          "notes": "mean=99.2 std=50.0 edges=0.041 tr=13 | f2=2026-07-17_15.37.28.png"
+        },
+        {
+          "kind": "world",
+          "confidence": 0.55,
+          "safe": true,
+          "path": "C:\\Users\\Danie\\Downloads\\Civs-1.11.6\\Civs-1.11.6\\scripts\\qa\\reports\\screenshots\\arrow_trap_daniel_south_close_post_143739_world.png",
+          "source_f2": "C:\\Users\\Danie\\AppData\\Roaming\\.minecraft\\screenshots\\2026-07-17_15.37.39.png",
+          "notes": "mean=117.4 std=68.1 edges=0.090 tr=21 | f2=2026-07-17_15.37.39.png"
+        },
+        {
+          "kind": "world",
+          "confidence": 0.55,
+          "safe": true,
+          "path": "C:\\Users\\Danie\\Downloads\\Civs-1.11.6\\Civs-1.11.6\\scripts\\qa\\reports\\screenshots\\arrow_trap_daniel_south_floor_pre_143742_world.png",
+          "source_f2": "C:\\Users\\Danie\\AppData\\Roaming\\.minecraft\\screenshots\\2026-07-17_15.37.41.png",
+          "notes": "mean=118.4 std=66.8 edges=0.091 tr=21 | f2=2026-07-17_15.37.41.png"
+        },
+        {
+          "kind": "world",
+          "confidence": 0.55,
+          "safe": true,
+          "path": "C:\\Users\\Danie\\Downloads\\Civs-1.11.6\\Civs-1.11.6\\scripts\\qa\\reports\\screenshots\\arrow_trap_daniel_south_floor_post_143753_world.png",
+          "source_f2": "C:\\Users\\Danie\\AppData\\Roaming\\.minecraft\\screenshots\\2026-07-17_15.37.52.png",
+          "notes": "mean=118.1 std=67.1 edges=0.089 tr=21 | f2=2026-07-17_15.37.52.png"
+        }
+      ],
+      "right_click": {
+        "ok": true,
+        "error": null,
+        "xy": null,
+        "capture_xy": null,
+        "safe_capture_ignored": true,
+        "sneak": false,
+        "move_cursor": false
+      },
+      "placement_menu": null,
+      "attempts": [
+        {
+          "pose": "daniel_south_close",
+          "tp": [
+            2977.5,
+            81.0,
+            2621.85
+          ],
+          "yaw_pitch": [
+            -0.0,
+            52.10631057760506
+          ],
+          "rotation": "smokeshow has the following entity data: [0.0f, 52.11f]",
+          "right_click_ok": true,
+          "center_has_chest": false,
+          "exact_cy": false,
+          "center_block": "The target block is not a block entity",
+          "neighbors": {
+            "0,0,0": "",
+            "0,-1,0": "",
+            "0,-2,0": "",
+            "0,1,0": "",
+            "0,0,-1": "",
+            "0,0,1": "",
+            "-1,0,0": "",
+            "1,0,0": "",
+            "0,-1,-1": "",
+            "0,0,-2": ""
+          },
+          "hand_preview": [
+            "minecraft:chest",
+            "arrow_trap"
+          ]
+        },
+        {
+          "pose": "daniel_south_floor",
+          "tp": [
+            2977.5,
+            81.0,
+            2621.0
+          ],
+          "yaw_pitch": [
+            -0.0,
+            40.29794457668384
+          ],
+          "rotation": "smokeshow has the following entity data: [0.0f, 40.3f]",
+          "right_click_ok": true,
+          "center_has_chest": false,
+          "exact_cy": false,
+          "center_block": "The target block is not a block entity",
+          "neighbors": {
+            "0,0,0": "",
+            "0,-1,0": "",
+            "0,-2,0": "",
+            "0,1,0": "",
+            "0,0,-1": "",
+            "0,0,1": "",
+            "-1,0,0": "",
+            "1,0,0": "",
+            "0,-1,-1": "",
+            "0,0,-2": ""
+          },
+          "hand_preview": [
+            "minecraft:chest",
+            "arrow_trap"
+          ]
+        }
+      ],
+      "error": "center place missed after chest-safe retries",
+      "restored_blocks": 9,
+      "hotbar_log": [
+        {
+          "label": "civs:arrow_trap_after",
+          "SelectedItemSlot": 0,
+          "item_id": "minecraft:chest",
+          "civs_key": "arrow_trap",
+          "kind": "civs",
+          "hotbar": [
+            {
+              "slot": 0,
+              "id": "minecraft:chest",
+              "kind": "civs",
+              "civs": "arrow_trap"
+            },
+            {
+              "slot": 1,
+              "id": "minecraft:redstone",
+              "kind": "junk",
+              "civs": null
+            },
+            {
+              "slot": 8,
+              "id": "minecraft:wooden_axe",
+              "kind": "wand",
+              "civs": null
+            }
+          ]
+        },
+        {
+          "label": "civs:arrow_trap_after",
+          "SelectedItemSlot": 0,
+          "item_id": "minecraft:chest",
+          "civs_key": "arrow_trap",
+          "kind": "civs",
+          "hotbar": [
+            {
+              "slot": 0,
+              "id": "minecraft:chest",
+              "kind": "civs",
+              "civs": "arrow_trap"
+            },
+            {
+              "slot": 1,
+              "id": "minecraft:redstone",
+              "kind": "junk",
+              "civs": null
+            },
+            {
+              "slot": 8,
+              "id": "minecraft:wooden_axe",
+              "kind": "wand",
+              "civs": null
+            }
+          ]
+        }
+      ],
+      "center_block": "The target block is not a block entity",
+      "center_has_chest": false,
+      "exact_cy": false
+    },
+    "shack_build": {
+      "ok": true,
+      "we_cmds": [
+        {
+          "cmd": "//pos1 2992,78,2622",
+          "ok": true,
+          "err": null
+        },
+        {
+          "cmd": "//pos2 2998,84,2628",
+          "ok": true,
+          "err": null
+        },
+        {
+          "cmd": "//set oak_planks",
+          "ok": true,
+          "err": null
+        },
+        {
+          "cmd": "//pos1 2995,81,2625",
+          "ok": true,
+          "err": null
+        },
+        {
+          "cmd": "//pos2 2995,81,2625",
+          "ok": true,
+          "err": null
+        },
+        {
+          "cmd": "//set air",
+          "ok": true,
+          "err": null
+        }
+      ],
+      "setblocks": 65,
+      "error": null,
+      "hotbar_log": [
+        {
+          "label": "we_before",
+          "SelectedItemSlot": 0,
+          "item_id": "minecraft:chest",
+          "civs_key": "arrow_trap",
+          "kind": "civs",
+          "hotbar": [
+            {
+              "slot": 0,
+              "id": "minecraft:chest",
+              "kind": "civs",
+              "civs": "arrow_trap"
+            },
+            {
+              "slot": 1,
+              "id": "minecraft:redstone",
+              "kind": "junk",
+              "civs": null
+            },
+            {
+              "slot": 8,
+              "id": "minecraft:wooden_axe",
+              "kind": "wand",
+              "civs": null
+            }
+          ]
+        },
+        {
+          "label": "we_wand_selected",
+          "SelectedItemSlot": 8,
+          "item_id": "minecraft:wooden_axe",
+          "civs_key": null,
+          "kind": "wand",
+          "hotbar": [
+            {
+              "slot": 0,
+              "id": "minecraft:chest",
+              "kind": "civs",
+              "civs": "arrow_trap"
+            },
+            {
+              "slot": 1,
+              "id": "minecraft:redstone",
+              "kind": "junk",
+              "civs": null
+            },
+            {
+              "slot": 8,
+              "id": "minecraft:wooden_axe",
+              "kind": "wand",
+              "civs": null
+            }
+          ]
+        },
+        {
+          "label": "we_cmd://pos1 2992,78,2622",
+          "SelectedItemSlot": 8,
+          "item_id": "minecraft:wooden_axe",
+          "civs_key": null,
+          "kind": "wand",
+          "hotbar": [
+            {
+              "slot": 0,
+              "id": "minecraft:chest",
+              "kind": "civs",
+              "civs": "arrow_trap"
+            },
+            {
+              "slot": 1,
+              "id": "minecraft:redstone",
+              "kind": "junk",
+              "civs": null
+            },
+            {
+              "slot": 8,
+              "id": "minecraft:wooden_axe",
+              "kind": "wand",
+              "civs": null
+            }
+          ]
+        },
+        {
+          "label": "we_cmd://pos2 2998,84,2628",
+          "SelectedItemSlot": 8,
+          "item_id": "minecraft:wooden_axe",
+          "civs_key": null,
+          "kind": "wand",
+          "hotbar": [
+            {
+              "slot": 0,
+              "id": "minecraft:chest",
+              "kind": "civs",
+              "civs": "arrow_trap"
+            },
+            {
+              "slot": 1,
+              "id": "minecraft:redstone",
+              "kind": "junk",
+              "civs": null
+            },
+            {
+              "slot": 8,
+              "id": "minecraft:wooden_axe",
+              "kind": "wand",
+              "civs": null
+            }
+          ]
+        },
+        {
+          "label": "we_cmd://set oak_planks",
+          "SelectedItemSlot": 8,
+          "item_id": "minecraft:wooden_axe",
+          "civs_key": null,
+          "kind": "wand",
+          "hotbar": [
+            {
+              "slot": 0,
+              "id": "minecraft:chest",
+              "kind": "civs",
+              "civs": "arrow_trap"
+            },
+            {
+              "slot": 1,
+              "id": "minecraft:redstone",
+              "kind": "junk",
+              "civs": null
+            },
+            {
+              "slot": 8,
+              "id": "minecraft:wooden_axe",
+              "kind": "wand",
+              "civs": null
+            }
+          ]
+        },
+        {
+          "label": "we_cmd://pos1 2995,81,2625",
+          "SelectedItemSlot": 8,
+          "item_id": "minecraft:wooden_axe",
+          "civs_key": null,
+          "kind": "wand",
+          "hotbar": [
+            {
+              "slot": 0,
+              "id": "minecraft:chest",
+              "kind": "civs",
+              "civs": "arrow_trap"
+            },
+            {
+              "slot": 1,
+              "id": "minecraft:redstone",
+              "kind": "junk",
+              "civs": null
+            },
+            {
+              "slot": 8,
+              "id": "minecraft:wooden_axe",
+              "kind": "wand",
+              "civs": null
+            }
+          ]
+        },
+        {
+          "label": "we_cmd://pos2 2995,81,2625",
+          "SelectedItemSlot": 8,
+          "item_id": "minecraft:wooden_axe",
+          "civs_key": null,
+          "kind": "wand",
+          "hotbar": [
+            {
+              "slot": 0,
+              "id": "minecraft:chest",
+              "kind": "civs",
+              "civs": "arrow_trap"
+            },
+            {
+              "slot": 1,
+              "id": "minecraft:redstone",
+              "kind": "junk",
+              "civs": null
+            },
+            {
+              "slot": 8,
+              "id": "minecraft:wooden_axe",
+              "kind": "wand",
+              "civs": null
+            }
+          ]
+        },
+        {
+          "label": "we_cmd://set air",
+          "SelectedItemSlot": 8,
+          "item_id": "minecraft:wooden_axe",
+          "civs_key": null,
+          "kind": "wand",
+          "hotbar": [
+            {
+              "slot": 0,
+              "id": "minecraft:chest",
+              "kind": "civs",
+              "civs": "arrow_trap"
+            },
+            {
+              "slot": 1,
+              "id": "minecraft:redstone",
+              "kind": "junk",
+              "civs": null
+            },
+            {
+              "slot": 8,
+              "id": "minecraft:wooden_axe",
+              "kind": "wand",
+              "civs": null
+            }
+          ]
+        },
+        {
+          "label": "we_after",
+          "SelectedItemSlot": 8,
+          "item_id": "minecraft:wooden_axe",
+          "civs_key": null,
+          "kind": "wand",
+          "hotbar": [
+            {
+              "slot": 0,
+              "id": "minecraft:chest",
+              "kind": "civs",
+              "civs": "arrow_trap"
+            },
+            {
+              "slot": 1,
+              "id": "minecraft:redstone",
+              "kind": "junk",
+              "civs": null
+            },
+            {
+              "slot": 8,
+              "id": "minecraft:wooden_axe",
+              "kind": "wand",
+              "civs": null
+            }
+          ]
+        }
+      ],
+      "wand": {
+        "ok": true,
+        "slot": 8,
+        "source": "already_held",
+        "selected": {
+          "ok": true,
+          "slot": 8,
+          "key": "9",
+          "label": "select_wand",
+          "before": {
+            "label": "select_wand_before",
+            "SelectedItemSlot": 0,
+            "item_id": "minecraft:chest",
+            "civs_key": "arrow_trap",
+            "kind": "civs",
+            "hotbar": [
+              {
+                "slot": 0,
+                "id": "minecraft:chest",
+                "kind": "civs",
+                "civs": "arrow_trap"
+              },
+              {
+                "slot": 1,
+                "id": "minecraft:redstone",
+                "kind": "junk",
+                "civs": null
+              },
+              {
+                "slot": 8,
+                "id": "minecraft:wooden_axe",
+                "kind": "wand",
+                "civs": null
+              }
+            ]
+          },
+          "after": {
+            "label": "select_wand_after",
+            "SelectedItemSlot": 8,
+            "item_id": "minecraft:wooden_axe",
+            "civs_key": null,
+            "kind": "wand",
+            "hotbar": [
+              {
+                "slot": 0,
+                "id": "minecraft:chest",
+                "kind": "civs",
+                "civs": "arrow_trap"
+              },
+              {
+                "slot": 1,
+                "id": "minecraft:redstone",
+                "kind": "junk",
+                "civs": null
+              },
+              {
+                "slot": 8,
+                "id": "minecraft:wooden_axe",
+                "kind": "wand",
+                "civs": null
+              }
+            ]
+          },
+          "error": null,
+          "selected_slot": 8,
+          "selected_slot_raw": "smokeshow has the following entity data: 8",
+          "hand_raw": "smokeshow has the following entity data: {id: \"minecraft:wooden_axe\", count: 1}",
+          "hand_ok": true,
+          "kind": "wand",
+          "civs_key": null,
+          "item_id": "minecraft:wooden_axe"
+        },
+        "error": null
+      },
+      "dominant": "oak_planks",
+      "material_counts": {
+        "chest": 2,
+        "oak_door": 2,
+        "glass_pane": 4,
+        "red_bed": 1,
+        "furnace": 1,
+        "crafting_table": 1,
+        "oak_stairs": 16,
+        "cobblestone": 8,
+        "oak_planks": 30
+      },
+      "we_ok": true,
+      "gravity_restamp": 0
+    },
+    "shack_place": {
+      "ok": false,
+      "civs_key": "shack",
+      "center": [
+        2995,
+        81,
+        2625
+      ],
+      "item": {
+        "ok": true,
+        "civs_key": "shack",
+        "source": "pdc_replace",
+        "slot": 0,
+        "error": null,
+        "detail": "Replaced a slot on smokeshow with [shack]"
+      },
+      "hygiene": {
+        "ok": true,
+        "civs_key": "shack",
+        "slot": 0,
+        "cleared": [],
+        "dump_preview": "smokeshow has the following entity data: [{Slot: 0b, id: \"minecraft:chest\", count: 1, components: {\"minecraft:custom_name\":...",
+        "key_select": {
+          "ok": true,
+          "slot": 0,
+          "key": "1",
+          "label": "civs:shack",
+          "before": {
+            "label": "civs:shack_before",
+            "SelectedItemSlot": 8,
+            "item_id": "minecraft:wooden_axe",
+            "civs_key": null,
+            "kind": "wand",
+            "hotbar": [
+              {
+                "slot": 0,
+                "id": "minecraft:chest",
+                "kind": "civs",
+                "civs": "shack"
+              },
+              {
+                "slot": 1,
+                "id": "minecraft:redstone",
+                "kind": "junk",
+                "civs": null
+              },
+              {
+                "slot": 8,
+                "id": "minecraft:wooden_axe",
+                "kind": "wand",
+                "civs": null
+              }
+            ]
+          },
+          "after": {
+            "label": "civs:shack_after",
+            "SelectedItemSlot": 0,
+            "item_id": "minecraft:chest",
+            "civs_key": "shack",
+            "kind": "civs",
+            "hotbar": [
+              {
+                "slot": 0,
+                "id": "minecraft:chest",
+                "kind": "civs",
+                "civs": "shack"
+              },
+              {
+                "slot": 1,
+                "id": "minecraft:redstone",
+                "kind": "junk",
+                "civs": null
+              },
+              {
+                "slot": 8,
+                "id": "minecraft:wooden_axe",
+                "kind": "wand",
+                "civs": null
+              }
+            ]
+          },
+          "error": null,
+          "selected_slot": 0,
+          "selected_slot_raw": "smokeshow has the following entity data: 0",
+          "hand_raw": "smokeshow has the following entity data: {id: \"minecraft:chest\", count: 1, components: {\"minecraft:custom_name\": \"shack\", \"minecraft:custom_data...",
+          "hand_ok": true,
+          "kind": "civs",
+          "civs_key": "shack",
+          "item_id": "minecraft:chest"
+        },
+        "hand_ok": true,
+        "error": null,
+        "before": {
+          "label": "place_prep:shack",
+          "SelectedItemSlot": 8,
+          "item_id": "minecraft:wooden_axe",
+          "civs_key": null,
+          "kind": "wand",
+          "hotbar": [
+            {
+              "slot": 0,
+              "id": "minecraft:chest",
+              "kind": "civs",
+              "civs": "arrow_trap"
+            },
+            {
+              "slot": 1,
+              "id": "minecraft:redstone",
+              "kind": "junk",
+              "civs": null
+            },
+            {
+              "slot": 8,
+              "id": "minecraft:wooden_axe",
+              "kind": "wand",
+              "civs": null
+            }
+          ]
+        },
+        "keys_before": [
+          "arrow_trap"
+        ],
+        "selected_before": 8,
+        "ensure": {
+          "ok": true,
+          "civs_key": "shack",
+          "source": "pdc_replace",
+          "slot": 0,
+          "error": null,
+          "detail": "Replaced a slot on smokeshow with [shack]"
+        },
+        "hand_check": "smokeshow has the following entity data: {id: \"minecraft:chest\", count: 1, components: {\"minecraft:custom_name\": \"shack\", \"minecraft:custom_data...",
+        "after": {
+          "label": "place_ready:shack",
+          "SelectedItemSlot": 0,
+          "item_id": "minecraft:chest",
+          "civs_key": "shack",
+          "kind": "civs",
+          "hotbar": [
+            {
+              "slot": 0,
+              "id": "minecraft:chest",
+              "kind": "civs",
+              "civs": "shack"
+            },
+            {
+              "slot": 1,
+              "id": "minecraft:redstone",
+              "kind": "junk",
+              "civs": null
+            },
+            {
+              "slot": 8,
+              "id": "minecraft:wooden_axe",
+              "kind": "wand",
+              "civs": null
+            }
+          ]
+        }
+      },
+      "vision": [
+        {
+          "kind": "container",
+          "confidence": 0.7835881062951496,
+          "safe": false,
+          "path": "C:\\Users\\Danie\\Downloads\\Civs-1.11.6\\Civs-1.11.6\\scripts\\qa\\reports\\screenshots\\shack_boot_after_esc1_143841_container.png",
+          "source_f2": "C:\\Users\\Danie\\AppData\\Roaming\\.minecraft\\screenshots\\2026-07-17_15.38.40.png",
+          "notes": "mean=98.3 std=40.1 edges=0.071 | f2=2026-07-17_15.38.40.png"
+        },
+        {
+          "kind": "world",
+          "confidence": 0.55,
+          "safe": true,
+          "path": "C:\\Users\\Danie\\Downloads\\Civs-1.11.6\\Civs-1.11.6\\scripts\\qa\\reports\\screenshots\\shack_boot2_143844_world.png",
+          "source_f2": "C:\\Users\\Danie\\AppData\\Roaming\\.minecraft\\screenshots\\2026-07-17_15.38.43.png",
+          "notes": "mean=128.1 std=29.5 edges=0.026 tr=1 | f2=2026-07-17_15.38.43.png"
+        },
+        {
+          "kind": "world",
+          "confidence": 0.55,
+          "safe": true,
+          "path": "C:\\Users\\Danie\\Downloads\\Civs-1.11.6\\Civs-1.11.6\\scripts\\qa\\reports\\screenshots\\shack_daniel_south_close_pre_143853_world.png",
+          "source_f2": "C:\\Users\\Danie\\AppData\\Roaming\\.minecraft\\screenshots\\2026-07-17_15.38.52.png",
+          "notes": "mean=134.5 std=54.0 edges=0.035 tr=15 | f2=2026-07-17_15.38.52.png"
+        },
+        {
+          "kind": "world",
+          "confidence": 0.55,
+          "safe": true,
+          "path": "C:\\Users\\Danie\\Downloads\\Civs-1.11.6\\Civs-1.11.6\\scripts\\qa\\reports\\screenshots\\shack_daniel_south_close_post_143904_world.png",
+          "source_f2": "C:\\Users\\Danie\\AppData\\Roaming\\.minecraft\\screenshots\\2026-07-17_15.39.03.png",
+          "notes": "mean=103.0 std=68.2 edges=0.081 tr=30 | f2=2026-07-17_15.39.03.png"
+        },
+        {
+          "kind": "world",
+          "confidence": 0.55,
+          "safe": true,
+          "path": "C:\\Users\\Danie\\Downloads\\Civs-1.11.6\\Civs-1.11.6\\scripts\\qa\\reports\\screenshots\\shack_daniel_south_floor_pre_143906_world.png",
+          "source_f2": "C:\\Users\\Danie\\AppData\\Roaming\\.minecraft\\screenshots\\2026-07-17_15.39.06.png",
+          "notes": "mean=103.9 std=67.1 edges=0.080 tr=30 | f2=2026-07-17_15.39.06.png"
+        },
+        {
+          "kind": "world",
+          "confidence": 0.55,
+          "safe": true,
+          "path": "C:\\Users\\Danie\\Downloads\\Civs-1.11.6\\Civs-1.11.6\\scripts\\qa\\reports\\screenshots\\shack_daniel_south_floor_post_143917_world.png",
+          "source_f2": "C:\\Users\\Danie\\AppData\\Roaming\\.minecraft\\screenshots\\2026-07-17_15.39.17.png",
+          "notes": "mean=103.8 std=67.2 edges=0.081 tr=30 | f2=2026-07-17_15.39.17.png"
+        }
+      ],
+      "right_click": {
+        "ok": true,
+        "error": null,
+        "xy": null,
+        "capture_xy": null,
+        "safe_capture_ignored": true,
+        "sneak": false,
+        "move_cursor": false
+      },
+      "placement_menu": null,
+      "attempts": [
+        {
+          "pose": "daniel_south_close",
+          "tp": [
+            2995.5,
+            81.0,
+            2623.85
+          ],
+          "yaw_pitch": [
+            -0.0,
+            52.10631057760506
+          ],
+          "rotation": "smokeshow has the following entity data: [0.0f, 52.11f]",
+          "right_click_ok": true,
+          "center_has_chest": false,
+          "exact_cy": false,
+          "center_block": "The target block is not a block entity",
+          "neighbors": {
+            "0,0,0": "",
+            "0,-1,0": "",
+            "0,-2,0": "",
+            "0,1,0": "",
+            "0,0,-1": "",
+            "0,0,1": "",
+            "-1,0,0": "",
+            "1,0,0": "",
+            "0,-1,-1": "",
+            "0,0,-2": ""
+          },
+          "hand_preview": [
+            "minecraft:chest",
+            "shack"
+          ]
+        },
+        {
+          "pose": "daniel_south_floor",
+          "tp": [
+            2995.5,
+            81.0,
+            2623.0
+          ],
+          "yaw_pitch": [
+            -0.0,
+            40.29794457668384
+          ],
+          "rotation": "smokeshow has the following entity data: [0.0f, 40.3f]",
+          "right_click_ok": true,
+          "center_has_chest": false,
+          "exact_cy": false,
+          "center_block": "The target block is not a block entity",
+          "neighbors": {
+            "0,0,0": "",
+            "0,-1,0": "",
+            "0,-2,0": "",
+            "0,1,0": "",
+            "0,0,-1": "",
+            "0,0,1": "",
+            "-1,0,0": "",
+            "1,0,0": "",
+            "0,-1,-1": "",
+            "0,0,-2": ""
+          },
+          "hand_preview": [
+            "minecraft:chest",
+            "shack"
+          ]
+        }
+      ],
+      "error": "center place missed after chest-safe retries",
+      "restored_blocks": 65,
+      "hotbar_log": [
+        {
+          "label": "civs:shack_after",
+          "SelectedItemSlot": 0,
+          "item_id": "minecraft:chest",
+          "civs_key": "shack",
+          "kind": "civs",
+          "hotbar": [
+            {
+              "slot": 0,
+              "id": "minecraft:chest",
+              "kind": "civs",
+              "civs": "shack"
+            },
+            {
+              "slot": 1,
+              "id": "minecraft:redstone",
+              "kind": "junk",
+              "civs": null
+            },
+            {
+              "slot": 8,
+              "id": "minecraft:wooden_axe",
+              "kind": "wand",
+              "civs": null
+            }
+          ]
+        },
+        {
+          "label": "civs:shack_after",
+          "SelectedItemSlot": 0,
+          "item_id": "minecraft:chest",
+          "civs_key": "shack",
+          "kind": "civs",
+          "hotbar": [
+            {
+              "slot": 0,
+              "id": "minecraft:chest",
+              "kind": "civs",
+              "civs": "shack"
+            },
+            {
+              "slot": 1,
+              "id": "minecraft:redstone",
+              "kind": "junk",
+              "civs": null
+            },
+            {
+              "slot": 8,
+              "id": "minecraft:wooden_axe",
+              "kind": "wand",
+              "civs": null
+            }
+          ]
+        }
+      ],
+      "center_block": "The target block is not a block entity",
+      "center_has_chest": false,
+      "exact_cy": false
+    },
+    "smithy_build": {
+      "ok": true,
+      "we_cmds": [
+        {
+          "cmd": "//pos1 3012,77,2622",
+          "ok": true,
+          "err": null
+        },
+        {
+          "cmd": "//pos2 3020,85,2630",
+          "ok": true,
+          "err": null
+        },
+        {
+          "cmd": "//set oak_planks",
+          "ok": true,
+          "err": null
+        },
+        {
+          "cmd": "//pos1 3016,81,2626",
+          "ok": true,
+          "err": null
+        },
+        {
+          "cmd": "//pos2 3016,81,2626",
+          "ok": true,
+          "err": null
+        },
+        {
+          "cmd": "//set air",
+          "ok": true,
+          "err": null
+        }
+      ],
+      "setblocks": 126,
+      "error": null,
+      "hotbar_log": [
+        {
+          "label": "we_before",
+          "SelectedItemSlot": 0,
+          "item_id": "minecraft:chest",
+          "civs_key": "shack",
+          "kind": "civs",
+          "hotbar": [
+            {
+              "slot": 0,
+              "id": "minecraft:chest",
+              "kind": "civs",
+              "civs": "shack"
+            },
+            {
+              "slot": 1,
+              "id": "minecraft:redstone",
+              "kind": "junk",
+              "civs": null
+            },
+            {
+              "slot": 8,
+              "id": "minecraft:wooden_axe",
+              "kind": "wand",
+              "civs": null
+            }
+          ]
+        },
+        {
+          "label": "we_wand_selected",
+          "SelectedItemSlot": 8,
+          "item_id": "minecraft:wooden_axe",
+          "civs_key": null,
+          "kind": "wand",
+          "hotbar": [
+            {
+              "slot": 0,
+              "id": "minecraft:chest",
+              "kind": "civs",
+              "civs": "shack"
+            },
+            {
+              "slot": 1,
+              "id": "minecraft:redstone",
+              "kind": "junk",
+              "civs": null
+            },
+            {
+              "slot": 8,
+              "id": "minecraft:wooden_axe",
+              "kind": "wand",
+              "civs": null
+            }
+          ]
+        },
+        {
+          "label": "we_cmd://pos1 3012,77,2622",
+          "SelectedItemSlot": 8,
+          "item_id": "minecraft:wooden_axe",
+          "civs_key": null,
+          "kind": "wand",
+          "hotbar": [
+            {
+              "slot": 0,
+              "id": "minecraft:chest",
+              "kind": "civs",
+              "civs": "shack"
+            },
+            {
+              "slot": 1,
+              "id": "minecraft:redstone",
+              "kind": "junk",
+              "civs": null
+            },
+            {
+              "slot": 8,
+              "id": "minecraft:wooden_axe",
+              "kind": "wand",
+              "civs": null
+            }
+          ]
+        },
+        {
+          "label": "we_cmd://pos2 3020,85,2630",
+          "SelectedItemSlot": 8,
+          "item_id": "minecraft:wooden_axe",
+          "civs_key": null,
+          "kind": "wand",
+          "hotbar": [
+            {
+              "slot": 0,
+              "id": "minecraft:chest",
+              "kind": "civs",
+              "civs": "shack"
+            },
+            {
+              "slot": 1,
+              "id": "minecraft:redstone",
+              "kind": "junk",
+              "civs": null
+            },
+            {
+              "slot": 8,
+              "id": "minecraft:wooden_axe",
+              "kind": "wand",
+              "civs": null
+            }
+          ]
+        },
+        {
+          "label": "we_cmd://set oak_planks",
+          "SelectedItemSlot": 8,
+          "item_id": "minecraft:wooden_axe",
+          "civs_key": null,
+          "kind": "wand",
+          "hotbar": [
+            {
+              "slot": 0,
+              "id": "minecraft:chest",
+              "kind": "civs",
+              "civs": "shack"
+            },
+            {
+              "slot": 1,
+              "id": "minecraft:redstone",
+              "kind": "junk",
+              "civs": null
+            },
+            {
+              "slot": 8,
+              "id": "minecraft:wooden_axe",
+              "kind": "wand",
+              "civs": null
+            }
+          ]
+        },
+        {
+          "label": "we_cmd://pos1 3016,81,2626",
+          "SelectedItemSlot": 8,
+          "item_id": "minecraft:wooden_axe",
+          "civs_key": null,
+          "kind": "wand",
+          "hotbar": [
+            {
+              "slot": 0,
+              "id": "minecraft:chest",
+              "kind": "civs",
+              "civs": "shack"
+            },
+            {
+              "slot": 1,
+              "id": "minecraft:redstone",
+              "kind": "junk",
+              "civs": null
+            },
+            {
+              "slot": 8,
+              "id": "minecraft:wooden_axe",
+              "kind": "wand",
+              "civs": null
+            }
+          ]
+        },
+        {
+          "label": "we_cmd://pos2 3016,81,2626",
+          "SelectedItemSlot": 8,
+          "item_id": "minecraft:wooden_axe",
+          "civs_key": null,
+          "kind": "wand",
+          "hotbar": [
+            {
+              "slot": 0,
+              "id": "minecraft:chest",
+              "kind": "civs",
+              "civs": "shack"
+            },
+            {
+              "slot": 1,
+              "id": "minecraft:redstone",
+              "kind": "junk",
+              "civs": null
+            },
+            {
+              "slot": 8,
+              "id": "minecraft:wooden_axe",
+              "kind": "wand",
+              "civs": null
+            }
+          ]
+        },
+        {
+          "label": "we_cmd://set air",
+          "SelectedItemSlot": 8,
+          "item_id": "minecraft:wooden_axe",
+          "civs_key": null,
+          "kind": "wand",
+          "hotbar": [
+            {
+              "slot": 0,
+              "id": "minecraft:chest",
+              "kind": "civs",
+              "civs": "shack"
+            },
+            {
+              "slot": 1,
+              "id": "minecraft:redstone",
+              "kind": "junk",
+              "civs": null
+            },
+            {
+              "slot": 8,
+              "id": "minecraft:wooden_axe",
+              "kind": "wand",
+              "civs": null
+            }
+          ]
+        },
+        {
+          "label": "we_after",
+          "SelectedItemSlot": 8,
+          "item_id": "minecraft:wooden_axe",
+          "civs_key": null,
+          "kind": "wand",
+          "hotbar": [
+            {
+              "slot": 0,
+              "id": "minecraft:chest",
+              "kind": "civs",
+              "civs": "shack"
+            },
+            {
+              "slot": 1,
+              "id": "minecraft:redstone",
+              "kind": "junk",
+              "civs": null
+            },
+            {
+              "slot": 8,
+              "id": "minecraft:wooden_axe",
+              "kind": "wand",
+              "civs": null
+            }
+          ]
+        }
+      ],
+      "wand": {
+        "ok": true,
+        "slot": 8,
+        "source": "already_held",
+        "selected": {
+          "ok": true,
+          "slot": 8,
+          "key": "9",
+          "label": "select_wand",
+          "before": {
+            "label": "select_wand_before",
+            "SelectedItemSlot": 0,
+            "item_id": "minecraft:chest",
+            "civs_key": "shack",
+            "kind": "civs",
+            "hotbar": [
+              {
+                "slot": 0,
+                "id": "minecraft:chest",
+                "kind": "civs",
+                "civs": "shack"
+              },
+              {
+                "slot": 1,
+                "id": "minecraft:redstone",
+                "kind": "junk",
+                "civs": null
+              },
+              {
+                "slot": 8,
+                "id": "minecraft:wooden_axe",
+                "kind": "wand",
+                "civs": null
+              }
+            ]
+          },
+          "after": {
+            "label": "select_wand_after",
+            "SelectedItemSlot": 8,
+            "item_id": "minecraft:wooden_axe",
+            "civs_key": null,
+            "kind": "wand",
+            "hotbar": [
+              {
+                "slot": 0,
+                "id": "minecraft:chest",
+                "kind": "civs",
+                "civs": "shack"
+              },
+              {
+                "slot": 1,
+                "id": "minecraft:redstone",
+                "kind": "junk",
+                "civs": null
+              },
+              {
+                "slot": 8,
+                "id": "minecraft:wooden_axe",
+                "kind": "wand",
+                "civs": null
+              }
+            ]
+          },
+          "error": null,
+          "selected_slot": 8,
+          "selected_slot_raw": "smokeshow has the following entity data: 8",
+          "hand_raw": "smokeshow has the following entity data: {id: \"minecraft:wooden_axe\", count: 1}",
+          "hand_ok": true,
+          "kind": "wand",
+          "civs_key": null,
+          "item_id": "minecraft:wooden_axe"
+        },
+        "error": null
+      },
+      "dominant": "oak_planks",
+      "material_counts": {
+        "glass_pane": 4,
+        "oak_door": 2,
+        "oak_stairs": 25,
+        "oak_planks": 80,
+        "cobblestone": 15
+      },
+      "we_ok": true,
+      "gravity_restamp": 0
+    },
+    "smithy_place": {
+      "ok": false,
+      "civs_key": "smithy",
+      "center": [
+        3016,
+        81,
+        2626
+      ],
+      "item": {
+        "ok": true,
+        "civs_key": "smithy",
+        "source": "pdc_replace",
+        "slot": 0,
+        "error": null,
+        "detail": "Replaced a slot on smokeshow with [smithy]"
+      },
+      "hygiene": {
+        "ok": true,
+        "civs_key": "smithy",
+        "slot": 0,
+        "cleared": [],
+        "dump_preview": "smokeshow has the following entity data: [{Slot: 0b, id: \"minecraft:chest\", count: 1, components: {\"minecraft:custom_name\":...",
+        "key_select": {
+          "ok": true,
+          "slot": 0,
+          "key": "1",
+          "label": "civs:smithy",
+          "before": {
+            "label": "civs:smithy_before",
+            "SelectedItemSlot": 8,
+            "item_id": "minecraft:wooden_axe",
+            "civs_key": null,
+            "kind": "wand",
+            "hotbar": [
+              {
+                "slot": 0,
+                "id": "minecraft:chest",
+                "kind": "civs",
+                "civs": "smithy"
+              },
+              {
+                "slot": 1,
+                "id": "minecraft:redstone",
+                "kind": "junk",
+                "civs": null
+              },
+              {
+                "slot": 8,
+                "id": "minecraft:wooden_axe",
+                "kind": "wand",
+                "civs": null
+              }
+            ]
+          },
+          "after": {
+            "label": "civs:smithy_after",
+            "SelectedItemSlot": 0,
+            "item_id": "minecraft:chest",
+            "civs_key": "smithy",
+            "kind": "civs",
+            "hotbar": [
+              {
+                "slot": 0,
+                "id": "minecraft:chest",
+                "kind": "civs",
+                "civs": "smithy"
+              },
+              {
+                "slot": 1,
+                "id": "minecraft:redstone",
+                "kind": "junk",
+                "civs": null
+              },
+              {
+                "slot": 8,
+                "id": "minecraft:wooden_axe",
+                "kind": "wand",
+                "civs": null
+              }
+            ]
+          },
+          "error": null,
+          "selected_slot": 0,
+          "selected_slot_raw": "smokeshow has the following entity data: 0",
+          "hand_raw": "smokeshow has the following entity data: {id: \"minecraft:chest\", count: 1, components: {\"minecraft:custom_name\": \"smithy\", \"minecraft:custom_data...",
+          "hand_ok": true,
+          "kind": "civs",
+          "civs_key": "smithy",
+          "item_id": "minecraft:chest"
+        },
+        "hand_ok": true,
+        "error": null,
+        "before": {
+          "label": "place_prep:smithy",
+          "SelectedItemSlot": 8,
+          "item_id": "minecraft:wooden_axe",
+          "civs_key": null,
+          "kind": "wand",
+          "hotbar": [
+            {
+              "slot": 0,
+              "id": "minecraft:chest",
+              "kind": "civs",
+              "civs": "shack"
+            },
+            {
+              "slot": 1,
+              "id": "minecraft:redstone",
+              "kind": "junk",
+              "civs": null
+            },
+            {
+              "slot": 8,
+              "id": "minecraft:wooden_axe",
+              "kind": "wand",
+              "civs": null
+            }
+          ]
+        },
+        "keys_before": [
+          "shack"
+        ],
+        "selected_before": 8,
+        "ensure": {
+          "ok": true,
+          "civs_key": "smithy",
+          "source": "pdc_replace",
+          "slot": 0,
+          "error": null,
+          "detail": "Replaced a slot on smokeshow with [smithy]"
+        },
+        "hand_check": "smokeshow has the following entity data: {id: \"minecraft:chest\", count: 1, components: {\"minecraft:custom_name\": \"smithy\", \"minecraft:custom_data...",
+        "after": {
+          "label": "place_ready:smithy",
+          "SelectedItemSlot": 0,
+          "item_id": "minecraft:chest",
+          "civs_key": "smithy",
+          "kind": "civs",
+          "hotbar": [
+            {
+              "slot": 0,
+              "id": "minecraft:chest",
+              "kind": "civs",
+              "civs": "smithy"
+            },
+            {
+              "slot": 1,
+              "id": "minecraft:redstone",
+              "kind": "junk",
+              "civs": null
+            },
+            {
+              "slot": 8,
+              "id": "minecraft:wooden_axe",
+              "kind": "wand",
+              "civs": null
+            }
+          ]
+        }
+      },
+      "vision": [
+        {
+          "kind": "world",
+          "confidence": 0.55,
+          "safe": true,
+          "path": "C:\\Users\\Danie\\Downloads\\Civs-1.11.6\\Civs-1.11.6\\scripts\\qa\\reports\\screenshots\\smithy_boot_after_esc1_144006_world.png",
+          "source_f2": "C:\\Users\\Danie\\AppData\\Roaming\\.minecraft\\screenshots\\2026-07-17_15.40.05.png",
+          "notes": "mean=110.2 std=45.9 edges=0.072 tr=11 | f2=2026-07-17_15.40.05.png"
+        },
+        {
+          "kind": "world",
+          "confidence": 0.55,
+          "safe": true,
+          "path": "C:\\Users\\Danie\\Downloads\\Civs-1.11.6\\Civs-1.11.6\\scripts\\qa\\reports\\screenshots\\smithy_daniel_south_close_pre_144018_world.png",
+          "source_f2": "C:\\Users\\Danie\\AppData\\Roaming\\.minecraft\\screenshots\\2026-07-17_15.40.17.png",
+          "notes": "mean=134.4 std=54.0 edges=0.036 tr=13 | f2=2026-07-17_15.40.17.png"
+        },
+        {
+          "kind": "world",
+          "confidence": 0.55,
+          "safe": true,
+          "path": "C:\\Users\\Danie\\Downloads\\Civs-1.11.6\\Civs-1.11.6\\scripts\\qa\\reports\\screenshots\\smithy_daniel_south_close_post_144029_world.png",
+          "source_f2": "C:\\Users\\Danie\\AppData\\Roaming\\.minecraft\\screenshots\\2026-07-17_15.40.28.png",
+          "notes": "mean=138.2 std=53.4 edges=0.042 tr=15 | f2=2026-07-17_15.40.28.png"
+        },
+        {
+          "kind": "world",
+          "confidence": 0.55,
+          "safe": true,
+          "path": "C:\\Users\\Danie\\Downloads\\Civs-1.11.6\\Civs-1.11.6\\scripts\\qa\\reports\\screenshots\\smithy_daniel_south_floor_pre_144032_world.png",
+          "source_f2": "C:\\Users\\Danie\\AppData\\Roaming\\.minecraft\\screenshots\\2026-07-17_15.40.31.png",
+          "notes": "mean=145.0 std=47.6 edges=0.047 tr=30 | f2=2026-07-17_15.40.31.png"
+        },
+        {
+          "kind": "world",
+          "confidence": 0.55,
+          "safe": true,
+          "path": "C:\\Users\\Danie\\Downloads\\Civs-1.11.6\\Civs-1.11.6\\scripts\\qa\\reports\\screenshots\\smithy_daniel_south_floor_post_144043_world.png",
+          "source_f2": "C:\\Users\\Danie\\AppData\\Roaming\\.minecraft\\screenshots\\2026-07-17_15.40.42.png",
+          "notes": "mean=146.5 std=47.7 edges=0.049 tr=36 | f2=2026-07-17_15.40.42.png"
+        }
+      ],
+      "right_click": {
+        "ok": true,
+        "error": null,
+        "xy": null,
+        "capture_xy": null,
+        "safe_capture_ignored": true,
+        "sneak": false,
+        "move_cursor": false
+      },
+      "placement_menu": null,
+      "attempts": [
+        {
+          "pose": "daniel_south_close",
+          "tp": [
+            3016.5,
+            81.0,
+            2624.85
+          ],
+          "yaw_pitch": [
+            -0.0,
+            52.10631057760506
+          ],
+          "rotation": "smokeshow has the following entity data: [0.0f, 52.11f]",
+          "right_click_ok": true,
+          "center_has_chest": false,
+          "exact_cy": false,
+          "center_block": "The target block is not a block entity",
+          "neighbors": {
+            "0,0,0": "",
+            "0,-1,0": "",
+            "0,-2,0": "",
+            "0,1,0": "",
+            "0,0,-1": "",
+            "0,0,1": "",
+            "-1,0,0": "",
+            "1,0,0": "",
+            "0,-1,-1": "",
+            "0,0,-2": ""
+          },
+          "hand_preview": [
+            "minecraft:chest",
+            "smithy"
+          ]
+        },
+        {
+          "pose": "daniel_south_floor",
+          "tp": [
+            3016.5,
+            81.0,
+            2624.0
+          ],
+          "yaw_pitch": [
+            -0.0,
+            40.29794457668384
+          ],
+          "rotation": "smokeshow has the following entity data: [0.0f, 40.3f]",
+          "right_click_ok": true,
+          "center_has_chest": false,
+          "exact_cy": false,
+          "center_block": "The target block is not a block entity",
+          "neighbors": {
+            "0,0,0": "",
+            "0,-1,0": "",
+            "0,-2,0": "",
+            "0,1,0": "",
+            "0,0,-1": "",
+            "0,0,1": "",
+            "-1,0,0": "",
+            "1,0,0": "",
+            "0,-1,-1": "",
+            "0,0,-2": ""
+          },
+          "hand_preview": [
+            "minecraft:chest",
+            "smithy"
+          ]
+        }
+      ],
+      "error": "center place missed after chest-safe retries",
+      "restored_blocks": 126,
+      "hotbar_log": [
+        {
+          "label": "civs:smithy_after",
+          "SelectedItemSlot": 0,
+          "item_id": "minecraft:chest",
+          "civs_key": "smithy",
+          "kind": "civs",
+          "hotbar": [
+            {
+              "slot": 0,
+              "id": "minecraft:chest",
+              "kind": "civs",
+              "civs": "smithy"
+            },
+            {
+              "slot": 1,
+              "id": "minecraft:redstone",
+              "kind": "junk",
+              "civs": null
+            },
+            {
+              "slot": 8,
+              "id": "minecraft:wooden_axe",
+              "kind": "wand",
+              "civs": null
+            }
+          ]
+        },
+        {
+          "label": "civs:smithy_after",
+          "SelectedItemSlot": 0,
+          "item_id": "minecraft:chest",
+          "civs_key": "smithy",
+          "kind": "civs",
+          "hotbar": [
+            {
+              "slot": 0,
+              "id": "minecraft:chest",
+              "kind": "civs",
+              "civs": "smithy"
+            },
+            {
+              "slot": 1,
+              "id": "minecraft:redstone",
+              "kind": "junk",
+              "civs": null
+            },
+            {
+              "slot": 8,
+              "id": "minecraft:wooden_axe",
+              "kind": "wand",
+              "civs": null
+            }
+          ]
+        }
+      ],
+      "center_block": "The target block is not a block entity",
+      "center_has_chest": false,
+      "exact_cy": false
+    },
+    "potato_farm_build": {
+      "ok": true,
+      "we_cmds": [
+        {
+          "cmd": "//pos1 2970,77,2594",
+          "ok": true,
+          "err": null
+        },
+        {
+          "cmd": "//pos2 2978,85,2602",
+          "ok": true,
+          "err": null
+        },
+        {
+          "cmd": "//set oak_fence",
+          "ok": true,
+          "err": null
+        },
+        {
+          "cmd": "//pos1 2974,81,2598",
+          "ok": true,
+          "err": null
+        },
+        {
+          "cmd": "//pos2 2974,81,2598",
+          "ok": true,
+          "err": null
+        },
+        {
+          "cmd": "//set air",
+          "ok": true,
+          "err": null
+        }
+      ],
+      "setblocks": 42,
+      "error": null,
+      "hotbar_log": [
+        {
+          "label": "we_before",
+          "SelectedItemSlot": 0,
+          "item_id": "minecraft:chest",
+          "civs_key": "smithy",
+          "kind": "civs",
+          "hotbar": [
+            {
+              "slot": 0,
+              "id": "minecraft:chest",
+              "kind": "civs",
+              "civs": "smithy"
+            },
+            {
+              "slot": 1,
+              "id": "minecraft:redstone",
+              "kind": "junk",
+              "civs": null
+            },
+            {
+              "slot": 8,
+              "id": "minecraft:wooden_axe",
+              "kind": "wand",
+              "civs": null
+            }
+          ]
+        },
+        {
+          "label": "we_wand_selected",
+          "SelectedItemSlot": 8,
+          "item_id": "minecraft:wooden_axe",
+          "civs_key": null,
+          "kind": "wand",
+          "hotbar": [
+            {
+              "slot": 0,
+              "id": "minecraft:chest",
+              "kind": "civs",
+              "civs": "smithy"
+            },
+            {
+              "slot": 1,
+              "id": "minecraft:redstone",
+              "kind": "junk",
+              "civs": null
+            },
+            {
+              "slot": 8,
+              "id": "minecraft:wooden_axe",
+              "kind": "wand",
+              "civs": null
+            }
+          ]
+        },
+        {
+          "label": "we_cmd://pos1 2970,77,2594",
+          "SelectedItemSlot": 8,
+          "item_id": "minecraft:wooden_axe",
+          "civs_key": null,
+          "kind": "wand",
+          "hotbar": [
+            {
+              "slot": 0,
+              "id": "minecraft:chest",
+              "kind": "civs",
+              "civs": "smithy"
+            },
+            {
+              "slot": 1,
+              "id": "minecraft:redstone",
+              "kind": "junk",
+              "civs": null
+            },
+            {
+              "slot": 8,
+              "id": "minecraft:wooden_axe",
+              "kind": "wand",
+              "civs": null
+            }
+          ]
+        },
+        {
+          "label": "we_cmd://pos2 2978,85,2602",
+          "SelectedItemSlot": 8,
+          "item_id": "minecraft:wooden_axe",
+          "civs_key": null,
+          "kind": "wand",
+          "hotbar": [
+            {
+              "slot": 0,
+              "id": "minecraft:chest",
+              "kind": "civs",
+              "civs": "smithy"
+            },
+            {
+              "slot": 1,
+              "id": "minecraft:redstone",
+              "kind": "junk",
+              "civs": null
+            },
+            {
+              "slot": 8,
+              "id": "minecraft:wooden_axe",
+              "kind": "wand",
+              "civs": null
+            }
+          ]
+        },
+        {
+          "label": "we_cmd://set oak_fence",
+          "SelectedItemSlot": 8,
+          "item_id": "minecraft:wooden_axe",
+          "civs_key": null,
+          "kind": "wand",
+          "hotbar": [
+            {
+              "slot": 0,
+              "id": "minecraft:chest",
+              "kind": "civs",
+              "civs": "smithy"
+            },
+            {
+              "slot": 1,
+              "id": "minecraft:redstone",
+              "kind": "junk",
+              "civs": null
+            },
+            {
+              "slot": 8,
+              "id": "minecraft:wooden_axe",
+              "kind": "wand",
+              "civs": null
+            }
+          ]
+        },
+        {
+          "label": "we_cmd://pos1 2974,81,2598",
+          "SelectedItemSlot": 8,
+          "item_id": "minecraft:wooden_axe",
+          "civs_key": null,
+          "kind": "wand",
+          "hotbar": [
+            {
+              "slot": 0,
+              "id": "minecraft:chest",
+              "kind": "civs",
+              "civs": "smithy"
+            },
+            {
+              "slot": 1,
+              "id": "minecraft:redstone",
+              "kind": "junk",
+              "civs": null
+            },
+            {
+              "slot": 8,
+              "id": "minecraft:wooden_axe",
+              "kind": "wand",
+              "civs": null
+            }
+          ]
+        },
+        {
+          "label": "we_cmd://pos2 2974,81,2598",
+          "SelectedItemSlot": 8,
+          "item_id": "minecraft:wooden_axe",
+          "civs_key": null,
+          "kind": "wand",
+          "hotbar": [
+            {
+              "slot": 0,
+              "id": "minecraft:chest",
+              "kind": "civs",
+              "civs": "smithy"
+            },
+            {
+              "slot": 1,
+              "id": "minecraft:redstone",
+              "kind": "junk",
+              "civs": null
+            },
+            {
+              "slot": 8,
+              "id": "minecraft:wooden_axe",
+              "kind": "wand",
+              "civs": null
+            }
+          ]
+        },
+        {
+          "label": "we_cmd://set air",
+          "SelectedItemSlot": 8,
+          "item_id": "minecraft:wooden_axe",
+          "civs_key": null,
+          "kind": "wand",
+          "hotbar": [
+            {
+              "slot": 0,
+              "id": "minecraft:chest",
+              "kind": "civs",
+              "civs": "smithy"
+            },
+            {
+              "slot": 1,
+              "id": "minecraft:redstone",
+              "kind": "junk",
+              "civs": null
+            },
+            {
+              "slot": 8,
+              "id": "minecraft:wooden_axe",
+              "kind": "wand",
+              "civs": null
+            }
+          ]
+        },
+        {
+          "label": "we_after",
+          "SelectedItemSlot": 8,
+          "item_id": "minecraft:wooden_axe",
+          "civs_key": null,
+          "kind": "wand",
+          "hotbar": [
+            {
+              "slot": 0,
+              "id": "minecraft:chest",
+              "kind": "civs",
+              "civs": "smithy"
+            },
+            {
+              "slot": 1,
+              "id": "minecraft:redstone",
+              "kind": "junk",
+              "civs": null
+            },
+            {
+              "slot": 8,
+              "id": "minecraft:wooden_axe",
+              "kind": "wand",
+              "civs": null
+            }
+          ]
+        }
+      ],
+      "wand": {
+        "ok": true,
+        "slot": 8,
+        "source": "already_held",
+        "selected": {
+          "ok": true,
+          "slot": 8,
+          "key": "9",
+          "label": "select_wand",
+          "before": {
+            "label": "select_wand_before",
+            "SelectedItemSlot": 0,
+            "item_id": "minecraft:chest",
+            "civs_key": "smithy",
+            "kind": "civs",
+            "hotbar": [
+              {
+                "slot": 0,
+                "id": "minecraft:chest",
+                "kind": "civs",
+                "civs": "smithy"
+              },
+              {
+                "slot": 1,
+                "id": "minecraft:redstone",
+                "kind": "junk",
+                "civs": null
+              },
+              {
+                "slot": 8,
+                "id": "minecraft:wooden_axe",
+                "kind": "wand",
+                "civs": null
+              }
+            ]
+          },
+          "after": {
+            "label": "select_wand_after",
+            "SelectedItemSlot": 8,
+            "item_id": "minecraft:wooden_axe",
+            "civs_key": null,
+            "kind": "wand",
+            "hotbar": [
+              {
+                "slot": 0,
+                "id": "minecraft:chest",
+                "kind": "civs",
+                "civs": "smithy"
+              },
+              {
+                "slot": 1,
+                "id": "minecraft:redstone",
+                "kind": "junk",
+                "civs": null
+              },
+              {
+                "slot": 8,
+                "id": "minecraft:wooden_axe",
+                "kind": "wand",
+                "civs": null
+              }
+            ]
+          },
+          "error": null,
+          "selected_slot": 8,
+          "selected_slot_raw": "smokeshow has the following entity data: 8",
+          "hand_raw": "smokeshow has the following entity data: {id: \"minecraft:wooden_axe\", count: 1}",
+          "hand_ok": true,
+          "kind": "wand",
+          "civs_key": null,
+          "item_id": "minecraft:wooden_axe"
+        },
+        "error": null
+      },
+      "dominant": "oak_fence",
+      "material_counts": {
+        "oak_fence_gate": 1,
+        "oak_fence": 16,
+        "composter": 1,
+        "potatoes": 24
+      },
+      "we_ok": true,
+      "gravity_restamp": 24
+    },
+    "potato_farm_place": {
+      "ok": false,
+      "civs_key": "potato_farm",
+      "center": [
+        2974,
+        81,
+        2598
+      ],
+      "item": {
+        "ok": true,
+        "civs_key": "potato_farm",
+        "source": "pdc_replace",
+        "slot": 0,
+        "error": null,
+        "detail": "Replaced a slot on smokeshow with [potato_farm]"
+      },
+      "hygiene": {
+        "ok": true,
+        "civs_key": "potato_farm",
+        "slot": 0,
+        "cleared": [],
+        "dump_preview": "smokeshow has the following entity data: [{Slot: 0b, id: \"minecraft:chest\", count: 1, components: {\"minecraft:custom_name\":...",
+        "key_select": {
+          "ok": true,
+          "slot": 0,
+          "key": "1",
+          "label": "civs:potato_farm",
+          "before": {
+            "label": "civs:potato_farm_before",
+            "SelectedItemSlot": 8,
+            "item_id": "minecraft:wooden_axe",
+            "civs_key": null,
+            "kind": "wand",
+            "hotbar": [
+              {
+                "slot": 0,
+                "id": "minecraft:chest",
+                "kind": "civs",
+                "civs": "potato_farm"
+              },
+              {
+                "slot": 1,
+                "id": "minecraft:redstone",
+                "kind": "junk",
+                "civs": null
+              },
+              {
+                "slot": 8,
+                "id": "minecraft:wooden_axe",
+                "kind": "wand",
+                "civs": null
+              }
+            ]
+          },
+          "after": {
+            "label": "civs:potato_farm_after",
+            "SelectedItemSlot": 0,
+            "item_id": "minecraft:chest",
+            "civs_key": "potato_farm",
+            "kind": "civs",
+            "hotbar": [
+              {
+                "slot": 0,
+                "id": "minecraft:chest",
+                "kind": "civs",
+                "civs": "potato_farm"
+              },
+              {
+                "slot": 1,
+                "id": "minecraft:redstone",
+                "kind": "junk",
+                "civs": null
+              },
+              {
+                "slot": 8,
+                "id": "minecraft:wooden_axe",
+                "kind": "wand",
+                "civs": null
+              }
+            ]
+          },
+          "error": null,
+          "selected_slot": 0,
+          "selected_slot_raw": "smokeshow has the following entity data: 0",
+          "hand_raw": "smokeshow has the following entity data: {id: \"minecraft:chest\", count: 1, components: {\"minecraft:custom_name\": \"potato_farm\", \"minecraft:custom_data...",
+          "hand_ok": true,
+          "kind": "civs",
+          "civs_key": "potato_farm",
+          "item_id": "minecraft:chest"
+        },
+        "hand_ok": true,
+        "error": null,
+        "before": {
+          "label": "place_prep:potato_farm",
+          "SelectedItemSlot": 8,
+          "item_id": "minecraft:wooden_axe",
+          "civs_key": null,
+          "kind": "wand",
+          "hotbar": [
+            {
+              "slot": 0,
+              "id": "minecraft:chest",
+              "kind": "civs",
+              "civs": "smithy"
+            },
+            {
+              "slot": 1,
+              "id": "minecraft:redstone",
+              "kind": "junk",
+              "civs": null
+            },
+            {
+              "slot": 8,
+              "id": "minecraft:wooden_axe",
+              "kind": "wand",
+              "civs": null
+            }
+          ]
+        },
+        "keys_before": [
+          "smithy"
+        ],
+        "selected_before": 8,
+        "ensure": {
+          "ok": true,
+          "civs_key": "potato_farm",
+          "source": "pdc_replace",
+          "slot": 0,
+          "error": null,
+          "detail": "Replaced a slot on smokeshow with [potato_farm]"
+        },
+        "hand_check": "smokeshow has the following entity data: {id: \"minecraft:chest\", count: 1, components: {\"minecraft:custom_name\": \"potato_farm\", \"minecraft:custom_data...",
+        "after": {
+          "label": "place_ready:potato_farm",
+          "SelectedItemSlot": 0,
+          "item_id": "minecraft:chest",
+          "civs_key": "potato_farm",
+          "kind": "civs",
+          "hotbar": [
+            {
+              "slot": 0,
+              "id": "minecraft:chest",
+              "kind": "civs",
+              "civs": "potato_farm"
+            },
+            {
+              "slot": 1,
+              "id": "minecraft:redstone",
+              "kind": "junk",
+              "civs": null
+            },
+            {
+              "slot": 8,
+              "id": "minecraft:wooden_axe",
+              "kind": "wand",
+              "civs": null
+            }
+          ]
+        }
+      },
+      "vision": [
+        {
+          "kind": "world",
+          "confidence": 0.55,
+          "safe": true,
+          "path": "C:\\Users\\Danie\\Downloads\\Civs-1.11.6\\Civs-1.11.6\\scripts\\qa\\reports\\screenshots\\potato_farm_boot_after_esc1_144134_world.png",
+          "source_f2": "C:\\Users\\Danie\\AppData\\Roaming\\.minecraft\\screenshots\\2026-07-17_15.41.33.png",
+          "notes": "mean=113.7 std=43.6 edges=0.072 tr=13 | f2=2026-07-17_15.41.33.png"
+        },
+        {
+          "kind": "world",
+          "confidence": 0.55,
+          "safe": true,
+          "path": "C:\\Users\\Danie\\Downloads\\Civs-1.11.6\\Civs-1.11.6\\scripts\\qa\\reports\\screenshots\\potato_farm_daniel_south_close_pre_144146_world.png",
+          "source_f2": "C:\\Users\\Danie\\AppData\\Roaming\\.minecraft\\screenshots\\2026-07-17_15.41.45.png",
+          "notes": "mean=134.6 std=54.1 edges=0.034 tr=15 | f2=2026-07-17_15.41.45.png"
+        },
+        {
+          "kind": "world",
+          "confidence": 0.55,
+          "safe": true,
+          "path": "C:\\Users\\Danie\\Downloads\\Civs-1.11.6\\Civs-1.11.6\\scripts\\qa\\reports\\screenshots\\potato_farm_daniel_south_close_post_144157_world.png",
+          "source_f2": "C:\\Users\\Danie\\AppData\\Roaming\\.minecraft\\screenshots\\2026-07-17_15.41.57.png",
+          "notes": "mean=120.7 std=64.3 edges=0.088 tr=21 | f2=2026-07-17_15.41.57.png"
+        },
+        {
+          "kind": "world",
+          "confidence": 0.55,
+          "safe": true,
+          "path": "C:\\Users\\Danie\\Downloads\\Civs-1.11.6\\Civs-1.11.6\\scripts\\qa\\reports\\screenshots\\potato_farm_daniel_south_floor_pre_144200_world.png",
+          "source_f2": "C:\\Users\\Danie\\AppData\\Roaming\\.minecraft\\screenshots\\2026-07-17_15.41.59.png",
+          "notes": "mean=120.7 std=64.2 edges=0.088 tr=21 | f2=2026-07-17_15.41.59.png"
+        },
+        {
+          "kind": "world",
+          "confidence": 0.55,
+          "safe": true,
+          "path": "C:\\Users\\Danie\\Downloads\\Civs-1.11.6\\Civs-1.11.6\\scripts\\qa\\reports\\screenshots\\potato_farm_daniel_south_floor_post_144211_world.png",
+          "source_f2": "C:\\Users\\Danie\\AppData\\Roaming\\.minecraft\\screenshots\\2026-07-17_15.42.10.png",
+          "notes": "mean=120.8 std=64.2 edges=0.088 tr=21 | f2=2026-07-17_15.42.10.png"
+        }
+      ],
+      "right_click": {
+        "ok": true,
+        "error": null,
+        "xy": null,
+        "capture_xy": null,
+        "safe_capture_ignored": true,
+        "sneak": false,
+        "move_cursor": false
+      },
+      "placement_menu": null,
+      "attempts": [
+        {
+          "pose": "daniel_south_close",
+          "tp": [
+            2974.5,
+            81.0,
+            2596.85
+          ],
+          "yaw_pitch": [
+            -0.0,
+            52.10631057760506
+          ],
+          "rotation": "smokeshow has the following entity data: [0.0f, 52.11f]",
+          "right_click_ok": true,
+          "center_has_chest": false,
+          "exact_cy": false,
+          "center_block": "The target block is not a block entity",
+          "neighbors": {
+            "0,0,0": "",
+            "0,-1,0": "",
+            "0,-2,0": "",
+            "0,1,0": "",
+            "0,0,-1": "",
+            "0,0,1": "",
+            "-1,0,0": "",
+            "1,0,0": "",
+            "0,-1,-1": "",
+            "0,0,-2": ""
+          },
+          "hand_preview": [
+            "minecraft:chest",
+            "potato_farm"
+          ]
+        },
+        {
+          "pose": "daniel_south_floor",
+          "tp": [
+            2974.5,
+            81.0,
+            2596.0
+          ],
+          "yaw_pitch": [
+            -0.0,
+            40.29794457668384
+          ],
+          "rotation": "smokeshow has the following entity data: [0.0f, 40.3f]",
+          "right_click_ok": true,
+          "center_has_chest": false,
+          "exact_cy": false,
+          "center_block": "The target block is not a block entity",
+          "neighbors": {
+            "0,0,0": "",
+            "0,-1,0": "",
+            "0,-2,0": "",
+            "0,1,0": "",
+            "0,0,-1": "",
+            "0,0,1": "",
+            "-1,0,0": "",
+            "1,0,0": "",
+            "0,-1,-1": "",
+            "0,0,-2": ""
+          },
+          "hand_preview": [
+            "minecraft:chest",
+            "potato_farm"
+          ]
+        }
+      ],
+      "error": "center place missed after chest-safe retries",
+      "restored_blocks": 42,
+      "hotbar_log": [
+        {
+          "label": "civs:potato_farm_after",
+          "SelectedItemSlot": 0,
+          "item_id": "minecraft:chest",
+          "civs_key": "potato_farm",
+          "kind": "civs",
+          "hotbar": [
+            {
+              "slot": 0,
+              "id": "minecraft:chest",
+              "kind": "civs",
+              "civs": "potato_farm"
+            },
+            {
+              "slot": 1,
+              "id": "minecraft:redstone",
+              "kind": "junk",
+              "civs": null
+            },
+            {
+              "slot": 8,
+              "id": "minecraft:wooden_axe",
+              "kind": "wand",
+              "civs": null
+            }
+          ]
+        },
+        {
+          "label": "civs:potato_farm_after",
+          "SelectedItemSlot": 0,
+          "item_id": "minecraft:chest",
+          "civs_key": "potato_farm",
+          "kind": "civs",
+          "hotbar": [
+            {
+              "slot": 0,
+              "id": "minecraft:chest",
+              "kind": "civs",
+              "civs": "potato_farm"
+            },
+            {
+              "slot": 1,
+              "id": "minecraft:redstone",
+              "kind": "junk",
+              "civs": null
+            },
+            {
+              "slot": 8,
+              "id": "minecraft:wooden_axe",
+              "kind": "wand",
+              "civs": null
+            }
+          ]
+        }
+      ],
+      "center_block": "The target block is not a block entity",
+      "center_has_chest": false,
+      "exact_cy": false
+    }
+  },
+  "rcon_tail": [
+    "Teleported smokeshow to 2995.500000, 81.000000, 2607.500000",
+    "Set minecraft:overworld to time marker minecraft:day",
+    "Set the weather to clear",
+    "Successfully filled 219 block(s)",
+    "Successfully filled 557 block(s)",
+    "Successfully filled 121 block(s)",
+    "Successfully filled 584 block(s)",
+    "Successfully filled 290 block(s)",
+    "Successfully filled 548 block(s)",
+    "PAD_ORIGIN:3000,81,2600 pads=4 blocked_existing=30",
+    "PAD_PLAN:arrow_trap@2977,81,2623 r=1",
+    "PAD_PLAN:shack@2995,81,2625 r=3",
+    "PAD_PLAN:smithy@3016,81,2626 r=4",
+    "PAD_PLAN:potato_farm@2974,81,2598 r=4",
+    "INV:cactus_farm",
+    "TOWN_BOOT:True err=None hub=3000,2600 skip=reuse existing QATown2.yml"
+  ],
+  "log_errors": [],
+  "passed_static_pad": 4,
+  "built": 4,
+  "activated": 0,
+  "io_pass": 0,
+  "io_fail": 0,
+  "io_skip": 0,
+  "total": 4,
+  "passed": 0,
+  "pipeline": "For each type: allocate NON-OVERLAPPING pad (r_a+r_b+margin) on a fresh origin \u2192 parse build-reqs \u2192 WE/fill \u2192 Civs place at center \u2192 region YAML \u2192 production I/O (input/wrong-item/upkeep/output)",
+  "item_acquisition": "Uses inventory civs:civs key if present; else item replace with PDC (QA-only, not /cv give). Shop/tutorial still preferred for realism."
+}

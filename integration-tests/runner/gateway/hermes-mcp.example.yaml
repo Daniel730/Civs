@@ -1,0 +1,40 @@
+# Working Windows Hermes MCP registration for minecraft-qa (2026-08-10).
+# Official docs: hermes mcp add / mcp_servers in config.yaml
+# (website/docs/user-guide/features/mcp.md — Minimal stdio example).
+#
+# Empirically on this machine:
+# - Windows Hermes v0.19.0 has NO node.exe on PATH → `hermes mcp add --command node` fails WinError 2.
+# - Gateway smoke PASS via WSL node (gateway/smoke.js).
+# - `hermes mcp add` prompts "Enable all N tools? [Y/n/select]" — pipe Y for non-interactive save.
+# - Windows `--env` alone does NOT reliably reach the Node process inside WSL; put KEY=VAL
+#   on the WSL side via `env` in --args (shown below).
+#
+# Register (PowerShell):
+#
+#   $h = "$env:LOCALAPPDATA\hermes\hermes-agent\venv\Scripts\hermes.exe"
+#   $node = "/home/dansilva/.nvm/versions/node/v25.8.0/bin/node"
+#   $script = "/mnt/c/Users/Danie/Downloads/Civs-1.11.6/Civs-1.11.6/integration-tests/runner/gateway/mcp-server.js"
+#   "Y" | & $h mcp add minecraft-qa --command wsl.exe --connect-timeout 60 `
+#     --args -e env RCON_HOST=127.0.0.1 RCON_PORT=25575 RCON_PASSWORD=civsqa `
+#     MC_HOST=127.0.0.1 MC_PORT=25565 ACTOR_NAME=Steve $node $script
+#   & $h mcp list
+#   & $h mcp test minecraft-qa
+#
+# YAML shape written to Hermes home config.yaml:
+
+mcp_servers:
+  minecraft-qa:
+    command: "wsl.exe"
+    args:
+      - "-e"
+      - "env"
+      - "RCON_HOST=127.0.0.1"
+      - "RCON_PORT=25575"
+      - "RCON_PASSWORD=civsqa"
+      - "MC_HOST=127.0.0.1"
+      - "MC_PORT=25565"
+      - "ACTOR_NAME=Steve"
+      - "/home/dansilva/.nvm/versions/node/v25.8.0/bin/node"
+      - "/mnt/c/Users/Danie/Downloads/Civs-1.11.6/Civs-1.11.6/integration-tests/runner/gateway/mcp-server.js"
+    connect_timeout: 60
+    enabled: true

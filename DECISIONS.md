@@ -208,3 +208,156 @@ access to `Daniel730/Civs`, not `Daniel730/civs-quests`**. This is a genuine acc
 blocker (no credential I can obtain). Per the autonomy rules I did not stop: the ready-to-
 apply patch is saved at `docs/civs-quests-docs-fix.patch` (and as a run artifact) for the
 owner to apply, or grant the bot push access to that repo. Everything else continued.
+
+---
+
+## Stage AP — Autonomous Minecraft agent platform (2026-08-10)
+
+**D-AP-001 — Extend integration-tests; do not create a competing harness.**
+Recon found a working two-layer framework (`CivsTestHarness` + Node runner +
+`RawKeepAliveActor`) and a separate Python `scripts/qa` path. Mission forbids destroying
+working systems. **Decision:** grow agent capabilities inside `integration-tests/` and
+document the platform under `docs/*`; defer a top-level `agent/` package until capabilities
+are empirically stable.
+
+**D-AP-002 — Server-side capability layer for Paper 26.1.2.**
+Mineflayer remains unusable here (prior empirical probe). Raw protocol provides *presence*
+only. **Decision:** add `/test act` / `/test observe` that invoke verified Paper
+`Player`/`LivingEntity` APIs (`breakBlock`, `setSneaking`, `setSprinting`, `attack`,
+`swingMainHand`, `setRotation`, `teleport`) against the online actor player. This is still
+an *actor* concern (production event paths), not harness Civs-state creation.
+
+**D-AP-003 — `place_block` via `BlockPlaceEvent` until a better API exists.**
+Paper `Player` has `breakBlock` but no `placeBlock` (javap 26.1.2). **Decision:** implement
+`place_block` by calling `BlockPlaceEvent` then `setType` if not cancelled; mark
+EMPIRICALLY VALIDATED only after a live probe confirms listeners see the event. Do not
+claim native client placement.
+
+**D-AP-004 — Work branch `cursor/agent-platform-p1` from `master`.**
+`docs/MIGRATION-STATUS.md` states migration landed on `master` / `v1.11.7`. **Decision:**
+platform work branches from `master`, not the leftover `paper-26.1.2-migration` tip.
+
+**D-AP-005 — WSL QA credentials differ from docs default.**
+OBSERVED: `/home/dansilva/civs-testserver` uses RCON password `civsqa`. Runner docs default
+to `civs-itest`. **Decision:** document both in `docs/TESTING.md` / `OPERATIONS.md`; probes
+on this host must export `RCON_PASSWORD=civsqa`.
+
+**D-AP-006 — RPG observe via reflection, not a civs-quests compile dependency.**
+Harness must stay buildable from the Civs repo alone. **Decision:** `RpgBridge` reflects
+`RPGServer.getProfileManager().getOrCreate(Player)` and profile getters. If RPG is absent
+or the API moves, `/test rpg observe` returns `success:false` with an explicit reason.
+
+**D-AP-007 — Allowlisted `run_as` for player commands.**
+`Player.performCommand` is verified in paper-api. **Decision:** expose `act run_as` only for
+prefixes `rpg|cv|say|me` so LLM/planner layers cannot escalate to arbitrary console commands
+through the capability API.
+
+**D-AP-008 — Quest accept must use QuestManager.acceptQuest result, not performCommand alone.**
+EMPIRICALLY: `performCommand("rpg quest accept …")` returns true even when accept fails
+(`LOCKED`, `MAX_ACTIVE`). **Decision:** `/test rpg accept` reflects
+`QuestManager.acceptQuest` and reports the `QuestAcceptResult` name; scenarios assert
+`SUCCESS` plus `active_quests` membership.
+
+**D-AP-009 — Free max-active slots via reflected abandonQuest for QA setup.**
+Starter merchant profiles often hold 3 active quests (`quests.max-active: 3`). **Decision:**
+`/test rpg abandon` calls the real `abandonQuest` API for test setup only.
+
+**D-AP-010 — Hermes is external explorer; harness remains sole Minecraft executor.**
+Recon found Windows Hermes v0.19.0 with official `-z` oneshot, `hermes mcp add` (stdio/HTTP),
+and `hermes mcp serve` (Hermes-as-server — wrong direction for our tools). **Decision:** expose
+verified capabilities as an MCP **stdio Agent Gateway**; Hermes attaches as MCP **client**.
+Do not invent endpoints. Mutating Hermes home config requires explicit user authorization for
+that task (granted for D-AP-012).
+
+**D-AP-011 — Greedy move_to, not pathfinder.**
+Paper 26.1.2 has no Mineflayer pathfinder. **Decision:** implement `step`/`move_to` as
+server-side greedy teleport stepping with standability checks. Document navigator as
+`greedy_step`; mazes may `stuck`/`timeout` — that is honest failure, not fake success.
+
+**D-AP-012 — Windows Hermes → local Ollama; WSL node for MCP (2026-08-10).**
+Blockers: MoA preset `poolside/laguna-s-2.1:free` missing; no Windows `node.exe`; hostname
+`desktop-vioren5-1` fails Windows DNS. User authorized Hermes home mutation for Civs QA.
+**Decision:** set `model.provider: custom`, `default: hermes-agent`,
+`base_url: http://100.69.136.92:11434/v1` (Tailscale IP of WSL Ollama); roles
+exploratory=`hermes-agent`, summaries=`hermes-fast`, coding=`hermes-coder`
+(`docs/HERMES-MODELS.md`). Register `minecraft-qa` via `hermes mcp add` with
+`wsl.exe -e env … node mcp-server.js` and pipe `Y` for the enable-tools prompt. Empirically:
+`-z` PONG PASS; `mcp test` 10 tools PASS. Keep Nous login as fallback only; leave MoA off.
+
+**D-AP-013 — Platform engineering standards + Issues→PR (2026-08-11).**
+User required observability (Sentry/Datadog/New Relic/OTel), JS quality
+(Biome/commitlint/knip/arch-contract/Stryker), Codecov/Playwright, motion UI
+(design-motion-principles), and GitHub Issues→PR for all work. **Decision:** document
+mandatory process in `docs/AGENT-WORKFLOW.md` + `.cursor/rules/agent-workflow.mdc`;
+**OpenTelemetry is the primary instrumentation contract** — Sentry for errors; Datadog
+*or* New Relic as one APM backend via OTLP (not three parallel SDKs). Install
+`kylezantos/design-motion-principles` under `.cursor/skills/`. Backlog filed as
+issues #31–#44. Hermes-fast used for checklist draft; Hermes-coder backlog timed out
+— parent authored issues. Full tool install is incremental via those issues, not a
+big-bang rewrite of the Paper plugin.
+
+**D-AP-014 — OpenTelemetry Node-first for #32 (2026-08-11).**
+Issue #32 asks for JVM + Node OTel. **Decision:** ship Node `integration-tests/runner`
++ Agent Gateway MCP instrumentation first (real Hermes→MCP→capability→RCON path),
+with env-driven exporters (`none` default so Minecraft QA never depends on a backend).
+JVM plugin spans deferred to a follow-up under the same issue/contract — avoid blocking
+#32 on Paper plugin shading while the agent platform already emits verifiable traces.
+No vendor SDKs (Sentry/Datadog/NR) in this PR; OTLP only.
+
+**D-AP-015 — Biome + commitlint + knip for runner (#35, 2026-08-11).**
+**Decision:** Biome is the sole JS format/lint tool for `integration-tests/runner`
+(`npm run lint`). Commitlint validates conventional **PR titles** in
+`.github/workflows/runner-quality.yml` when the runner changes. Knip gates **critical**
+dead-ends (unused files, unused/unlisted deps); unused **export** reporting is off for
+now because knip under-detects CommonJS `require` + member access (`tel.foo`) false
+positives on intentional public/test APIs. `zod` is a direct dependency (MCP tool schemas).
+`typescript` is a knip peer only (ignored as unused app dep). Broader CI (Maven, merge
+blocking policy) remains #42; arch-contract remains #36.
+
+**D-AP-016 — CI gates + master branch protection (#42, 2026-08-11).**
+**Decision:** ship `.github/workflows/maven-ci.yml` (`maven-test` on Temurin 25 with
+nocheatplus installed from the GitHub release jar — jitpack 404 workaround from
+`AGENTS.md`) and keep `runner-quality.yml` always present on PRs (path-filter skips
+Biome work when JS unchanged so required checks never hang). Integration stays a
+**documented** job (`integration-manual`) until a self-hosted Paper runner exists —
+do not fake green Minecraft E2E in GHA. Enable `master` branch protection requiring
+`maven-test`, `Biome + knip`, and `Conventional PR title`.
+
+**D-AP-017 — Datadog as primary APM via OTLP (#34, 2026-08-11).**
+Issue #34 requires choosing Datadog XOR New Relic as the APM backend behind OTel.
+**Decision: Datadog is the primary APM;** New Relic remains optional/secondary only if
+a future ops need appears — do **not** run both as first-class backends.
+**Why Datadog:** existing Cursor Datadog MCP/skills and operator familiarity on this
+machine; OTLP HTTP ingest is first-class; keeps one metrics/traces dashboard path.
+**How:** export OTLP from the Node runner (and later JVM) to the Datadog agent or
+Datadog OTLP intake — **no** Datadog tracing SDK alongside OTel. Staging wiring needs
+`DD_API_KEY` / agent endpoint in env or GitHub Secrets (not committed). Minimum
+dashboard: scenario latency + error rate (see `docs/OBSERVABILITY.md` § APM).
+
+**D-AP-018 — Construction quality pipeline in Node village runner (2026-08-11).**
+**Decision:** implement the deterministic construction quality vertical slice under
+`integration-tests/runner/lib/village/construction/` (blueprint IR, site scoring,
+validators, transaction log, inspect/score, repair/rollback, memory). Wire
+`village-worker` builder/farmer through `runProject`; gate `village-builder`
+`preparePad` flatten behind `VILLAGE_ALLOW_PAD_FLATTEN=1`. Do **not** put this in
+Java `civs.npc` (guide-only) and do **not** expand Java FAWE paste undo in V1 —
+document terrain-only `TerrainAdapter` rollback as a known gap. LLM/MCP may only
+express intent; harness capabilities + transactions own block placement.
+**Why:** autonomous NPC builds already run in the Node village stack; world-safety
+invariants (no float, no unexplained changes, rollback) must be testable without
+collapsing planner/validator/engine into one AI builder class. Refs #66.
+
+**D-AP-019 — AI World extends runner; Player actors are citizens (#67, 2026-08-11).**
+Do **not** introduce Citizens/Mythic/another NPC plugin as the autonomy runtime.
+Autonomous “citizens” are `RawKeepAliveActor` players + server capabilities +
+`lib/ai-world` decision/memory/quest loop. Guide villagers in Civs remain static
+dialog/housing population. LLM is optional high-level choice only (never per-tick).
+Quest planning requires RpgBridge `quest_detail` / `next_quest` (objectives+progress);
+POI coordinates from RPG `DiscoveryRegistry` (`/test rpg pois`); Civs local geography
+from `/test world nearby`. Disposable QA worlds only for live runs.
+
+**D-AP-020 — Physical mine progress is RPG state, not break_block alone (#67).**
+`Player.breakBlock` is the production event path (fires `BlockBreakEvent` →
+RPGServer `handleMineBlock`). Agents must verify progress via `quest_detail` /
+`completed_quests` before claiming success. QA fixture quest `ai_world_mine_probe`
+is disposable-only (copy into RPGServer/quests).

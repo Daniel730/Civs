@@ -1,0 +1,5 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Agent workflow
+    url: https://github.com/Daniel730/Civs/blob/master/docs/AGENT-WORKFLOW.md
+    about: Como abrir Issues → PRs (tipo labels, qualidade, observabilidade)

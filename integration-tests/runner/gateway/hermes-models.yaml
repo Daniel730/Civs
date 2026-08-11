@@ -1,0 +1,37 @@
+# Role → Ollama model mapping for Windows Hermes (Civs Minecraft QA).
+# Authoritative policy: model-policy.yaml (benchmarked 2026-08-10).
+# Commentary: docs/HERMES-MODELS.md
+# Endpoint: Tailscale IP of WSL Ollama (desktop-vioren5-1). Hostname often fails on Windows DNS.
+
+ollama:
+  base_url: http://100.69.136.92:11434/v1
+  base_url_hostname: http://desktop-vioren5-1:11434/v1
+
+roles:
+  fast_agent: hermes-fast      # default Minecraft MCP loops (benchmarked)
+  planner: hermes-fast
+  qa_explorer: hermes-fast
+  code_analysis: hermes-coder # NOT default Minecraft brain
+  vision: hermes-fast         # only when vision toolset re-enabled
+  # director: omitted (unprobed)
+
+fallbacks:
+  fast_agent: hermes-agent
+  qa_explorer: hermes-agent
+  code_analysis: hermes-qwen14
+
+hermes_windows:
+  cli: C:\Users\Danie\AppData\Local\hermes\hermes-agent\venv\Scripts\hermes.exe
+  home: C:\Users\Danie\AppData\Local\hermes\
+  model:
+    provider: custom
+    default: hermes-fast
+    base_url: http://100.69.136.92:11434/v1
+    api_key: no-key
+    context_length: 65536   # Hermes v0.19 minimum; keep prompts slim
+  moa_enabled: false
+  mcp_discovery_timeout: 60
+  notes:
+    - "oneshot must wait_for_mcp_discovery (local patch under hermes_cli/oneshot.py)"
+    - "Do not use -t clarify,todo,memory alone — that drops MCP servers"
+    - "Prefer --ignore-rules + neutral cwd to avoid AGENTS.md prompt bloat"

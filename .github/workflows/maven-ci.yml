@@ -1,0 +1,61 @@
+# Maven unit/integration-test suite for the Civs plugin (#42).
+name: maven-ci
+
+on:
+  pull_request:
+  push:
+    branches:
+      - master
+      - paper-26.1.2-migration
+      - cursor/agent-platform-p1
+
+jobs:
+  maven-test:
+    name: maven-test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 25
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '25'
+          cache: maven
+
+      - name: Install nocheatplus into local Maven repo
+        # FACT (AGENTS.md): jitpack returns HTTP 404 for this artifact even when
+        # the upstream build is "ok". Install from the GitHub release jar.
+        run: |
+          set -euo pipefail
+          curl -sL -o /tmp/NoCheatPlus.jar \
+            https://github.com/Updated-NoCheatPlus/NoCheatPlus/releases/download/v1.5/NoCheatPlus.jar
+          cat > /tmp/ncp-clean-pom.xml <<'EOF'
+          <project xmlns="http://maven.apache.org/POM/4.0.0">
+            <modelVersion>4.0.0</modelVersion>
+            <groupId>com.github.Updated-NoCheatPlus.NoCheatPlus</groupId>
+            <artifactId>nocheatplus</artifactId>
+            <version>1.5</version>
+            <packaging>jar</packaging>
+          </project>
+          EOF
+          mvn -B install:install-file \
+            -Dfile=/tmp/NoCheatPlus.jar \
+            -DpomFile=/tmp/ncp-clean-pom.xml
+
+      - name: Resolve dependencies
+        run: mvn -B -DskipTests dependency:resolve
+
+      - name: Run tests
+        run: mvn -B test
+
+      - name: Checkstyle gate (#43)
+        run: mvn -B -DskipTests checkstyle:check
+
+      - name: Upload Surefire reports on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: surefire-reports
+          path: target/surefire-reports/
+          if-no-files-found: ignore
