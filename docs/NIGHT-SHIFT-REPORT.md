@@ -1,70 +1,82 @@
-# Night shift report — 2026-08-11
+# Night shift report — 2026-08-11 (late)
 
-Unattended night shift on `Daniel730/Civs`. Labels: **FACT** · **OBSERVED** · **INFERRED**.
+Unattended dual mandate: **NPCs work** on WSL Paper QA + **engineering PRs**.  
+Labels: **FACT** · **OBSERVED** · **BLOCKED** · **INFERRED**.
 
 ## NIGHT SHIFT SUMMARY
 
-### Completed
-- **Verified #32 / PR #46** (OTel): mergeable, CLEAN; local unit 10/10; `test:otel-validate` + `--mcp` PASS (scenario→step→move_to→rcon). No rewrite. **FACT**
-- **#35 Biome + commitlint + knip**: implemented, tested, PR opened. **FACT**
-- **#42 CI gates**: Maven + runner-quality workflows, master branch protection, docs. **FACT**
-- **#41 RegionsTests fixture** + CI-order isolation for Items/Civilian tests (needed to unblock `maven-test`). **FACT**
+### NPC activity (live)
 
-### PRs
-| PR | Title | Base | Status (at report time) |
-|----|-------|------|-------------------------|
-| [#46](https://github.com/Daniel730/Civs/pull/46) | OTel primary instrumentation (#32) | `cursor/agent-platform-p1` | OPEN, MERGEABLE; no required checks on that base **OBSERVED** |
-| [#47](https://github.com/Daniel730/Civs/pull/47) | Biome + commitlint + knip (#35) | `feat/otel-integration-runner` | OPEN; Biome + commitlint **PASS** **FACT** |
-| [#48](https://github.com/Daniel730/Civs/pull/48) | Maven CI + merge gates (#42) + test isolation (#41) | `feat/biome-runner-quality` | OPEN; **all checks PASS** including `maven-test` (764 tests) **FACT** |
-| [#45](https://github.com/Daniel730/Civs/pull/45) | Workflow docs (#31) | `master` | OPEN (pre-existing; not modified this shift) **OBSERVED** |
+| Check | Result | Label |
+|-------|--------|-------|
+| Paper `civs-qa` tmux | UP | **FACT** |
+| `village-npc` tmux | Running `village-worker.js` | **FACT** |
+| Players | Viewer, Steve, Alex, Cam | **OBSERVED** |
+| Town `NpcPad` | exists (recovered after mid-shift wipe) | **FACT** |
+| Pad origin | 5200,80,5200 | **FACT** |
+| Work ticks (JSONL) | 119 ticks; **116 PASS** / 3 BLOCKED | **FACT** |
+| Job mix | builder/miner/farmer/stockpile/patrol ×23; placeregion ×4 | **FACT** |
+| Capabilities exercised | `move_to`, `look_at`, `break_block`, `place_block` (BlockPlaceEvent), `swing`, `jump` | **FACT** |
+| Helper actor | Alex (`ENABLE_HELPER=1`) | **FACT** |
+| Watch | `launch-viewer.ps1` → WSL IP `192.168.152.149:25565` (not 127.0.0.1) | **FACT** |
 
-Stack for merge: `#46` → `#47` → `#48` (or squash-merge in that order onto `cursor/agent-platform-p1` / agreed trunk).
+Evidence: `integration-tests/runner/reports/village-worker.jsonl`.
 
-### Issues
-| Issue | Outcome |
-|-------|---------|
-| #32 | Done in PR #46; left open until merge **FACT** |
-| #35 | Closes via PR #47 **FACT** |
-| #42 | Closes via PR #48 **FACT** |
-| #41 | Closes via PR #48 (fixture + docs) **FACT** |
-| #33–#34, #36–#40, #43–#44 | Not started this shift |
+### Soft goals / village structures
+
+| Structure | Status | Notes |
+|-----------|--------|-------|
+| council_room / shelter / hovel / cobble_quarry / smithy | Present from #49/#50 | **OBSERVED** |
+| shack | Briefly placed @5210 then later `region=none` | **OBSERVED** — overnight dig/place can disturb pads; worker now uses dig pits + work aprons |
+| inn / barracks / potato_farm | **BLOCKED** | placeregion FAIL on build-reqs (honest stockpile retries logged) |
+| Hamlet upgrade | **BLOCKED** | Needs build-reqs / evolve path — not forced |
+
+### Engineering shipped this shift
+
+| Issue | PR | Title |
+|-------|-----|-------|
+| [#53](https://github.com/Daniel730/Civs/issues/53) | [#54](https://github.com/Daniel730/Civs/pull/54) | Overnight NPC village worker (real capabilities) |
+| [#36](https://github.com/Daniel730/Civs/issues/36) | [#55](https://github.com/Daniel730/Civs/pull/55) | dependency-cruiser arch-contract |
+| [#44](https://github.com/Daniel730/Civs/issues/44) | [#56](https://github.com/Daniel730/Civs/pull/56) | GitHub issue/PR templates (área/prioridade) |
+
+Pre-existing open: [#50](https://github.com/Daniel730/Civs/pull/50) village builder, [#52](https://github.com/Daniel730/Civs/pull/52) stream prep, [#45](https://github.com/Daniel730/Civs/pull/45) docs→master.
 
 ### Tests
-- Runner: `npm run lint` clean (24 files); `npm run knip` clean; `npm run test:unit` 10/10; OTel validate + MCP tree PASS **FACT**
-- Java local: `mvn -B -DskipTests compile` SUCCESS; `mvn -B test` **764** tests, **0** failures, 6 skipped (after isolation fixes) **FACT**
-- First GHA `maven-test` on #48: **4 failures** (ItemsTests×2, CivilianTests×2) under Linux order — not RegionsTests **FACT**
-- Root cause: test `InventoryImpl.clear()` was a no-op; fixed in `afca5da9` **FACT**
-- Final GHA `maven-test` on #48 @ `afca5da9`: **PASS** (~5m) **FACT**
 
-### Empirical validations
-1. OTel memory exporter tree: `scenario.run → scenario.step → minecraft.move_to → rcon.send` (+ `mcp.tool` parent) **FACT**
-2. Commitlint: conventional title accepted; non-conventional rejected **FACT**
-3. GHA `runner-quality` on #47: Biome + knip + Conventional PR title **PASS** **FACT**
-4. `master` branch protection required contexts set via API: `maven-test`, `Biome + knip`, `Conventional PR title` **FACT**
-5. nocheatplus CI install-from-release step completed successfully on GHA **FACT**
+- `npm run test:village-unit` — **5/5 PASS** (**FACT**)
+- `npm run arch` — **0 violations** (14 modules) (**FACT**)
+- Biome on WSL: **BLOCKED** locally (missing `@biomejs/cli-linux-x64` in this node_modules install) — CI on Ubuntu still authoritative
 
-### Blocked
-None hard-blocked for remaining high-priority unlockers. Soft notes:
+### Blocked (do not spin)
 
-| Item | Cause | Attempted | Evidence | Why not finished | Min action |
-|------|-------|-----------|----------|------------------|------------|
-| Live Paper / Hermes E2E | Not in night-shift scope; no testserver this run | Skipped per mission | N/A | Out of priority | Optional later |
-| #38 Codecov | Needs `CODECOV_TOKEN` secret | Not started | Issue acceptance | Secret not verified in env | Add secret then wire JaCoCo/c8 upload |
-| #33 Sentry | After OTel; needs DSN secret | Deferred | Mission: do not expand OTel | Wait #32 merge | Bridge after #46 |
-| First `maven-test` red | Order-dependent fixtures + no-op `InventoryImpl.clear()` | Fixed in `f6c4a801` + `afca5da9` | GHA log then PASS | Resolved | None |
+| Item | Cause | Min action |
+|------|-------|------------|
+| #38 Codecov | No `CODECOV_TOKEN` visible in repo secrets listing | Add secret → wire JaCoCo/c8 upload |
+| #33 Sentry | Needs DSN after OTel stack merge | Wait secrets + #32 lineage |
+| Public YouTube | Explicitly out of scope | Keep local OBS only (#51/#52) |
+| inn/barracks/potato_farm | build-reqs / overlap | Improve stockpile profiles or hamlet evolve |
 
-### Next recommended issue
-1. Confirm **PR #48 `maven-test` green**, then merge stack **#46 → #47 → #48** (or rebase as preferred).
-2. **#36 arch-contract** (dependency-cruiser on runner) — unlocks import boundaries on top of Biome/knip.
-3. **#38 Codecov** once token available.
-4. Avoid AI world / Director / OBS / 24-7.
+### How to watch / monitor
 
-### Repository state
-- Current branch (workspace): `feat/ci-gates-42` @ `f6c4a801` tracking `origin/feat/ci-gates-42` **FACT**
-- Untracked local QA scripts under `scripts/_*.sh` / `scripts/qa/` **not committed** (left alone) **FACT**
-- Decisions added: **D-AP-015** (Biome/knip/commitlint), **D-AP-016** (CI gates / protection) **FACT**
-- Docs updated: `docs/AGENT-WORKFLOW.md` §3, `docs/TESTING.md` CI gates + flake notes, `docs/NIGHT-SHIFT-REPORT.md` (this file)
+```powershell
+powershell -ExecutionPolicy Bypass -File integration-tests/runner/scripts/launch-viewer.ps1
+```
 
-### Assumptions (not claimed as fact)
-- Merging the stacked PRs in order will close #32/#35/#41/#42 without further conflicts (**INFERRED**).
-- Branch protection on `master` alone is sufficient for the current deploy path; platform feature branches are not protected (**OBSERVED** protection only on `master`).
+```bash
+tmux attach -t village-npc
+tail -f integration-tests/runner/reports/village-worker.jsonl
+```
+
+Docs: `docs/NPC-NIGHT-SHIFT.md`.
+
+### Repo state
+
+- Active overnight NPC branch: `feat/npc-village-worker-53` → PR **#54**
+- Paper + worker left running in WSL tmux
+- Production `Civs_servidor` live world: **not touched** (**FACT**)
+
+### Next
+
+1. Merge stack hygiene: #50 → #54 (NPC), #55 (arch), #56 (templates); stream #52 when ready  
+2. #38 Codecov once token exists  
+3. Safer placeregion stockpile profiles + optional hamlet evolve experiment on disposable QA only  
