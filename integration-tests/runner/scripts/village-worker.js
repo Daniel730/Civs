@@ -5,12 +5,12 @@ const path = require('path');
 const { Harness } = require('../lib/harness');
 const { RawKeepAliveActor } = require('../lib/actor');
 const { SpectatorCamera } = require('../lib/camera');
+const { ObservationDirector, ViewerFollowLoop } = require('../lib/observation');
 const {
   nextJob,
   workCoords,
   SITES,
   EXCLUSIVE_PAIRS,
-  JOB_CAMERA_MODE,
   stockpileMaterials,
   walkTo,
   cleanupTargets,
@@ -18,13 +18,6 @@ const {
   construction,
 } = require('../lib/village');
 const { initTelemetry, shutdownTelemetry } = require('../lib/telemetry');
-
-let FallbackDirector = null;
-try {
-  ({ FallbackDirector } = require('../lib/stream'));
-} catch (_) {
-  /* shot-planner optional when stream surface missing */
-}
 
 const REPORTS = path.join(__dirname, '..', 'reports');
 const LOG_JSONL = path.join(REPORTS, 'village-worker.jsonl');
@@ -49,6 +42,10 @@ const cfg = {
   },
   intervalMs: Number.parseInt(process.env.WORKER_MS || '6000', 10),
   enableHelper: process.env.ENABLE_HELPER === '1',
+  viewerName: process.env.VIEWER_NAME || 'Viewer',
+  camDwellMs: Number.parseInt(process.env.CAM_DWELL_MS || '20000', 10),
+  viewerFollowMs: Number.parseInt(process.env.VIEWER_FOLLOW_MS || '2500', 10),
+  enableViewerFollow: process.env.ENABLE_VIEWER_FOLLOW !== '0',
 };
 
 function log(entry) {
@@ -145,9 +142,40 @@ async function placeAesthetic(harness, actorName, block) {
 }
 
 /**
+ * Protocol bots can die and stay as corpses (health 0) without client respawn UI.
+ * Dead agents look "invisible"/unresponsive to Cam — recover before work.
+ */
+async function ensureAlive(harness, actorName) {
+  let obs = await harness.cap.observe(actorName);
+  const health = obs && obs.data ? Number(obs.data.health) : NaN;
+  if (obs && obs.success && health > 0) {
+    return { status: 'PASS', action: 'ensure_alive', player: actorName, health, revived: false };
+  }
+  const respawn = await harness.cap.respawn(actorName);
+  await harness.raw(`gamemode survival ${actorName}`);
+  await harness.cap.teleport(actorName, cfg.origin.x, cfg.origin.y + 2, cfg.origin.z);
+  obs = await harness.cap.observe(actorName);
+  const healthAfter = obs && obs.data ? Number(obs.data.health) : NaN;
+  return {
+    status: healthAfter > 0 ? 'PASS' : 'FAIL',
+    action: 'ensure_alive',
+    player: actorName,
+    health: healthAfter,
+    revived: true,
+    priorHealth: health,
+    respawn,
+    position: obs && obs.data ? { x: obs.data.x, y: obs.data.y, z: obs.data.z } : null,
+  };
+}
+
+/**
  * Execute one visible work tick — survival-like by default (#66).
  */
 async function runJob(harness, actorName, step, state) {
+  const alive = await ensureAlive(harness, actorName);
+  if (alive.revived) {
+    log({ ...alive });
+  }
   const coords = workCoords(cfg.origin, { ...step, tick: state.tick });
   const cap = harness.cap;
   const results = {
@@ -155,6 +183,7 @@ async function runJob(harness, actorName, step, state) {
     site: step.site || step.label,
     actions: [],
     policy: 'playerlike_v1',
+    alive,
   };
 
   // Creative ONLY for Civs founding stockpile (build-reqs). All other jobs: survival.
@@ -458,7 +487,7 @@ async function runJob(harness, actorName, step, state) {
   return results;
 }
 
-async function connectActor(harness, name) {
+async function connectActor(harness, name, attempt = 1) {
   const actor = new RawKeepAliveActor({
     host: cfg.mcHost,
     port: cfg.mcPort,
@@ -468,6 +497,10 @@ async function connectActor(harness, name) {
   });
   await actor.connect();
   if (!actor.available) {
+    if (attempt < 3) {
+      await sleep(2000 * attempt);
+      return connectActor(harness, name, attempt + 1);
+    }
     return { actor, ok: false, reason: actor.reason };
   }
   await actor.grantOp();
@@ -475,7 +508,8 @@ async function connectActor(harness, name) {
   await harness.raw(`gamemode creative ${name}`);
   await actor.teleport(cfg.origin.x, cfg.origin.y + 2, cfg.origin.z);
   await harness.raw(`gamemode survival ${name}`);
-  return { actor, ok: true };
+  const alive = await ensureAlive(harness, name);
+  return { actor, ok: true, alive };
 }
 
 /** Recover council_room + town if overnight damage wiped the center. */
@@ -547,6 +581,7 @@ async function main() {
 
   let helper = null;
   if (cfg.enableHelper) {
+    await sleep(2500);
     helper = await connectActor(harness, cfg.helperName);
     log({
       status: helper.ok ? 'PASS' : 'DEGRADED',
@@ -556,6 +591,7 @@ async function main() {
     });
   }
 
+  await sleep(2500);
   const camera = new SpectatorCamera({
     harness,
     host: cfg.mcHost,
@@ -564,34 +600,51 @@ async function main() {
     version: cfg.version,
     targetName: cfg.actorName,
   });
-  const camStart = await camera.start();
+  let camStart = await camera.start();
+  if (camStart.status !== 'PASS') {
+    await sleep(3000);
+    camStart = await camera.start();
+  }
   log({ status: camStart.status, action: 'camera_start', ...camStart });
-
-  const getTargetPos = async () => {
-    const obs = await harness.cap.observe(cfg.actorName);
-    if (obs && obs.success && obs.data) {
-      return {
-        x: obs.data.x ?? obs.data.loc_x,
-        y: obs.data.y ?? obs.data.loc_y,
-        z: obs.data.z ?? obs.data.loc_z,
-      };
-    }
-    return { x: cfg.origin.x, y: cfg.origin.y, z: cfg.origin.z };
-  };
-
-  let director = null;
-  if (FallbackDirector) {
-    director = new FallbackDirector({
-      camera,
-      getTargetPos,
-      intervalMs: Math.min(2500, cfg.intervalMs),
+  if (camStart.status !== 'PASS') {
+    log({
+      status: 'BLOCKED',
+      action: 'camera_required',
+      reason: camStart.reason || 'camera_start_failed',
     });
-    director.start();
-    log({ status: 'PASS', action: 'director_start', sites: Object.keys(SITES) });
-  } else {
-    process.env.FORCE_ORBIT = process.env.FORCE_ORBIT || '1';
-    camera.startLoop(getTargetPos, Math.min(2500, cfg.intervalMs));
-    log({ status: 'PASS', action: 'camera_orbit_loop', sites: Object.keys(SITES) });
+    process.exit(3);
+  }
+
+  const subjects = [cfg.actorName];
+  if (helper && helper.ok) subjects.push(cfg.helperName);
+
+  const observation = new ObservationDirector({
+    camera,
+    harness,
+    subjects,
+    dwellMs: cfg.camDwellMs,
+    tickMs: Math.min(2000, cfg.intervalMs),
+    onLog: (entry) => log(entry),
+    forceTarget: process.env.CAM_FORCE_TARGET || null,
+  });
+  observation.start();
+  log({
+    status: 'PASS',
+    action: 'observation_director_start',
+    subjects,
+    dwellMs: cfg.camDwellMs,
+  });
+
+  let viewerFollow = null;
+  if (cfg.enableViewerFollow) {
+    viewerFollow = new ViewerFollowLoop({
+      harness,
+      viewerName: cfg.viewerName,
+      cameraName: cfg.cameraName,
+      intervalMs: cfg.viewerFollowMs,
+      onLog: (entry) => log(entry),
+    });
+    viewerFollow.start();
   }
 
   let busy = false;
@@ -607,14 +660,59 @@ async function main() {
       }
       const step = nextJob(state.tick, state);
       const who = helper && helper.ok && state.tick % 2 === 0 ? cfg.helperName : cfg.actorName;
+      state.agentJobs = state.agentJobs || {};
+      const prevJob = state.agentJobs[who] || null;
       const result = await runJob(harness, who, step, state);
-      if (director && result.status === 'PASS') {
-        const mode = JOB_CAMERA_MODE[step.job] || 'event';
-        await director.onEvent({
-          x: cfg.origin.x + (step.dx || 0),
-          y: cfg.origin.y + 2,
-          z: cfg.origin.z + (step.dz || 0),
-          mode,
+      let agentPos = null;
+      try {
+        const obs = await harness.cap.observe(who);
+        if (obs && obs.success && obs.data) {
+          agentPos = {
+            x: obs.data.x ?? obs.data.loc_x,
+            y: obs.data.y ?? obs.data.loc_y,
+            z: obs.data.z ?? obs.data.loc_z,
+          };
+        }
+      } catch (_) {}
+      state.agentJobs[who] = step.job;
+      state.lastAgent = {
+        worker: who,
+        job: step.job,
+        status: result.status,
+        position: agentPos,
+        at: Date.now(),
+      };
+      if (prevJob !== step.job) {
+        log({
+          status: 'PASS',
+          action: 'agent_state_transition',
+          worker: who,
+          fromJob: prevJob,
+          toJob: step.job,
+          position: agentPos,
+          result: result.status,
+        });
+      } else {
+        log({
+          status: result.status === 'PASS' ? 'PASS' : 'DEGRADED',
+          action: 'agent_action',
+          worker: who,
+          job: step.job,
+          position: agentPos,
+          lastAction: step.job,
+        });
+      }
+      if (result.status === 'PASS' && observation) {
+        observation.biasTo(who, 'work_tick_bias');
+      }
+      if (state.tick % 5 === 0) {
+        log({
+          status: 'OBSERVED',
+          action: 'observation_snapshot',
+          observation: observation.snapshot(),
+          viewer: viewerFollow ? viewerFollow.snapshot() : null,
+          worker: who,
+          job: step.job,
         });
       }
       log({
@@ -625,7 +723,8 @@ async function main() {
         town,
         step,
         result,
-        watch: 'launch-viewer.ps1 → spectate Cam @ WSL IP:25565',
+        cameraSubject: observation.currentSubject,
+        watch: 'Viewer continuously spectates Cam; Cam tracks Steve↔Alex',
       });
       saveState(state);
     } catch (e) {
@@ -640,7 +739,8 @@ async function main() {
 
   const shutdown = async () => {
     clearInterval(timer);
-    if (director) director.stop();
+    if (observation) observation.stop();
+    if (viewerFollow) viewerFollow.stop();
     camera.stopLoop();
     await camera.stop();
     await primary.actor.disconnect();
