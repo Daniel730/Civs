@@ -5,6 +5,9 @@ const {
   nextPlaceAttempt,
   workCoords,
   siteForJob,
+  apronStand,
+  approachFrom,
+  SITE_FOOTPRINT,
   JOBS,
   JOB_SITE_AFFINITY,
   JOB_CAMERA_MODE,
@@ -85,9 +88,25 @@ describe('village jobs planner', () => {
     const guard = workCoords(origin, { job: 'guard', dx: 24, dz: -18, tick: 4 });
     assert.ok(guard.stand);
     assert.equal(guard.place, null);
+    assert.equal(guard.stand.x, Math.floor(guard.stand.x));
+    assert.equal(guard.stand.z, Math.floor(guard.stand.z));
     const patrol = workCoords(origin, { job: 'patrol', tick: 3 });
     assert.ok(patrol.stand);
     assert.equal(patrol.place, null);
+    assert.equal(patrol.stand.x, Math.floor(patrol.stand.x));
+  });
+
+  it('keeps farmer stand on apron outside potato_farm footprint', () => {
+    const origin = { x: 5200, y: 80, z: 5200 };
+    const farm = workCoords(origin, { job: 'farmer', site: 'farm', dx: 0, dz: -14, tick: 5 });
+    const farmOz = origin.z - 14;
+    const minOutside = farmOz - SITE_FOOTPRINT.farm;
+    assert.ok(farm.stand.z <= minOutside, `stand ${farm.stand.z} must be <= ${minOutside}`);
+    const expected = apronStand(origin.x, origin.y, farmOz, SITE_FOOTPRINT.farm, 2);
+    assert.deepEqual(farm.stand, expected);
+    const approach = approachFrom(farm.stand);
+    assert.equal(approach.x, farm.stand.x - 2);
+    assert.equal(approach.z, farm.stand.z - 2);
   });
 
   it('uses dedicated inn/barracks stockpile profiles', () => {
