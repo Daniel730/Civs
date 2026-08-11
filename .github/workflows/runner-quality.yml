@@ -49,12 +49,15 @@ jobs:
       - name: Knip (unused files / deps)
         if: needs.changes.outputs.runner == 'true'
         run: npm run knip
+      - name: Arch-contract (dependency-cruiser)
+        if: needs.changes.outputs.runner == 'true'
+        run: npm run arch
       - name: Unit tests
         if: needs.changes.outputs.runner == 'true'
         run: npm run test:unit
       - name: Skip notice
         if: needs.changes.outputs.runner != 'true'
-        run: echo "No integration-tests/runner changes; Biome/knip/unit skipped (pass)."
+        run: echo "No integration-tests/runner changes; Biome/knip/arch/unit skipped (pass)."
 
   commitlint:
     name: Conventional PR title

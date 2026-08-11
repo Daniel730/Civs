@@ -7,7 +7,7 @@ Labels: **FACT** · **OBSERVED** · **UNKNOWN** · **TODO**
 | Layer | Command / entry | Status |
 |-------|-----------------|--------|
 | Unit | `mvn test` (Civs) | FACT: large suite on master; **CI:** `.github/workflows/maven-ci.yml` (`maven-test`) |
-| Runner lint / knip / Node unit | `cd integration-tests/runner && npm run lint && npm run knip && npm run test:unit` | FACT: **CI:** `.github/workflows/runner-quality.yml` |
+| Runner lint / knip / arch / Node unit | `cd integration-tests/runner && npm run lint && npm run knip && npm run arch && npm run test:unit` | FACT: **CI:** `.github/workflows/runner-quality.yml` |
 | Integration | `integration-tests/runner` + live Paper | FACT: scenarios documented green; **CI job is documented manual** (`integration-manual`) until self-hosted Paper exists |
 | Structure fast QA | `scripts/qa/run_all.py fast` | FACT: WSL-oriented |
 | Capability probes | `node` scenarios + `/test act` | TODO → in progress |
