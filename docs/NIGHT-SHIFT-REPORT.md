@@ -35,7 +35,7 @@ Evidence: `integration-tests/runner/reports/village-worker.jsonl` + `village-wor
 
 | Issue | PR | Title | CI |
 |-------|-----|-------|-----|
-| [#62](https://github.com/Daniel730/Civs/issues/62) | (this PR) | Approach aprons + footing clear + recover teleport | pending |
+| [#62](https://github.com/Daniel730/Civs/issues/62) | [#63](https://github.com/Daniel730/Civs/pull/63) | Approach aprons + footing clear + recover teleport | pending CI |
 | [#60](https://github.com/Daniel730/Civs/issues/60) | [#61](https://github.com/Daniel730/Civs/pull/61) | Job-site affinity + lumberjack/guard + camera modes | **GREEN** |
 | [#37](https://github.com/Daniel730/Civs/issues/37) | [#58](https://github.com/Daniel730/Civs/pull/58) | Stryker | **GREEN** |
 | [#51](https://github.com/Daniel730/Civs/issues/51) | [#52](https://github.com/Daniel730/Civs/pull/52) | Stream nightshift | **GREEN** |
@@ -46,9 +46,11 @@ Evidence: `integration-tests/runner/reports/village-worker.jsonl` + `village-wor
 
 Village stack: #50 → #54 → #61 → #62 (approach). Hygiene PRs #52/#55–#59 all **GREEN** (no CI red left).
 
-### Move reliability evidence (pre-fix)
+### Move reliability evidence
 
 Before apron fix (**FACT** tally of jsonl): ~346 `move_to` fails / ~1099 ticks — farmer `no_progress` 147, patrol `stuck` 88. Root cause: farmer stand at `oz-2` inside potato_farm footprint (radius 4).
+
+After recover-npc with #63 (**FACT** ticks ≥1148 sample): 10 work ticks, **0** move fails, farmer move OK 1/1, `recoverTeleport` unused (apron walks finished).
 
 ### Worker diversity (live evidence)
 
