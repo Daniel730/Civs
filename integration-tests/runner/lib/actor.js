@@ -110,6 +110,33 @@ class RawKeepAliveActor {
       () => this.sendCommand(`cv placeregion ${this.name} ${type} ${x} ${y} ${z}`)
     );
   }
+
+  /**
+   * Found a Civs town (TownType, not RegionType). Requires holding the town item.
+   * Production path: give token → hold slot 0 → /cv town <name> at player location.
+   */
+  async placeTown(townType, townName, x, y, z) {
+    return withSpan(
+      'actor.place_town',
+      {
+        'minecraft.player': this.name,
+        'minecraft.action': 'place_town',
+        'minecraft.capability': 'place_town',
+      },
+      async () => {
+        if (x != null) await this.teleport(x, y != null ? y : 80, z);
+        await this.sendCommand(`clear ${this.name}`);
+        await this.give(townType, 1);
+        await this.sendCommand(`test act ${this.name} hotbar 0`);
+        await this.sendCommand(
+          `item replace entity ${this.name} weapon.mainhand from entity ${this.name} container.0`
+        );
+        // FACT: /cv town requires CommandSender instanceof Player — RCON `execute as`
+        // still fails as non-player for Civs. Use harness run_as (Player.performCommand path).
+        return this.sendCommand(`test act ${this.name} run_as cv town ${townName}`);
+      }
+    );
+  }
   /** Receive a Civs item through the real item pipeline. */
   async give(item, qty = 1) {
     return withSpan(
