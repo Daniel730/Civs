@@ -146,6 +146,12 @@ Jobs rotate: **patrol → builder → miner → farmer → stockpile** (+ period
 
 Optional second actor: `ENABLE_HELPER=1` joins **Alex** and multiplexes every other tick.
 
+Recover if the worker dies:
+
+```bash
+bash scripts/recover-npc.sh
+```
+
 ---
 
 ## Code added / fixed
