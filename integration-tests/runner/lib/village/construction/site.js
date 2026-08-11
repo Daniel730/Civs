@@ -78,17 +78,40 @@ async function measureSlope(harness, footprint, opts = {}) {
         1
     );
   const heights = [];
+  let liquidHits = 0;
+  let lavaHits = 0;
   for (let x = footprint.minX; x <= footprint.maxX; x += step) {
     for (let z = footprint.minZ; z <= footprint.maxZ; z += step) {
       const s = await findSurfaceY(harness, x, z, opts);
-      if (!s.liquid) heights.push(s.y);
+      if (s.liquid) {
+        liquidHits += 1;
+        if (String(s.material).includes('LAVA')) lavaHits += 1;
+        continue;
+      }
+      heights.push(s.y);
     }
   }
-  if (!heights.length) return { slope: 99, meanY: 0, samples: 0 };
+  if (!heights.length) {
+    return {
+      slope: liquidHits ? 0 : 99,
+      meanY: 0,
+      samples: 0,
+      liquidHits,
+      lavaHits,
+    };
+  }
   const min = Math.min(...heights);
   const max = Math.max(...heights);
   const meanY = heights.reduce((a, b) => a + b, 0) / heights.length;
-  return { slope: max - min, meanY, samples: heights.length, minY: min, maxY: max };
+  return {
+    slope: max - min,
+    meanY,
+    samples: heights.length,
+    minY: min,
+    maxY: max,
+    liquidHits,
+    lavaHits,
+  };
 }
 
 /**
@@ -124,6 +147,17 @@ async function scoreSite(harness, candidate, ctx = {}) {
     startY: ctx.startY,
     world: ctx.world,
   });
+
+  // Liquids first — all-water/lava footprints must not be mislabeled as steep_terrain.
+  if (slopeInfo.lavaHits > 0) {
+    reasons.push('lava');
+    return { ok: false, score: -1, reasons, footprint, slopeInfo, reject: 'lava' };
+  }
+  if (slopeInfo.liquidHits > 0 && slopeInfo.samples === 0) {
+    reasons.push('water');
+    return { ok: false, score: -1, reasons, footprint, slopeInfo, reject: 'water' };
+  }
+
   const maxSlope = ctx.maxSlope != null ? ctx.maxSlope : 4;
   if (slopeInfo.slope > maxSlope) {
     reasons.push(`slope_too_steep:${slopeInfo.slope}`);

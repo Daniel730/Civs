@@ -45,6 +45,16 @@ async function scenario(name, fn) {
   }
 }
 
+async function paveFootprint(harness, origin, mat = 'grass_block') {
+  const x0 = origin.x - 8;
+  const x1 = origin.x + 8;
+  const z0 = origin.z - 12;
+  const z1 = origin.z + 2;
+  await harness.raw(`forceload add ${x0} ${z0} ${x1} ${z1}`);
+  await harness.raw(`fill ${x0} ${origin.y - 1} ${z0} ${x1} ${origin.y - 1} ${z1} ${mat}`);
+  await harness.raw(`fill ${x0} ${origin.y} ${z0} ${x1} ${origin.y + 6} ${z1} air`);
+}
+
 async function main() {
   if (!fs.existsSync(REPORTS)) fs.mkdirSync(REPORTS, { recursive: true });
   const harness = new Harness({
@@ -60,13 +70,11 @@ async function main() {
   results.push(
     await scenario('flat_terrain_house', async () => {
       const origin = { x: o.x, y: o.y, z: o.z };
-      // Small flat pad ONLY for this isolated scenario fixture (not village-builder default).
-      await harness.raw(
-        `fill ${origin.x - 8} ${origin.y - 1} ${origin.z - 12} ${origin.x + 8} ${origin.y - 1} ${origin.z + 2} grass_block`
-      );
-      await harness.raw(
-        `fill ${origin.x - 8} ${origin.y} ${origin.z - 12} ${origin.x + 8} ${origin.y + 6} ${origin.z + 2} air`
-      );
+      await paveFootprint(harness, origin);
+      const probe = await harness.block.at(origin.x, origin.y - 1, origin.z);
+      if (!probe || String(probe).toUpperCase() === 'AIR') {
+        throw new Error(`terrain fixture missing under origin (got ${probe})`);
+      }
       const bp = planBlueprint(origin, { site: 'shelter', tick: 1 });
       const project = await runProject({
         harness,
@@ -80,7 +88,12 @@ async function main() {
           return m !== 'AIR' && !m.includes('WATER') && !m.includes('LAVA');
         },
       });
-      if (!project.ok) throw new Error(project.reason || project.status);
+      if (!project.ok) {
+        const issues = (project.validation && project.validation.issues) || [];
+        throw new Error(
+          `${project.reason || project.status}: ${issues.map((i) => i.code).join(',') || JSON.stringify(project.stages)}`
+        );
+      }
       return { score: project.inspection && project.inspection.score };
     })
   );
@@ -90,11 +103,27 @@ async function main() {
       const x = o.x + 40;
       const z = o.z;
       const y = o.y;
-      await harness.raw(`fill ${x - 2} ${y} ${z - 2} ${x + 2} ${y} ${z + 2} water`);
+      await harness.raw(`forceload add ${x} ${z}`);
+      for (let dx = -2; dx <= 2; dx++) {
+        for (let dz = -2; dz <= 2; dz++) {
+          await harness.block.set(x + dx, y, z + dz, 'WATER');
+        }
+      }
+      const got = await harness.block.at(x, y, z);
+      if (String(got).toUpperCase() !== 'WATER') {
+        throw new Error(`water fixture missing (got ${got})`);
+      }
       const scored = await scoreSite(harness, { x, z, width: 3, depth: 3 }, { startY: y + 20 });
       // cleanup water
-      await harness.raw(`fill ${x - 2} ${y} ${z - 2} ${x + 2} ${y} ${z + 2} air`);
+      for (let dx = -2; dx <= 2; dx++) {
+        for (let dz = -2; dz <= 2; dz++) {
+          await harness.block.set(x + dx, y, z + dz, 'AIR');
+        }
+      }
       if (scored.ok) throw new Error('expected water reject');
+      if (scored.reject !== 'water' && scored.reject !== 'lava') {
+        throw new Error(`expected water/lava reject, got ${scored.reject}`);
+      }
       return { reject: scored.reject };
     })
   );
