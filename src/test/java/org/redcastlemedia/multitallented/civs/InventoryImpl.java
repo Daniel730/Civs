@@ -348,12 +348,12 @@ public class InventoryImpl implements Inventory {
 
     @Override
     public void clear(int i) {
-
+        contents.remove(i);
     }
 
     @Override
     public void clear() {
-
+        contents.clear();
     }
 
     @Override

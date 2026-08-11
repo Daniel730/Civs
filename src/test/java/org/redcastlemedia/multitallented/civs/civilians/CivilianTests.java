@@ -18,6 +18,7 @@ import org.junit.Test;
 import org.redcastlemedia.multitallented.civs.TestUtil;
 import org.redcastlemedia.multitallented.civs.items.CivItem;
 import org.redcastlemedia.multitallented.civs.items.ItemManager;
+import org.redcastlemedia.multitallented.civs.menus.MenuManager;
 import org.redcastlemedia.multitallented.civs.regions.RegionManager;
 import org.redcastlemedia.multitallented.civs.regions.RegionType;
 import org.redcastlemedia.multitallented.civs.regions.RegionsTests;
@@ -27,11 +28,12 @@ public class CivilianTests extends TestUtil {
 
     @Before
     public void onBefore() {
-        // Isolate from earlier suites that leave regions / stash on shared singletons (CI order).
+        // Isolate from earlier suites that leave regions / stash / menus on shared singletons (CI order).
         RegionManager.getInstance().reload();
         TownManager.getInstance().reload();
         CivilianManager.getInstance().reload();
         CivilianManager.getInstance().loadCivilian(TestUtil.player);
+        MenuManager.getInstance().clearOpenMenus();
     }
 
     @Test
