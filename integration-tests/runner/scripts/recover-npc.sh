@@ -5,7 +5,7 @@ export PATH="${HOME}/.nvm/versions/node/v25.8.0/bin:${PATH}"
 ROOT="/mnt/c/Users/Danie/Downloads/Civs-1.11.6/Civs-1.11.6/integration-tests/runner"
 cd "$ROOT"
 if ! tmux has-session -t civs-qa 2>/dev/null; then
-  echo "BLOCKED: civs-qa tmux missing — start Paper first"
+  echo "BLOCKED: civs-qa tmux missing - start Paper first"
   exit 2
 fi
 tmux kill-session -t village-npc 2>/dev/null || true
