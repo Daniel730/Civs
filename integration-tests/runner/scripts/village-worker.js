@@ -1,28 +1,24 @@
 #!/usr/bin/env node
-/**
- * Overnight NPC village WORKER — visible work via harness capabilities.
- * Architecture: runner → RawKeepAliveActor + Capabilities + RCON → Paper QA.
- * No Mineflayer. Agent decides WHAT (jobs); harness executes HOW.
- *
- * Usage (WSL):
- *   RCON_PASSWORD=civsqa node scripts/village-worker.js
- *   RCON_PASSWORD=civsqa WORKER_MS=4000 node scripts/village-worker.js
- */
-'use strict';
 
 const fs = require('fs');
 const path = require('path');
 const { Harness } = require('../lib/harness');
 const { RawKeepAliveActor } = require('../lib/actor');
 const { SpectatorCamera } = require('../lib/camera');
-const { nextJob, workCoords, SITES } = require('../lib/village/jobs');
+const {
+  nextJob,
+  workCoords,
+  SITES,
+  EXCLUSIVE_PAIRS,
+  stockpileMaterials,
+} = require('../lib/village');
 const { initTelemetry, shutdownTelemetry } = require('../lib/telemetry');
 
 let FallbackDirector = null;
 try {
   ({ FallbackDirector } = require('../lib/stream'));
 } catch (_) {
-  /* shot-planner optional when stream PR not on branch */
+  /* shot-planner optional when stream surface missing */
 }
 
 const REPORTS = path.join(__dirname, '..', 'reports');
@@ -58,9 +54,25 @@ function log(entry) {
 
 function loadState() {
   try {
-    return JSON.parse(fs.readFileSync(STATE_FILE, 'utf8'));
+    const s = JSON.parse(fs.readFileSync(STATE_FILE, 'utf8'));
+    // One-shot: clear place blocks after stockpile profile v2 (inn/barracks/farm)
+    if (!s.stockpileV2) {
+      for (const t of ['shack', 'potato_farm', 'inn', 'barracks']) {
+        delete s.blocked?.[t];
+      }
+      s.stockpileV2 = true;
+      s.failCounts = {};
+    }
+    return s;
   } catch (_) {
-    return { tick: 0, blocked: {}, completedPlaces: {}, actions: 0 };
+    return {
+      tick: 0,
+      blocked: {},
+      completedPlaces: {},
+      actions: 0,
+      failCounts: {},
+      stockpileV2: true,
+    };
   }
 }
 
@@ -73,57 +85,9 @@ async function sleep(ms) {
   return new Promise((r) => setTimeout(r, ms));
 }
 
-/** Honest stockpile fills for placeregion retries (same materials family as builder). */
+/** Honest stockpile fills for placeregion retries (shared with village-builder). */
 async function stockpile(harness, x, y, z, profile) {
-  const r = profile === 'farm' ? 4 : 4;
-  const cmds = [
-    `fill ${x - r} ${y + 1} ${z - r} ${x + r} ${y + 7} ${z + r} air`,
-    `fill ${x - r} ${y} ${z - r} ${x + r} ${y + 3} ${z + r} stone_bricks`,
-    `fill ${x - r} ${y} ${z - r} ${x + r} ${y} ${z + r} cobblestone`,
-    `fill ${x - Math.max(1, r - 1)} ${y + 1} ${z - Math.max(1, r - 1)} ${x + Math.max(1, r - 1)} ${y + 2} ${z + Math.max(1, r - 1)} oak_log`,
-    `fill ${x - r} ${y + 4} ${z - r} ${x + r} ${y + 4} ${z + r} oak_stairs`,
-    `fill ${x - Math.max(1, r - 2)} ${y + 1} ${z - Math.max(1, r - 2)} ${x + Math.max(1, r - 2)} ${y + 3} ${z + Math.max(1, r - 2)} air`,
-    `setblock ${x + 1} ${y + 1} ${z} chest`,
-    `setblock ${x + 2} ${y + 1} ${z} chest`,
-    `setblock ${x - 1} ${y + 1} ${z} chest`,
-    `setblock ${x} ${y + 1} ${z + 1} oak_door[half=lower]`,
-    `setblock ${x} ${y + 2} ${z + 1} oak_door[half=upper]`,
-    `setblock ${x + 1} ${y + 2} ${z + 2} glass`,
-    `setblock ${x - 1} ${y + 2} ${z + 2} glass`,
-    `setblock ${x + 1} ${y + 2} ${z - 2} glass`,
-    `setblock ${x - 1} ${y + 2} ${z - 2} glass`,
-    `setblock ${x + 2} ${y + 1} ${z} furnace`,
-    `setblock ${x - 2} ${y + 1} ${z} crafting_table`,
-    `setblock ${x} ${y} ${z} grass_block`,
-    `setblock ${x} ${y + 1} ${z} air`,
-  ];
-  if (profile === 'farm') {
-    cmds.push(
-      `fill ${x - 3} ${y} ${z - 4} ${x + 3} ${y} ${z - 2} farmland`,
-      `fill ${x - 3} ${y + 1} ${z - 4} ${x + 3} ${y + 1} ${z - 2} potatoes[age=7]`,
-      `setblock ${x} ${y} ${z - 3} water`,
-      `setblock ${x + 2} ${y + 1} ${z} composter`,
-      `fill ${x - 4} ${y + 1} ${z - 4} ${x + 4} ${y + 1} ${z - 4} oak_fence`,
-      `setblock ${x} ${y + 1} ${z - 4} oak_fence_gate`
-    );
-  }
-  if (profile === 'hovel') {
-    cmds.push(
-      `setblock ${x + 1} ${y + 1} ${z + 3} red_bed`,
-      `setblock ${x - 1} ${y + 1} ${z + 3} yellow_bed`
-    );
-  }
-  if (profile === 'utility') {
-    cmds.push(
-      `fill ${x - 3} ${y + 1} ${z - 3} ${x + 3} ${y + 1} ${z - 3} iron_bars`,
-      `setblock ${x + 3} ${y + 1} ${z + 1} black_bed`,
-      `setblock ${x + 3} ${y + 1} ${z - 1} red_bed`,
-      `setblock ${x - 3} ${y + 1} ${z + 1} black_bed`
-    );
-  }
-  for (const c of cmds) {
-    await harness.raw(c);
-  }
+  await stockpileMaterials(harness, x, y, z, profile);
 }
 
 /**
@@ -160,11 +124,22 @@ async function runJob(harness, actorName, step, state) {
     });
     if (ok) {
       state.completedPlaces[step.type] = true;
+      const exclusiveOther = EXCLUSIVE_PAIRS[step.type];
+      if (exclusiveOther) {
+        state.blocked[exclusiveOther] = true;
+        results.exclusiveBlocked = exclusiveOther;
+      }
       results.status = 'PASS';
     } else {
-      state.blocked[step.type] = true;
+      state.failCounts = state.failCounts || {};
+      state.failCounts[step.type] = (state.failCounts[step.type] || 0) + 1;
+      // Allow a few honest stockpile retries before permanent block
+      if (state.failCounts[step.type] >= 3) {
+        state.blocked[step.type] = true;
+      }
       results.status = 'BLOCKED';
       results.reason = 'placeregion_failed_build_reqs_or_overlap';
+      results.failCount = state.failCounts[step.type];
     }
     return results;
   }
@@ -172,24 +147,11 @@ async function runJob(harness, actorName, step, state) {
   // Teleport near the site first so move_to can finish a short walk (avoids no_progress).
   const stand = coords.stand;
   await cap.teleport(actorName, stand.x - 2, cfg.origin.y + 1, stand.z - 2);
-  const move = await cap.moveTo(
-    actorName,
-    stand.x,
-    stand.y,
-    stand.z,
-    7000,
-    1.8,
-    0.85
-  );
+  const move = await cap.moveTo(actorName, stand.x, stand.y, stand.z, 7000, 1.8, 0.85);
   results.actions.push({ move });
 
   if (coords.target) {
-    const look = await cap.lookAt(
-      actorName,
-      coords.target.x,
-      coords.target.y,
-      coords.target.z
-    );
+    const look = await cap.lookAt(actorName, coords.target.x, coords.target.y, coords.target.z);
     results.actions.push({ look });
   }
 
@@ -244,9 +206,8 @@ async function runJob(harness, actorName, step, state) {
   }
 
   const obs = await cap.observe(actorName);
-  results.observe = obs && obs.data
-    ? { x: obs.data.x, y: obs.data.y, z: obs.data.z, held: obs.data.held }
-    : null;
+  results.observe =
+    obs && obs.data ? { x: obs.data.x, y: obs.data.y, z: obs.data.z, held: obs.data.held } : null;
   results.status = 'PASS';
   state.actions += 1;
   return results;
@@ -395,8 +356,7 @@ async function main() {
         log({ status: recovery.status, action: 'ensure_town', recovery });
       }
       const step = nextJob(state.tick, state);
-      const who =
-        helper && helper.ok && state.tick % 2 === 0 ? cfg.helperName : cfg.actorName;
+      const who = helper && helper.ok && state.tick % 2 === 0 ? cfg.helperName : cfg.actorName;
       const result = await runJob(harness, who, step, state);
       if (director && result.status === 'PASS' && step.job !== 'patrol') {
         await director.onEvent({

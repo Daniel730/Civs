@@ -1,5 +1,3 @@
-'use strict';
-
 const { describe, it } = require('node:test');
 const assert = require('node:assert/strict');
 const {
@@ -8,7 +6,9 @@ const {
   workCoords,
   JOBS,
   PLACE_ATTEMPTS,
-} = require('../lib/village/jobs');
+  EXCLUSIVE_PAIRS,
+  radiusFor,
+} = require('../lib/village');
 
 describe('village jobs planner', () => {
   it('rotates visible work jobs', () => {
@@ -52,5 +52,21 @@ describe('village jobs planner', () => {
     const patrol = workCoords(origin, { job: 'patrol', tick: 3 });
     assert.ok(patrol.stand);
     assert.equal(patrol.place, null);
+  });
+
+  it('uses dedicated inn/barracks stockpile profiles', () => {
+    assert.equal(PLACE_ATTEMPTS.find((p) => p.type === 'inn').stockpile, 'inn');
+    assert.equal(PLACE_ATTEMPTS.find((p) => p.type === 'barracks').stockpile, 'barracks');
+  });
+
+  it('exclusive pairs map inn ↔ barracks', () => {
+    assert.equal(EXCLUSIVE_PAIRS.inn, 'barracks');
+    assert.equal(EXCLUSIVE_PAIRS.barracks, 'inn');
+  });
+
+  it('stockpile radius matches build footprint', () => {
+    assert.equal(radiusFor('inn'), 9);
+    assert.equal(radiusFor('barracks'), 7);
+    assert.equal(radiusFor('farm'), 4);
   });
 });

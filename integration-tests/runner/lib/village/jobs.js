@@ -1,18 +1,4 @@
-/**
- * Deterministic overnight NPC job planner.
- * Agent decides WHAT (job id); harness executes HOW via Capabilities.
- * Pure logic — no RCON — so unit tests stay offline.
- */
-'use strict';
-
-const JOBS = Object.freeze([
-  'patrol',
-  'builder',
-  'miner',
-  'farmer',
-  'stockpile',
-  'placeregion',
-]);
+const JOBS = Object.freeze(['patrol', 'builder', 'miner', 'farmer', 'stockpile', 'placeregion']);
 
 /** Sites relative to village origin (matches village-builder pad layout). */
 const SITES = Object.freeze({
@@ -31,9 +17,15 @@ const SITES = Object.freeze({
 const PLACE_ATTEMPTS = Object.freeze([
   { type: 'shack', site: 'shack', stockpile: 'hovel' },
   { type: 'potato_farm', site: 'farm', stockpile: 'farm' },
-  { type: 'inn', site: 'inn', stockpile: 'utility' },
-  { type: 'barracks', site: 'barracks', stockpile: 'utility' },
+  { type: 'inn', site: 'inn', stockpile: 'inn' },
+  { type: 'barracks', site: 'barracks', stockpile: 'barracks' },
 ]);
+
+/** Civs exclusive: pairs — placing one blocks the other in the same town. */
+const EXCLUSIVE_PAIRS = Object.freeze({
+  inn: 'barracks',
+  barracks: 'inn',
+});
 
 /**
  * @param {number} tick
@@ -106,7 +98,6 @@ function workCoords(origin, step) {
           material: 'stone_bricks',
         },
       };
-    case 'patrol':
     default: {
       const a = tick * 0.55;
       return {
@@ -126,6 +117,7 @@ module.exports = {
   JOBS,
   SITES,
   PLACE_ATTEMPTS,
+  EXCLUSIVE_PAIRS,
   nextJob,
   nextPlaceAttempt,
   workCoords,

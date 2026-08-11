@@ -13,6 +13,7 @@ const { Harness } = require('../lib/harness');
 const { RawKeepAliveActor } = require('../lib/actor');
 const { SpectatorCamera } = require('../lib/camera');
 const { initTelemetry, shutdownTelemetry } = require('../lib/telemetry');
+const { stockpileMaterials } = require('../lib/village');
 
 const REPORTS = path.join(__dirname, '..', 'reports');
 const LOG_JSONL = path.join(REPORTS, 'village-builder.jsonl');
@@ -66,7 +67,15 @@ const PLAN = [
     dz: 2,
     label: 'Found settlement town (/cv town)',
   },
-  { id: 'shelter', kind: 'region', type: 'shelter', dx: -10, dy: 0, dz: 0, label: 'Emergency shelter' },
+  {
+    id: 'shelter',
+    kind: 'region',
+    type: 'shelter',
+    dx: -10,
+    dy: 0,
+    dz: 0,
+    label: 'Emergency shelter',
+  },
   {
     id: 'hovel',
     kind: 'region',
@@ -96,7 +105,7 @@ const PLAN = [
     dy: 0,
     dz: 14,
     label: 'Utility: inn (settlement-tier storage/housing)',
-    stockpile: 'utility',
+    stockpile: 'inn',
   },
   {
     id: 'wheat_farm',
@@ -116,7 +125,7 @@ const PLAN = [
     dy: 0,
     dz: -10,
     label: 'Defense: barracks',
-    stockpile: 'utility',
+    stockpile: 'barracks',
   },
   {
     id: 'smithy',
@@ -165,86 +174,15 @@ async function sleep(ms) {
 
 /**
  * Dump Civs build materials so MANUAL /cv placeregion can validate.
- * Materials match Civs_servidor config.yml item-groups (primary/secondary/roof/…).
+ * Implementation: lib/village/stockpile.js (shared with village-worker).
  */
-async function stockpileMaterials(harness, x, y, z, profile = 'utility') {
-  const r = profile === 'council_room' ? 5 : profile === 'hovel' ? 4 : 4;
-  const cmds = [
-    `fill ${x - r} ${y + 1} ${z - r} ${x + r} ${y + 7} ${z + r} air`,
-    // Primary volume (stone_bricks ∈ g:primary) — overshoot counts for 125+
-    `fill ${x - r} ${y} ${z - r} ${x + r} ${y + 3} ${z + r} stone_bricks`,
-    // Secondary (cobblestone)
-    `fill ${x - r} ${y} ${z - r} ${x + r} ${y} ${z + r} cobblestone`,
-    `fill ${x - Math.max(1, r - 1)} ${y + 1} ${z - Math.max(1, r - 1)} ${x + Math.max(1, r - 1)} ${y + 2} ${z + Math.max(1, r - 1)} oak_log`,
-    // Roof / stairs
-    `fill ${x - r} ${y + 4} ${z - r} ${x + r} ${y + 4} ${z + r} oak_stairs`,
-    `fill ${x - r} ${y + 5} ${z - r} ${x + r} ${y + 5} ${z + r} oak_slab`,
-    // Hollow interior for interactables
-    `fill ${x - Math.max(1, r - 2)} ${y + 1} ${z - Math.max(1, r - 2)} ${x + Math.max(1, r - 2)} ${y + 3} ${z + Math.max(1, r - 2)} air`,
-    `setblock ${x + 1} ${y + 1} ${z} chest`,
-    `setblock ${x + 2} ${y + 1} ${z} chest`,
-    `setblock ${x - 1} ${y + 1} ${z} chest`,
-    `setblock ${x - 2} ${y + 1} ${z} chest`,
-    `setblock ${x} ${y + 1} ${z + 1} oak_door[half=lower]`,
-    `setblock ${x} ${y + 2} ${z + 1} oak_door[half=upper]`,
-    `setblock ${x} ${y + 1} ${z - 1} oak_door[half=lower]`,
-    `setblock ${x} ${y + 2} ${z - 1} oak_door[half=upper]`,
-    `setblock ${x + 1} ${y + 2} ${z + 2} glass`,
-    `setblock ${x - 1} ${y + 2} ${z + 2} glass`,
-    `setblock ${x + 1} ${y + 2} ${z - 2} glass`,
-    `setblock ${x - 1} ${y + 2} ${z - 2} glass`,
-    `setblock ${x + 2} ${y + 2} ${z + 1} glass_pane`,
-    `setblock ${x - 2} ${y + 2} ${z + 1} glass_pane`,
-    `setblock ${x + 2} ${y + 2} ${z - 1} glass_pane`,
-    `setblock ${x - 2} ${y + 2} ${z - 1} glass_pane`,
-    `setblock ${x + 3} ${y + 1} ${z} furnace`,
-    `setblock ${x + 3} ${y + 1} ${z + 1} furnace`,
-    `setblock ${x - 3} ${y + 1} ${z} crafting_table`,
-    `setblock ${x - 3} ${y + 1} ${z + 1} bookshelf`,
-    `setblock ${x - 3} ${y + 1} ${z + 2} bookshelf`,
-    `setblock ${x - 3} ${y + 2} ${z + 1} bookshelf`,
-    `setblock ${x - 3} ${y + 2} ${z + 2} bookshelf`,
-    `setblock ${x - 2} ${y + 1} ${z + 2} bookshelf`,
-    `setblock ${x - 2} ${y + 2} ${z + 2} bookshelf`,
-    `setblock ${x - 1} ${y + 1} ${z + 2} bookshelf`,
-    `setblock ${x - 1} ${y + 2} ${z + 2} bookshelf`,
-    `setblock ${x + 1} ${y + 1} ${z + 3} red_bed`,
-    `setblock ${x - 1} ${y + 1} ${z + 3} water`,
-    `setblock ${x - 2} ${y + 1} ${z + 3} lava`,
-    `setblock ${x + 2} ${y + 1} ${z + 3} cauldron`,
-  ];
-  if (profile === 'farm') {
-    cmds.push(
-      `fill ${x - 3} ${y} ${z - 4} ${x + 3} ${y} ${z - 2} farmland`,
-      `fill ${x - 3} ${y + 1} ${z - 4} ${x + 3} ${y + 1} ${z - 2} potatoes[age=7]`,
-      `setblock ${x} ${y} ${z - 3} water`,
-      `setblock ${x + 2} ${y + 1} ${z} composter`,
-      `fill ${x - 4} ${y + 1} ${z - 4} ${x + 4} ${y + 1} ${z - 4} oak_fence`,
-      `setblock ${x} ${y + 1} ${z - 4} oak_fence_gate`
-    );
-  }
-  if (profile === 'quarry') {
-    cmds.push(
-      `setblock ${x + 1} ${y + 1} ${z + 1} furnace`,
-      `setblock ${x - 1} ${y + 1} ${z + 1} furnace`,
-      `setblock ${x} ${y + 1} ${z + 2} lava`,
-      `setblock ${x} ${y + 1} ${z - 2} cauldron`
-    );
-  }
-  // Leave center clear for region icon chest placed by placeregion
-  cmds.push(`setblock ${x} ${y} ${z} grass_block`);
-  cmds.push(`setblock ${x} ${y + 1} ${z} air`);
-  const results = [];
-  for (const c of cmds) {
-    results.push({ cmd: c.slice(0, 80), reply: await harness.raw(c) });
-  }
-  return results;
-}
 
 async function pasteSchem(harness, actor, schem, x, y, z) {
   // WorldEdit console paste if plugin present — best-effort, not required.
   const replies = [];
-  replies.push(await harness.raw(`execute as ${actor.name} at ${actor.name} run //schem load ${schem}`));
+  replies.push(
+    await harness.raw(`execute as ${actor.name} at ${actor.name} run //schem load ${schem}`)
+  );
   replies.push(await harness.raw(`tp ${actor.name} ${x} ${y + 1} ${z}`));
   replies.push(await harness.raw(`execute as ${actor.name} at ${actor.name} run //paste -a`));
   return replies;
@@ -257,19 +195,11 @@ async function preparePad(harness, actor) {
   await harness.raw(`weather clear`);
   await harness.raw(`gamemode creative ${actor.name}`);
   await actor.teleport(x, y + 2, z);
-  await harness.raw(
-    `fill ${x - size} ${y} ${z - size} ${x + size} ${y} ${z + size} grass_block`
-  );
-  await harness.raw(
-    `fill ${x - size} ${y + 1} ${z - size} ${x + size} ${y + 8} ${z + size} air`
-  );
+  await harness.raw(`fill ${x - size} ${y} ${z - size} ${x + size} ${y} ${z + size} grass_block`);
+  await harness.raw(`fill ${x - size} ${y + 1} ${z - size} ${x + size} ${y + 8} ${z + size} air`);
   // Visible border for cinematic
-  await harness.raw(
-    `fill ${x - size} ${y} ${z - size} ${x + size} ${y} ${z - size} stone_bricks`
-  );
-  await harness.raw(
-    `fill ${x - size} ${y} ${z + size} ${x + size} ${y} ${z + size} stone_bricks`
-  );
+  await harness.raw(`fill ${x - size} ${y} ${z - size} ${x + size} ${y} ${z - size} stone_bricks`);
+  await harness.raw(`fill ${x - size} ${y} ${z + size} ${x + size} ${y} ${z + size} stone_bricks`);
   await harness.raw(`say Village pad ready at ${x} ${y} ${z}`);
   return { x, y, z, size };
 }
@@ -277,7 +207,13 @@ async function preparePad(harness, actor) {
 async function placeRegionStep(harness, actor, step) {
   const p = posFor(step);
   if (step.stockpile) {
-    await stockpileMaterials(harness, p.x, p.y, p.z, step.stockpile === true ? 'utility' : step.stockpile);
+    await stockpileMaterials(
+      harness,
+      p.x,
+      p.y,
+      p.z,
+      step.stockpile === true ? 'utility' : step.stockpile
+    );
   }
   if (step.schem) {
     await pasteSchem(harness, actor, step.schem, p.x, p.y, p.z);
@@ -403,7 +339,13 @@ async function main() {
       return false;
     }
     state.attempts[step.id] = (state.attempts[step.id] || 0) + 1;
-    log({ status: 'OBSERVED', action: 'plan_step', step: step.id, label: step.label, attempt: state.attempts[step.id] });
+    log({
+      status: 'OBSERVED',
+      action: 'plan_step',
+      step: step.id,
+      label: step.label,
+      attempt: state.attempts[step.id],
+    });
 
     let result;
     try {
@@ -432,7 +374,12 @@ async function main() {
         skipped: true,
         result,
       };
-      log({ status: 'BLOCKED', action: 'step_skipped', step: step.id, attempts: state.attempts[step.id] });
+      log({
+        status: 'BLOCKED',
+        action: 'step_skipped',
+        step: step.id,
+        attempts: state.attempts[step.id],
+      });
     }
     saveState(state);
     await camera.ensureFollow();

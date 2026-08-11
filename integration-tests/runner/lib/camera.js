@@ -34,9 +34,17 @@ class SpectatorCamera {
     await this.harness.raw(`gamemode spectator ${this.name}`);
     // Native entity follow — best watchability for a second client looking at Cam,
     // and for anyone spectating Cam / Steve.
-    const spectate = await this.harness.raw(`execute as ${this.name} run spectate ${this.targetName}`);
+    const spectate = await this.harness.raw(
+      `execute as ${this.name} run spectate ${this.targetName}`
+    );
     this.mode = 'spectate';
-    return { status: 'PASS', mode: this.mode, spectate, player: this.name, target: this.targetName };
+    return {
+      status: 'PASS',
+      mode: this.mode,
+      spectate,
+      player: this.name,
+      target: this.targetName,
+    };
   }
 
   /** Soft re-attach if Steve reconnects or spectate drops. */
@@ -46,6 +54,26 @@ class SpectatorCamera {
     await this.harness.raw(`execute as ${this.name} run spectate ${this.targetName}`);
     this.mode = 'spectate';
     return { status: 'PASS', mode: this.mode };
+  }
+
+  /**
+   * Apply a deterministic pose from ShotPlanner / FallbackDirector.
+   * pose.kind: 'spectate' | 'teleport_look'
+   */
+  async applyPose(pose) {
+    if (!this.actor.available) return { status: 'BLOCKED', reason: 'camera_offline' };
+    if (!pose || pose.kind === 'spectate') {
+      return this.ensureFollow();
+    }
+    const tp = await this.harness.cap.teleport(this.name, pose.x, pose.y, pose.z);
+    const look = await this.harness.cap.lookAt(this.name, pose.lookX, pose.lookY, pose.lookZ);
+    this.mode = pose.mode || 'teleport_look';
+    return {
+      status: tp && tp.success ? 'PASS' : 'FAIL',
+      mode: this.mode,
+      tp,
+      look,
+    };
   }
 
   /**
