@@ -78,7 +78,7 @@ Java equivalents while JVM OTel lands: structured logging with correlation ids; 
 | **Biome** | Format + lint | **DONE** (#35) — `cd integration-tests/runner && npm run lint` |
 | **commitlint** | Conventional commits on PR titles / commit messages | **DONE** (#35) — CI on PRs touching the runner; local: pipe title into `npx commitlint` |
 | **knip** | Dead files / unused & unlisted deps | **DONE** (#35) — `npm run knip` (CJS export-member noise off; see D-AP-015) |
-| **arch-contract** (dependency-cruiser or eslint-plugin-boundaries) | Forbidden import edges (runner ↛ plugin internals, UI ↛ secrets) | **TODO** (#36) |
+| **arch-contract** (dependency-cruiser) | Forbidden import edges (lib ↛ scripts/tests; runner ↛ plugin `src/`; no secrets paths) | **DONE** (#36) — `cd integration-tests/runner && npm run arch` |
 | **Stryker** | Mutation testing on critical runner libs (`harness`, `capabilities`, `dsl`) | **TODO** (#37) |
 
 **Runner quality scripts (FACT):** from `integration-tests/runner`:
@@ -86,9 +86,10 @@ Java equivalents while JVM OTel lands: structured logging with correlation ids; 
 - `npm run lint` — Biome format + lint (check only)
 - `npm run lint:fix` / `npm run format` — apply Biome fixes / format only
 - `npm run knip` — unused files & dependency graph (CI fails on critical dead-ends)
+- `npm run arch` — dependency-cruiser arch-contract (#36)
 - `npm run test:unit` — also re-run after lint/format changes
 
-CI: `.github/workflows/runner-quality.yml` (Biome + knip + unit + conventional PR title; always reports on PRs). Maven: `.github/workflows/maven-ci.yml` (`maven-test`). Broader notes: `docs/TESTING.md` § CI gates. Merge on `master` requires the named checks via branch protection (#42).
+CI: `.github/workflows/runner-quality.yml` (Biome + knip + arch + unit + conventional PR title; always reports on PRs). Maven: `.github/workflows/maven-ci.yml` (`maven-test`). Broader notes: `docs/TESTING.md` § CI gates. Merge on `master` requires the named checks via branch protection (#42).
 
 ### Java (Civs plugin)
 
