@@ -1,6 +1,17 @@
 /** @typedef {'council_room'|'hovel'|'farm'|'quarry'|'utility'|'inn'|'barracks'} StockpileProfile */
 
 /**
+ * Civs placeregion founding helper — DOCUMENTED CHEAT EXCEPTION.
+ *
+ * Real survival players gather and place blocks by hand. Civs region creation
+ * requires a dense block footprint in-world (build-reqs), so workers use RCON
+ * `fill`/`setblock` **only** immediately before `cv placeregion`.
+ *
+ * Never call this for decoration, mining, farming, or beautify. Standalone
+ * "stockpile" work ticks were removed for that reason (#66).
+ */
+
+/**
  * @param {string} profile
  * @returns {number} half-extent for primary shell
  */

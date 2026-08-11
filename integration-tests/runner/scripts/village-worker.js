@@ -15,6 +15,7 @@ const {
   walkTo,
   blueprintFor,
   cleanupTargets,
+  findSurfaceY,
 } = require('../lib/village');
 const { initTelemetry, shutdownTelemetry } = require('../lib/telemetry');
 
@@ -107,17 +108,21 @@ async function clearFooting(harness, x, y, z) {
   await harness.raw(`setblock ${ix} ${iy + 1} ${iz} air`);
 }
 
-/** Honest stockpile fills for placeregion retries (shared with village-builder). */
+/** Honest stockpile fills ONLY for Civs placeregion founding (#66 exception). */
 async function stockpile(harness, x, y, z, profile) {
   await stockpileMaterials(harness, x, y, z, profile);
 }
 
 /**
- * Place one blueprint block via capability; fall back to setblock for slabs/paths/fences.
+ * Place one blueprint block via capability. Prefer place_block; setblock only for
+ * slabs/paths/fences the capability cannot place — never pre-clear the ground pad.
  */
 async function placeAesthetic(harness, actorName, block) {
   const mat = block.material;
-  await harness.raw(`setblock ${block.x} ${block.y} ${block.z} air`);
+  // Paths replace surface; walls/roof need empty air — clear only the target cell if not path
+  if (block.role !== 'path') {
+    await harness.raw(`setblock ${block.x} ${block.y} ${block.z} air`);
+  }
   await harness.cap.giveItem(actorName, mat.toUpperCase(), 8);
   await harness.cap.lookAt(actorName, block.x, block.y, block.z);
   const pl = await harness.cap.placeBlock(actorName, block.x, block.y, block.z, mat);
@@ -125,7 +130,6 @@ async function placeAesthetic(harness, actorName, block) {
     await harness.cap.swing(actorName);
     return { via: 'place_block', ...pl, material: mat, role: block.role };
   }
-  // Honest fallback: RCON setblock (already used for stockpiles). Still grid blueprint.
   await harness.raw(`setblock ${block.x} ${block.y} ${block.z} ${mat}`);
   await harness.cap.swing(actorName);
   return {
@@ -140,19 +144,27 @@ async function placeAesthetic(harness, actorName, block) {
 }
 
 /**
- * Execute one visible work tick using only existing capabilities.
+ * Execute one visible work tick — survival-like by default (#66).
  */
 async function runJob(harness, actorName, step, state) {
   const coords = workCoords(cfg.origin, { ...step, tick: state.tick });
   const cap = harness.cap;
-  const results = { job: step.job, site: step.site || step.label, actions: [] };
+  const results = {
+    job: step.job,
+    site: step.site || step.label,
+    actions: [],
+    policy: 'playerlike_v1',
+  };
 
-  await harness.raw(`gamemode creative ${actorName}`);
+  // Creative ONLY for Civs founding stockpile (build-reqs). All other jobs: survival.
+  const founding = step.job === 'placeregion';
+  await harness.raw(`gamemode ${founding ? 'creative' : 'survival'} ${actorName}`);
 
   if (step.job === 'placeregion') {
     const px = cfg.origin.x + (step.dx || 0);
     const pz = cfg.origin.z + (step.dz || 0);
     const py = cfg.origin.y;
+    // Founding exception: stockpile fill then placeregion (documented in VILLAGE-AESTHETICS).
     await stockpile(harness, px, py, pz, step.stockpile || 'utility');
     const walk = await walkTo(
       harness,
@@ -175,7 +187,9 @@ async function runJob(harness, actorName, step, state) {
       placeReply: String(placeReply || '').slice(0, 240),
       after,
       ok,
+      cheat: 'stockpile_fill_for_civs_founding',
     });
+    await harness.raw(`gamemode survival ${actorName}`);
     if (ok) {
       state.completedPlaces[step.type] = true;
       const exclusiveOther = EXCLUSIVE_PAIRS[step.type];
@@ -197,8 +211,17 @@ async function runJob(harness, actorName, step, state) {
     return results;
   }
 
-  // Walk (not teleport) to work stand — soft TP only inside walkTo recovery.
-  const stand = coords.stand;
+  // Adapt stands to natural surface (no floating platforms).
+  const standX = coords.stand.x;
+  const standZ = coords.stand.z;
+  const groundY = await findSurfaceY(harness, standX, standZ, {
+    fallbackY: cfg.origin.y,
+    maxY: cfg.origin.y + 24,
+    minY: cfg.origin.y - 24,
+  });
+  const stand = { x: standX, y: groundY + 1, z: standZ };
+  results.groundY = groundY;
+
   const walk = await walkTo(harness, actorName, stand, {
     clearFooting: (x, y, z) => clearFooting(harness, x, y, z),
     timeoutMs: 14000,
@@ -217,7 +240,7 @@ async function runJob(harness, actorName, step, state) {
   });
 
   if (coords.target) {
-    const look = await cap.lookAt(actorName, coords.target.x, coords.target.y, coords.target.z);
+    const look = await cap.lookAt(actorName, coords.target.x, groundY + 1, coords.target.z);
     results.actions.push({ look });
   }
 
@@ -238,27 +261,45 @@ async function runJob(harness, actorName, step, state) {
     await cap.hotbar(actorName, 0);
   }
 
+  // Mine / chop existing terrain only — never spawn a block then break it (#66).
   if (step.job === 'miner') {
     const digX = Math.floor(cfg.origin.x + (step.dx || 0) + 5);
-    const digY = cfg.origin.y;
     const digZ = Math.floor(cfg.origin.z + (step.dz || 0) + 5);
-    await harness.raw(`setblock ${digX} ${digY} ${digZ} stone`);
+    const digY = await findSurfaceY(harness, digX, digZ, {
+      fallbackY: groundY,
+      maxY: groundY + 8,
+      minY: groundY - 8,
+    });
     const br = await cap.breakBlock(actorName, digX, digY, digZ);
-    results.actions.push({ breakBlock: br });
+    results.actions.push({ breakBlock: br, spawned: false });
     await cap.swing(actorName);
   } else if (step.job === 'lumberjack') {
     const digX = Math.floor(cfg.origin.x + (step.dx || 0) + 5);
-    const digY = cfg.origin.y;
     const digZ = Math.floor(cfg.origin.z + (step.dz || 0) + 4);
-    await harness.raw(`setblock ${digX} ${digY} ${digZ} oak_log`);
+    // Prefer a block above surface (log/leaves) if present; else surface
+    let digY = groundY + 1;
     const br = await cap.breakBlock(actorName, digX, digY, digZ);
-    results.actions.push({ breakBlock: br });
+    if (!br || !br.success) {
+      digY = await findSurfaceY(harness, digX, digZ, {
+        fallbackY: groundY,
+        maxY: groundY + 12,
+        minY: groundY - 4,
+      });
+      const br2 = await cap.breakBlock(actorName, digX, digY, digZ);
+      results.actions.push({ breakBlock: br2, spawned: false });
+    } else {
+      results.actions.push({ breakBlock: br, spawned: false });
+    }
     await cap.swing(actorName);
   }
 
-  // Beautify / pride: tear down historic junk scatter + restore grass.
+  // Beautify: tear platform junk + restore grass (no new pads).
   if (step.job === 'beautify' || coords.cleanup) {
-    const targets = cleanupTargets(cfg.origin, { ...step, tick: state.tick });
+    const targets = cleanupTargets(cfg.origin, {
+      ...step,
+      tick: state.tick,
+      groundY,
+    });
     const cleaned = [];
     for (const t of targets) {
       if (t.action === 'break') {
@@ -276,16 +317,15 @@ async function runJob(harness, actorName, step, state) {
     results.actions.push({ beautify: true, cleaned: cleaned.length, sample: cleaned.slice(0, 4) });
   }
 
-  // Builder / farmer: coherent blueprints (house shell, path, farm fence) — no random spam.
+  // Builder / farmer: terrain-adapted blueprints (no floor platforms).
   if (step.job === 'builder' || step.job === 'farmer' || coords.blueprint) {
-    const bp = blueprintFor(cfg.origin, { ...step, tick: state.tick });
+    const bp = blueprintFor(cfg.origin, { ...step, tick: state.tick, groundY });
     const placed = [];
     for (const block of bp.blocks) {
-      // Walk closer if block is far from current stand (keeps motion visible)
       const near = {
         x: block.x,
-        y: Math.max(block.y, cfg.origin.y + 1),
-        z: block.z + (block.role === 'path' ? 0 : 2),
+        y: Math.max(block.y, groundY + 1),
+        z: block.z + (block.role === 'path' ? 0 : 1),
       };
       const w2 = await walkTo(harness, actorName, near, {
         arrive: 2.5,
@@ -306,23 +346,15 @@ async function runJob(harness, actorName, step, state) {
     });
   }
 
-  if (step.job === 'stockpile') {
-    const sx = cfg.origin.x + (step.dx || 0);
-    const sz = cfg.origin.z + (step.dz || 0);
-    await stockpile(harness, sx, cfg.origin.y, sz, 'utility');
-    results.actions.push({ stockpile: true, x: sx, z: sz });
-  }
-
   if (step.job === 'patrol' || step.job === 'guard') {
     await cap.sprint(actorName, true);
-    // Visible gait: several small forward steps with pauses (not one big teleport step)
     for (let i = 0; i < 3; i++) {
       await cap.step(actorName, 'forward', 0.5);
       await sleep(120);
     }
     await cap.swing(actorName);
     if (step.job === 'guard') {
-      await cap.lookAt(actorName, cfg.origin.x, cfg.origin.y + 1, cfg.origin.z);
+      await cap.lookAt(actorName, cfg.origin.x, groundY + 1, cfg.origin.z);
       await cap.swing(actorName);
     }
     await cap.sprint(actorName, false);
@@ -349,8 +381,10 @@ async function connectActor(harness, name) {
     return { actor, ok: false, reason: actor.reason };
   }
   await actor.grantOp();
+  // Spawn-in: brief creative only to land safely, then survival for player-like work.
   await harness.raw(`gamemode creative ${name}`);
   await actor.teleport(cfg.origin.x, cfg.origin.y + 2, cfg.origin.z);
+  await harness.raw(`gamemode survival ${name}`);
   return { actor, ok: true };
 }
 
@@ -359,6 +393,7 @@ async function ensureTown(harness, actorName) {
   const town = await harness.assert.town(cfg.town);
   if (town && town.ok) return { status: 'PASS', town };
   const { x, y, z } = cfg.origin;
+  await harness.raw(`gamemode creative ${actorName}`);
   await stockpile(harness, x, y, z, 'utility');
   // Bookshelves required by council_room build-reqs
   for (const [bx, by, bz] of [
@@ -385,11 +420,13 @@ async function ensureTown(harness, actorName) {
   );
   await harness.cap.runAs(actorName, `cv town ${cfg.town}`);
   await sleep(400);
+  await harness.raw(`gamemode survival ${actorName}`);
   const again = await harness.assert.town(cfg.town);
   return {
     status: again && again.ok ? 'PASS' : 'FAIL',
     place: String(place || '').slice(0, 160),
     town: again,
+    cheat: 'ensure_town_stockpile_fill',
   };
 }
 

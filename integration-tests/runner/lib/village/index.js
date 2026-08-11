@@ -3,4 +3,5 @@ module.exports = {
   ...require('./stockpile'),
   ...require('./blueprints'),
   ...require('./walk'),
+  ...require('./terrain'),
 };
