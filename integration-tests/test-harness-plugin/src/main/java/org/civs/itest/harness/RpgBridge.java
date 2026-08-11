@@ -6,6 +6,7 @@ import java.util.Locale;
 import java.util.stream.Collectors;
 
 import org.bukkit.Bukkit;
+import org.bukkit.Location;
 import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 import org.bukkit.plugin.Plugin;
@@ -20,7 +21,7 @@ final class RpgBridge {
 
     static boolean handle(CommandSender sender, String[] a) {
         if (a.length < 2) {
-            return err(sender, "usage: /test rpg <ping|observe|abandon|accept> ...");
+            return err(sender, "usage: /test rpg <ping|observe|abandon|accept|quest_detail|next_quest|pois> ...");
         }
         String sub = a[1].toLowerCase(Locale.ROOT);
         return switch (sub) {
@@ -36,6 +37,19 @@ final class RpgBridge {
             case "accept" -> {
                 if (a.length < 4) yield err(sender, "usage: /test rpg accept <player> <questId>");
                 yield accept(sender, a[2], a[3]);
+            }
+            case "quest_detail" -> {
+                if (a.length < 4) yield err(sender, "usage: /test rpg quest_detail <player> <questId>");
+                yield questDetail(sender, a[2], a[3]);
+            }
+            case "next_quest" -> {
+                if (a.length < 3) yield err(sender, "usage: /test rpg next_quest <player>");
+                yield nextQuest(sender, a[2]);
+            }
+            case "pois" -> {
+                if (a.length < 3) yield err(sender, "usage: /test rpg pois <player> [radius]");
+                double radius = a.length >= 4 ? Double.parseDouble(a[3]) : 256.0;
+                yield pois(sender, a[2], radius);
             }
             default -> err(sender, "unknown rpg subcommand: " + sub);
         };
@@ -137,6 +151,249 @@ final class RpgBridge {
             return failJson(sender, "rpg_accept", questId, t0,
                     e.getClass().getSimpleName() + ":" + e.getMessage());
         }
+    }
+
+    /**
+     * Quest definition + per-player progress for AI planning (objectives, rewards, status).
+     * Reflects {@code QuestManager.getQuest} / {@code getQuestProgress} / objective getters.
+     */
+    private static boolean questDetail(CommandSender sender, String playerName, String questId) {
+        long t0 = System.currentTimeMillis();
+        Plugin rpg = Bukkit.getPluginManager().getPlugin("RPGServer");
+        if (rpg == null || !rpg.isEnabled()) {
+            return failJson(sender, "rpg_quest_detail", questId, t0, "rpg_absent");
+        }
+        Player player = Bukkit.getPlayerExact(playerName);
+        if (player == null || !player.isOnline()) {
+            return failJson(sender, "rpg_quest_detail", questId, t0, "player_offline");
+        }
+        try {
+            Object profileManager = rpg.getClass().getMethod("getProfileManager").invoke(rpg);
+            Object profile = profileManager.getClass().getMethod("getOrCreate", Player.class)
+                    .invoke(profileManager, player);
+            Object questManager = rpg.getClass().getMethod("getQuestManager").invoke(rpg);
+            Object quest = questManager.getClass().getMethod("getQuest", String.class)
+                    .invoke(questManager, questId);
+            if (quest == null) {
+                return failJson(sender, "rpg_quest_detail", questId, t0, "quest_not_found");
+            }
+
+            String status = "UNKNOWN";
+            try {
+                Object st = questManager.getClass()
+                        .getMethod("getQuestStatus", Player.class, profile.getClass(), quest.getClass())
+                        .invoke(questManager, player, profile, quest);
+                status = st == null ? "null" : String.valueOf(st);
+            } catch (ReflectiveOperationException ignored) {
+                try {
+                    Object st = questManager.getClass()
+                            .getMethod("getQuestStatus", profile.getClass(), quest.getClass())
+                            .invoke(questManager, profile, quest);
+                    status = st == null ? "null" : String.valueOf(st);
+                } catch (ReflectiveOperationException ignored2) {
+                    status = "UNKNOWN";
+                }
+            }
+
+            int progressDone = 0;
+            int progressTotal = 0;
+            try {
+                Object progress = questManager.getClass()
+                        .getMethod("getQuestProgress", profile.getClass(), quest.getClass())
+                        .invoke(questManager, profile, quest);
+                progressDone = ((Number) progress.getClass().getMethod("completed").invoke(progress)).intValue();
+                progressTotal = ((Number) progress.getClass().getMethod("total").invoke(progress)).intValue();
+            } catch (ReflectiveOperationException | ClassCastException ignored) {
+                // leave zeros
+            }
+
+            @SuppressWarnings("unchecked")
+            Collection<Object> objectives = (Collection<Object>) invoke(quest, "getObjectives");
+            StringBuilder objJson = new StringBuilder("[");
+            boolean first = true;
+            if (objectives != null) {
+                for (Object objective : objectives) {
+                    if (!first) objJson.append(',');
+                    first = false;
+                    String oid = str(invoke(objective, "getId"));
+                    String typeId = str(invoke(objective, "getTypeId"));
+                    String desc = str(invoke(objective, "getDescription"));
+                    String block = str(invoke(objective, "getBlock"));
+                    String mob = str(invoke(objective, "getMob"));
+                    String region = str(invoke(objective, "getRegion"));
+                    int amount = 0;
+                    try {
+                        amount = ((Number) invoke(objective, "getAmount")).intValue();
+                    } catch (ClassCastException | NullPointerException ignored) {
+                        amount = 0;
+                    }
+                    int cur = 0;
+                    boolean done = false;
+                    try {
+                        cur = ((Number) profile.getClass()
+                                .getMethod("getObjectiveProgress", String.class, String.class)
+                                .invoke(profile, questId, oid)).intValue();
+                        done = Boolean.TRUE.equals(profile.getClass()
+                                .getMethod("isObjectiveComplete", String.class, String.class)
+                                .invoke(profile, questId, oid));
+                    } catch (ReflectiveOperationException ignored) {
+                        // leave defaults
+                    }
+                    objJson.append('{')
+                            .append("\"id\":").append(jsonStr(oid))
+                            .append(",\"typeId\":").append(jsonStr(typeId))
+                            .append(",\"description\":").append(jsonStr(desc))
+                            .append(",\"block\":").append(jsonStr(block))
+                            .append(",\"mob\":").append(jsonStr(mob))
+                            .append(",\"region\":").append(jsonStr(region))
+                            .append(",\"amount\":").append(amount)
+                            .append(",\"progress\":").append(cur)
+                            .append(",\"complete\":").append(done)
+                            .append('}');
+                }
+            }
+            objJson.append(']');
+
+            Object rewards = invoke(quest, "getRewards");
+            double money = 0;
+            if (rewards != null) {
+                try {
+                    money = ((Number) invoke(rewards, "getMoney")).doubleValue();
+                } catch (ClassCastException | NullPointerException ignored) {
+                    money = 0;
+                }
+            }
+
+            String data = "\"id\":" + jsonStr(questId)
+                    + ",\"name\":" + jsonStr(str(invoke(quest, "getName")))
+                    + ",\"archetype\":" + jsonStr(str(invoke(quest, "getArchetype")))
+                    + ",\"description\":" + jsonStr(str(invoke(quest, "getDescription")))
+                    + ",\"tier\":" + safeInt(invoke(quest, "getTier"))
+                    + ",\"status\":" + jsonStr(status)
+                    + ",\"progress_completed\":" + progressDone
+                    + ",\"progress_total\":" + progressTotal
+                    + ",\"objectives\":" + objJson
+                    + ",\"rewards\":{\"money\":" + money + "}"
+                    + ",\"player\":" + jsonStr(playerName);
+            return json(sender, true, "rpg_quest_detail", questId, System.currentTimeMillis() - t0, null, data);
+        } catch (ReflectiveOperationException | ClassCastException | NullPointerException e) {
+            return failJson(sender, "rpg_quest_detail", questId, t0,
+                    e.getClass().getSimpleName() + ":" + e.getMessage());
+        }
+    }
+
+    /**
+     * Next available story quest for the player's archetype via
+     * {@code QuestManager.findNextAvailableQuest}.
+     */
+    private static boolean nextQuest(CommandSender sender, String playerName) {
+        long t0 = System.currentTimeMillis();
+        Plugin rpg = Bukkit.getPluginManager().getPlugin("RPGServer");
+        if (rpg == null || !rpg.isEnabled()) {
+            return failJson(sender, "rpg_next_quest", playerName, t0, "rpg_absent");
+        }
+        Player player = Bukkit.getPlayerExact(playerName);
+        if (player == null || !player.isOnline()) {
+            return failJson(sender, "rpg_next_quest", playerName, t0, "player_offline");
+        }
+        try {
+            Object profileManager = rpg.getClass().getMethod("getProfileManager").invoke(rpg);
+            Object profile = profileManager.getClass().getMethod("getOrCreate", Player.class)
+                    .invoke(profileManager, player);
+            Object questManager = rpg.getClass().getMethod("getQuestManager").invoke(rpg);
+            Object optional = questManager.getClass()
+                    .getMethod("findNextAvailableQuest", Player.class, profile.getClass())
+                    .invoke(questManager, player, profile);
+            boolean present = Boolean.TRUE.equals(optional.getClass().getMethod("isPresent").invoke(optional));
+            if (!present) {
+                return json(sender, true, "rpg_next_quest", playerName, System.currentTimeMillis() - t0, null,
+                        "\"quest\":null,\"player\":" + jsonStr(playerName));
+            }
+            Object quest = optional.getClass().getMethod("get").invoke(optional);
+            String qid = str(invoke(quest, "getId"));
+            String data = "\"player\":" + jsonStr(playerName)
+                    + ",\"quest\":{"
+                    + "\"id\":" + jsonStr(qid)
+                    + ",\"name\":" + jsonStr(str(invoke(quest, "getName")))
+                    + ",\"archetype\":" + jsonStr(str(invoke(quest, "getArchetype")))
+                    + ",\"description\":" + jsonStr(str(invoke(quest, "getDescription")))
+                    + "}";
+            return json(sender, true, "rpg_next_quest", qid, System.currentTimeMillis() - t0, null, data);
+        } catch (ReflectiveOperationException | ClassCastException | NullPointerException e) {
+            return failJson(sender, "rpg_next_quest", playerName, t0,
+                    e.getClass().getSimpleName() + ":" + e.getMessage());
+        }
+    }
+
+    /**
+     * RPG DiscoveryRegistry POIs near the player (authoritative coordinates from pois.yml).
+     */
+    private static boolean pois(CommandSender sender, String playerName, double radius) {
+        long t0 = System.currentTimeMillis();
+        if (radius < 1) radius = 1;
+        if (radius > 2048) radius = 2048;
+        Plugin rpg = Bukkit.getPluginManager().getPlugin("RPGServer");
+        if (rpg == null || !rpg.isEnabled()) {
+            return failJson(sender, "rpg_pois", playerName, t0, "rpg_absent");
+        }
+        Player player = Bukkit.getPlayerExact(playerName);
+        if (player == null || !player.isOnline()) {
+            return failJson(sender, "rpg_pois", playerName, t0, "player_offline");
+        }
+        try {
+            Object discovery = rpg.getClass().getMethod("getDiscoveryService").invoke(rpg);
+            Object registry = discovery.getClass().getMethod("getRegistry").invoke(discovery);
+            @SuppressWarnings("unchecked")
+            Collection<Object> all = (Collection<Object>) registry.getClass().getMethod("getAllPois").invoke(registry);
+            Location origin = player.getLocation();
+            StringBuilder arr = new StringBuilder("[");
+            boolean first = true;
+            int count = 0;
+            for (Object poi : all) {
+                String worldName = str(invoke(poi, "getWorldName"));
+                if (origin.getWorld() == null || worldName == null
+                        || !origin.getWorld().getName().equalsIgnoreCase(worldName)) {
+                    continue;
+                }
+                double px = ((Number) invoke(poi, "getX")).doubleValue();
+                double py = ((Number) invoke(poi, "getY")).doubleValue();
+                double pz = ((Number) invoke(poi, "getZ")).doubleValue();
+                double dx = origin.getX() - px;
+                double dy = origin.getY() - py;
+                double dz = origin.getZ() - pz;
+                double dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
+                if (dist > radius) continue;
+                if (!first) arr.append(',');
+                first = false;
+                arr.append('{')
+                        .append("\"id\":").append(jsonStr(str(invoke(poi, "getId"))))
+                        .append(",\"name\":").append(jsonStr(str(invoke(poi, "getName"))))
+                        .append(",\"world\":").append(jsonStr(worldName))
+                        .append(",\"x\":").append(px)
+                        .append(",\"y\":").append(py)
+                        .append(",\"z\":").append(pz)
+                        .append(",\"radius\":").append(((Number) invoke(poi, "getRadius")).doubleValue())
+                        .append(",\"distance\":").append(Math.round(dist * 100.0) / 100.0)
+                        .append('}');
+                if (++count >= 64) break;
+            }
+            arr.append(']');
+            String data = "\"player\":" + jsonStr(playerName)
+                    + ",\"radius\":" + radius
+                    + ",\"count\":" + count
+                    + ",\"pois\":" + arr;
+            return json(sender, true, "rpg_pois", playerName, System.currentTimeMillis() - t0, null, data);
+        } catch (ReflectiveOperationException | ClassCastException | NullPointerException e) {
+            return failJson(sender, "rpg_pois", playerName, t0,
+                    e.getClass().getSimpleName() + ":" + e.getMessage());
+        }
+    }
+
+    private static int safeInt(Object o) {
+        if (o instanceof Number n) {
+            return n.intValue();
+        }
+        return 0;
     }
 
     /**

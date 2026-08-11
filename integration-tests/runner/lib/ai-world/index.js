@@ -1,0 +1,16 @@
+module.exports = {
+  ...require('./personality'),
+  ...require('./memory'),
+  ...require('./anti-stupid'),
+  ...require('./state'),
+  ...require('./goals'),
+  ...require('./perception'),
+  ...require('./quest-eval'),
+  ...require('./objective-plan'),
+  ...require('./decision'),
+  ...require('./events'),
+  ...require('./quest-loop'),
+  ...require('./mine-executor'),
+  ...require('./world-adapter'),
+  ...require('./persistence'),
+};

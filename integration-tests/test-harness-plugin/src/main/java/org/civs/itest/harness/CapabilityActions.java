@@ -79,6 +79,7 @@ final class CapabilityActions {
                 case "respawn" -> respawn(sender, p, t0);
                 case "step" -> step(sender, p, args, t0);
                 case "move_to" -> moveTo(sender, p, args, t0);
+                case "find_block" -> findBlock(sender, p, args, t0);
                 default -> json(sender, false, action, null, System.currentTimeMillis() - t0,
                         "unknown_action", null);
             };
@@ -181,6 +182,75 @@ final class CapabilityActions {
         if (v.getY() < 0.42) v.setY(0.42);
         p.setVelocity(v);
         return ok(sender, "jump", null, t0, "\"vy\":" + v.getY());
+    }
+
+    /**
+     * Nearest matching block within a cubic radius (capped). Used by AI World mine loops —
+     * not a full world scan.
+     * Usage: {@code find_block <MATERIAL> [radius=6] [max=5]}
+     */
+    private static boolean findBlock(CommandSender sender, Player p, String[] args, long t0) {
+        if (args.length < 1) throw new IllegalArgumentException("find_block <MATERIAL> [radius] [max]");
+        Material want = Material.valueOf(args[0].toUpperCase(Locale.ROOT));
+        int radius = args.length >= 2 ? Integer.parseInt(args[1]) : 6;
+        int max = args.length >= 3 ? Integer.parseInt(args[2]) : 5;
+        if (radius < 1) radius = 1;
+        if (radius > 16) radius = 16;
+        if (max < 1) max = 1;
+        if (max > 32) max = 32;
+        Location origin = p.getLocation();
+        World w = origin.getWorld();
+        if (w == null) {
+            return json(sender, false, "find_block", want.name(), System.currentTimeMillis() - t0, "no_world", null);
+        }
+        int ox = origin.getBlockX();
+        int oy = origin.getBlockY();
+        int oz = origin.getBlockZ();
+        java.util.List<Block> found = new java.util.ArrayList<>();
+        double best = Double.MAX_VALUE;
+        Block nearest = null;
+        for (int dx = -radius; dx <= radius; dx++) {
+            for (int dy = -radius; dy <= radius; dy++) {
+                for (int dz = -radius; dz <= radius; dz++) {
+                    Block b = w.getBlockAt(ox + dx, oy + dy, oz + dz);
+                    if (b.getType() != want) continue;
+                    double d = b.getLocation().distanceSquared(origin);
+                    if (d < best) {
+                        best = d;
+                        nearest = b;
+                    }
+                    if (found.size() < max) {
+                        found.add(b);
+                    }
+                }
+            }
+        }
+        if (nearest == null) {
+            return json(sender, false, "find_block", want.name(), System.currentTimeMillis() - t0,
+                    "not_found", "\"radius\":" + radius + ",\"count\":0");
+        }
+        // Sort found by distance for stable output
+        found.sort((a, c) -> Double.compare(
+                a.getLocation().distanceSquared(origin),
+                c.getLocation().distanceSquared(origin)));
+        StringBuilder arr = new StringBuilder("[");
+        for (int i = 0; i < found.size(); i++) {
+            Block b = found.get(i);
+            if (i > 0) arr.append(',');
+            arr.append("{\"x\":").append(b.getX())
+                    .append(",\"y\":").append(b.getY())
+                    .append(",\"z\":").append(b.getZ())
+                    .append(",\"material\":").append(quote(b.getType().name())).append('}');
+        }
+        arr.append(']');
+        return json(sender, true, "find_block", want.name(), System.currentTimeMillis() - t0, null,
+                "\"radius\":" + radius
+                        + ",\"count\":" + found.size()
+                        + ",\"nearest\":{\"x\":" + nearest.getX()
+                        + ",\"y\":" + nearest.getY()
+                        + ",\"z\":" + nearest.getZ()
+                        + ",\"material\":" + quote(nearest.getType().name()) + "}"
+                        + ",\"blocks\":" + arr);
     }
 
     private static boolean breakBlock(CommandSender sender, Player p, String[] args, long t0) {

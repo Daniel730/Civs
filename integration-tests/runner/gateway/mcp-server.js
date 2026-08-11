@@ -319,6 +319,75 @@ server.tool(
 );
 
 server.tool(
+  'minecraft_rpg_quest_detail',
+  'Quest definition + progress (objectives, rewards, status) for AI planning.',
+  { quest_id: z.string() },
+  async ({ quest_id }) =>
+    withToolLog('minecraft_rpg_quest_detail', { quest_id }, async () => {
+      const blocked = await ensureSession();
+      if (blocked) return textResult(blocked);
+      return textResult(
+        fromCap('rpg_quest_detail', await harness.cap.rpgQuestDetail(cfg.actorName, quest_id))
+      );
+    })
+);
+
+server.tool(
+  'minecraft_rpg_next_quest',
+  'Next available archetype story quest via QuestManager.findNextAvailableQuest.',
+  {},
+  async () =>
+    withToolLog('minecraft_rpg_next_quest', {}, async () => {
+      const blocked = await ensureSession();
+      if (blocked) return textResult(blocked);
+      return textResult(fromCap('rpg_next_quest', await harness.cap.rpgNextQuest(cfg.actorName)));
+    })
+);
+
+server.tool(
+  'minecraft_rpg_pois',
+  'Nearby RPG DiscoveryRegistry POIs (authoritative coords from pois.yml).',
+  { radius: z.number().optional() },
+  async ({ radius }) =>
+    withToolLog('minecraft_rpg_pois', { radius }, async () => {
+      const blocked = await ensureSession();
+      if (blocked) return textResult(blocked);
+      return textResult(fromCap('rpg_pois', await harness.cap.rpgPois(cfg.actorName, radius)));
+    })
+);
+
+server.tool(
+  'minecraft_find_block',
+  'Find nearest matching block within radius (AI World mine loops).',
+  {
+    material: z.string(),
+    radius: z.number().optional(),
+  },
+  async ({ material, radius }) =>
+    withToolLog('minecraft_find_block', { material, radius }, async () => {
+      const blocked = await ensureSession();
+      if (blocked) return textResult(blocked);
+      return textResult(
+        fromCap('find_block', await harness.cap.findBlock(cfg.actorName, material, radius))
+      );
+    })
+);
+
+server.tool(
+  'minecraft_world_nearby',
+  'Local world observation: biome, players, entities, Civs regions/town.',
+  { radius: z.number().optional() },
+  async ({ radius }) =>
+    withToolLog('minecraft_world_nearby', { radius }, async () => {
+      const blocked = await ensureSession();
+      if (blocked) return textResult(blocked);
+      return textResult(
+        fromCap('world_nearby', await harness.cap.worldNearby(cfg.actorName, radius))
+      );
+    })
+);
+
+server.tool(
   'minecraft_teleport',
   'Teleport player (Bukkit teleport / tp). Useful for pads; not a substitute for move_to.',
   { x: z.number(), y: z.number(), z: z.number() },

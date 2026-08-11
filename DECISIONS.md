@@ -333,3 +333,19 @@ machine; OTLP HTTP ingest is first-class; keeps one metrics/traces dashboard pat
 Datadog OTLP intake — **no** Datadog tracing SDK alongside OTel. Staging wiring needs
 `DD_API_KEY` / agent endpoint in env or GitHub Secrets (not committed). Minimum
 dashboard: scenario latency + error rate (see `docs/OBSERVABILITY.md` § APM).
+
+**D-AP-018 — AI World extends runner; Player actors are citizens (#67, 2026-08-11).**
+Do **not** introduce Citizens/Mythic/another NPC plugin as the autonomy runtime.
+Autonomous “citizens” are `RawKeepAliveActor` players + server capabilities +
+`lib/ai-world` decision/memory/quest loop. Guide villagers in Civs remain static
+dialog/housing population. LLM is optional high-level choice only (never per-tick).
+Quest planning requires RpgBridge `quest_detail` / `next_quest` (objectives+progress);
+POI coordinates remain **BLOCKED** until an observe adapter exists. Construction and
+settlement evolution are later milestones; disposable QA worlds only for live runs.
+
+**D-AP-019 — Physical mine progress is RPG state, not break_block alone (#67).**
+`Player.breakBlock` is the production event path (fires `BlockBreakEvent` →
+RPGServer `handleMineBlock`). Agents must verify progress via `quest_detail` /
+`completed_quests` before claiming success. POI coords come from RPG
+`DiscoveryRegistry` (`/test rpg pois`); Civs local geography from `/test world nearby`.
+QA fixture quest `ai_world_mine_probe` is disposable-only (copy into RPGServer/quests).
