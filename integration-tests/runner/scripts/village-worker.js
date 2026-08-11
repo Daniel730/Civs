@@ -202,28 +202,28 @@ async function runJob(harness, actorName, step, state) {
     await cap.hotbar(actorName, 0);
   }
 
-  // Break then place where allowed (creative QA pad — visible progress)
-  if (coords.target && (step.job === 'miner' || step.job === 'builder' || step.job === 'farmer')) {
-    const br = await cap.breakBlock(
-      actorName,
-      Math.floor(coords.target.x),
-      Math.floor(coords.target.y),
-      Math.floor(coords.target.z)
-    );
+  // Visible work: prefer place + swing. Only break known filler at dedicated dig spots.
+  if (step.job === 'miner') {
+    const digX = Math.floor(cfg.origin.x + (step.dx || 0) + 5);
+    const digY = cfg.origin.y;
+    const digZ = Math.floor(cfg.origin.z + (step.dz || 0) + 5);
+    await harness.raw(`setblock ${digX} ${digY} ${digZ} stone`);
+    const br = await cap.breakBlock(actorName, digX, digY, digZ);
     results.actions.push({ breakBlock: br });
+    await cap.swing(actorName);
+  } else if (step.job === 'builder' || step.job === 'farmer' || step.job === 'stockpile') {
     await cap.swing(actorName);
   }
 
   if (coords.place && step.job !== 'patrol') {
-    const mat = coords.place.material || 'stone_bricks';
+    // Place on work apron outside stockpile interiors (site + 6)
+    const mat = step.job === 'farmer' ? 'cobblestone' : coords.place.material || 'stone_bricks';
+    const px = Math.floor(cfg.origin.x + (step.dx || 0) + 6);
+    const py = cfg.origin.y + 1;
+    const pz = Math.floor(cfg.origin.z + (step.dz || 0) + 6 + (state.tick % 3));
+    await harness.raw(`setblock ${px} ${py} ${pz} air`);
     await cap.giveItem(actorName, mat.toUpperCase(), 16);
-    const pl = await cap.placeBlock(
-      actorName,
-      Math.floor(coords.place.x),
-      Math.floor(coords.place.y),
-      Math.floor(coords.place.z),
-      mat
-    );
+    const pl = await cap.placeBlock(actorName, px, py, pz, mat);
     results.actions.push({ placeBlock: pl });
     await cap.swing(actorName);
     await cap.jump(actorName);
@@ -268,6 +268,45 @@ async function connectActor(harness, name) {
   await harness.raw(`gamemode creative ${name}`);
   await actor.teleport(cfg.origin.x, cfg.origin.y + 2, cfg.origin.z);
   return { actor, ok: true };
+}
+
+/** Recover council_room + town if overnight damage wiped the center. */
+async function ensureTown(harness, actorName) {
+  const town = await harness.assert.town(cfg.town);
+  if (town && town.ok) return { status: 'PASS', town };
+  const { x, y, z } = cfg.origin;
+  await stockpile(harness, x, y, z, 'utility');
+  // Bookshelves required by council_room build-reqs
+  for (const [bx, by, bz] of [
+    [-3, 1, 1],
+    [-3, 1, 2],
+    [-3, 2, 1],
+    [-3, 2, 2],
+    [-2, 1, 2],
+    [-2, 2, 2],
+    [-1, 1, 2],
+    [-1, 2, 2],
+  ]) {
+    await harness.raw(`setblock ${x + bx} ${y + by} ${z + bz} bookshelf`);
+  }
+  await harness.raw(`setblock ${x} ${y} ${z} grass_block`);
+  await harness.raw(`setblock ${x} ${y + 1} ${z} air`);
+  const place = await harness.raw(`cv placeregion ${actorName} council_room ${x} ${y} ${z}`);
+  await harness.raw(`clear ${actorName}`);
+  await harness.raw(`cv give ${actorName} settlement 1`);
+  await harness.raw(`tp ${actorName} ${x + 2} ${y + 1} ${z + 2}`);
+  await harness.cap.hotbar(actorName, 0);
+  await harness.raw(
+    `item replace entity ${actorName} weapon.mainhand from entity ${actorName} container.0`
+  );
+  await harness.cap.runAs(actorName, `cv town ${cfg.town}`);
+  await sleep(400);
+  const again = await harness.assert.town(cfg.town);
+  return {
+    status: again && again.ok ? 'PASS' : 'FAIL',
+    place: String(place || '').slice(0, 160),
+    town: again,
+  };
 }
 
 async function main() {
@@ -351,6 +390,10 @@ async function main() {
     state.tick += 1;
     try {
       const town = await harness.assert.town(cfg.town);
+      if ((!town || !town.ok) && state.tick % 12 === 1) {
+        const recovery = await ensureTown(harness, cfg.actorName);
+        log({ status: recovery.status, action: 'ensure_town', recovery });
+      }
       const step = nextJob(state.tick, state);
       const who =
         helper && helper.ok && state.tick % 2 === 0 ? cfg.helperName : cfg.actorName;
