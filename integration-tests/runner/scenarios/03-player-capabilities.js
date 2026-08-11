@@ -1,4 +1,3 @@
-'use strict';
 /**
  * Empirically validates server-side player capabilities on Paper 26.1.2.
  * Requires an online actor (RawKeepAliveActor) — actions run via /test act as that player.
@@ -13,13 +12,21 @@ module.exports = scenario('PlayerCapabilities')
   .step('observe baseline', async (ctx) => {
     const obs = await ctx.harness.cap.observe(ctx.playerName);
     ctx.expectTrue('observe success', obs.success === true, obs.reason || obs._raw);
-    ctx.expectTrue('observe has coords', obs.data && typeof obs.data.x === 'number', JSON.stringify(obs.data));
+    ctx.expectTrue(
+      'observe has coords',
+      obs.data && typeof obs.data.x === 'number',
+      JSON.stringify(obs.data)
+    );
   })
   .step('sneak on/off', async (ctx) => {
     let r = await ctx.harness.cap.sneak(ctx.playerName, true);
     ctx.expectTrue('sneak on', r.success === true, r.reason || r._raw);
-    let obs = await ctx.harness.cap.observe(ctx.playerName);
-    ctx.expectTrue('sneaking true', obs.data && obs.data.sneaking === true, JSON.stringify(obs.data));
+    const obs = await ctx.harness.cap.observe(ctx.playerName);
+    ctx.expectTrue(
+      'sneaking true',
+      obs.data && obs.data.sneaking === true,
+      JSON.stringify(obs.data)
+    );
     r = await ctx.harness.cap.sneak(ctx.playerName, false);
     ctx.expectTrue('sneak off', r.success === true, r.reason || r._raw);
   })
@@ -36,7 +43,13 @@ module.exports = scenario('PlayerCapabilities')
   })
   .expectBlock(PAD.x + 1, PAD.y, PAD.z, 'AIR')
   .step('place_block via BlockPlaceEvent', async (ctx) => {
-    const r = await ctx.harness.cap.placeBlock(ctx.playerName, PAD.x + 2, PAD.y, PAD.z, 'OAK_PLANKS');
+    const r = await ctx.harness.cap.placeBlock(
+      ctx.playerName,
+      PAD.x + 2,
+      PAD.y,
+      PAD.z,
+      'OAK_PLANKS'
+    );
     ctx.expectTrue('place_block success', r.success === true, r.reason || r._raw);
   })
   .expectBlock(PAD.x + 2, PAD.y, PAD.z, 'OAK_PLANKS')

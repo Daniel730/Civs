@@ -1,4 +1,3 @@
-'use strict';
 /**
  * Accept an RPG quest through Player.performCommand and verify via /test rpg observe.
  *
@@ -40,11 +39,19 @@ module.exports = scenario('RpgQuestAccept')
 
     // Prefer QuestManager.acceptQuest via harness — returns real QuestAcceptResult.
     const r = await ctx.harness.cap.rpgAccept(ACTOR, QUEST);
-    ctx.expectTrue('rpg_accept SUCCESS', r.success === true, (r.reason || r._raw) + ' data=' + JSON.stringify(r.data));
+    ctx.expectTrue(
+      'rpg_accept SUCCESS',
+      r.success === true,
+      (r.reason || r._raw) + ' data=' + JSON.stringify(r.data)
+    );
     await ctx.wait(200);
     obs = await ctx.harness.cap.rpgObserve(ACTOR);
     active = (obs.data && obs.data.active_quests) || [];
-    ctx.expectTrue(`quest ${QUEST} in active_quests`, active.includes(QUEST), JSON.stringify(active));
+    ctx.expectTrue(
+      `quest ${QUEST} in active_quests`,
+      active.includes(QUEST),
+      JSON.stringify(active)
+    );
   })
   .expectNoErrors({ ignore: [/\[CivsTestHarness\]/, /PlaceholderAPI/] })
   .build();

@@ -295,3 +295,21 @@ mandatory process in `docs/AGENT-WORKFLOW.md` + `.cursor/rules/agent-workflow.md
 issues #31–#44. Hermes-fast used for checklist draft; Hermes-coder backlog timed out
 — parent authored issues. Full tool install is incremental via those issues, not a
 big-bang rewrite of the Paper plugin.
+
+**D-AP-014 — OpenTelemetry Node-first for #32 (2026-08-11).**
+Issue #32 asks for JVM + Node OTel. **Decision:** ship Node `integration-tests/runner`
++ Agent Gateway MCP instrumentation first (real Hermes→MCP→capability→RCON path),
+with env-driven exporters (`none` default so Minecraft QA never depends on a backend).
+JVM plugin spans deferred to a follow-up under the same issue/contract — avoid blocking
+#32 on Paper plugin shading while the agent platform already emits verifiable traces.
+No vendor SDKs (Sentry/Datadog/NR) in this PR; OTLP only.
+
+**D-AP-015 — Biome + commitlint + knip for runner (#35, 2026-08-11).**
+**Decision:** Biome is the sole JS format/lint tool for `integration-tests/runner`
+(`npm run lint`). Commitlint validates conventional **PR titles** in
+`.github/workflows/runner-quality.yml` when the runner changes. Knip gates **critical**
+dead-ends (unused files, unused/unlisted deps); unused **export** reporting is off for
+now because knip under-detects CommonJS `require` + member access (`tel.foo`) false
+positives on intentional public/test APIs. `zod` is a direct dependency (MCP tool schemas).
+`typescript` is a knip peer only (ignored as unused app dep). Broader CI (Maven, merge
+blocking policy) remains #42; arch-contract remains #36.
