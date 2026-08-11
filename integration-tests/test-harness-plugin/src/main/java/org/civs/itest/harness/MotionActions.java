@@ -945,6 +945,8 @@ final class MotionActions {
 
             Location candidate = null;
             // Try the intended angle, then rotate away in 40-degree steps, then lift.
+            // Occlusion is ONLY real line-of-sight blocking between aim and camera; an
+            // angular adjustment that finds a clear cell is NOT an occlusion.
             for (int attempt = 0; attempt < 14 && candidate == null; attempt++) {
                 int ring = attempt / 9;
                 double yawTry = baseYaw + Math.toRadians((attempt % 9) * 40.0);
@@ -956,13 +958,12 @@ final class MotionActions {
                         sLoc.getZ() + Math.sin(yawTry) * distTry);
                 Location fitted = pullIn(aim, c);
                 if (fitted == null) {
-                    if (attempt == 0) pose.wasOccluded = true;
+                    // pullIn returns null only when the candidate cell is inside geometry
+                    // or the aim->cam ray is blocked; that is a genuine occlusion.
+                    pose.wasOccluded = true;
                     continue;
                 }
-                if (attempt > 0) {
-                    pose.wasRepositioned = true;
-                    if (!pose.wasOccluded) pose.wasOccluded = true;
-                }
+                if (attempt > 0) pose.wasRepositioned = true;
                 candidate = fitted;
             }
             if (candidate == null) {
