@@ -4,10 +4,11 @@
     "run.js!",
     "gateway/mcp-server.js!",
     "gateway/smoke.js!",
-    "scripts/*.js!",
+    "scripts/**/*.js!",
     "scenarios/*.js!",
     "test/*.test.js!",
-    "lib/actor-mineflayer.js!"
+    "lib/actor-mineflayer.js!",
+    "lib/stream/**/*.js!"
   ],
   "project": ["**/*.{js,cjs,mjs}"],
   "ignore": ["reports/**", "node_modules/**", "commitlint.config.cjs"],

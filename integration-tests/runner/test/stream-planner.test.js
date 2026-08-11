@@ -1,12 +1,11 @@
 /**
- * Unit tests for stream shot planner (no Minecraft required).
- * Health/OBS summarize stays on feat/stream-nightshift-51.
- * Run: node --test test/stream-planner.test.js
+ * Unit tests for stream shot planner / health (no Minecraft required).
+ * Run from runner: node --test test/stream-planner.test.js
  */
 const { describe, it } = require('node:test');
 const assert = require('node:assert/strict');
 const { ShotPlanner } = require('../lib/stream/shot-planner');
-const { FallbackDirector } = require('../lib/stream/fallback-director');
+const { summarize, STATES } = require('../lib/stream/health');
 
 describe('ShotPlanner', () => {
   it('exposes cinematic modes', () => {
@@ -16,12 +15,12 @@ describe('ShotPlanner', () => {
   });
 
   it('respects cooldown and avoids immediate repeat', () => {
-    const p = new ShotPlanner({
-      cooldownMs: 60_000,
-      minDurationMs: 1,
-      maxDurationMs: 2,
-      rng: () => 0.1,
-    });
+    let n = 0;
+    const rng = () => {
+      n += 1;
+      return 0.1;
+    };
+    const p = new ShotPlanner({ cooldownMs: 60_000, minDurationMs: 1, maxDurationMs: 2, rng });
     const a = p.nextShot({ now: 1_000, force: true, mode: 'follow' });
     assert.equal(a.mode, 'follow');
     const b = p.nextShot({ now: 1_000 + 5_000 });
@@ -62,17 +61,22 @@ describe('ShotPlanner', () => {
   });
 });
 
-describe('FallbackDirector', () => {
-  it('exports a constructible director', () => {
-    const d = new FallbackDirector({
-      camera: { actor: { available: false } },
-      getTargetPos: async () => ({ x: 0, y: 0, z: 0 }),
-      intervalMs: 999_999,
+describe('stream health summarize', () => {
+  it('worst-wins across components', () => {
+    const s = summarize({
+      minecraft: { state: 'HEALTHY' },
+      obs: { state: 'DEGRADED' },
+      stream: { state: 'BLOCKED' },
     });
-    assert.equal(d.status, 'IDLE');
-    d.start();
-    assert.equal(d.status, 'HEALTHY');
-    d.stop();
-    assert.equal(d.status, 'IDLE');
+    assert.equal(s.overall, 'BLOCKED');
+    assert.ok(STATES.includes(s.overall));
+  });
+
+  it('healthy when all healthy', () => {
+    const s = summarize({
+      minecraft: { state: 'HEALTHY' },
+      obs: { state: 'HEALTHY' },
+    });
+    assert.equal(s.overall, 'HEALTHY');
   });
 });

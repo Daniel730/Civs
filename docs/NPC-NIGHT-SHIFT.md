@@ -180,3 +180,4 @@ bash scripts/recover-npc.sh
 | Full Director (orbit interest scoring) | **TODO** | Cam spectate is enough |
 | Hamlet+ structures (warehouse, wheat_farm) | **BLOCKED** until hamlet upgrade | Evolve town when build-reqs met |
 | Windows `127.0.0.1` → WSL game port | **BLOCKED** on this host | Use WSL IP / launcher auto-detect (fixed in viewer) |
+| Public YouTube livestream | **NOT STARTED** | Local OBS prep: `docs/STREAM-NIGHTSHIFT.md` (#51) |

@@ -11,6 +11,7 @@
     "test": "node run.js",
     "test:one": "node run.js --scenario",
     "test:unit": "node --test test/*.test.js",
+    "test:stream-unit": "node --test test/stream-planner.test.js",
     "test:otel-validate": "node scripts/validate-otel-tree.js",
     "village-builder": "node scripts/village-builder.js",
     "village-builder:once": "node scripts/village-builder.js --once",

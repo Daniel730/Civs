@@ -1,0 +1,1606 @@
+{
+    "name": "CivsNightshift",
+    "current_scene": "Minecraft — Cinematic",
+    "current_program_scene": "Minecraft — Cinematic",
+    "scene_order": [
+        "Starting Soon",
+        "Minecraft — Cinematic",
+        "Minecraft — Wide",
+        "Minecraft — Exploration",
+        "Minecraft — Event",
+        "Minecraft — AFK Quiet",
+        "BRB",
+        "Stream Ending"
+    ],
+    "DesktopAudioDevice1": {
+        "prev_ver": 536936448,
+        "name": "Desktop Audio",
+        "uuid": "4fff02f1-0b4e-4718-91fd-650a05754598",
+        "id": "wasapi_output_capture",
+        "versioned_id": "wasapi_output_capture",
+        "settings": {
+            "device_id": "default"
+        },
+        "mixers": 255,
+        "sync": 0,
+        "flags": 0,
+        "volume": 0.5,
+        "balance": 0.5,
+        "enabled": true,
+        "muted": false,
+        "push-to-mute": false,
+        "push-to-mute-delay": 0,
+        "push-to-talk": false,
+        "push-to-talk-delay": 0,
+        "hotkeys": {},
+        "deinterlace_mode": 0,
+        "deinterlace_field_order": 0,
+        "monitoring_type": 0,
+        "private_settings": {}
+    },
+    "sources": [
+        {
+            "prev_ver": 536936448,
+            "name": "BG Dark",
+            "uuid": "50a93e56-c725-4840-8673-099771dc3ab4",
+            "id": "color_source_v3",
+            "versioned_id": "color_source_v3",
+            "settings": {
+                "color": 4278190080,
+                "width": 1920,
+                "height": 1080
+            },
+            "mixers": 255,
+            "sync": 0,
+            "flags": 0,
+            "volume": 1,
+            "balance": 0.5,
+            "enabled": true,
+            "muted": false,
+            "push-to-mute": false,
+            "push-to-mute-delay": 0,
+            "push-to-talk": false,
+            "push-to-talk-delay": 0,
+            "hotkeys": {},
+            "deinterlace_mode": 0,
+            "deinterlace_field_order": 0,
+            "monitoring_type": 0,
+            "private_settings": {}
+        },
+        {
+            "prev_ver": 536936448,
+            "name": "BG Quiet",
+            "uuid": "ba64ed00-2c2c-4147-a9dd-412c0f881bba",
+            "id": "color_source_v3",
+            "versioned_id": "color_source_v3",
+            "settings": {
+                "color": 4279834905,
+                "width": 1920,
+                "height": 1080
+            },
+            "mixers": 255,
+            "sync": 0,
+            "flags": 0,
+            "volume": 1,
+            "balance": 0.5,
+            "enabled": true,
+            "muted": false,
+            "push-to-mute": false,
+            "push-to-mute-delay": 0,
+            "push-to-talk": false,
+            "push-to-talk-delay": 0,
+            "hotkeys": {},
+            "deinterlace_mode": 0,
+            "deinterlace_field_order": 0,
+            "monitoring_type": 0,
+            "private_settings": {}
+        },
+        {
+            "prev_ver": 536936448,
+            "name": "Text Starting Soon",
+            "uuid": "bee372cb-2304-49ba-9431-7b7613db30bc",
+            "id": "text_gdiplus_v2",
+            "versioned_id": "text_gdiplus_v2",
+            "settings": {
+                "text": "Starting Soon — Civs AI Village",
+                "font": {
+                    "face": "Segoe UI",
+                    "size": 72,
+                    "flags": 0
+                },
+                "color": 4294967295,
+                "align": "center",
+                "valign": "center"
+            },
+            "mixers": 255,
+            "sync": 0,
+            "flags": 0,
+            "volume": 1,
+            "balance": 0.5,
+            "enabled": true,
+            "muted": false,
+            "push-to-mute": false,
+            "push-to-mute-delay": 0,
+            "push-to-talk": false,
+            "push-to-talk-delay": 0,
+            "hotkeys": {},
+            "deinterlace_mode": 0,
+            "deinterlace_field_order": 0,
+            "monitoring_type": 0,
+            "private_settings": {}
+        },
+        {
+            "prev_ver": 536936448,
+            "name": "Text BRB",
+            "uuid": "75c02b7c-412e-4df3-8d3c-dc2f5d08ded3",
+            "id": "text_gdiplus_v2",
+            "versioned_id": "text_gdiplus_v2",
+            "settings": {
+                "text": "Be right back",
+                "font": {
+                    "face": "Segoe UI",
+                    "size": 72,
+                    "flags": 0
+                },
+                "color": 4294967295,
+                "align": "center",
+                "valign": "center"
+            },
+            "mixers": 255,
+            "sync": 0,
+            "flags": 0,
+            "volume": 1,
+            "balance": 0.5,
+            "enabled": true,
+            "muted": false,
+            "push-to-mute": false,
+            "push-to-mute-delay": 0,
+            "push-to-talk": false,
+            "push-to-talk-delay": 0,
+            "hotkeys": {},
+            "deinterlace_mode": 0,
+            "deinterlace_field_order": 0,
+            "monitoring_type": 0,
+            "private_settings": {}
+        },
+        {
+            "prev_ver": 536936448,
+            "name": "Text Ending",
+            "uuid": "b9bdf70e-e899-4a4c-9674-88fbbc8927b1",
+            "id": "text_gdiplus_v2",
+            "versioned_id": "text_gdiplus_v2",
+            "settings": {
+                "text": "Thanks for watching",
+                "font": {
+                    "face": "Segoe UI",
+                    "size": 72,
+                    "flags": 0
+                },
+                "color": 4294967295,
+                "align": "center",
+                "valign": "center"
+            },
+            "mixers": 255,
+            "sync": 0,
+            "flags": 0,
+            "volume": 1,
+            "balance": 0.5,
+            "enabled": true,
+            "muted": false,
+            "push-to-mute": false,
+            "push-to-mute-delay": 0,
+            "push-to-talk": false,
+            "push-to-talk-delay": 0,
+            "hotkeys": {},
+            "deinterlace_mode": 0,
+            "deinterlace_field_order": 0,
+            "monitoring_type": 0,
+            "private_settings": {}
+        },
+        {
+            "prev_ver": 536936448,
+            "name": "Minecraft Capture",
+            "uuid": "3eca182c-3645-4a27-8e1a-ad69dbf981e8",
+            "id": "game_capture",
+            "versioned_id": "game_capture",
+            "settings": {
+                "capture_mode": "any_fullscreen",
+                "capture_audio": true
+            },
+            "mixers": 255,
+            "sync": 0,
+            "flags": 0,
+            "volume": 1,
+            "balance": 0.5,
+            "enabled": true,
+            "muted": false,
+            "push-to-mute": false,
+            "push-to-mute-delay": 0,
+            "push-to-talk": false,
+            "push-to-talk-delay": 0,
+            "hotkeys": {},
+            "deinterlace_mode": 0,
+            "deinterlace_field_order": 0,
+            "monitoring_type": 0,
+            "private_settings": {}
+        },
+        {
+            "prev_ver": 536936448,
+            "name": "Music Procedural",
+            "uuid": "55b2b6b1-02e7-423c-b838-defb5c9e84ad",
+            "id": "ffmpeg_source",
+            "versioned_id": "ffmpeg_source",
+            "settings": {
+                "local_file": "C:/Users/Danie/Downloads/Civs-1.11.6/Civs-1.11.6/stream-assets/music/soft-loop-procedural.wav",
+                "looping": true,
+                "clear_on_media_end": false,
+                "restart_on_activate": true
+            },
+            "mixers": 255,
+            "sync": 0,
+            "flags": 0,
+            "volume": 0.12,
+            "balance": 0.5,
+            "enabled": true,
+            "muted": false,
+            "push-to-mute": false,
+            "push-to-mute-delay": 0,
+            "push-to-talk": false,
+            "push-to-talk-delay": 0,
+            "hotkeys": {},
+            "deinterlace_mode": 0,
+            "deinterlace_field_order": 0,
+            "monitoring_type": 0,
+            "private_settings": {}
+        },
+        {
+            "prev_ver": 536936448,
+            "name": "Cinematic Overlay",
+            "uuid": "e12a228e-1f12-469f-85e8-c29c1f3af6c0",
+            "id": "browser_source",
+            "versioned_id": "browser_source",
+            "settings": {
+                "local_file": "C:/Users/Danie/Downloads/Civs-1.11.6/Civs-1.11.6/stream-assets/overlays/cinematic.html",
+                "is_local_file": true,
+                "width": 1920,
+                "height": 1080,
+                "css": "body { background-color: rgba(0,0,0,0); margin: 0px; overflow: hidden; }",
+                "shutdown": true,
+                "fps": 30
+            },
+            "mixers": 255,
+            "sync": 0,
+            "flags": 0,
+            "volume": 1,
+            "balance": 0.5,
+            "enabled": true,
+            "muted": false,
+            "push-to-mute": false,
+            "push-to-mute-delay": 0,
+            "push-to-talk": false,
+            "push-to-talk-delay": 0,
+            "hotkeys": {},
+            "deinterlace_mode": 0,
+            "deinterlace_field_order": 0,
+            "monitoring_type": 0,
+            "private_settings": {}
+        },
+        {
+            "prev_ver": 536936448,
+            "name": "Starting Soon",
+            "uuid": "c42d53f3-857e-4263-b8e4-00fbb43a0cdb",
+            "id": "scene",
+            "versioned_id": "scene",
+            "settings": {
+                "id_counter": 4,
+                "custom_size": false,
+                "items": [
+                    {
+                        "name": "BG Dark",
+                        "source_uuid": "50a93e56-c725-4840-8673-099771dc3ab4",
+                        "visible": true,
+                        "locked": false,
+                        "rot": 0,
+                        "scale_ref": {
+                            "x": 1920,
+                            "y": 1080
+                        },
+                        "align": 5,
+                        "bounds_type": 0,
+                        "bounds_align": 0,
+                        "bounds_crop": false,
+                        "crop_left": 0,
+                        "crop_top": 0,
+                        "crop_right": 0,
+                        "crop_bottom": 0,
+                        "id": 1,
+                        "group_item_backup": false,
+                        "pos": {
+                            "x": 0,
+                            "y": 0
+                        },
+                        "pos_rel": {
+                            "x": 0,
+                            "y": 0
+                        },
+                        "scale": {
+                            "x": 1,
+                            "y": 1
+                        },
+                        "scale_rel": {
+                            "x": 1,
+                            "y": 1
+                        },
+                        "bounds": {
+                            "x": 0,
+                            "y": 0
+                        },
+                        "bounds_rel": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    },
+                    {
+                        "name": "Text Starting Soon",
+                        "source_uuid": "bee372cb-2304-49ba-9431-7b7613db30bc",
+                        "visible": true,
+                        "locked": false,
+                        "rot": 0,
+                        "scale_ref": {
+                            "x": 1920,
+                            "y": 1080
+                        },
+                        "align": 5,
+                        "bounds_type": 0,
+                        "bounds_align": 0,
+                        "bounds_crop": false,
+                        "crop_left": 0,
+                        "crop_top": 0,
+                        "crop_right": 0,
+                        "crop_bottom": 0,
+                        "id": 2,
+                        "group_item_backup": false,
+                        "pos": {
+                            "x": 0,
+                            "y": 0
+                        },
+                        "pos_rel": {
+                            "x": 0,
+                            "y": 0
+                        },
+                        "scale": {
+                            "x": 1,
+                            "y": 1
+                        },
+                        "scale_rel": {
+                            "x": 1,
+                            "y": 1
+                        },
+                        "bounds": {
+                            "x": 0,
+                            "y": 0
+                        },
+                        "bounds_rel": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    },
+                    {
+                        "name": "Music Procedural",
+                        "source_uuid": "55b2b6b1-02e7-423c-b838-defb5c9e84ad",
+                        "visible": true,
+                        "locked": false,
+                        "rot": 0,
+                        "scale_ref": {
+                            "x": 1920,
+                            "y": 1080
+                        },
+                        "align": 5,
+                        "bounds_type": 0,
+                        "bounds_align": 0,
+                        "bounds_crop": false,
+                        "crop_left": 0,
+                        "crop_top": 0,
+                        "crop_right": 0,
+                        "crop_bottom": 0,
+                        "id": 3,
+                        "group_item_backup": false,
+                        "pos": {
+                            "x": 0,
+                            "y": 0
+                        },
+                        "pos_rel": {
+                            "x": 0,
+                            "y": 0
+                        },
+                        "scale": {
+                            "x": 1,
+                            "y": 1
+                        },
+                        "scale_rel": {
+                            "x": 1,
+                            "y": 1
+                        },
+                        "bounds": {
+                            "x": 0,
+                            "y": 0
+                        },
+                        "bounds_rel": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    }
+                ]
+            },
+            "mixers": 255,
+            "sync": 0,
+            "flags": 0,
+            "volume": 1,
+            "balance": 0.5,
+            "enabled": true,
+            "muted": false,
+            "push-to-mute": false,
+            "push-to-mute-delay": 0,
+            "push-to-talk": false,
+            "push-to-talk-delay": 0,
+            "hotkeys": {},
+            "deinterlace_mode": 0,
+            "deinterlace_field_order": 0,
+            "monitoring_type": 0,
+            "private_settings": {}
+        },
+        {
+            "prev_ver": 536936448,
+            "name": "Minecraft — Cinematic",
+            "uuid": "b9ad3611-78e7-420b-bfd4-f6508f33a0ea",
+            "id": "scene",
+            "versioned_id": "scene",
+            "settings": {
+                "id_counter": 4,
+                "custom_size": false,
+                "items": [
+                    {
+                        "name": "Minecraft Capture",
+                        "source_uuid": "3eca182c-3645-4a27-8e1a-ad69dbf981e8",
+                        "visible": true,
+                        "locked": false,
+                        "rot": 0,
+                        "scale_ref": {
+                            "x": 1920,
+                            "y": 1080
+                        },
+                        "align": 5,
+                        "bounds_type": 0,
+                        "bounds_align": 0,
+                        "bounds_crop": false,
+                        "crop_left": 0,
+                        "crop_top": 0,
+                        "crop_right": 0,
+                        "crop_bottom": 0,
+                        "id": 1,
+                        "group_item_backup": false,
+                        "pos": {
+                            "x": 0,
+                            "y": 0
+                        },
+                        "pos_rel": {
+                            "x": 0,
+                            "y": 0
+                        },
+                        "scale": {
+                            "x": 1,
+                            "y": 1
+                        },
+                        "scale_rel": {
+                            "x": 1,
+                            "y": 1
+                        },
+                        "bounds": {
+                            "x": 0,
+                            "y": 0
+                        },
+                        "bounds_rel": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    },
+                    {
+                        "name": "Cinematic Overlay",
+                        "source_uuid": "e12a228e-1f12-469f-85e8-c29c1f3af6c0",
+                        "visible": true,
+                        "locked": false,
+                        "rot": 0,
+                        "scale_ref": {
+                            "x": 1920,
+                            "y": 1080
+                        },
+                        "align": 5,
+                        "bounds_type": 0,
+                        "bounds_align": 0,
+                        "bounds_crop": false,
+                        "crop_left": 0,
+                        "crop_top": 0,
+                        "crop_right": 0,
+                        "crop_bottom": 0,
+                        "id": 2,
+                        "group_item_backup": false,
+                        "pos": {
+                            "x": 0,
+                            "y": 0
+                        },
+                        "pos_rel": {
+                            "x": 0,
+                            "y": 0
+                        },
+                        "scale": {
+                            "x": 1,
+                            "y": 1
+                        },
+                        "scale_rel": {
+                            "x": 1,
+                            "y": 1
+                        },
+                        "bounds": {
+                            "x": 0,
+                            "y": 0
+                        },
+                        "bounds_rel": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    },
+                    {
+                        "name": "Music Procedural",
+                        "source_uuid": "55b2b6b1-02e7-423c-b838-defb5c9e84ad",
+                        "visible": true,
+                        "locked": false,
+                        "rot": 0,
+                        "scale_ref": {
+                            "x": 1920,
+                            "y": 1080
+                        },
+                        "align": 5,
+                        "bounds_type": 0,
+                        "bounds_align": 0,
+                        "bounds_crop": false,
+                        "crop_left": 0,
+                        "crop_top": 0,
+                        "crop_right": 0,
+                        "crop_bottom": 0,
+                        "id": 3,
+                        "group_item_backup": false,
+                        "pos": {
+                            "x": 0,
+                            "y": 0
+                        },
+                        "pos_rel": {
+                            "x": 0,
+                            "y": 0
+                        },
+                        "scale": {
+                            "x": 1,
+                            "y": 1
+                        },
+                        "scale_rel": {
+                            "x": 1,
+                            "y": 1
+                        },
+                        "bounds": {
+                            "x": 0,
+                            "y": 0
+                        },
+                        "bounds_rel": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    }
+                ]
+            },
+            "mixers": 255,
+            "sync": 0,
+            "flags": 0,
+            "volume": 1,
+            "balance": 0.5,
+            "enabled": true,
+            "muted": false,
+            "push-to-mute": false,
+            "push-to-mute-delay": 0,
+            "push-to-talk": false,
+            "push-to-talk-delay": 0,
+            "hotkeys": {},
+            "deinterlace_mode": 0,
+            "deinterlace_field_order": 0,
+            "monitoring_type": 0,
+            "private_settings": {}
+        },
+        {
+            "prev_ver": 536936448,
+            "name": "Minecraft — Wide",
+            "uuid": "e1631484-4ccf-4da6-a174-ce0cd6117230",
+            "id": "scene",
+            "versioned_id": "scene",
+            "settings": {
+                "id_counter": 4,
+                "custom_size": false,
+                "items": [
+                    {
+                        "name": "Minecraft Capture",
+                        "source_uuid": "3eca182c-3645-4a27-8e1a-ad69dbf981e8",
+                        "visible": true,
+                        "locked": false,
+                        "rot": 0,
+                        "scale_ref": {
+                            "x": 1920,
+                            "y": 1080
+                        },
+                        "align": 5,
+                        "bounds_type": 0,
+                        "bounds_align": 0,
+                        "bounds_crop": false,
+                        "crop_left": 0,
+                        "crop_top": 0,
+                        "crop_right": 0,
+                        "crop_bottom": 0,
+                        "id": 1,
+                        "group_item_backup": false,
+                        "pos": {
+                            "x": 0,
+                            "y": 0
+                        },
+                        "pos_rel": {
+                            "x": 0,
+                            "y": 0
+                        },
+                        "scale": {
+                            "x": 1,
+                            "y": 1
+                        },
+                        "scale_rel": {
+                            "x": 1,
+                            "y": 1
+                        },
+                        "bounds": {
+                            "x": 0,
+                            "y": 0
+                        },
+                        "bounds_rel": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    },
+                    {
+                        "name": "Cinematic Overlay",
+                        "source_uuid": "e12a228e-1f12-469f-85e8-c29c1f3af6c0",
+                        "visible": true,
+                        "locked": false,
+                        "rot": 0,
+                        "scale_ref": {
+                            "x": 1920,
+                            "y": 1080
+                        },
+                        "align": 5,
+                        "bounds_type": 0,
+                        "bounds_align": 0,
+                        "bounds_crop": false,
+                        "crop_left": 0,
+                        "crop_top": 0,
+                        "crop_right": 0,
+                        "crop_bottom": 0,
+                        "id": 2,
+                        "group_item_backup": false,
+                        "pos": {
+                            "x": 0,
+                            "y": 0
+                        },
+                        "pos_rel": {
+                            "x": 0,
+                            "y": 0
+                        },
+                        "scale": {
+                            "x": 1,
+                            "y": 1
+                        },
+                        "scale_rel": {
+                            "x": 1,
+                            "y": 1
+                        },
+                        "bounds": {
+                            "x": 0,
+                            "y": 0
+                        },
+                        "bounds_rel": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    },
+                    {
+                        "name": "Music Procedural",
+                        "source_uuid": "55b2b6b1-02e7-423c-b838-defb5c9e84ad",
+                        "visible": true,
+                        "locked": false,
+                        "rot": 0,
+                        "scale_ref": {
+                            "x": 1920,
+                            "y": 1080
+                        },
+                        "align": 5,
+                        "bounds_type": 0,
+                        "bounds_align": 0,
+                        "bounds_crop": false,
+                        "crop_left": 0,
+                        "crop_top": 0,
+                        "crop_right": 0,
+                        "crop_bottom": 0,
+                        "id": 3,
+                        "group_item_backup": false,
+                        "pos": {
+                            "x": 0,
+                            "y": 0
+                        },
+                        "pos_rel": {
+                            "x": 0,
+                            "y": 0
+                        },
+                        "scale": {
+                            "x": 1,
+                            "y": 1
+                        },
+                        "scale_rel": {
+                            "x": 1,
+                            "y": 1
+                        },
+                        "bounds": {
+                            "x": 0,
+                            "y": 0
+                        },
+                        "bounds_rel": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    }
+                ]
+            },
+            "mixers": 255,
+            "sync": 0,
+            "flags": 0,
+            "volume": 1,
+            "balance": 0.5,
+            "enabled": true,
+            "muted": false,
+            "push-to-mute": false,
+            "push-to-mute-delay": 0,
+            "push-to-talk": false,
+            "push-to-talk-delay": 0,
+            "hotkeys": {},
+            "deinterlace_mode": 0,
+            "deinterlace_field_order": 0,
+            "monitoring_type": 0,
+            "private_settings": {}
+        },
+        {
+            "prev_ver": 536936448,
+            "name": "Minecraft — Exploration",
+            "uuid": "ffc50567-fce9-453f-b00c-14b8216ad758",
+            "id": "scene",
+            "versioned_id": "scene",
+            "settings": {
+                "id_counter": 4,
+                "custom_size": false,
+                "items": [
+                    {
+                        "name": "Minecraft Capture",
+                        "source_uuid": "3eca182c-3645-4a27-8e1a-ad69dbf981e8",
+                        "visible": true,
+                        "locked": false,
+                        "rot": 0,
+                        "scale_ref": {
+                            "x": 1920,
+                            "y": 1080
+                        },
+                        "align": 5,
+                        "bounds_type": 0,
+                        "bounds_align": 0,
+                        "bounds_crop": false,
+                        "crop_left": 0,
+                        "crop_top": 0,
+                        "crop_right": 0,
+                        "crop_bottom": 0,
+                        "id": 1,
+                        "group_item_backup": false,
+                        "pos": {
+                            "x": 0,
+                            "y": 0
+                        },
+                        "pos_rel": {
+                            "x": 0,
+                            "y": 0
+                        },
+                        "scale": {
+                            "x": 1,
+                            "y": 1
+                        },
+                        "scale_rel": {
+                            "x": 1,
+                            "y": 1
+                        },
+                        "bounds": {
+                            "x": 0,
+                            "y": 0
+                        },
+                        "bounds_rel": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    },
+                    {
+                        "name": "Cinematic Overlay",
+                        "source_uuid": "e12a228e-1f12-469f-85e8-c29c1f3af6c0",
+                        "visible": true,
+                        "locked": false,
+                        "rot": 0,
+                        "scale_ref": {
+                            "x": 1920,
+                            "y": 1080
+                        },
+                        "align": 5,
+                        "bounds_type": 0,
+                        "bounds_align": 0,
+                        "bounds_crop": false,
+                        "crop_left": 0,
+                        "crop_top": 0,
+                        "crop_right": 0,
+                        "crop_bottom": 0,
+                        "id": 2,
+                        "group_item_backup": false,
+                        "pos": {
+                            "x": 0,
+                            "y": 0
+                        },
+                        "pos_rel": {
+                            "x": 0,
+                            "y": 0
+                        },
+                        "scale": {
+                            "x": 1,
+                            "y": 1
+                        },
+                        "scale_rel": {
+                            "x": 1,
+                            "y": 1
+                        },
+                        "bounds": {
+                            "x": 0,
+                            "y": 0
+                        },
+                        "bounds_rel": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    },
+                    {
+                        "name": "Music Procedural",
+                        "source_uuid": "55b2b6b1-02e7-423c-b838-defb5c9e84ad",
+                        "visible": true,
+                        "locked": false,
+                        "rot": 0,
+                        "scale_ref": {
+                            "x": 1920,
+                            "y": 1080
+                        },
+                        "align": 5,
+                        "bounds_type": 0,
+                        "bounds_align": 0,
+                        "bounds_crop": false,
+                        "crop_left": 0,
+                        "crop_top": 0,
+                        "crop_right": 0,
+                        "crop_bottom": 0,
+                        "id": 3,
+                        "group_item_backup": false,
+                        "pos": {
+                            "x": 0,
+                            "y": 0
+                        },
+                        "pos_rel": {
+                            "x": 0,
+                            "y": 0
+                        },
+                        "scale": {
+                            "x": 1,
+                            "y": 1
+                        },
+                        "scale_rel": {
+                            "x": 1,
+                            "y": 1
+                        },
+                        "bounds": {
+                            "x": 0,
+                            "y": 0
+                        },
+                        "bounds_rel": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    }
+                ]
+            },
+            "mixers": 255,
+            "sync": 0,
+            "flags": 0,
+            "volume": 1,
+            "balance": 0.5,
+            "enabled": true,
+            "muted": false,
+            "push-to-mute": false,
+            "push-to-mute-delay": 0,
+            "push-to-talk": false,
+            "push-to-talk-delay": 0,
+            "hotkeys": {},
+            "deinterlace_mode": 0,
+            "deinterlace_field_order": 0,
+            "monitoring_type": 0,
+            "private_settings": {}
+        },
+        {
+            "prev_ver": 536936448,
+            "name": "Minecraft — Event",
+            "uuid": "235864d6-aaf0-4ff9-b939-f4ef25a17d6d",
+            "id": "scene",
+            "versioned_id": "scene",
+            "settings": {
+                "id_counter": 4,
+                "custom_size": false,
+                "items": [
+                    {
+                        "name": "Minecraft Capture",
+                        "source_uuid": "3eca182c-3645-4a27-8e1a-ad69dbf981e8",
+                        "visible": true,
+                        "locked": false,
+                        "rot": 0,
+                        "scale_ref": {
+                            "x": 1920,
+                            "y": 1080
+                        },
+                        "align": 5,
+                        "bounds_type": 0,
+                        "bounds_align": 0,
+                        "bounds_crop": false,
+                        "crop_left": 0,
+                        "crop_top": 0,
+                        "crop_right": 0,
+                        "crop_bottom": 0,
+                        "id": 1,
+                        "group_item_backup": false,
+                        "pos": {
+                            "x": 0,
+                            "y": 0
+                        },
+                        "pos_rel": {
+                            "x": 0,
+                            "y": 0
+                        },
+                        "scale": {
+                            "x": 1,
+                            "y": 1
+                        },
+                        "scale_rel": {
+                            "x": 1,
+                            "y": 1
+                        },
+                        "bounds": {
+                            "x": 0,
+                            "y": 0
+                        },
+                        "bounds_rel": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    },
+                    {
+                        "name": "Cinematic Overlay",
+                        "source_uuid": "e12a228e-1f12-469f-85e8-c29c1f3af6c0",
+                        "visible": true,
+                        "locked": false,
+                        "rot": 0,
+                        "scale_ref": {
+                            "x": 1920,
+                            "y": 1080
+                        },
+                        "align": 5,
+                        "bounds_type": 0,
+                        "bounds_align": 0,
+                        "bounds_crop": false,
+                        "crop_left": 0,
+                        "crop_top": 0,
+                        "crop_right": 0,
+                        "crop_bottom": 0,
+                        "id": 2,
+                        "group_item_backup": false,
+                        "pos": {
+                            "x": 0,
+                            "y": 0
+                        },
+                        "pos_rel": {
+                            "x": 0,
+                            "y": 0
+                        },
+                        "scale": {
+                            "x": 1,
+                            "y": 1
+                        },
+                        "scale_rel": {
+                            "x": 1,
+                            "y": 1
+                        },
+                        "bounds": {
+                            "x": 0,
+                            "y": 0
+                        },
+                        "bounds_rel": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    },
+                    {
+                        "name": "Music Procedural",
+                        "source_uuid": "55b2b6b1-02e7-423c-b838-defb5c9e84ad",
+                        "visible": true,
+                        "locked": false,
+                        "rot": 0,
+                        "scale_ref": {
+                            "x": 1920,
+                            "y": 1080
+                        },
+                        "align": 5,
+                        "bounds_type": 0,
+                        "bounds_align": 0,
+                        "bounds_crop": false,
+                        "crop_left": 0,
+                        "crop_top": 0,
+                        "crop_right": 0,
+                        "crop_bottom": 0,
+                        "id": 3,
+                        "group_item_backup": false,
+                        "pos": {
+                            "x": 0,
+                            "y": 0
+                        },
+                        "pos_rel": {
+                            "x": 0,
+                            "y": 0
+                        },
+                        "scale": {
+                            "x": 1,
+                            "y": 1
+                        },
+                        "scale_rel": {
+                            "x": 1,
+                            "y": 1
+                        },
+                        "bounds": {
+                            "x": 0,
+                            "y": 0
+                        },
+                        "bounds_rel": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    }
+                ]
+            },
+            "mixers": 255,
+            "sync": 0,
+            "flags": 0,
+            "volume": 1,
+            "balance": 0.5,
+            "enabled": true,
+            "muted": false,
+            "push-to-mute": false,
+            "push-to-mute-delay": 0,
+            "push-to-talk": false,
+            "push-to-talk-delay": 0,
+            "hotkeys": {},
+            "deinterlace_mode": 0,
+            "deinterlace_field_order": 0,
+            "monitoring_type": 0,
+            "private_settings": {}
+        },
+        {
+            "prev_ver": 536936448,
+            "name": "Minecraft — AFK Quiet",
+            "uuid": "84b4c8c7-40df-4599-a591-3f64dba250f8",
+            "id": "scene",
+            "versioned_id": "scene",
+            "settings": {
+                "id_counter": 4,
+                "custom_size": false,
+                "items": [
+                    {
+                        "name": "Minecraft Capture",
+                        "source_uuid": "3eca182c-3645-4a27-8e1a-ad69dbf981e8",
+                        "visible": true,
+                        "locked": false,
+                        "rot": 0,
+                        "scale_ref": {
+                            "x": 1920,
+                            "y": 1080
+                        },
+                        "align": 5,
+                        "bounds_type": 0,
+                        "bounds_align": 0,
+                        "bounds_crop": false,
+                        "crop_left": 0,
+                        "crop_top": 0,
+                        "crop_right": 0,
+                        "crop_bottom": 0,
+                        "id": 1,
+                        "group_item_backup": false,
+                        "pos": {
+                            "x": 0,
+                            "y": 0
+                        },
+                        "pos_rel": {
+                            "x": 0,
+                            "y": 0
+                        },
+                        "scale": {
+                            "x": 1,
+                            "y": 1
+                        },
+                        "scale_rel": {
+                            "x": 1,
+                            "y": 1
+                        },
+                        "bounds": {
+                            "x": 0,
+                            "y": 0
+                        },
+                        "bounds_rel": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    },
+                    {
+                        "name": "Cinematic Overlay",
+                        "source_uuid": "e12a228e-1f12-469f-85e8-c29c1f3af6c0",
+                        "visible": true,
+                        "locked": false,
+                        "rot": 0,
+                        "scale_ref": {
+                            "x": 1920,
+                            "y": 1080
+                        },
+                        "align": 5,
+                        "bounds_type": 0,
+                        "bounds_align": 0,
+                        "bounds_crop": false,
+                        "crop_left": 0,
+                        "crop_top": 0,
+                        "crop_right": 0,
+                        "crop_bottom": 0,
+                        "id": 2,
+                        "group_item_backup": false,
+                        "pos": {
+                            "x": 0,
+                            "y": 0
+                        },
+                        "pos_rel": {
+                            "x": 0,
+                            "y": 0
+                        },
+                        "scale": {
+                            "x": 1,
+                            "y": 1
+                        },
+                        "scale_rel": {
+                            "x": 1,
+                            "y": 1
+                        },
+                        "bounds": {
+                            "x": 0,
+                            "y": 0
+                        },
+                        "bounds_rel": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    },
+                    {
+                        "name": "Music Procedural",
+                        "source_uuid": "55b2b6b1-02e7-423c-b838-defb5c9e84ad",
+                        "visible": true,
+                        "locked": false,
+                        "rot": 0,
+                        "scale_ref": {
+                            "x": 1920,
+                            "y": 1080
+                        },
+                        "align": 5,
+                        "bounds_type": 0,
+                        "bounds_align": 0,
+                        "bounds_crop": false,
+                        "crop_left": 0,
+                        "crop_top": 0,
+                        "crop_right": 0,
+                        "crop_bottom": 0,
+                        "id": 3,
+                        "group_item_backup": false,
+                        "pos": {
+                            "x": 0,
+                            "y": 0
+                        },
+                        "pos_rel": {
+                            "x": 0,
+                            "y": 0
+                        },
+                        "scale": {
+                            "x": 1,
+                            "y": 1
+                        },
+                        "scale_rel": {
+                            "x": 1,
+                            "y": 1
+                        },
+                        "bounds": {
+                            "x": 0,
+                            "y": 0
+                        },
+                        "bounds_rel": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    }
+                ]
+            },
+            "mixers": 255,
+            "sync": 0,
+            "flags": 0,
+            "volume": 1,
+            "balance": 0.5,
+            "enabled": true,
+            "muted": false,
+            "push-to-mute": false,
+            "push-to-mute-delay": 0,
+            "push-to-talk": false,
+            "push-to-talk-delay": 0,
+            "hotkeys": {},
+            "deinterlace_mode": 0,
+            "deinterlace_field_order": 0,
+            "monitoring_type": 0,
+            "private_settings": {}
+        },
+        {
+            "prev_ver": 536936448,
+            "name": "BRB",
+            "uuid": "63bb5db9-19cb-43b6-8c82-aeabf6acc027",
+            "id": "scene",
+            "versioned_id": "scene",
+            "settings": {
+                "id_counter": 4,
+                "custom_size": false,
+                "items": [
+                    {
+                        "name": "BG Quiet",
+                        "source_uuid": "ba64ed00-2c2c-4147-a9dd-412c0f881bba",
+                        "visible": true,
+                        "locked": false,
+                        "rot": 0,
+                        "scale_ref": {
+                            "x": 1920,
+                            "y": 1080
+                        },
+                        "align": 5,
+                        "bounds_type": 0,
+                        "bounds_align": 0,
+                        "bounds_crop": false,
+                        "crop_left": 0,
+                        "crop_top": 0,
+                        "crop_right": 0,
+                        "crop_bottom": 0,
+                        "id": 1,
+                        "group_item_backup": false,
+                        "pos": {
+                            "x": 0,
+                            "y": 0
+                        },
+                        "pos_rel": {
+                            "x": 0,
+                            "y": 0
+                        },
+                        "scale": {
+                            "x": 1,
+                            "y": 1
+                        },
+                        "scale_rel": {
+                            "x": 1,
+                            "y": 1
+                        },
+                        "bounds": {
+                            "x": 0,
+                            "y": 0
+                        },
+                        "bounds_rel": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    },
+                    {
+                        "name": "Text BRB",
+                        "source_uuid": "75c02b7c-412e-4df3-8d3c-dc2f5d08ded3",
+                        "visible": true,
+                        "locked": false,
+                        "rot": 0,
+                        "scale_ref": {
+                            "x": 1920,
+                            "y": 1080
+                        },
+                        "align": 5,
+                        "bounds_type": 0,
+                        "bounds_align": 0,
+                        "bounds_crop": false,
+                        "crop_left": 0,
+                        "crop_top": 0,
+                        "crop_right": 0,
+                        "crop_bottom": 0,
+                        "id": 2,
+                        "group_item_backup": false,
+                        "pos": {
+                            "x": 0,
+                            "y": 0
+                        },
+                        "pos_rel": {
+                            "x": 0,
+                            "y": 0
+                        },
+                        "scale": {
+                            "x": 1,
+                            "y": 1
+                        },
+                        "scale_rel": {
+                            "x": 1,
+                            "y": 1
+                        },
+                        "bounds": {
+                            "x": 0,
+                            "y": 0
+                        },
+                        "bounds_rel": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    },
+                    {
+                        "name": "Music Procedural",
+                        "source_uuid": "55b2b6b1-02e7-423c-b838-defb5c9e84ad",
+                        "visible": true,
+                        "locked": false,
+                        "rot": 0,
+                        "scale_ref": {
+                            "x": 1920,
+                            "y": 1080
+                        },
+                        "align": 5,
+                        "bounds_type": 0,
+                        "bounds_align": 0,
+                        "bounds_crop": false,
+                        "crop_left": 0,
+                        "crop_top": 0,
+                        "crop_right": 0,
+                        "crop_bottom": 0,
+                        "id": 3,
+                        "group_item_backup": false,
+                        "pos": {
+                            "x": 0,
+                            "y": 0
+                        },
+                        "pos_rel": {
+                            "x": 0,
+                            "y": 0
+                        },
+                        "scale": {
+                            "x": 1,
+                            "y": 1
+                        },
+                        "scale_rel": {
+                            "x": 1,
+                            "y": 1
+                        },
+                        "bounds": {
+                            "x": 0,
+                            "y": 0
+                        },
+                        "bounds_rel": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    }
+                ]
+            },
+            "mixers": 255,
+            "sync": 0,
+            "flags": 0,
+            "volume": 1,
+            "balance": 0.5,
+            "enabled": true,
+            "muted": false,
+            "push-to-mute": false,
+            "push-to-mute-delay": 0,
+            "push-to-talk": false,
+            "push-to-talk-delay": 0,
+            "hotkeys": {},
+            "deinterlace_mode": 0,
+            "deinterlace_field_order": 0,
+            "monitoring_type": 0,
+            "private_settings": {}
+        },
+        {
+            "prev_ver": 536936448,
+            "name": "Stream Ending",
+            "uuid": "1527178e-7154-4dc7-9fb6-6c9d10651e26",
+            "id": "scene",
+            "versioned_id": "scene",
+            "settings": {
+                "id_counter": 4,
+                "custom_size": false,
+                "items": [
+                    {
+                        "name": "BG Dark",
+                        "source_uuid": "50a93e56-c725-4840-8673-099771dc3ab4",
+                        "visible": true,
+                        "locked": false,
+                        "rot": 0,
+                        "scale_ref": {
+                            "x": 1920,
+                            "y": 1080
+                        },
+                        "align": 5,
+                        "bounds_type": 0,
+                        "bounds_align": 0,
+                        "bounds_crop": false,
+                        "crop_left": 0,
+                        "crop_top": 0,
+                        "crop_right": 0,
+                        "crop_bottom": 0,
+                        "id": 1,
+                        "group_item_backup": false,
+                        "pos": {
+                            "x": 0,
+                            "y": 0
+                        },
+                        "pos_rel": {
+                            "x": 0,
+                            "y": 0
+                        },
+                        "scale": {
+                            "x": 1,
+                            "y": 1
+                        },
+                        "scale_rel": {
+                            "x": 1,
+                            "y": 1
+                        },
+                        "bounds": {
+                            "x": 0,
+                            "y": 0
+                        },
+                        "bounds_rel": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    },
+                    {
+                        "name": "Text Ending",
+                        "source_uuid": "b9bdf70e-e899-4a4c-9674-88fbbc8927b1",
+                        "visible": true,
+                        "locked": false,
+                        "rot": 0,
+                        "scale_ref": {
+                            "x": 1920,
+                            "y": 1080
+                        },
+                        "align": 5,
+                        "bounds_type": 0,
+                        "bounds_align": 0,
+                        "bounds_crop": false,
+                        "crop_left": 0,
+                        "crop_top": 0,
+                        "crop_right": 0,
+                        "crop_bottom": 0,
+                        "id": 2,
+                        "group_item_backup": false,
+                        "pos": {
+                            "x": 0,
+                            "y": 0
+                        },
+                        "pos_rel": {
+                            "x": 0,
+                            "y": 0
+                        },
+                        "scale": {
+                            "x": 1,
+                            "y": 1
+                        },
+                        "scale_rel": {
+                            "x": 1,
+                            "y": 1
+                        },
+                        "bounds": {
+                            "x": 0,
+                            "y": 0
+                        },
+                        "bounds_rel": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    },
+                    {
+                        "name": "Music Procedural",
+                        "source_uuid": "55b2b6b1-02e7-423c-b838-defb5c9e84ad",
+                        "visible": true,
+                        "locked": false,
+                        "rot": 0,
+                        "scale_ref": {
+                            "x": 1920,
+                            "y": 1080
+                        },
+                        "align": 5,
+                        "bounds_type": 0,
+                        "bounds_align": 0,
+                        "bounds_crop": false,
+                        "crop_left": 0,
+                        "crop_top": 0,
+                        "crop_right": 0,
+                        "crop_bottom": 0,
+                        "id": 3,
+                        "group_item_backup": false,
+                        "pos": {
+                            "x": 0,
+                            "y": 0
+                        },
+                        "pos_rel": {
+                            "x": 0,
+                            "y": 0
+                        },
+                        "scale": {
+                            "x": 1,
+                            "y": 1
+                        },
+                        "scale_rel": {
+                            "x": 1,
+                            "y": 1
+                        },
+                        "bounds": {
+                            "x": 0,
+                            "y": 0
+                        },
+                        "bounds_rel": {
+                            "x": 0,
+                            "y": 0
+                        }
+                    }
+                ]
+            },
+            "mixers": 255,
+            "sync": 0,
+            "flags": 0,
+            "volume": 1,
+            "balance": 0.5,
+            "enabled": true,
+            "muted": false,
+            "push-to-mute": false,
+            "push-to-mute-delay": 0,
+            "push-to-talk": false,
+            "push-to-talk-delay": 0,
+            "hotkeys": {},
+            "deinterlace_mode": 0,
+            "deinterlace_field_order": 0,
+            "monitoring_type": 0,
+            "private_settings": {}
+        }
+    ],
+    "groups": [],
+    "quick_transitions": [],
+    "transitions": [],
+    "saved_projectors": [],
+    "modules": {}
+}
