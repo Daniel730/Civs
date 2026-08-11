@@ -117,6 +117,30 @@ Live Paper: set `CIVS_OTEL_FILE` and run a real scenario / `gateway/smoke.js`; i
 ## What is intentionally out of scope here
 
 - Sentry bridge → issue #33  
-- Datadog XOR New Relic OTLP backend → issue #34  
 - JVM plugin spans → same contract, later PR under #32 or follow-up if split  
 - Hermes/LLM request spans — only when the integration exposes a clear boundary (MCP tool entry is instrumented; Hermes process internals are not)
+
+---
+
+## APM backend (#34 / D-AP-017)
+
+**Primary: Datadog** (OTLP only — no parallel Datadog tracing SDK). New Relic is optional/secondary, not dual-primary.
+
+### Staging export (needs secrets — do not commit keys)
+
+```bash
+# Point runner OTLP at a Datadog Agent OTLP HTTP receiver (typical :4318)
+export OTEL_EXPORTER_OTLP_ENDPOINT=http://127.0.0.1:4318
+export OTEL_SERVICE_NAME=civs-integration-runner
+# Agent itself holds DD_API_KEY / DD_SITE via its own env or systemd — not the repo
+```
+
+Or Datadog intake OTLP URL per current Datadog docs (site-specific), still using the same OTel exporter env vars.
+
+### Minimum dashboard checklist
+
+1. **Latency** — p50/p95 of spans named like `scenario.run` / `scenario.step` / `rcon.send`
+2. **Error rate** — count of spans with error status / `recordResultStatus` FAIL
+3. Filter by `service:civs-integration-runner` (or `OTEL_SERVICE_NAME`)
+
+Validate locally with `CIVS_OTEL_FILE` first; promote to Datadog once the agent/key exists.

@@ -53,7 +53,7 @@ Sentry / Datadog / New Relic are **exporters or optional APM backends**, not thr
 |-------|--------|---------|--------|
 | Traces + metrics + logs correlation | Plugin JVM + Node runner + future operator UI | **OpenTelemetry** SDK + OTLP exporter | **PARTIAL** — Node runner + Agent Gateway MCP instrumented (#32); JVM plugin **TODO** |
 | Error tracking (exceptions, breadcrumbs) | Same | **Sentry** (OTel bridge or native SDK) | **TODO** (#33) |
-| Infra / APM dashboard | Ops choice | **Datadog** *or* **New Relic** (one primary; second optional) | **TODO** (#34) |
+| Infra / APM dashboard | Ops | **Datadog** primary via OTLP (**DONE** decision #34 / D-AP-017); New Relic optional secondary only | Staging export needs `DD_API_KEY` / agent (secrets) |
 | Local / CI | Dev | OTel Collector → file/console / `CIVS_OTEL_FILE`; no cloud keys in repo | **DONE** (runner) — see `docs/OBSERVABILITY.md` |
 
 Rules:

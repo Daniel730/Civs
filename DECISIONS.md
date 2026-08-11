@@ -322,3 +322,14 @@ Biome work when JS unchanged so required checks never hang). Integration stays a
 **documented** job (`integration-manual`) until a self-hosted Paper runner exists —
 do not fake green Minecraft E2E in GHA. Enable `master` branch protection requiring
 `maven-test`, `Biome + knip`, and `Conventional PR title`.
+
+**D-AP-017 — Datadog as primary APM via OTLP (#34, 2026-08-11).**
+Issue #34 requires choosing Datadog XOR New Relic as the APM backend behind OTel.
+**Decision: Datadog is the primary APM;** New Relic remains optional/secondary only if
+a future ops need appears — do **not** run both as first-class backends.
+**Why Datadog:** existing Cursor Datadog MCP/skills and operator familiarity on this
+machine; OTLP HTTP ingest is first-class; keeps one metrics/traces dashboard path.
+**How:** export OTLP from the Node runner (and later JVM) to the Datadog agent or
+Datadog OTLP intake — **no** Datadog tracing SDK alongside OTel. Staging wiring needs
+`DD_API_KEY` / agent endpoint in env or GitHub Secrets (not committed). Minimum
+dashboard: scenario latency + error rate (see `docs/OBSERVABILITY.md` § APM).
