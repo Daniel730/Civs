@@ -5,7 +5,7 @@ const path = require('path');
 const { Harness } = require('../lib/harness');
 const { RawKeepAliveActor } = require('../lib/actor');
 const { SpectatorCamera } = require('../lib/camera');
-const { ObservationDirector, ViewerFollowLoop } = require('../lib/observation');
+const { CinematicDirector, ObservationDirector, ViewerFollowLoop } = require('../lib/observation');
 const {
   nextJob,
   workCoords,
@@ -15,9 +15,19 @@ const {
   walkTo,
   cleanupTargets,
   findSurfaceY,
+  chooseFocus,
+  biasJob,
   construction,
 } = require('../lib/village');
+const { SurvivalMonitor, executeSurvival } = require('../lib/survival');
+const { IntentionCache, AntiStall } = require('../lib/ai-world/intention-cache');
 const { initTelemetry, shutdownTelemetry } = require('../lib/telemetry');
+const {
+  METRIC,
+  initMetrics,
+  observeMetric,
+  metricsSnapshot,
+} = require('../lib/metrics');
 
 const REPORTS = path.join(__dirname, '..', 'reports');
 const LOG_JSONL = path.join(REPORTS, 'village-worker.jsonl');
@@ -46,6 +56,13 @@ const cfg = {
   camDwellMs: Number.parseInt(process.env.CAM_DWELL_MS || '20000', 10),
   viewerFollowMs: Number.parseInt(process.env.VIEWER_FOLLOW_MS || '2500', 10),
   enableViewerFollow: process.env.ENABLE_VIEWER_FOLLOW !== '0',
+  // Cinematic director is the default; CAM_LEGACY=1 falls back to ObservationDirector.
+  legacyCamera: process.env.CAM_LEGACY === '1',
+  camMinDwellMs: Number.parseInt(process.env.CAM_MIN_DWELL_MS || '7000', 10),
+  camMaxDwellMs: Number.parseInt(process.env.CAM_MAX_DWELL_MS || '32000', 10),
+  camTickMs: Number.parseInt(process.env.CAM_TICK_MS || '1500', 10),
+  // How far an agent may stray from the village before it is considered stranded.
+  leashRadius: Number.parseInt(process.env.VILLAGE_LEASH || '150', 10),
 };
 
 function log(entry) {
@@ -145,9 +162,9 @@ async function placeAesthetic(harness, actorName, block) {
  * Protocol bots can die and stay as corpses (health 0) without client respawn UI.
  * Dead agents look "invisible"/unresponsive to Cam — recover before work.
  */
-async function ensureAlive(harness, actorName) {
-  let obs = await harness.cap.observe(actorName);
-  const health = obs && obs.data ? Number(obs.data.health) : NaN;
+async function ensureAlive(harness, actorName, preObserved) {
+  let obs = preObserved || (await harness.cap.observe(actorName));
+  const health = obs && obs.data ? Number(obs.data.health) : Number.NaN;
   if (obs && obs.success && health > 0) {
     return { status: 'PASS', action: 'ensure_alive', player: actorName, health, revived: false };
   }
@@ -155,7 +172,7 @@ async function ensureAlive(harness, actorName) {
   await harness.raw(`gamemode survival ${actorName}`);
   await harness.cap.teleport(actorName, cfg.origin.x, cfg.origin.y + 2, cfg.origin.z);
   obs = await harness.cap.observe(actorName);
-  const healthAfter = obs && obs.data ? Number(obs.data.health) : NaN;
+  const healthAfter = obs && obs.data ? Number(obs.data.health) : Number.NaN;
   return {
     status: healthAfter > 0 ? 'PASS' : 'FAIL',
     action: 'ensure_alive',
@@ -171,8 +188,8 @@ async function ensureAlive(harness, actorName) {
 /**
  * Execute one visible work tick — survival-like by default (#66).
  */
-async function runJob(harness, actorName, step, state) {
-  const alive = await ensureAlive(harness, actorName);
+async function runJob(harness, actorName, step, state, ctx = {}) {
+  const alive = await ensureAlive(harness, actorName, ctx.observed);
   if (alive.revived) {
     log({ ...alive });
   }
@@ -554,10 +571,28 @@ async function ensureTown(harness, actorName) {
   };
 }
 
+/** Countable evidence that a work tick actually moved the world forward. */
+function meaningfulProgress(result) {
+  if (!result) return 0;
+  let score = 0;
+  if (result.status === 'PASS') score += 1;
+  for (const entry of result.actions || []) {
+    const walk = entry.walk || entry.walkBlock;
+    if (walk && walk.success && !walk.recoverTeleport) score += 1;
+    if (entry.breakBlock && entry.breakBlock.success) score += 1;
+    if (entry.beautify && entry.cleaned) score += Math.min(3, entry.cleaned);
+    if (entry.construction && entry.construction.placed) score += entry.construction.placed;
+    if (entry.ok === true) score += 2;
+  }
+  return score;
+}
+
 async function main() {
   initTelemetry({ serviceName: 'civs-village-worker' });
+  initMetrics({ serviceName: 'civs-village-worker' });
   fs.mkdirSync(REPORTS, { recursive: true });
   const state = loadState();
+  state.progress = Number.isFinite(state.progress) ? state.progress : 0;
 
   const harness = new Harness({
     host: cfg.rconHost,
@@ -618,22 +653,49 @@ async function main() {
   const subjects = [cfg.actorName];
   if (helper && helper.ok) subjects.push(cfg.helperName);
 
-  const observation = new ObservationDirector({
-    camera,
-    harness,
-    subjects,
-    dwellMs: cfg.camDwellMs,
-    tickMs: Math.min(2000, cfg.intervalMs),
-    onLog: (entry) => log(entry),
-    forceTarget: process.env.CAM_FORCE_TARGET || null,
-  });
+  const observation = cfg.legacyCamera
+    ? new ObservationDirector({
+        camera,
+        harness,
+        subjects,
+        dwellMs: cfg.camDwellMs,
+        tickMs: Math.min(2000, cfg.intervalMs),
+        onLog: (entry) => log(entry),
+        forceTarget: process.env.CAM_FORCE_TARGET || null,
+      })
+    : new CinematicDirector({
+        camera,
+        harness,
+        subjects,
+        tickMs: cfg.camTickMs,
+        minDwellMs: cfg.camMinDwellMs,
+        preferredDwellMs: cfg.camDwellMs,
+        maxDwellMs: cfg.camMaxDwellMs,
+        fallbackOrigin: cfg.origin,
+        onLog: (entry) => log(entry),
+        forceTarget: process.env.CAM_FORCE_TARGET || null,
+      });
   observation.start();
   log({
     status: 'PASS',
     action: 'observation_director_start',
+    director: cfg.legacyCamera ? 'ObservationDirector' : 'CinematicDirector',
     subjects,
     dwellMs: cfg.camDwellMs,
+    minDwellMs: cfg.camMinDwellMs,
+    maxDwellMs: cfg.camMaxDwellMs,
   });
+
+  // Survival, intention and stall detection are per-agent.
+  const survival = new Map();
+  for (const name of subjects) {
+    survival.set(
+      name,
+      new SurvivalMonitor({ actor: name, workOrigin: cfg.origin, leashRadius: cfg.leashRadius })
+    );
+  }
+  const intentions = new IntentionCache();
+  const antiStall = new AntiStall({ noProgressMs: Math.max(12000, cfg.intervalMs * 3) });
 
   let viewerFollow = null;
   if (cfg.enableViewerFollow) {
@@ -658,11 +720,100 @@ async function main() {
         const recovery = await ensureTown(harness, cfg.actorName);
         log({ status: recovery.status, action: 'ensure_town', recovery });
       }
-      const step = nextJob(state.tick, state);
       const who = helper && helper.ok && state.tick % 2 === 0 ? cfg.helperName : cfg.actorName;
+
+      // 1. Perception + survival. Survival always outranks the job rotation.
+      const observed = await harness.cap.observe(who);
+      const monitor = survival.get(who);
+      const assessment = monitor
+        ? monitor.assess((observed && observed.data) || {})
+        : { state: 'SAFE', action: { kind: 'work' }, changed: false };
+      if (assessment.changed || assessment.state !== 'SAFE') {
+        log({
+          status: assessment.state === 'SAFE' ? 'PASS' : 'DEGRADED',
+          action: 'survival_state',
+          worker: who,
+          state: assessment.state,
+          previous: assessment.previous,
+          reason: assessment.reason,
+          threats: assessment.threats,
+          healthPct: assessment.healthPct,
+          distanceFromWork: assessment.distanceFromWork,
+          recommended: assessment.action.kind,
+        });
+      }
+      if (assessment.deathCause) {
+        log({
+          status: 'DEGRADED',
+          action: 'agent_death',
+          worker: who,
+          cause: assessment.deathCause,
+          deaths: assessment.deaths,
+        });
+        if (typeof observation.noteEvent === 'function') observation.noteEvent(who, 'death');
+      }
+      if (assessment.action.kind !== 'work') {
+        if (typeof observation.noteEvent === 'function') {
+          observation.noteEvent(who, assessment.state === 'RECOVER' ? 'danger' : 'combat');
+        }
+        intentions.applySignals(who, { survivalEscalated: true });
+        const survived = await executeSurvival(harness, who, assessment, {
+          workOrigin: cfg.origin,
+          findSurfaceY: (x, z) =>
+            findSurfaceY(harness, x, z, {
+              fallbackY: cfg.origin.y,
+              maxY: cfg.origin.y + 24,
+              minY: cfg.origin.y - 24,
+            }),
+        });
+        log({
+          status: survived.status,
+          action: 'survival_action',
+          worker: who,
+          kind: survived.kind,
+          state: assessment.state,
+          steps: survived.steps,
+        });
+        saveState(state);
+        return;
+      }
+
+      // 2. Intention (cached 20-60 s) then the deterministic per-tick job.
+      const decisionStart = Date.now();
+      const focusCandidate = chooseFocus(state, {
+        survivalState: assessment.state,
+        townOk: !!(town && town.ok),
+      });
+      const cached = intentions.get(who, focusCandidate.contextKey);
+      const intention = cached.hit ? cached.intention : focusCandidate;
+      if (!cached.hit) {
+        intentions.set(who, focusCandidate, { contextKey: focusCandidate.contextKey });
+        log({
+          status: 'PASS',
+          action: 'intention_set',
+          worker: who,
+          focus: focusCandidate.focus,
+          reason: focusCandidate.reason,
+          cacheMiss: cached.reason,
+        });
+      }
+      const step = biasJob(nextJob(state.tick, state), intention.focus, state.tick);
+      observeMetric(METRIC.DECISION_LATENCY, Date.now() - decisionStart, {
+        actor: who,
+        cached: String(cached.hit),
+      });
+
       state.agentJobs = state.agentJobs || {};
       const prevJob = state.agentJobs[who] || null;
-      const result = await runJob(harness, who, step, state);
+      if (typeof observation.setActivity === 'function') {
+        observation.setActivity(who, step.job);
+      }
+
+      // 3. Act.
+      const actionStart = Date.now();
+      const result = await runJob(harness, who, step, state, { observed });
+      observeMetric(METRIC.ACTION_LATENCY, Date.now() - actionStart, { actor: who, job: step.job });
+
       let agentPos = null;
       try {
         const obs = await harness.cap.observe(who);
@@ -674,6 +825,29 @@ async function main() {
           };
         }
       } catch (_) {}
+
+      // 4. Stall detection on real progress, not on tick count.
+      state.progress += meaningfulProgress(result);
+      const stall = antiStall.report(who, {
+        goalKey: `${who}:${intention.focus}:${step.job}:${step.site || ''}`,
+        progressValue: state.progress,
+        higherIsBetter: true,
+      });
+      if (stall.escalated) {
+        log({
+          status: 'DEGRADED',
+          action: 'anti_stall',
+          worker: who,
+          stage: stall.stage,
+          noProgressMs: stall.noProgressMs,
+          goalAgeMs: stall.goalAgeMs,
+          reason: stall.reason,
+          job: step.job,
+        });
+        if (stall.stage === 'REPLAN' || stall.stage === 'ABANDON_GOAL') {
+          intentions.applySignals(who, { noProgress: true, goalAbandoned: stall.stage === 'ABANDON_GOAL' });
+        }
+      }
       state.agentJobs[who] = step.job;
       state.lastAgent = {
         worker: who,
@@ -703,7 +877,14 @@ async function main() {
         });
       }
       if (result.status === 'PASS' && observation) {
+        // Interest signal only: the director decides whether that earns a cut.
         observation.biasTo(who, 'work_tick_bias');
+        if (prevJob !== step.job && typeof observation.noteEvent === 'function') {
+          observation.noteEvent(who, 'state_transition');
+        }
+      }
+      if (step.job === 'placeregion' && result.status === 'PASS' && typeof observation.noteEvent === 'function') {
+        observation.noteEvent(who, 'region_placed');
       }
       if (state.tick % 5 === 0) {
         log({
@@ -715,16 +896,28 @@ async function main() {
           job: step.job,
         });
       }
+      if (state.tick % 20 === 0) {
+        log({
+          status: 'OBSERVED',
+          action: 'metrics_snapshot',
+          metrics: metricsSnapshot(),
+          intentions: intentions.snapshot(),
+          antiStall: antiStall.snapshot(),
+          survival: [...survival.values()].map((m) => m.snapshot()),
+        });
+      }
       log({
         status: result.status,
         action: 'work_tick',
         tick: state.tick,
         worker: who,
         town,
+        focus: intention.focus,
+        survivalState: assessment.state,
         step,
         result,
         cameraSubject: observation.currentSubject,
-        watch: 'Viewer continuously spectates Cam; Cam tracks Steve↔Alex',
+        watch: 'Viewer continuously spectates Cam; Cam directs shots on Steve/Alex',
       });
       saveState(state);
     } catch (e) {

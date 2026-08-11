@@ -8,6 +8,7 @@ module.exports = {
   ...require('./quest-eval'),
   ...require('./objective-plan'),
   ...require('./decision'),
+  ...require('./intention-cache'),
   ...require('./events'),
   ...require('./quest-loop'),
   ...require('./mine-executor'),
