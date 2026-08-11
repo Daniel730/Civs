@@ -10,6 +10,7 @@ const {
   workCoords,
   SITES,
   EXCLUSIVE_PAIRS,
+  JOB_CAMERA_MODE,
   stockpileMaterials,
 } = require('../lib/village');
 const { initTelemetry, shutdownTelemetry } = require('../lib/telemetry');
@@ -172,6 +173,14 @@ async function runJob(harness, actorName, step, state) {
     await cap.giveItem(actorName, 'IRON_HOE', 1);
     await cap.hotbar(actorName, 0);
   }
+  if (step.job === 'lumberjack') {
+    await cap.giveItem(actorName, 'IRON_AXE', 1);
+    await cap.hotbar(actorName, 0);
+  }
+  if (step.job === 'guard') {
+    await cap.giveItem(actorName, 'IRON_SWORD', 1);
+    await cap.hotbar(actorName, 0);
+  }
 
   // Visible work: prefer place + swing. Only break known filler at dedicated dig spots.
   if (step.job === 'miner') {
@@ -182,13 +191,26 @@ async function runJob(harness, actorName, step, state) {
     const br = await cap.breakBlock(actorName, digX, digY, digZ);
     results.actions.push({ breakBlock: br });
     await cap.swing(actorName);
+  } else if (step.job === 'lumberjack') {
+    const digX = Math.floor(cfg.origin.x + (step.dx || 0) + 5);
+    const digY = cfg.origin.y;
+    const digZ = Math.floor(cfg.origin.z + (step.dz || 0) + 4);
+    await harness.raw(`setblock ${digX} ${digY} ${digZ} oak_log`);
+    const br = await cap.breakBlock(actorName, digX, digY, digZ);
+    results.actions.push({ breakBlock: br });
+    await cap.swing(actorName);
   } else if (step.job === 'builder' || step.job === 'farmer' || step.job === 'stockpile') {
     await cap.swing(actorName);
   }
 
-  if (coords.place && step.job !== 'patrol') {
+  if (coords.place && step.job !== 'patrol' && step.job !== 'guard') {
     // Place on work apron outside stockpile interiors (site + 6)
-    const mat = step.job === 'farmer' ? 'cobblestone' : coords.place.material || 'stone_bricks';
+    const mat =
+      step.job === 'farmer'
+        ? 'cobblestone'
+        : step.job === 'lumberjack'
+          ? 'oak_planks'
+          : coords.place.material || 'stone_bricks';
     const px = Math.floor(cfg.origin.x + (step.dx || 0) + 6);
     const py = cfg.origin.y + 1;
     const pz = Math.floor(cfg.origin.z + (step.dz || 0) + 6 + (state.tick % 3));
@@ -207,10 +229,14 @@ async function runJob(harness, actorName, step, state) {
     results.actions.push({ stockpile: true, x: sx, z: sz });
   }
 
-  if (step.job === 'patrol') {
+  if (step.job === 'patrol' || step.job === 'guard') {
     await cap.sprint(actorName, true);
-    await cap.step(actorName, 'forward', 1.2);
+    await cap.step(actorName, 'forward', step.job === 'guard' ? 1.6 : 1.2);
     await cap.swing(actorName);
+    if (step.job === 'guard') {
+      await cap.lookAt(actorName, cfg.origin.x, cfg.origin.y + 1, cfg.origin.z);
+      await cap.swing(actorName);
+    }
     await cap.sprint(actorName, false);
   }
 
@@ -367,12 +393,13 @@ async function main() {
       const step = nextJob(state.tick, state);
       const who = helper && helper.ok && state.tick % 2 === 0 ? cfg.helperName : cfg.actorName;
       const result = await runJob(harness, who, step, state);
-      if (director && result.status === 'PASS' && step.job !== 'patrol') {
+      if (director && result.status === 'PASS') {
+        const mode = JOB_CAMERA_MODE[step.job] || 'event';
         await director.onEvent({
           x: cfg.origin.x + (step.dx || 0),
           y: cfg.origin.y + 2,
           z: cfg.origin.z + (step.dz || 0),
-          mode: 'event',
+          mode,
         });
       }
       log({
