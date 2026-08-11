@@ -35,7 +35,7 @@ Evidence: `integration-tests/runner/reports/village-worker.jsonl` + `village-wor
 
 | Issue | PR | Title | CI |
 |-------|-----|-------|-----|
-| [#62](https://github.com/Daniel730/Civs/issues/62) | [#63](https://github.com/Daniel730/Civs/pull/63) | Approach aprons + footing clear + recover teleport | pending CI |
+| [#62](https://github.com/Daniel730/Civs/issues/62) | [#63](https://github.com/Daniel730/Civs/pull/63) | Approach aprons + footing clear + recover teleport | **GREEN** (prior run; docs push recheck) |
 | [#60](https://github.com/Daniel730/Civs/issues/60) | [#61](https://github.com/Daniel730/Civs/pull/61) | Job-site affinity + lumberjack/guard + camera modes | **GREEN** |
 | [#37](https://github.com/Daniel730/Civs/issues/37) | [#58](https://github.com/Daniel730/Civs/pull/58) | Stryker | **GREEN** |
 | [#51](https://github.com/Daniel730/Civs/issues/51) | [#52](https://github.com/Daniel730/Civs/pull/52) | Stream nightshift | **GREEN** |
