@@ -9,4 +9,7 @@ const { Rcon } = require('rcon-client');
     console.log(cmd, '=>', out);
   }
   await r.end();
-})().catch((e) => { console.error(e); process.exit(1); });
+})().catch((e) => {
+  console.error(e);
+  process.exit(1);
+});

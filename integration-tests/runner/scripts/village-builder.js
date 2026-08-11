@@ -66,7 +66,15 @@ const PLAN = [
     dz: 2,
     label: 'Found settlement town (/cv town)',
   },
-  { id: 'shelter', kind: 'region', type: 'shelter', dx: -10, dy: 0, dz: 0, label: 'Emergency shelter' },
+  {
+    id: 'shelter',
+    kind: 'region',
+    type: 'shelter',
+    dx: -10,
+    dy: 0,
+    dz: 0,
+    label: 'Emergency shelter',
+  },
   {
     id: 'hovel',
     kind: 'region',
@@ -244,7 +252,9 @@ async function stockpileMaterials(harness, x, y, z, profile = 'utility') {
 async function pasteSchem(harness, actor, schem, x, y, z) {
   // WorldEdit console paste if plugin present — best-effort, not required.
   const replies = [];
-  replies.push(await harness.raw(`execute as ${actor.name} at ${actor.name} run //schem load ${schem}`));
+  replies.push(
+    await harness.raw(`execute as ${actor.name} at ${actor.name} run //schem load ${schem}`)
+  );
   replies.push(await harness.raw(`tp ${actor.name} ${x} ${y + 1} ${z}`));
   replies.push(await harness.raw(`execute as ${actor.name} at ${actor.name} run //paste -a`));
   return replies;
@@ -257,19 +267,11 @@ async function preparePad(harness, actor) {
   await harness.raw(`weather clear`);
   await harness.raw(`gamemode creative ${actor.name}`);
   await actor.teleport(x, y + 2, z);
-  await harness.raw(
-    `fill ${x - size} ${y} ${z - size} ${x + size} ${y} ${z + size} grass_block`
-  );
-  await harness.raw(
-    `fill ${x - size} ${y + 1} ${z - size} ${x + size} ${y + 8} ${z + size} air`
-  );
+  await harness.raw(`fill ${x - size} ${y} ${z - size} ${x + size} ${y} ${z + size} grass_block`);
+  await harness.raw(`fill ${x - size} ${y + 1} ${z - size} ${x + size} ${y + 8} ${z + size} air`);
   // Visible border for cinematic
-  await harness.raw(
-    `fill ${x - size} ${y} ${z - size} ${x + size} ${y} ${z - size} stone_bricks`
-  );
-  await harness.raw(
-    `fill ${x - size} ${y} ${z + size} ${x + size} ${y} ${z + size} stone_bricks`
-  );
+  await harness.raw(`fill ${x - size} ${y} ${z - size} ${x + size} ${y} ${z - size} stone_bricks`);
+  await harness.raw(`fill ${x - size} ${y} ${z + size} ${x + size} ${y} ${z + size} stone_bricks`);
   await harness.raw(`say Village pad ready at ${x} ${y} ${z}`);
   return { x, y, z, size };
 }
@@ -277,7 +279,13 @@ async function preparePad(harness, actor) {
 async function placeRegionStep(harness, actor, step) {
   const p = posFor(step);
   if (step.stockpile) {
-    await stockpileMaterials(harness, p.x, p.y, p.z, step.stockpile === true ? 'utility' : step.stockpile);
+    await stockpileMaterials(
+      harness,
+      p.x,
+      p.y,
+      p.z,
+      step.stockpile === true ? 'utility' : step.stockpile
+    );
   }
   if (step.schem) {
     await pasteSchem(harness, actor, step.schem, p.x, p.y, p.z);
@@ -403,7 +411,13 @@ async function main() {
       return false;
     }
     state.attempts[step.id] = (state.attempts[step.id] || 0) + 1;
-    log({ status: 'OBSERVED', action: 'plan_step', step: step.id, label: step.label, attempt: state.attempts[step.id] });
+    log({
+      status: 'OBSERVED',
+      action: 'plan_step',
+      step: step.id,
+      label: step.label,
+      attempt: state.attempts[step.id],
+    });
 
     let result;
     try {
@@ -432,7 +446,12 @@ async function main() {
         skipped: true,
         result,
       };
-      log({ status: 'BLOCKED', action: 'step_skipped', step: step.id, attempts: state.attempts[step.id] });
+      log({
+        status: 'BLOCKED',
+        action: 'step_skipped',
+        step: step.id,
+        attempts: state.attempts[step.id],
+      });
     }
     saveState(state);
     await camera.ensureFollow();

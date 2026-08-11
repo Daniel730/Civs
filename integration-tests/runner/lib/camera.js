@@ -34,9 +34,17 @@ class SpectatorCamera {
     await this.harness.raw(`gamemode spectator ${this.name}`);
     // Native entity follow — best watchability for a second client looking at Cam,
     // and for anyone spectating Cam / Steve.
-    const spectate = await this.harness.raw(`execute as ${this.name} run spectate ${this.targetName}`);
+    const spectate = await this.harness.raw(
+      `execute as ${this.name} run spectate ${this.targetName}`
+    );
     this.mode = 'spectate';
-    return { status: 'PASS', mode: this.mode, spectate, player: this.name, target: this.targetName };
+    return {
+      status: 'PASS',
+      mode: this.mode,
+      spectate,
+      player: this.name,
+      target: this.targetName,
+    };
   }
 
   /** Soft re-attach if Steve reconnects or spectate drops. */
