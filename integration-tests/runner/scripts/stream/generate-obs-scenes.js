@@ -1,10 +1,3 @@
-/**
- * Generate a minimal OBS scene collection for CivsNightshift.
- * Interstitial color+text scenes + shared placeholders for capture/music/overlay.
- * Window/Game capture target must be bound once in OBS UI.
- */
-'use strict';
-
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
@@ -143,7 +136,7 @@ function main() {
       clear_on_media_end: false,
       restart_on_activate: true,
     },
-    { volume: 0.12 },
+    { volume: 0.12 }
   );
 
   const overlay = sourceBase('Cinematic Overlay', 'browser_source', {
@@ -210,7 +203,9 @@ function main() {
   fs.mkdirSync(path.dirname(outPath), { recursive: true });
   fs.writeFileSync(outPath, JSON.stringify(collection, null, 4), 'utf8');
   // Also keep a copy under stream-assets for the repo
-  console.log(JSON.stringify({ status: 'PASS', out: outPath, scenes: collection.scene_order.length }));
+  console.log(
+    JSON.stringify({ status: 'PASS', out: outPath, scenes: collection.scene_order.length })
+  );
 }
 
 main();

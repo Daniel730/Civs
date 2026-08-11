@@ -1,9 +1,3 @@
-/**
- * Deterministic fallback cinematic when AI Director is unavailable.
- * Drives SpectatorCamera using ShotPlanner — no LLM, no fake intelligence.
- */
-'use strict';
-
 const { ShotPlanner } = require('./shot-planner');
 
 class FallbackDirector {
@@ -57,7 +51,7 @@ class FallbackDirector {
 
     pose.mode = shot.mode;
     const applied = await this.camera.applyPose(
-      shot.mode === 'follow' ? { kind: 'spectate' } : pose,
+      shot.mode === 'follow' ? { kind: 'spectate' } : pose
     );
     const ok = applied && applied.status === 'PASS';
     this.status = ok ? 'HEALTHY' : 'DEGRADED';
@@ -67,17 +61,16 @@ class FallbackDirector {
   /** Push an event cut (builder placed region, etc.). */
   async onEvent(poi) {
     const now = Date.now();
-    const shot = this.planner.nextShot({ now, event: true, mode: poi && poi.mode ? poi.mode : 'event' });
+    const shot = this.planner.nextShot({
+      now,
+      event: true,
+      mode: poi && poi.mode ? poi.mode : 'event',
+    });
     if (poi && typeof poi.x === 'number') {
       const pose = this.planner.poseFor(shot.mode, poi, this._angle);
       if (pose.kind === 'teleport_look') {
         await this.camera.harness.cap.teleport(this.camera.name, pose.x, pose.y, pose.z);
-        await this.camera.harness.cap.lookAt(
-          this.camera.name,
-          pose.lookX,
-          pose.lookY,
-          pose.lookZ,
-        );
+        await this.camera.harness.cap.lookAt(this.camera.name, pose.lookX, pose.lookY, pose.lookZ);
       }
     }
     return { status: this.status, shot };

@@ -1,8 +1,3 @@
-/**
- * Lightweight stream subsystem health aggregation (no network side effects).
- */
-'use strict';
-
 const STATES = Object.freeze(['HEALTHY', 'DEGRADED', 'FAILED', 'RECOVERING', 'BLOCKED']);
 
 /**
