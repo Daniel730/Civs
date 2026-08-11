@@ -26,7 +26,9 @@
     "format": "biome format --write .",
     "knip": "knip --reporter compact",
     "arch": "depcruise lib scripts --config .dependency-cruiser.cjs --validate",
-    "commitlint": "commitlint --edit"
+    "commitlint": "commitlint --edit",
+    "test:mutation": "stryker run",
+    "test:mutation:dsl": "stryker run --mutate lib/dsl.js"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.12.1",
@@ -47,6 +49,7 @@
     "@biomejs/biome": "^1.9.4",
     "@commitlint/cli": "^19.8.1",
     "@commitlint/config-conventional": "^19.8.1",
+    "@stryker-mutator/core": "^8.7.1",
     "dependency-cruiser": "^16.10.2",
     "knip": "^5.61.3",
     "typescript": "^5.8.3"

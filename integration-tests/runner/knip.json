@@ -11,7 +11,7 @@
     "lib/stream/**/*.js!"
   ],
   "project": ["**/*.{js,cjs,mjs}"],
-  "ignore": ["reports/**", "node_modules/**", "commitlint.config.cjs"],
+  "ignore": ["reports/**", "node_modules/**", "commitlint.config.cjs", "stryker.conf.cjs"],
   "ignoreDependencies": ["typescript"],
   "ignoreBinaries": [],
   "ignoreExportsUsedInFile": true,
