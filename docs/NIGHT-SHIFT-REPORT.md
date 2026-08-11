@@ -41,6 +41,7 @@ Evidence: `integration-tests/runner/reports/village-worker.jsonl` + `village-wor
 | [#44](https://github.com/Daniel730/Civs/issues/44) | [#56](https://github.com/Daniel730/Civs/pull/56) | GitHub templates | open |
 | [#43](https://github.com/Daniel730/Civs/issues/43) | [#57](https://github.com/Daniel730/Civs/pull/57) | Java Checkstyle + ArchUnit phase-1 | **GREEN** checks |
 | [#37](https://github.com/Daniel730/Civs/issues/37) | [#58](https://github.com/Daniel730/Civs/pull/58) | Stryker mutation (DSL phase-1) | opened |
+| [#34](https://github.com/Daniel730/Civs/issues/34) | [#59](https://github.com/Daniel730/Civs/pull/59) | Datadog primary APM (D-AP-017) | opened |
 
 Also: PR titles normalized to commitlint `subject-case` (lowercase).
 
