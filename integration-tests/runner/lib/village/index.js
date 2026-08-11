@@ -4,4 +4,5 @@ module.exports = {
   ...require('./blueprints'),
   ...require('./walk'),
   ...require('./terrain'),
+  construction: require('./construction'),
 };

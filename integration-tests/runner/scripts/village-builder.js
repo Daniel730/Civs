@@ -45,7 +45,7 @@ const cfg = {
  * Offsets keep footprints from overlapping (radii ~2–5 + town 40).
  */
 const PLAN = [
-  { id: 'pad', kind: 'prep', label: 'Prepare village plateau' },
+  { id: 'pad', kind: 'prep', label: 'Prepare village (no flatten by default)' },
   // Town build-reqs need council_room first (settlement.yml), then found town via /cv town.
   {
     id: 'council_room',
@@ -195,13 +195,30 @@ async function preparePad(harness, actor) {
   await harness.raw(`weather clear`);
   await harness.raw(`gamemode creative ${actor.name}`);
   await actor.teleport(x, y + 2, z);
-  await harness.raw(`fill ${x - size} ${y} ${z - size} ${x + size} ${y} ${z + size} grass_block`);
-  await harness.raw(`fill ${x - size} ${y + 1} ${z - size} ${x + size} ${y + 8} ${z + size} air`);
-  // Visible border for cinematic
-  await harness.raw(`fill ${x - size} ${y} ${z - size} ${x + size} ${y} ${z - size} stone_bricks`);
-  await harness.raw(`fill ${x - size} ${y} ${z + size} ${x + size} ${y} ${z + size} stone_bricks`);
-  await harness.raw(`say Village pad ready at ${x} ${y} ${z}`);
-  return { x, y, z, size };
+
+  // Default: NO large flatten pad (Refs #66 / construction quality).
+  // Opt-in only for cinematic bootstrap: VILLAGE_ALLOW_PAD_FLATTEN=1
+  const allowFlatten = process.env.VILLAGE_ALLOW_PAD_FLATTEN === '1';
+  if (allowFlatten) {
+    await harness.raw(`fill ${x - size} ${y} ${z - size} ${x + size} ${y} ${z + size} grass_block`);
+    await harness.raw(`fill ${x - size} ${y + 1} ${z - size} ${x + size} ${y + 8} ${z + size} air`);
+    await harness.raw(
+      `fill ${x - size} ${y} ${z - size} ${x + size} ${y} ${z - size} stone_bricks`
+    );
+    await harness.raw(
+      `fill ${x - size} ${y} ${z + size} ${x + size} ${y} ${z + size} stone_bricks`
+    );
+    await harness.raw(`say Village pad FLATTENED (unsafe opt-in) at ${x} ${y} ${z}`);
+    return { x, y, z, size, flattened: true };
+  }
+
+  // Safe prep: time/weather + border markers only — keep natural terrain.
+  await harness.raw(`setblock ${x - size} ${y} ${z - size} stone_bricks`);
+  await harness.raw(`setblock ${x + size} ${y} ${z - size} stone_bricks`);
+  await harness.raw(`setblock ${x - size} ${y} ${z + size} stone_bricks`);
+  await harness.raw(`setblock ${x + size} ${y} ${z + size} stone_bricks`);
+  await harness.raw(`say Village prep (no flatten) at ${x} ${y} ${z}`);
+  return { x, y, z, size, flattened: false };
 }
 
 async function placeRegionStep(harness, actor, step) {

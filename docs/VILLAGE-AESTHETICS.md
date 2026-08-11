@@ -1,7 +1,8 @@
 # Village aesthetic rules (NpcPad workers)
 
 Status: mandatory for `village-worker` / `village-builder` changes.  
-Issues: #64 (beauty/walk), **#66 (player-like / no platforms / no cheats)**.
+Issues: #64 (beauty/walk), **#66 (player-like / no platforms / no cheats)**.  
+See also: [`docs/CONSTRUCTION-QUALITY.md`](CONSTRUCTION-QUALITY.md).
 
 ## Player-like policy (critical)
 
@@ -13,6 +14,8 @@ Bots must look and act like **survival players** on **existing natural terrain**
 4. **Place like a player** — blocks on solid ground / adjacent to existing structures; small footprints (3×3 cabin walls+roof, **no floor pad**); paths replace surface only.
 5. **Beautify cleans** — tear historic junk + former house-shell platforms; restore `grass_block`. Never build more pads in beautify.
 6. **Civs first** — prefer existing town/region footprints and rare `cv placeregion` over inventing mega-builds.
+7. **Validate before place** — construction pipeline site + blueprint + foundation + palette gates via `runProject`; never skip.
+8. **Transactions** — aesthetic block changes are logged; failed inspection → repair or rollback.
 
 ## Allowed admin shortcuts (minimize)
 
@@ -27,9 +30,9 @@ Standalone **stockpile work ticks** (fill without placing a region) are **forbid
 
 ## What “beautiful” still means
 
-1. **Plan before place** — `lib/village/blueprints.js` templates (tiny cabin, path, sparse farm posts).
+1. **Plan before place** — `lib/village/blueprints.js` templates compiled into construction IR (`lib/village/construction/`).
 2. **Grid alignment** — integer coords; coherent small footprints.
-3. **Material palettes** — oak housing, cobble accents, `dirt_path` connectors.
+3. **Material palettes** — oak housing, cobble accents, `dirt_path` connectors (`PALETTES` / style system).
 4. **Walk, don’t teleport** — `lib/village/walk.js`; teleport only as rare recovery.
 5. **Pride / cleanup** — `beautify` job removes platform scars and restores grass.
 
@@ -42,7 +45,9 @@ Standalone **stockpile work ticks** (fill without placing a region) are **forbid
 - Spawning stone/log with `setblock` then `break_block`
 - Placing junk inside Civs region footprints meant for build-reqs
 - Inventing Paper APIs or Mineflayer clients
+- Large flatten platforms / `fill` pads as the default village prep (`VILLAGE_ALLOW_PAD_FLATTEN=1` is unsafe opt-in only)
+- Floating normal buildings (`NORMAL_BUILDING_FLOATING_BLOCKS = 0` unless `blueprint.elevated`)
 
 ## Honesty limit
 
-`place_block` cannot do true steep roofs / complex architecture. We use small cabin walls + slab roof + paths. That is intentional understatement — better than terraforming platforms.
+`place_block` cannot do true steep roofs / complex architecture. We use small cabin walls + slab roof + paths. That is intentional understatement — better than terraforming platforms. The construction engine remains authoritative for world safety even if a future vision critic suggests style tweaks.

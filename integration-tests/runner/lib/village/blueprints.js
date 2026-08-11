@@ -7,9 +7,11 @@
  * - Paths replace only the surface block; follow groundY when provided.
  * - Prefer Civs placeregion over decorative mega-builds.
  * - Beautify tears down platform junk and restores grass.
+ * - Structured IR / validation: `./construction` (`compileBlueprint` / `runProject`).
  */
 
 const { PLATFORM_JUNK } = require('./terrain');
+const { PALETTES, paletteFor } = require('./construction/styles');
 
 /** Junk materials previously spammed by workers — safe to tear down. */
 const JUNK_MATERIALS = Object.freeze([
@@ -25,66 +27,6 @@ const JUNK_MATERIALS = Object.freeze([
   'oak_slab',
   'oak_fence',
 ]);
-
-/** Site-specific palettes for coherent builds (no floor pad materials required). */
-const PALETTES = Object.freeze({
-  shelter: {
-    wall: 'oak_planks',
-    trim: 'oak_log',
-    roof: 'oak_slab',
-    path: 'dirt_path',
-  },
-  hovel: {
-    wall: 'oak_planks',
-    trim: 'oak_log',
-    roof: 'oak_slab',
-    path: 'dirt_path',
-  },
-  shack: {
-    wall: 'oak_planks',
-    trim: 'oak_log',
-    roof: 'oak_slab',
-    path: 'dirt_path',
-  },
-  smithy: {
-    wall: 'cobblestone',
-    trim: 'oak_log',
-    roof: 'cobblestone_slab',
-    path: 'dirt_path',
-  },
-  quarry: {
-    wall: 'cobblestone',
-    trim: 'oak_log',
-    roof: 'cobblestone_slab',
-    path: 'dirt_path',
-  },
-  farm: { wall: 'oak_fence', trim: 'oak_log', roof: 'oak_slab', path: 'dirt_path' },
-  barracks: {
-    wall: 'cobblestone',
-    trim: 'oak_log',
-    roof: 'cobblestone_slab',
-    path: 'dirt_path',
-  },
-  inn: {
-    wall: 'oak_planks',
-    trim: 'oak_log',
-    roof: 'oak_slab',
-    path: 'dirt_path',
-  },
-  center: {
-    wall: 'cobblestone',
-    trim: 'oak_log',
-    roof: 'cobblestone_slab',
-    path: 'dirt_path',
-  },
-});
-
-/**
- * @param {string} site
- */
-function paletteFor(site) {
-  return PALETTES[site] || PALETTES.shelter;
-}
 
 /**
  * Surface Y for blueprints: prefer step.groundY (from findSurfaceY), else origin.y.

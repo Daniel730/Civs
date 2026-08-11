@@ -13,9 +13,9 @@ const {
   JOB_CAMERA_MODE,
   stockpileMaterials,
   walkTo,
-  blueprintFor,
   cleanupTargets,
   findSurfaceY,
+  construction,
 } = require('../lib/village');
 const { initTelemetry, shutdownTelemetry } = require('../lib/telemetry');
 
@@ -29,6 +29,7 @@ try {
 const REPORTS = path.join(__dirname, '..', 'reports');
 const LOG_JSONL = path.join(REPORTS, 'village-worker.jsonl');
 const STATE_FILE = path.join(REPORTS, 'village-worker-state.json');
+const MEMORY_PATH = path.join(REPORTS, 'construction-memory.json');
 
 const cfg = {
   rconHost: process.env.RCON_HOST || '127.0.0.1',
@@ -317,11 +318,27 @@ async function runJob(harness, actorName, step, state) {
     results.actions.push({ beautify: true, cleaned: cleaned.length, sample: cleaned.slice(0, 4) });
   }
 
-  // Builder / farmer: terrain-adapted blueprints (no floor platforms).
+  // Builder / farmer: construction quality pipeline on natural terrain (playerlike_v1).
+  // Never places arbitrary blocks; pauses leave PROJECT_PAUSED in worker state.
   if (step.job === 'builder' || step.job === 'farmer' || coords.blueprint) {
-    const bp = blueprintFor(cfg.origin, { ...step, tick: state.tick, groundY });
-    const placed = [];
-    for (const block of bp.blocks) {
+    const paused = state.construction && state.construction.status === 'PROJECT_PAUSED';
+    const supportAt = async (x, y, z) => {
+      const below = await harness.block.at(x, y - 1, z);
+      const m = String(below || 'AIR').toUpperCase();
+      return (
+        m !== 'AIR' &&
+        m !== 'CAVE_AIR' &&
+        m !== 'VOID_AIR' &&
+        !m.includes('WATER') &&
+        !m.includes('LAVA')
+      );
+    };
+
+    // Keep the same plan across incremental ticks (don't flip path↔house mid-project).
+    const resumeTick =
+      paused && state.construction.planTick != null ? state.construction.planTick : state.tick;
+
+    const placeFn = async (block, tx) => {
       const near = {
         x: block.x,
         y: Math.max(block.y, groundY + 1),
@@ -336,14 +353,87 @@ async function runJob(harness, actorName, step, state) {
       results.actions.push({
         walkBlock: { steps: w2.steps, success: w2.success, recoverTeleport: w2.recoverTeleport },
       });
+      const oldBlock = await harness.block.at(block.x, block.y, block.z);
       const pr = await placeAesthetic(harness, actorName, block);
-      placed.push(pr);
-    }
-    results.actions.push({
-      blueprint: bp.id,
-      placed: placed.length,
-      materials: [...new Set(placed.map((p) => p.material))],
+      await tx.setBlock({
+        x: block.x,
+        y: block.y,
+        z: block.z,
+        newBlock: block.material,
+        oldBlock: oldBlock || 'AIR',
+        reason: `role:${block.role}:${pr.via || 'place'}`,
+        apply: false,
+      });
+    };
+
+    const project = await construction.runProject({
+      harness,
+      origin: cfg.origin,
+      step: { ...step, tick: resumeTick },
+      actorName,
+      memoryPath: MEMORY_PATH,
+      persistMemory: true,
+      maxBlocks: 10,
+      startIndex: paused ? state.construction.nextIndex || 0 : 0,
+      projectId: paused ? state.construction.projectId : undefined,
+      priorLog: paused ? state.construction.log || [] : undefined,
+      supportAt,
+      skipSiteSelection: true,
+      placeFn,
+      settlementContext: {
+        nearbyBuildings: Object.keys(state.completedPlaces || {}).length,
+        roadConnected: true,
+      },
+      shouldPause: () => state._interruptConstruction === true,
     });
+
+    if (project.status === 'PROJECT_PAUSED') {
+      state.construction = {
+        status: 'PROJECT_PAUSED',
+        projectId: project.tx && project.tx.projectId,
+        nextIndex: project.nextIndex,
+        purpose: project.blueprint && project.blueprint.purpose,
+        planTick: resumeTick,
+        log: project.tx ? project.tx.log : [],
+      };
+      results.status = project.incremental ? 'PASS' : 'PAUSED';
+      results.actions.push({
+        construction: {
+          status: project.status,
+          incremental: !!project.incremental,
+          stages: (project.stages || []).map((s) => s.stage),
+          nextIndex: project.nextIndex,
+          placed: project.build && project.build.placed && project.build.placed.length,
+        },
+      });
+      return results;
+    }
+
+    if (project.ok) {
+      state.construction = { status: 'COMMITTED', projectId: project.tx && project.tx.projectId };
+      results.actions.push({
+        construction: {
+          status: project.status,
+          blueprint: project.blueprint && project.blueprint.id,
+          purpose: project.blueprint && project.blueprint.purpose,
+          placed: project.build && project.build.placed && project.build.placed.length,
+          score: project.inspection && project.inspection.score,
+        },
+      });
+    } else {
+      state.construction = {
+        status: project.status || 'PROJECT_ABORTED',
+        reason: project.reason || (project.resolution && project.resolution.reason),
+      };
+      results.status = project.status === 'PROJECT_ABORTED' ? 'BLOCKED' : results.status;
+      results.actions.push({
+        construction: {
+          status: project.status,
+          reason: project.reason,
+          stages: (project.stages || []).map((s) => ({ stage: s.stage, ok: s.ok })),
+        },
+      });
+    }
   }
 
   if (step.job === 'patrol' || step.job === 'guard') {
