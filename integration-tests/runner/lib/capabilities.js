@@ -186,6 +186,36 @@ class Capabilities {
       this.harness.raw(`test rpg accept ${player} ${questId}`).then((line) => this._parse(line))
     );
   }
+  rpgQuestDetail(player, questId) {
+    return this._capSpan('rpg_quest_detail', player, 'rpg_quest_detail', () =>
+      this.harness
+        .raw(`test rpg quest_detail ${player} ${questId}`)
+        .then((line) => this._parse(line))
+    );
+  }
+  rpgNextQuest(player) {
+    return this._capSpan('rpg_next_quest', player, 'rpg_next_quest', () =>
+      this.harness.raw(`test rpg next_quest ${player}`).then((line) => this._parse(line))
+    );
+  }
+  rpgPois(player, radius) {
+    const r = radius == null ? '' : ` ${radius}`;
+    return this._capSpan('rpg_pois', player, 'rpg_pois', () =>
+      this.harness.raw(`test rpg pois ${player}${r}`).then((line) => this._parse(line))
+    );
+  }
+  findBlock(player, material, radius, max) {
+    const args = [material];
+    if (radius != null) args.push(radius);
+    if (max != null) args.push(max);
+    return this.act(player, 'find_block', ...args);
+  }
+  worldNearby(player, radius) {
+    const r = radius == null ? '' : ` ${radius}`;
+    return this._capSpan('world_nearby', player, 'world_nearby', () =>
+      this.harness.raw(`test world nearby ${player}${r}`).then((line) => this._parse(line))
+    );
+  }
 }
 
 module.exports = { Capabilities };

@@ -103,12 +103,13 @@ public class TestHarnessPlugin extends JavaPlugin implements CommandExecutor {
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] a) {
         try {
-            if (a.length == 0) return err(sender, "usage: /test <ping|money|assert|region|held|inventory|permission|block|spawnentity|scheduler|act|observe>");
+            if (a.length == 0) return err(sender, "usage: /test <ping|money|assert|region|held|inventory|permission|block|spawnentity|scheduler|act|observe|world>");
             String sub = a[0].toLowerCase(Locale.ROOT);
             switch (sub) {
                 case "ping":       return ping(sender);
                 case "money":      return money(sender, a);
                 case "region":     return region(sender, a);
+                case "world":      return WorldObserve.handle(sender, a);
                 case "held":       return held(sender, a);
                 case "inventory":  return inventory(sender, a);
                 case "permission": return permission(sender, a);
