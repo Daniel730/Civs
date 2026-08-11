@@ -121,14 +121,35 @@ Village pad structures confirmed: `council_room`, `shelter`, `hovel`, `cobble_qu
 ## Overnight loop control
 
 ```bash
-# WSL
+# WSL — preferred: NPC WORKER (move/break/place/swing, not AFK orbit)
 export PATH="$HOME/.nvm/versions/node/v25.8.0/bin:$PATH"
 cd /mnt/c/Users/Danie/Downloads/Civs-1.11.6/Civs-1.11.6/integration-tests/runner
-tmux attach -t village-npc
-# overnight cinematic keep-alive
 tmux kill-session -t village-npc 2>/dev/null || true
 tmux new-session -d -s village-npc \
-  "RCON_PASSWORD=civsqa FORCE_ORBIT=1 node scripts/village-watch.js 2>&1 | tee -a reports/village-watch.log"
+  "RCON_PASSWORD=civsqa ENABLE_HELPER=1 FORCE_ORBIT=1 node scripts/village-worker.js 2>&1 | tee -a reports/village-worker.log"
+
+# Legacy watch-only (teleport orbit)
+# tmux new-session -d -s village-npc \
+#   "RCON_PASSWORD=civsqa FORCE_ORBIT=1 node scripts/village-watch.js 2>&1 | tee -a reports/village-watch.log"
+```
+
+### Monitor NPC work
+
+| Artifact | Path |
+|----------|------|
+| Worker JSONL | `integration-tests/runner/reports/village-worker.jsonl` |
+| Worker state | `integration-tests/runner/reports/village-worker-state.json` |
+| Worker log | `integration-tests/runner/reports/village-worker.log` |
+| tmux | `tmux attach -t village-npc` |
+
+Jobs rotate: **patrol → builder → miner → farmer → stockpile** (+ periodic `placeregion` retries). Evidence lines include `"action":"work_tick"` with `move` / `breakBlock` / `placeBlock` results.
+
+Optional second actor: `ENABLE_HELPER=1` joins **Alex** and multiplexes every other tick.
+
+Recover if the worker dies:
+
+```bash
+bash scripts/recover-npc.sh
 ```
 
 ---
@@ -137,6 +158,8 @@ tmux new-session -d -s village-npc \
 
 - `integration-tests/runner/lib/camera.js` — spectator Cam
 - `integration-tests/runner/scripts/village-builder.js` — deterministic planner
+- `integration-tests/runner/scripts/village-worker.js` — overnight **work** loop (capabilities)
+- `integration-tests/runner/lib/village/jobs.js` — job rotation planner
 - `integration-tests/runner/scripts/launch-viewer.ps1` — quickPlay + reachable host + auto-spectate
 - `integration-tests/runner/scripts/_rcon_once.js` — RCON helper for the launcher
 - `integration-tests/runner/scripts/start-obs-capture.ps1` — OBS helper

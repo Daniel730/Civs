@@ -13,6 +13,7 @@ const { Harness } = require('../lib/harness');
 const { RawKeepAliveActor } = require('../lib/actor');
 const { SpectatorCamera } = require('../lib/camera');
 const { initTelemetry, shutdownTelemetry } = require('../lib/telemetry');
+const { stockpileMaterials } = require('../lib/village');
 
 const REPORTS = path.join(__dirname, '..', 'reports');
 const LOG_JSONL = path.join(REPORTS, 'village-builder.jsonl');
@@ -100,11 +101,11 @@ const PLAN = [
     id: 'warehouse',
     kind: 'region',
     type: 'inn',
-    dx: 14,
+    dx: 24,
     dy: 0,
-    dz: 14,
+    dz: 24,
     label: 'Utility: inn (settlement-tier storage/housing)',
-    stockpile: 'utility',
+    stockpile: 'inn',
   },
   {
     id: 'wheat_farm',
@@ -120,11 +121,11 @@ const PLAN = [
     id: 'barracks',
     kind: 'region',
     type: 'barracks',
-    dx: 14,
+    dx: 24,
     dy: 0,
-    dz: -10,
+    dz: -18,
     label: 'Defense: barracks',
-    stockpile: 'utility',
+    stockpile: 'barracks',
   },
   {
     id: 'smithy',
@@ -173,81 +174,8 @@ async function sleep(ms) {
 
 /**
  * Dump Civs build materials so MANUAL /cv placeregion can validate.
- * Materials match Civs_servidor config.yml item-groups (primary/secondary/roof/…).
+ * Implementation: lib/village/stockpile.js (shared with village-worker).
  */
-async function stockpileMaterials(harness, x, y, z, profile = 'utility') {
-  const r = profile === 'council_room' ? 5 : profile === 'hovel' ? 4 : 4;
-  const cmds = [
-    `fill ${x - r} ${y + 1} ${z - r} ${x + r} ${y + 7} ${z + r} air`,
-    // Primary volume (stone_bricks ∈ g:primary) — overshoot counts for 125+
-    `fill ${x - r} ${y} ${z - r} ${x + r} ${y + 3} ${z + r} stone_bricks`,
-    // Secondary (cobblestone)
-    `fill ${x - r} ${y} ${z - r} ${x + r} ${y} ${z + r} cobblestone`,
-    `fill ${x - Math.max(1, r - 1)} ${y + 1} ${z - Math.max(1, r - 1)} ${x + Math.max(1, r - 1)} ${y + 2} ${z + Math.max(1, r - 1)} oak_log`,
-    // Roof / stairs
-    `fill ${x - r} ${y + 4} ${z - r} ${x + r} ${y + 4} ${z + r} oak_stairs`,
-    `fill ${x - r} ${y + 5} ${z - r} ${x + r} ${y + 5} ${z + r} oak_slab`,
-    // Hollow interior for interactables
-    `fill ${x - Math.max(1, r - 2)} ${y + 1} ${z - Math.max(1, r - 2)} ${x + Math.max(1, r - 2)} ${y + 3} ${z + Math.max(1, r - 2)} air`,
-    `setblock ${x + 1} ${y + 1} ${z} chest`,
-    `setblock ${x + 2} ${y + 1} ${z} chest`,
-    `setblock ${x - 1} ${y + 1} ${z} chest`,
-    `setblock ${x - 2} ${y + 1} ${z} chest`,
-    `setblock ${x} ${y + 1} ${z + 1} oak_door[half=lower]`,
-    `setblock ${x} ${y + 2} ${z + 1} oak_door[half=upper]`,
-    `setblock ${x} ${y + 1} ${z - 1} oak_door[half=lower]`,
-    `setblock ${x} ${y + 2} ${z - 1} oak_door[half=upper]`,
-    `setblock ${x + 1} ${y + 2} ${z + 2} glass`,
-    `setblock ${x - 1} ${y + 2} ${z + 2} glass`,
-    `setblock ${x + 1} ${y + 2} ${z - 2} glass`,
-    `setblock ${x - 1} ${y + 2} ${z - 2} glass`,
-    `setblock ${x + 2} ${y + 2} ${z + 1} glass_pane`,
-    `setblock ${x - 2} ${y + 2} ${z + 1} glass_pane`,
-    `setblock ${x + 2} ${y + 2} ${z - 1} glass_pane`,
-    `setblock ${x - 2} ${y + 2} ${z - 1} glass_pane`,
-    `setblock ${x + 3} ${y + 1} ${z} furnace`,
-    `setblock ${x + 3} ${y + 1} ${z + 1} furnace`,
-    `setblock ${x - 3} ${y + 1} ${z} crafting_table`,
-    `setblock ${x - 3} ${y + 1} ${z + 1} bookshelf`,
-    `setblock ${x - 3} ${y + 1} ${z + 2} bookshelf`,
-    `setblock ${x - 3} ${y + 2} ${z + 1} bookshelf`,
-    `setblock ${x - 3} ${y + 2} ${z + 2} bookshelf`,
-    `setblock ${x - 2} ${y + 1} ${z + 2} bookshelf`,
-    `setblock ${x - 2} ${y + 2} ${z + 2} bookshelf`,
-    `setblock ${x - 1} ${y + 1} ${z + 2} bookshelf`,
-    `setblock ${x - 1} ${y + 2} ${z + 2} bookshelf`,
-    `setblock ${x + 1} ${y + 1} ${z + 3} red_bed`,
-    `setblock ${x - 1} ${y + 1} ${z + 3} water`,
-    `setblock ${x - 2} ${y + 1} ${z + 3} lava`,
-    `setblock ${x + 2} ${y + 1} ${z + 3} cauldron`,
-  ];
-  if (profile === 'farm') {
-    cmds.push(
-      `fill ${x - 3} ${y} ${z - 4} ${x + 3} ${y} ${z - 2} farmland`,
-      `fill ${x - 3} ${y + 1} ${z - 4} ${x + 3} ${y + 1} ${z - 2} potatoes[age=7]`,
-      `setblock ${x} ${y} ${z - 3} water`,
-      `setblock ${x + 2} ${y + 1} ${z} composter`,
-      `fill ${x - 4} ${y + 1} ${z - 4} ${x + 4} ${y + 1} ${z - 4} oak_fence`,
-      `setblock ${x} ${y + 1} ${z - 4} oak_fence_gate`
-    );
-  }
-  if (profile === 'quarry') {
-    cmds.push(
-      `setblock ${x + 1} ${y + 1} ${z + 1} furnace`,
-      `setblock ${x - 1} ${y + 1} ${z + 1} furnace`,
-      `setblock ${x} ${y + 1} ${z + 2} lava`,
-      `setblock ${x} ${y + 1} ${z - 2} cauldron`
-    );
-  }
-  // Leave center clear for region icon chest placed by placeregion
-  cmds.push(`setblock ${x} ${y} ${z} grass_block`);
-  cmds.push(`setblock ${x} ${y + 1} ${z} air`);
-  const results = [];
-  for (const c of cmds) {
-    results.push({ cmd: c.slice(0, 80), reply: await harness.raw(c) });
-  }
-  return results;
-}
 
 async function pasteSchem(harness, actor, schem, x, y, z) {
   // WorldEdit console paste if plugin present — best-effort, not required.

@@ -57,6 +57,26 @@ class SpectatorCamera {
   }
 
   /**
+   * Apply a deterministic pose from ShotPlanner / FallbackDirector.
+   * pose.kind: 'spectate' | 'teleport_look'
+   */
+  async applyPose(pose) {
+    if (!this.actor.available) return { status: 'BLOCKED', reason: 'camera_offline' };
+    if (!pose || pose.kind === 'spectate') {
+      return this.ensureFollow();
+    }
+    const tp = await this.harness.cap.teleport(this.name, pose.x, pose.y, pose.z);
+    const look = await this.harness.cap.lookAt(this.name, pose.lookX, pose.lookY, pose.lookZ);
+    this.mode = pose.mode || 'teleport_look';
+    return {
+      status: tp && tp.success ? 'PASS' : 'FAIL',
+      mode: this.mode,
+      tp,
+      look,
+    };
+  }
+
+  /**
    * Orbit around observed target position (when spectate is unavailable or for cinematic wide shots).
    * Uses verified capabilities: teleport + look_at.
    */
