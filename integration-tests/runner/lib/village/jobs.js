@@ -6,6 +6,7 @@ const JOBS = Object.freeze([
   'stockpile',
   'lumberjack',
   'guard',
+  'beautify',
   'placeregion',
 ]);
 
@@ -34,6 +35,8 @@ const JOB_SITE_AFFINITY = Object.freeze({
   stockpile: ['shack', 'shelter'],
   lumberjack: ['quarry', 'shelter', 'hovel'],
   guard: ['barracks', 'center'],
+  // Pride pass: clean historic junk pads around housing / smithy / quarry
+  beautify: ['shelter', 'hovel', 'smithy', 'quarry', 'shack', 'farm'],
 });
 
 /** Preferred FallbackDirector / ShotPlanner modes when a job succeeds. */
@@ -45,6 +48,7 @@ const JOB_CAMERA_MODE = Object.freeze({
   stockpile: 'follow',
   lumberjack: 'follow',
   guard: 'orbit',
+  beautify: 'poi',
   placeregion: 'event',
 });
 
@@ -80,12 +84,13 @@ function siteForJob(job, tick) {
  */
 function nextJob(tick, state = {}) {
   const n = Math.max(0, Math.floor(tick));
-  // Every 8th job try placeregion for next unlocked structure.
-  if (n > 0 && n % 8 === 0) {
+  const rotate = JOBS.filter((j) => j !== 'placeregion');
+  // Placeregion on a cadence that does not collide with rotate index 0 (patrol).
+  // With 8 visible jobs, n%8===0 would starve patrol if we also stole those ticks.
+  if (n > 0 && n % 9 === 0) {
     const attempt = nextPlaceAttempt(state);
     if (attempt) return { job: 'placeregion', ...attempt };
   }
-  const rotate = JOBS.filter((j) => j !== 'placeregion');
   const job = rotate[n % rotate.length];
   const siteKey = siteForJob(job, n);
   return { job, site: siteKey, ...SITES[siteKey] };
@@ -178,29 +183,25 @@ function workCoords(origin, step) {
           ? SITE_FOOTPRINT.barracks
           : 5;
   switch (step.job) {
-    case 'miner':
-      return {
-        stand: apronStand(ox, oy, oz, Math.min(footprint, 5), 2),
-        target: { x: ox + 3, y: oy, z: oz + 2 },
-        place: { x: ox + 4, y: oy + 1, z: oz + 2, material: 'cobblestone' },
-      };
     case 'farmer':
-      // potato_farm footprint radius 4 — prior stand at oz-2 was inside the region.
+      // potato_farm footprint radius 4 — stand on apron; fence via farmEdge blueprint.
       return {
         stand: apronStand(ox, oy, oz, SITE_FOOTPRINT.farm, 2),
-        target: { x: ox + (tick % 3) - 1, y: oy, z: oz - SITE_FOOTPRINT.farm },
-        place: {
-          x: ox + (tick % 3) - 1,
-          y: oy + 1,
-          z: oz - SITE_FOOTPRINT.farm - 1,
-          material: 'potatoes',
-        },
+        target: { x: ox, y: oy + 1, z: oz - SITE_FOOTPRINT.farm - 1 },
+        place: null,
+        blueprint: true,
       };
     case 'lumberjack':
       return {
         stand: apronStand(ox, oy, oz, Math.min(footprint, 5), 2),
         target: { x: ox + 3, y: oy, z: oz - 1 },
-        place: { x: ox + 4, y: oy + 1, z: oz - 1, material: 'oak_planks' },
+        place: null,
+      };
+    case 'miner':
+      return {
+        stand: apronStand(ox, oy, oz, Math.min(footprint, 5), 2),
+        target: { x: ox + 3, y: oy, z: oz + 2 },
+        place: null,
       };
     case 'guard': {
       // Orbit on the apron ring (outside barracks walls), integer blocks only.
@@ -217,16 +218,25 @@ function workCoords(origin, step) {
       };
     }
     case 'builder':
+      // Stand on south apron facing the house-shell anchor (see blueprints.houseShell).
+      return {
+        stand: apronStand(ox, oy, oz, Math.min(footprint, 5), 3),
+        target: { x: ox - 2, y: oy + 2, z: oz - 8 },
+        place: null, // blueprintFor() supplies coherent blocks
+        blueprint: true,
+      };
+    case 'beautify':
+      return {
+        stand: apronStand(ox, oy, oz, Math.min(footprint, 5), 2),
+        target: { x: ox + 6, y: oy + 1, z: oz + 6 },
+        place: null,
+        cleanup: true,
+      };
     case 'stockpile':
       return {
         stand: apronStand(ox, oy, oz, Math.min(footprint, 5), 1),
         target: { x: ox + 2, y: oy + 1, z: oz },
-        place: {
-          x: ox + 2 + (tick % 2),
-          y: oy + 1,
-          z: oz + (tick % 3),
-          material: 'stone_bricks',
-        },
+        place: null,
       };
     default: {
       const a = tick * 0.55;
