@@ -19,16 +19,16 @@ const {
   cleanupTargets,
   paletteFor,
   horizDist,
+  isNaturalSurface,
 } = require('../lib/village');
 
 describe('village jobs planner', () => {
   it('rotates visible work jobs including lumberjack, guard, beautify', () => {
     const seen = new Set();
     for (let t = 0; t <= 80; t++) {
-      if (t > 0 && t % 9 === 0) continue;
       const j = nextJob(t);
       seen.add(j.job);
-      assert.ok(JOBS.includes(j.job) || j.job === 'placeregion');
+      assert.ok(JOBS.includes(j.job) || j.job === 'placeregion' || j.job === 'beautify');
     }
     assert.ok(seen.has('patrol'));
     assert.ok(seen.has('builder'));
@@ -36,11 +36,15 @@ describe('village jobs planner', () => {
     assert.ok(seen.has('lumberjack'));
     assert.ok(seen.has('guard'));
     assert.ok(seen.has('beautify'));
+    assert.ok(!seen.has('stockpile'), 'standalone stockpile terraform job must be gone');
+  });
+
+  it('does not schedule stockpile as a job id', () => {
+    assert.ok(!JOBS.includes('stockpile'));
   });
 
   it('keeps job-site affinity (farmer never at barracks)', () => {
     for (let t = 1; t <= 70; t++) {
-      if (t % 9 === 0) continue;
       const j = nextJob(t);
       if (j.job === 'placeregion') continue;
       const allowed = JOB_SITE_AFFINITY[j.job];
@@ -53,7 +57,7 @@ describe('village jobs planner', () => {
 
   it('siteForJob respects affinity lists', () => {
     assert.equal(siteForJob('farmer', 3), 'farm');
-    assert.ok(['quarry', 'hovel'].includes(siteForJob('miner', 1)));
+    assert.ok(['quarry'].includes(siteForJob('miner', 1)));
     assert.ok(['barracks', 'center'].includes(siteForJob('guard', 2)));
   });
 
@@ -65,10 +69,15 @@ describe('village jobs planner', () => {
     assert.equal(JOB_CAMERA_MODE.beautify, 'poi');
   });
 
-  it('schedules placeregion every 9 ticks when attempts remain', () => {
-    const j = nextJob(9, {});
+  it('schedules placeregion every 11 ticks when attempts remain', () => {
+    const j = nextJob(11, {});
     assert.equal(j.job, 'placeregion');
     assert.equal(j.type, PLACE_ATTEMPTS[0].type);
+  });
+
+  it('injects extra beautify on %4 ticks', () => {
+    const j = nextJob(4, {});
+    assert.equal(j.job, 'beautify');
   });
 
   it('skips blocked placeregion types', () => {
@@ -151,40 +160,61 @@ describe('village jobs planner', () => {
   });
 });
 
-describe('village blueprints aesthetics', () => {
-  it('house shell has floor walls roof door gap and oak palette for shelter', () => {
+describe('village blueprints player-like (no platforms)', () => {
+  it('cabin shell has walls+roof only — no floor platform', () => {
     const origin = { x: 5200, y: 80, z: 5200 };
     const shell = houseShell(origin, { site: 'shelter', dx: -10, dz: 0, tick: 0 });
-    assert.ok(shell.allBlocks.length > 40);
     const roles = new Set(shell.allBlocks.map((b) => b.role));
-    assert.ok(roles.has('floor'));
     assert.ok(roles.has('wall'));
     assert.ok(roles.has('roof'));
+    assert.ok(!roles.has('floor'), 'floor platforms are forbidden');
+    assert.ok(shell.allBlocks.length <= 30, 'footprint must stay small');
     assert.equal(paletteFor('shelter').wall, 'oak_planks');
-    // Door gap: south wall mid at y+1/+2 should be absent
+    // Door gap: south mid at y+1/+2 absent
     const doorCells = shell.allBlocks.filter(
-      (b) => b.z === 5200 - 8 && b.x === 5200 - 10 - 2 + 2 && b.y >= 81 && b.y <= 82
+      (b) => b.z === 5200 - 8 && b.x === 5200 - 10 - 1 + 1 && b.y >= 81 && b.y <= 82
     );
     assert.equal(doorCells.length, 0);
   });
 
-  it('blueprintFor farm returns fence edge; housing returns shell or path', () => {
+  it('respects groundY for slopes', () => {
+    const origin = { x: 5200, y: 80, z: 5200 };
+    const shell = houseShell(origin, { site: 'shelter', dx: -10, dz: 0, tick: 0, groundY: 77 });
+    assert.ok(shell.allBlocks.every((b) => b.y >= 78 && b.y <= 80));
+  });
+
+  it('blueprintFor farm returns fence posts; housing prefers path over cabin', () => {
     const origin = { x: 5200, y: 80, z: 5200 };
     const farm = blueprintFor(origin, { job: 'farmer', site: 'farm', dx: 0, dz: -14, tick: 1 });
     assert.equal(farm.id, 'farm_edge');
     assert.ok(farm.blocks.every((b) => b.material === 'oak_fence'));
-    const path = blueprintFor(origin, { job: 'builder', site: 'shelter', dx: -10, dz: 0, tick: 3 });
-    assert.ok(path.id.startsWith('path_') || path.id.startsWith('house_shell_'));
+    const path = blueprintFor(origin, { job: 'builder', site: 'shelter', dx: -10, dz: 0, tick: 1 });
+    assert.ok(path.id.startsWith('path_'));
+    const cabin = blueprintFor(origin, {
+      job: 'builder',
+      site: 'shelter',
+      dx: -10,
+      dz: 0,
+      tick: 5,
+    });
+    assert.ok(cabin.id.startsWith('cabin_'));
   });
 
-  it('cleanupTargets hit historic junk pad at site+6', () => {
+  it('cleanupTargets hit historic junk pad and former floor platform scars', () => {
     const origin = { x: 5200, y: 80, z: 5200 };
     const all = [];
-    for (let tick = 0; tick < 12; tick++) {
+    for (let tick = 0; tick < 40; tick++) {
       all.push(...cleanupTargets(origin, { dx: -10, dz: 0, tick }));
     }
     assert.ok(all.some((t) => t.x === 5196 && t.z >= 5195 && t.action === 'break'));
     assert.ok(all.some((t) => t.action === 'set_grass'));
+    // Former 5×5 shell floor around (5188, 5192)
+    assert.ok(all.some((t) => t.x === 5188 && t.z === 5192 && t.action === 'set_grass'));
+  });
+
+  it('isNaturalSurface recognizes grass/dirt/path', () => {
+    assert.equal(isNaturalSurface('grass_block'), true);
+    assert.equal(isNaturalSurface('oak_planks'), false);
   });
 
   it('horizDist is planar', () => {

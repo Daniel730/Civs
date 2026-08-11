@@ -3,7 +3,7 @@ const JOBS = Object.freeze([
   'builder',
   'miner',
   'farmer',
-  'stockpile',
+  // stockpile fill alone is a terraform cheat — only via placeregion founding
   'lumberjack',
   'guard',
   'beautify',
@@ -29,14 +29,14 @@ const SITES = Object.freeze({
  */
 const JOB_SITE_AFFINITY = Object.freeze({
   patrol: ['center'],
-  builder: ['shelter', 'hovel', 'smithy', 'shack'],
-  miner: ['quarry', 'hovel'],
+  // Builder: light paths/cabins near existing housing — not mega-pads
+  builder: ['shelter', 'hovel', 'shack'],
+  miner: ['quarry'],
   farmer: ['farm'],
-  stockpile: ['shack', 'shelter'],
-  lumberjack: ['quarry', 'shelter', 'hovel'],
+  lumberjack: ['quarry', 'shelter'],
   guard: ['barracks', 'center'],
-  // Pride pass: clean historic junk pads around housing / smithy / quarry
-  beautify: ['shelter', 'hovel', 'smithy', 'quarry', 'shack', 'farm'],
+  // Pride pass: tear platform scars / restore grass (more sites = more cleanup)
+  beautify: ['shelter', 'hovel', 'smithy', 'quarry', 'shack', 'farm', 'center'],
 });
 
 /** Preferred FallbackDirector / ShotPlanner modes when a job succeeds. */
@@ -45,7 +45,6 @@ const JOB_CAMERA_MODE = Object.freeze({
   builder: 'event',
   miner: 'poi',
   farmer: 'wide',
-  stockpile: 'follow',
   lumberjack: 'follow',
   guard: 'orbit',
   beautify: 'poi',
@@ -85,11 +84,15 @@ function siteForJob(job, tick) {
 function nextJob(tick, state = {}) {
   const n = Math.max(0, Math.floor(tick));
   const rotate = JOBS.filter((j) => j !== 'placeregion');
-  // Placeregion on a cadence that does not collide with rotate index 0 (patrol).
-  // With 8 visible jobs, n%8===0 would starve patrol if we also stole those ticks.
-  if (n > 0 && n % 9 === 0) {
+  // Placeregion cadence — founding still needs honest stockpile (documented exception).
+  if (n > 0 && n % 11 === 0) {
     const attempt = nextPlaceAttempt(state);
     if (attempt) return { job: 'placeregion', ...attempt };
+  }
+  // Extra beautify ticks so platform scars heal faster than new builds appear.
+  if (n > 0 && n % 4 === 0) {
+    const siteKey = siteForJob('beautify', n);
+    return { job: 'beautify', site: siteKey, ...SITES[siteKey] };
   }
   const job = rotate[n % rotate.length];
   const siteKey = siteForJob(job, n);
@@ -218,11 +221,11 @@ function workCoords(origin, step) {
       };
     }
     case 'builder':
-      // Stand on south apron facing the house-shell anchor (see blueprints.houseShell).
+      // South apron facing tiny cabin / path (no floor platform).
       return {
         stand: apronStand(ox, oy, oz, Math.min(footprint, 5), 3),
-        target: { x: ox - 2, y: oy + 2, z: oz - 8 },
-        place: null, // blueprintFor() supplies coherent blocks
+        target: { x: ox - 1, y: oy + 2, z: oz - 8 },
+        place: null,
         blueprint: true,
       };
     case 'beautify':
@@ -231,12 +234,6 @@ function workCoords(origin, step) {
         target: { x: ox + 6, y: oy + 1, z: oz + 6 },
         place: null,
         cleanup: true,
-      };
-    case 'stockpile':
-      return {
-        stand: apronStand(ox, oy, oz, Math.min(footprint, 5), 1),
-        target: { x: ox + 2, y: oy + 1, z: oz },
-        place: null,
       };
     default: {
       const a = tick * 0.55;
