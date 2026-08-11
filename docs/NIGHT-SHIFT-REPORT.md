@@ -15,7 +15,7 @@ Unattended night shift on `Daniel730/Civs`. Labels: **FACT** · **OBSERVED** · 
 |----|-------|------|-------------------------|
 | [#46](https://github.com/Daniel730/Civs/pull/46) | OTel primary instrumentation (#32) | `cursor/agent-platform-p1` | OPEN, MERGEABLE; no required checks on that base **OBSERVED** |
 | [#47](https://github.com/Daniel730/Civs/pull/47) | Biome + commitlint + knip (#35) | `feat/otel-integration-runner` | OPEN; Biome + commitlint **PASS** **FACT** |
-| [#48](https://github.com/Daniel730/Civs/pull/48) | Maven CI + merge gates (#42) + test isolation (#41) | `feat/biome-runner-quality` | OPEN; runner-quality PASS; `maven-test` re-running after isolation fix **OBSERVED** |
+| [#48](https://github.com/Daniel730/Civs/pull/48) | Maven CI + merge gates (#42) + test isolation (#41) | `feat/biome-runner-quality` | OPEN; **all checks PASS** including `maven-test` (764 tests) **FACT** |
 | [#45](https://github.com/Daniel730/Civs/pull/45) | Workflow docs (#31) | `master` | OPEN (pre-existing; not modified this shift) **OBSERVED** |
 
 Stack for merge: `#46` → `#47` → `#48` (or squash-merge in that order onto `cursor/agent-platform-p1` / agreed trunk).
@@ -33,7 +33,8 @@ Stack for merge: `#46` → `#47` → `#48` (or squash-merge in that order onto `
 - Runner: `npm run lint` clean (24 files); `npm run knip` clean; `npm run test:unit` 10/10; OTel validate + MCP tree PASS **FACT**
 - Java local: `mvn -B -DskipTests compile` SUCCESS; `mvn -B test` **764** tests, **0** failures, 6 skipped (after isolation fixes) **FACT**
 - First GHA `maven-test` on #48: **4 failures** (ItemsTests×2, CivilianTests×2) under Linux order — not RegionsTests **FACT**
-- Second GHA `maven-test`: in progress / re-check after push of isolation commit **OBSERVED**
+- Root cause: test `InventoryImpl.clear()` was a no-op; fixed in `afca5da9` **FACT**
+- Final GHA `maven-test` on #48 @ `afca5da9`: **PASS** (~5m) **FACT**
 
 ### Empirical validations
 1. OTel memory exporter tree: `scenario.run → scenario.step → minecraft.move_to → rcon.send` (+ `mcp.tool` parent) **FACT**
@@ -50,7 +51,7 @@ None hard-blocked for remaining high-priority unlockers. Soft notes:
 | Live Paper / Hermes E2E | Not in night-shift scope; no testserver this run | Skipped per mission | N/A | Out of priority | Optional later |
 | #38 Codecov | Needs `CODECOV_TOKEN` secret | Not started | Issue acceptance | Secret not verified in env | Add secret then wire JaCoCo/c8 upload |
 | #33 Sentry | After OTel; needs DSN secret | Deferred | Mission: do not expand OTel | Wait #32 merge | Bridge after #46 |
-| First `maven-test` red | Order-dependent fixtures | Fixed in `f6c4a801` | GHA log: GRAVEL vs COBBLESTONE; isAtMax cobble | Await re-run green | Confirm #48 `maven-test` PASS |
+| First `maven-test` red | Order-dependent fixtures + no-op `InventoryImpl.clear()` | Fixed in `f6c4a801` + `afca5da9` | GHA log then PASS | Resolved | None |
 
 ### Next recommended issue
 1. Confirm **PR #48 `maven-test` green**, then merge stack **#46 → #47 → #48** (or rebase as preferred).
