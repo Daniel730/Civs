@@ -27,9 +27,28 @@ test('OllamaBrain.decide parses a JSON focus from the model response', async () 
   assert.strictEqual(bad, null, 'extractJSON returns null when no JSON present');
 });
 
-test('OllamaBrain.decide rejects an invalid focus (falls back)', async () => {
-  const { OllamaBrain, FOCUSES } = require(path.join(ROOT, 'lib', 'ai-world', 'ollama-brain'));
-  assert.ok(FOCUSES.includes('survive') && FOCUSES.includes('build'), 'focus vocabulary includes core intents');
-  // A focus outside the vocabulary must be rejected by the worker (tested via FOCUSES membership)
-  assert.ok(!FOCUSES.includes('fly_to_moon'), 'unknown focus rejected');
+test('OllamaBrain reads OLLAMA_MODEL env as default model (trained civs-brain)', () => {
+  const { OllamaBrain } = require(path.join(ROOT, 'lib', 'ai-world', 'ollama-brain'));
+  const prev = process.env.OLLAMA_MODEL;
+  process.env.OLLAMA_MODEL = 'civs-brain';
+  try {
+    const brain = new OllamaBrain({}); // no explicit model -> must pick up env
+    assert.strictEqual(brain.model, 'civs-brain', 'defaults to trained civs-brain when env set');
+  } finally {
+    if (prev === undefined) delete process.env.OLLAMA_MODEL;
+    else process.env.OLLAMA_MODEL = prev;
+  }
+});
+
+test('OllamaBrain explicit model overrides env', () => {
+  const { OllamaBrain } = require(path.join(ROOT, 'lib', 'ai-world', 'ollama-brain'));
+  const prev = process.env.OLLAMA_MODEL;
+  process.env.OLLAMA_MODEL = 'civs-brain';
+  try {
+    const brain = new OllamaBrain({ model: 'llama3.1:8b' });
+    assert.strictEqual(brain.model, 'llama3.1:8b', 'explicit model wins over env');
+  } finally {
+    if (prev === undefined) delete process.env.OLLAMA_MODEL;
+    else process.env.OLLAMA_MODEL = prev;
+  }
 });

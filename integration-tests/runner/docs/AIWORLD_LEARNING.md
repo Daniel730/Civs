@@ -214,3 +214,33 @@ decisions toward what actually survived/built in the past.
 - Ad-hoc: 12/12 (ollama wiring + coexistence with B1/B2/W1).
 - Fine-tune dataset: generated from 319 rated experiences -> **122 valid examples (32 pos / 90 neg),
   0 malformed**; `manifest.json` records per-agent counts (Steve 107, Alex 15, LearnBot 0).
+
+## Continuous-learning loop (close the cycle)
+
+The pieces above form a full loop, orchestrated by `scripts/aiworld-learn-loop.sh`:
+
+```
+  LIVE RUN (worker, AIWORLD_POLICY=neural|ollama)
+      |  records decisions + later outcomes  (Task A)
+      v
+  reports/aiworld-experiences/experiences-*.jsonl   (rated: outcome.reward set)
+      |
+      |  aiworld-finetune.py   (distill reward -> training examples)
+      v
+  reports/aiworld-finetune/dataset.jsonl  (+ Modelfile, manifest.json)
+      |
+      |  ollama create civs-brain -f Modelfile   (only if `ollama` CLI present)
+      v
+  local model "civs-brain"  --OLLAMA_MODEL=civs-brain-->  next LIVE RUN
+```
+
+`OllamaBrain` reads `OLLAMA_MODEL` (explicit arg > env > `llama3.1:8b` default), so a trained
+`civs-brain` is picked up automatically when the worker is launched with `OLLAMA_MODEL=civs-brain`.
+The loop is safe: if `ollama` is not installed, the script only regenerates the dataset and the
+worker keeps running on the deterministic brain (or a previously trained model). No destructive
+step, no external API cost — everything is local on your PC.
+
+**Verification:**
+- Unit: `test/ollama-brain.test.js` covers `OLLAMA_MODEL` env default + explicit override (288/288).
+- `aiworld-learn-loop.sh` is idempotent; step [1] regenerates the dataset from live experiences,
+  step [2] is skipped cleanly when `ollama` is absent (verified: ollama not on PATH on build host).

@@ -81,7 +81,8 @@ function extractJSON(text) {
 class OllamaBrain {
   constructor(opts = {}) {
     this.endpoint = opts.endpoint || DEFAULT_ENDPOINT;
-    this.model = opts.model || DEFAULT_MODEL;
+    // model priority: explicit arg > OLLAMA_MODEL env > built-in default
+    this.model = opts.model || process.env.OLLAMA_MODEL || DEFAULT_MODEL;
     this.systemPrompt = opts.systemPrompt || null;
     this.timeoutMs = opts.timeoutMs || TIMEOUT_MS;
     this._available = null; // lazy: checked on first decide()
