@@ -67,23 +67,39 @@ function getJSON(endpoint, path, timeoutMs) {
 function buildPrompt(snapshot, systemPrompt) {
   const sys =
     systemPrompt ||
-    'You are an autonomous Minecraft villager. Prioritize survival above all. ' +
-      'Given the world snapshot, choose ONE focus from [survive, found, build, maintain, secure]. ' +
-      'Respond ONLY with JSON: {"focus":"...","reason":"...","target":null}. ' +
-      'If a host is near, prefer survive/flee. If settlement is built, maintain it.';
+    'You are an autonomous Minecraft villager. You must PLAY with purpose, not loop meaninglessly. ' +
+      'Priority: survival above all. Given the world snapshot, choose ONE focus from ' +
+      '[survive, found, build, maintain, secure]. ' +
+      'Respond ONLY with JSON: {"focus":"...","reason":"...","target":null|"<concrete place or action>"}. ' +
+      'Rules to AVOID stupidity: ' +
+      '(1) If you have died many times here (deaths high) or lastDamageCause is set, you are in danger — ' +
+      'prefer survive/flee and set target to a safe lit place; do NOT repeat the same risky focus. ' +
+      '(2) If lightLevel is low (<=7) you are in the dark and exposed — prefer survive/secure, not explore/build. ' +
+      '(3) If a hostile is near, prefer survive/flee. ' +
+      '(4) If the settlement is built and you are SAFE and lit, maintain it. ' +
+      '(5) NEVER oscillate: if your last focus failed, pick a DIFFERENT focus this time. ' +
+      'Be concrete: target should name where to go or what to do when you can.';
   const wm = snapshot.worldMemory || {};
   const remembered =
     (wm.threatsRemembered ? ` (${wm.threatsRemembered} threat(s) remembered)` : '') +
     (wm.blocksPlaced ? `, placed ${wm.blocksPlaced} block(s)` : '') +
     (wm.blocksBroken ? `, broke ${wm.blocksBroken} block(s)` : '');
+  const deaths = snapshot.deaths != null ? snapshot.deaths : (wm.deaths || 0);
+  const lastDmg = snapshot.lastDamageCause || wm.lastDamageCause || null;
+  const light = snapshot.lightLevel != null ? snapshot.lightLevel : (wm.lightLevel != null ? wm.lightLevel : -1);
   const snap =
     'WORLD SNAPSHOT:\n' +
     `- health: ${snapshot.healthPct != null ? Math.round(snapshot.healthPct * 100) : '?'}\%\n` +
     `- survivalState: ${snapshot.survivalState || 'SAFE'}\n` +
     `- position: (${snapshot.x ?? '?'}, ${snapshot.z ?? '?'})\n` +
     `- threats: ${snapshot.threats && snapshot.threats.length ? snapshot.threats.join(', ') : 'none'}\n` +
+    `- nearestHostile: ${snapshot.nearestHostile ? JSON.stringify(snapshot.nearestHostile) : 'none'}\n` +
     `- nearestThreatDist: ${snapshot.nearestThreatDist != null && snapshot.nearestThreatDist >= 0 ? snapshot.nearestThreatDist : 'unknown'}\n` +
     `- dangerZoneRemembered: ${snapshot.dangerZone ? 'yes' : 'no'}\n` +
+    `- deathsHere: ${deaths}\n` +
+    `- lastDamageCause: ${lastDmg || 'none'}\n` +
+    `- lightLevel: ${light >= 0 ? light : 'unknown'}${light >= 0 && light <= 7 ? ' (DARK)' : ''}\n` +
+    `- blockBelow: ${snapshot.blockBelow || wm.blockBelow || 'unknown'}\n` +
     `- memory:${remembered || ' nothing remembered yet'}\n` +
     `- currentFocus: ${snapshot.currentFocus || 'none'}\n` +
     `- completedPlaces: ${snapshot.completedPlaces || 0}\n` +
