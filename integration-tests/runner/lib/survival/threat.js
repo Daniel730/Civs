@@ -168,7 +168,7 @@ class SurvivalMonitor {
       return { state: 'DANGER', reason: threats[0], threats, healthPct: pct, fromWork };
     }
 
-    if (hostiles > 0 && Number.isFinite(nearest) && nearest <= this.cfg.hostileCautionRange) {
+    if ((hostiles > 0 || hasNearestHostile) && Number.isFinite(nearest) && nearest <= this.cfg.hostileCautionRange) {
       threats.push('hostile_nearby');
     }
     if (Number(d.food) <= this.cfg.lowFood) threats.push('hungry');

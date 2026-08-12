@@ -122,8 +122,10 @@ async function executeSurvival(harness, actorName, assessment, ctx = {}) {
 
       if (action.kind === 'defend') {
         // Gear is granted on spawn/respawn; ensure the sword is in hand before swinging.
-        await cap.giveItem(actorName, 'DIAMOND_SWORD', 1).catch(() => {});
-        await cap.hotbar(actorName, 0);
+        if (typeof cap.giveItem === 'function') {
+          await cap.giveItem(actorName, 'DIAMOND_SWORD', 1).catch(() => {});
+          await cap.hotbar(actorName, 0).catch(() => {});
+        }
         for (let i = 0; i < 3; i++) {
           const hit = await cap.attackNearest(actorName);
           steps.push({ attack: !!(hit && hit.success), reason: hit && hit.reason });
@@ -172,8 +174,10 @@ async function executeSurvival(harness, actorName, assessment, ctx = {}) {
       if (action.kind === 'heal') {
         // Hurt but not under attack: get food in hand and eat so natural regen can close
         // the health gap. Try the harness `eat` action first, then generic `use` (right-click).
-        // If neither raises health we fall back to a respawn (mirrors the recover path) so the
-        // agent never stays pinned in DANGER forever. Never throws — survival must not crash.
+        // If neither raises health we leave it to the next tick's assessment (the agent is not
+        // under attack, so standing and regenerating is acceptable) — we do NOT respawn here,
+        // because the harness respawn does not restore health and would just loop.
+        // Never throws — survival must not crash the tick.
         await cap.giveItem(actorName, 'COOKED_BEEF', 2).catch(() => {});
         await cap.hotbar(actorName, 0).catch(() => {});
         await cap.act(actorName, 'eat').catch(() => {});
@@ -187,14 +191,7 @@ async function executeSurvival(harness, actorName, assessment, ctx = {}) {
             ? Number(d2.health) / Number(d2.max_health)
             : null;
         } catch (_) { /* observe may fail */ }
-        // Last resort: respawn restores full health if eating did not close the gap.
-        if (hpAfter == null || hpAfter <= (assessment.healthPct || 0) + 0.01) {
-          await cap.respawn(actorName).catch(() => {});
-          await cap.teleport(actorName, origin.x, origin.y + 1, origin.z).catch(() => {});
-          steps.push({ heal: { gave: 'COOKED_BEEF', healthPctAfter: hpAfter, fellBackTo: 'respawn' } });
-        } else {
-          steps.push({ heal: { gave: 'COOKED_BEEF', healthPctAfter: hpAfter } });
-        }
+        steps.push({ heal: { gave: 'COOKED_BEEF', healthPctAfter: hpAfter } });
         return { status: 'PASS', handled: true, kind: 'heal', steps };
       }
 
