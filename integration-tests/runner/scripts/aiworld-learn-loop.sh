@@ -27,12 +27,14 @@ PYBIN="$(command -v python3 || command -v python || echo python)"
 
 echo "== [2/3] create Ollama model (skipped if 'ollama' not installed) =="
 if command -v ollama >/dev/null 2>&1; then
-  echo "ollama found -> creating $TRAINED_MODEL from $OUT/Modelfile"
-  ollama create "$TRAINED_MODEL" -f "$OUT/Modelfile"
+  # Prompt-only create is instant (base model already local) -> consumable civs-brain today.
+  echo "ollama found -> creating $TRAINED_MODEL (prompt-only, instant) from $OUT/Modelfile.civs-brain"
+  ollama create "$TRAINED_MODEL" -f "$OUT/Modelfile.civs-brain"
   echo "created model: $TRAINED_MODEL"
+  echo "Optional LoRA training (needs dataset.jsonl + base blob pull): ollama create ${TRAINED_MODEL}-lora -f $OUT/Modelfile"
 else
   echo "ollama NOT on PATH. Dataset written to $OUT; install Ollama and run:"
-  echo "    ollama create $TRAINED_MODEL -f $OUT/Modelfile"
+  echo "    ollama create $TRAINED_MODEL -f $OUT/Modelfile.civs-brain"
   echo "then relaunch the worker with OLLAMA_MODEL=$TRAINED_MODEL"
 fi
 
