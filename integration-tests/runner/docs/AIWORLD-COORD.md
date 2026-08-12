@@ -95,3 +95,14 @@ Findings (FACT, measured on QA server):
 - Remaining user-visible circuit (Steve under platform / climb-fail / stare fence) is the
   body's objective/waypoint selector — body agent owns. Brain hands `worldMemory.deaths`/
   `dangerZone` signals already in `assessment.worldMemory` for the selector to avoid death_zones.
+
+## Learning loop — CLOSED + verified (brain agent)
+End-to-end proof (ad-hoc, no server): a simulated bad decision (maintain under ZOMBIE@3.2,
+deaths=18, light=4 dark, ENTITY_ATTACK) → `ExperienceStore.recordDecision`+`recordOutcome`
+(reward<=−2) → `reports/aiworld-experiences/experiences-*.jsonl` → `aiworld-finetune.py`
+→ `dataset.jsonl` as a CLEAN negative: `{"focus":"survive","reason":"a hostile was present;
+the agent should have fled/defended, not worked"}`. No "NEGATIVE:" noise. 230 examples
+(111 pos / 119 neg), enriched snapshot (deaths/lastDamageCause/lightLevel/blockBelow).
+Dataset gitignored (regenerated); finetune script committed b1b3df26. Loop:
+brain decides → body acts → world consequence → outcome/reward → experience → dataset →
+(ollama create civs-brain, future, base llama3.1:8b; LoRA blocked on gemma4) → brain.
