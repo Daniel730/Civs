@@ -25,6 +25,7 @@ const { IntentionCache, AntiStall } = require('../lib/ai-world/intention-cache')
 const { ConsultGate, plannerFromEnv } = require('../lib/ai-world/consult-planner');
 const { recordFocusDecision, recordFocusOutcome } = require('../lib/ai-world/decision');
 const { policy: aiPolicy } = require('../lib/ai-world/decision');
+const { OllamaBrain } = require('../lib/ai-world/ollama-brain');
 const { encodeState } = require('../lib/ai-world/state-rep');
 const { FOCUSES } = require('../lib/village/focus');
 const { initTelemetry, shutdownTelemetry } = require('../lib/telemetry');
@@ -1204,6 +1205,53 @@ async function main() {
           }
         } catch (_) {
           /* best-effort: any fault keeps the deterministic focus */
+        }
+      }
+      // Ollama local-LLM brain: replaces the deterministic chooseFocus with a real decision.
+      // In 'ollama' mode the LLM focus executes; in 'ollama-shadow' it only logs (deterministic
+      // still executes) for side-by-side comparison. Any failure falls back to focusCandidate.
+      if (aiwMode === 'ollama' || aiwMode === 'ollama-shadow') {
+        try {
+          if (!ollamaBrainInst) {
+            ollamaBrainInst = new OllamaBrain({
+              endpoint: process.env.OLLAMA_ENDPOINT,
+              model: process.env.OLLAMA_MODEL,
+              systemPrompt: process.env.OLLAMA_SYSTEM_PROMPT || null,
+            });
+          }
+          const od = (observed && observed.data) || {};
+          const snap = {
+            healthPct: assessment.healthPct,
+            survivalState: assessment.state,
+            x: od.x,
+            z: od.z,
+            threats: assessment.threats || [],
+            nearestThreatDist: (assessment.worldMemory && assessment.worldMemory.nearestThreatDist) || -1,
+            dangerZone: !!(assessment.worldMemory && assessment.worldMemory.dangerZone === 1),
+            currentFocus: focusCandidate.focus,
+            completedPlaces: Object.keys(state.completedPlaces || {}).length,
+          };
+          const decision = await ollamaBrainInst.decide(snap);
+          if (decision && FOCUSES.includes(decision.focus)) {
+            if (aiwMode === 'ollama') {
+              effectiveFocus = {
+                ...focusCandidate,
+                focus: decision.focus,
+                reason: `ollama(${ollamaBrainInst.model}):${decision.reason}`,
+              };
+            }
+            log({
+              status: 'PASS',
+              action: 'ollama_decision',
+              worker: who,
+              focus: decision.focus,
+              reason: decision.reason,
+              shadow: aiwMode === 'ollama-shadow',
+            });
+            observeMetric(METRIC.AIWORLD_POLICY_DISAGREEMENT, { agent: who, mode: aiwMode });
+          }
+        } catch (_) {
+          /* best-effort: keep deterministic focus */
         }
       }
       const cached = intentions.get(who, effectiveFocus.contextKey);
