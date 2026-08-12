@@ -127,9 +127,10 @@ async function executeSurvival(harness, actorName, assessment, ctx = {}) {
           await cap.hotbar(actorName, 0).catch(() => {});
         }
         for (let i = 0; i < 3; i++) {
+          if (typeof cap.attackNearest !== 'function') break;
           const hit = await cap.attackNearest(actorName);
           steps.push({ attack: !!(hit && hit.success), reason: hit && hit.reason });
-          await cap.swing(actorName);
+          if (typeof cap.swing === 'function') await cap.swing(actorName);
           await sleep(250);
           if (!hit || !hit.success) break;
         }
@@ -178,10 +179,9 @@ async function executeSurvival(harness, actorName, assessment, ctx = {}) {
         // under attack, so standing and regenerating is acceptable) — we do NOT respawn here,
         // because the harness respawn does not restore health and would just loop.
         // Never throws — survival must not crash the tick.
-        await cap.giveItem(actorName, 'COOKED_BEEF', 2).catch(() => {});
-        await cap.hotbar(actorName, 0).catch(() => {});
-        await cap.act(actorName, 'eat').catch(() => {});
-        await cap.act(actorName, 'use').catch(() => {});
+        if (typeof cap.giveItem === 'function') await cap.giveItem(actorName, 'COOKED_BEEF', 2).catch(() => {});
+        if (typeof cap.hotbar === 'function') await cap.hotbar(actorName, 0).catch(() => {});
+        if (typeof cap.act === 'function') { await cap.act(actorName, 'eat').catch(() => {}); await cap.act(actorName, 'use').catch(() => {}); }
         await sleep(3000);
         let hpAfter = null;
         try {
