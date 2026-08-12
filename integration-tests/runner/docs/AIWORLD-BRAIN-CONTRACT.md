@@ -6,20 +6,39 @@ must consume. Written so the two Hermes agents (and the user) agree on blame for
 visible "Steve walks a stupid circuit" bug.
 
 ## What the brain emits (FACT, measured)
-`decision.js decide()` returns ONLY an **abstract intent** — never coordinates:
-```
-{ intent: 'explore'|'build'|'maintain'|'survive'|'secure'|'found'|...,
-  goal, reason, model, needScores }
-```
-Verified: `grep` for `target.x|target.z|waypoint|move_to` in `decision.js` → **0 matches**.
-The brain decides *what to do* (survive/build/explore), not *where to go*.
+The worker (`scripts/village-worker.js`) consumes TWO brain layers and the body must honor
+BOTH, in order:
+
+1. **Survival layer** — `SurvivalMonitor.assess(observe)` returns:
+   - `state`: SAFE | CAUTION | DANGER | ESCAPE | RECOVER
+   - `action.kind`: `flee` | `defend` | `heal` | `retreat` | `work`
+   - If `state` ∈ {DANGER, ESCAPE, RECOVER}, the worker runs `executeSurvival(action.kind)`
+     **immediately** (survival always wins). The body must execute `flee`/`defend`/`heal`/
+     `retreat` with a SAFE target (away from the threat / home), never a fixed waypoint.
+   - Measured: `grep` for `target.x|target.z|waypoint|move_to` in `decision.js` and
+     `ollama-brain.js` → **0 matches**. The brain decides *what*, the body decides *where*.
+
+2. **Need layer** — when SAFE/CAUTION, `decide()` returns `focus` (survive/found/build/
+   maintain/secure) → `chooseObjective()` maps it to a **`job`** the body must run:
+   | focus      | job (body must implement) |
+   |------------|---------------------------|
+   | survive    | guard                     |
+   | secure     | guard                     |
+   | found      | placeregion               |
+   | build      | builder                   |
+   | maintain   | farmer                    |
+   | (all done) | beautify                  |
+   The body executes `job` with a SAFE (x,z) waypoint — see death-zone rule below.
+
+So the brain emits **no coordinates**; it emits `action.kind` (survival) + `job` (need).
+The visible "Steve walks a stupid circuit" is a body `job`→waypoint failure, NOT the brain.
 
 ## Therefore the circuit is the body's responsibility
 The user-visible loop (Steve spawns, walks under the platform, tries to climb, stares at
 a fence, repeats) is a **waypoint/objective-selection** failure: the body converts the
-brain's abstract intent into a concrete `(x,z)` and issues `move_to`/`walk_path`. If that
-waypoint is unreachable (under-platform, needs climb, clip) and gets re-selected, you get
-the circuit. The brain cannot cause it — it emits no coordinates.
+brain's `job`/`action.kind` into a concrete `(x,z)` and issues `move_to`/`walk_path`. If
+that waypoint is unreachable (under-platform, needs climb, clip) and gets re-selected, you
+get the circuit. The brain cannot cause it — it emits no coordinates.
 
 ## Signals the brain already computes for the body to avoid death-loops
 Every tick `assessment.worldMemory` (from `world-memory.js`) carries:
@@ -39,6 +58,6 @@ The body's objective/waypoint selector SHOULD:
 ## Ownership summary
 | Layer | Owns | Status |
 |---|---|---|
-| Brain (`lib/ai-world/`) | intent/focus + anti-oscillation + world-memory signals | DONE + verified |
-| Body objective/waypoint selector | concrete (x,z), climb handling, death_zone avoidance | body agent |
+| Brain (`lib/ai-world/`) | `action.kind` + `job`/focus + anti-oscillation + world-memory signals | DONE + verified |
+| Body objective/waypoint selector | concrete (x,z) for each `job`, climb handling, death_zone avoidance | body agent |
 | Body locomotion (`walk.js` A*) | path execution | DONE (3.89 b/s measured) |
