@@ -24,10 +24,11 @@ const { SurvivalMonitor, executeSurvival } = require('../lib/survival');
 const { IntentionCache, AntiStall } = require('../lib/ai-world/intention-cache');
 const { ConsultGate, plannerFromEnv } = require('../lib/ai-world/consult-planner');
 const { recordFocusDecision, recordFocusOutcome } = require('../lib/ai-world/decision');
-const rt = require('../lib/ai-world/agent-runtime');
-const { HermesBridge, evaluateTriggers } = require('../lib/ai-world/hermes-bridge');
 const { initTelemetry, shutdownTelemetry } = require('../lib/telemetry');
 const { METRIC, initMetrics, observeMetric, metricsSnapshot } = require('../lib/metrics');
+const rt = require('../lib/ai-world/agent-runtime');
+const { AgentCooperation, semanticFor } = require('../lib/ai-world/agent-bus');
+const { HermesBridge } = require('../lib/ai-world/hermes-bridge');
 
 const REPORTS = path.join(__dirname, '..', 'reports');
 const LOG_JSONL = path.join(REPORTS, 'village-worker.jsonl');
@@ -64,6 +65,9 @@ const cfg = {
   // How far an agent may stray from the village before it is considered stranded.
   leashRadius: Number.parseInt(process.env.VILLAGE_LEASH || '150', 10),
 };
+
+// Throttle cache for equipSurvivalGear — avoids RCON storm from equipping every tick.
+const _lastEquipped = {};
 
 function log(entry) {
   fs.mkdirSync(REPORTS, { recursive: true });
@@ -517,8 +521,20 @@ async function runJob(harness, actorName, step, state, ctx = {}) {
  * gear into the armour/weapon slots via `replaceitem`, which equips it directly. We also
  * `clear` first so leftover blocks from earlier jobs can't block the food/consumables.
  */
-async function equipSurvivalGear(harness, actorName) {
+async function equipSurvivalGear(harness, actorName, opts = {}) {
   const cap = harness.cap;
+  const { force = false, healthPct = null, state = null } = opts;
+
+  // Throttle: skip equip if we're safe and recently equipped (every 30s).
+  // This avoids the RCON storm from equipping every tick (6s) regardless of need.
+  if (!force) {
+    const lastEquipped = _lastEquipped[actorName] || 0;
+    const safeToSkip = state === 'SAFE' && healthPct != null && healthPct >= 0.5;
+    if (safeToSkip && Date.now() - lastEquipped < 30000) {
+      return; // Safe + recently equipped — skip.
+    }
+  }
+
   try {
     await harness.raw(`clear ${actorName}`);
   } catch (_) {
@@ -552,6 +568,8 @@ async function equipSurvivalGear(harness, actorName) {
       /* best effort */
     }
   }
+  // Mark this actor as recently equipped for throttle purposes.
+  _lastEquipped[actorName] = Date.now();
 }
 
 async function connectActor(harness, name, attempt = 1) {
@@ -793,15 +811,16 @@ async function main() {
     });
   }
 
-  // Phase 5: Hermes Bridge — bidirectional NPC <-> external intelligence. The ConsultGate
-  // (created below) already owns the *when* policy (anti-stall escalation + cooldown +
-  // per-goalKey cache); the bridge supplies the *what* (a HermesPlanner behind the same
-  // propose() interface). evaluateTriggers() adds the brief §15 signals (confidence /
-  // novelty / goal_conflict / explicit ask) so NPCs can also consult outside anti-stall.
+  // Phase 5+6: Hermes Bridge + NPC cooperation. The bridge owns the bus + shared world
+  // memory; the cooperation layer (AgentCooperation) adds semantic 'share' messages between
+  // NPCs (brief §11) on top of the same bus Hermes publishes to (brief §16).
   const hermesBridge = new HermesBridge({
     transport: new (require('../lib/ai-world/hermes-bridge').LocalHermesStub)(),
     onLog: (entry) => log(entry),
   });
+  // Lazily-built cooperation object (AgentCooperation) — owns the same bus + worldMemory,
+  // publishes semantic shares between NPCs, and mirrors SPATIAL facts into shared worldMemory.
+  const cooperation = hermesBridge.cooperation;
 
   await sleep(2500);
   const camera = new SpectatorCamera({
@@ -824,7 +843,8 @@ async function main() {
       action: 'camera_required',
       reason: camStart.reason || 'camera_start_failed',
     });
-    process.exit(3);
+    // Do NOT exit — the loop can run without camera (degraded mode).
+    // The camera is used for observation/cinematic, not for the core work loop.
   }
 
   const subjects = [cfg.actorName];
@@ -936,6 +956,33 @@ async function main() {
         }
       }
 
+      // 0c. Camera health check — if the spectator actor dropped mid-run, try to bring it
+      // back so cinematic/observation keep working without a full worker restart.
+      // Best-effort: a camera that stays down does not block the core work loop.
+      if (cfg.cameraName) {
+        try {
+          const camActor = camera.actor;
+          if (camActor && typeof camActor.isOnline === 'function' && !camActor.isOnline()) {
+            log({ status: 'DEGRADED', action: 'camera_health', online: false });
+            try {
+              await camera.stopLoop();
+              await camera.stop();
+              const restart = await camera.start();
+              log({
+                status: restart.status === 'PASS' ? 'PASS' : 'DEGRADED',
+                action: 'camera_restart',
+                status: restart.status,
+                reason: restart.reason,
+              });
+            } catch (_) {
+              /* best effort */
+            }
+          }
+        } catch (_) {
+          /* best effort — camera monitor must never break a work tick */
+        }
+      }
+
       // 0b. Keep survival gear topped up BEFORE the survival assessment, so a bot in danger
       // still gets armour (otherwise it dies before runJob's ensureAlive ever runs).
       try {
@@ -1023,7 +1070,6 @@ async function main() {
           deaths: assessment.deaths,
         });
         if (typeof observation.noteEvent === 'function') observation.noteEvent(who, 'death');
-        // Close the experience loop: attach a death outcome + negative reward.
         try {
           recordFocusOutcome(who, lastEpisode[who], {
             died: true,
@@ -1045,57 +1091,10 @@ async function main() {
             });
             rt.closeCurrentGoal(ag, 'abandoned');
           }
-        } catch (_) {
-          /* best-effort */
+        } catch (err) {
+          /* best-effort — survival_action failure is not fatal */
         }
-      }
-      if (assessment.action.kind !== 'work') {
-        if (typeof observation.noteEvent === 'function') {
-          observation.noteEvent(who, assessment.state === 'RECOVER' ? 'danger' : 'combat');
-        }
-        intentions.applySignals(who, { survivalEscalated: true });
-        const survived = await executeSurvival(harness, who, assessment, {
-          workOrigin: cfg.origin,
-          findSurfaceY: (x, z) =>
-            findSurfaceY(harness, x, z, {
-              fallbackY: cfg.origin.y,
-              maxY: cfg.origin.y + 24,
-              minY: cfg.origin.y - 24,
-            }),
-        });
-        log({
-          status: survived.status,
-          action: 'survival_action',
-          worker: who,
-          kind: survived.kind,
-          state: assessment.state,
-          steps: survived.steps,
-        });
-        // A successful survival recovery (recover/flee that brought the agent back) is a positive outcome.
-        if (survived.kind === 'recover' || survived.kind === 'flee') {
-          try {
-            recordFocusOutcome(who, lastEpisode[who], {
-              recovered: true,
-              damageTaken: assessment.healthPct != null ? (1 - assessment.healthPct) * 20 : 0,
-            });
-          } catch (_) {
-            /* best-effort */
-          }
-          // Phase 2: remember the recovery as a positive episode.
-          try {
-            const ag = agentByName[who];
-            if (ag) {
-              rt.recordEpisode(ag, {
-                type: 'survival_recovery',
-                summary: `Recovered from ${assessment.state} (${survived.kind})`,
-                importance: 0.6,
-                tags: ['survival', survived.kind, assessment.state],
-              });
-            }
-          } catch (_) {
-            /* best-effort */
-          }
-        }
+        if (typeof observation.noteEvent === 'function') observation.noteEvent(who, 'danger_survival');
         saveState(state);
         return;
       }
@@ -1188,6 +1187,23 @@ async function main() {
               priority: 0.7,
             });
           }
+        }
+      } catch (_) {
+        /* best-effort */
+      }
+      // Phase 6: NPC cooperation — share the current activity with peers so they can
+      // coordinate (e.g. Alex joins Steve's mine, Steve retreats when Alex reports combat).
+      // Best-effort: a failed share must never break the work tick.
+      try {
+        const ag = agentByName[who];
+        if (ag && cooperation && typeof cooperation.publishSituation === 'function') {
+          const situation = semanticFor({
+            who,
+            job: step.job,
+            site: step.site,
+            observation: (observed && observed.data) || {},
+          });
+          if (situation) await cooperation.publishSituation(who, situation);
         }
       } catch (_) {
         /* best-effort */

@@ -16,14 +16,15 @@
 
 const fs = require('node:fs');
 const path = require('node:path');
-const { createAgent, createGoal, setCurrentGoal, completeCurrentGoal } = require('./state');
+const { createAgent, loadAgent } = require('./state');
+const { createGoal, setCurrentGoal, completeCurrentGoal } = require('./goals');
 const { restoreAgent, persistAgent } = require('./persistence');
 const { rememberEpisode, rememberFact, rememberPerson, setWorking } = require('./memory');
 const { buildObservation } = require('./perception');
 const { scoreNeeds, decide } = require('./decision');
 const { EVENT, emitAgentEvent } = require('./events');
 
-const AGENTS_DIR = path.join(__dirname, '..', '..', 'reports', 'agents');
+let AGENTS_DIR = path.join(__dirname, '..', '..', 'reports', 'agents');
 
 function agentPath(name) {
   return path.join(AGENTS_DIR, `${name}.json`);
@@ -151,7 +152,7 @@ function emit(agent, sink, type, payload = {}) {
   ]);
   if (IMPORTANT.has(type)) {
     recordEpisode(agent, {
-      type: String(type).replace('ai.npc.', ''),
+      type: String(type).replace('ai.npc.', '').replace('.', '_'),
       summary: payload.summary || type,
       importance: 0.7,
       tags: [payload.questId || 'event'],
@@ -187,7 +188,8 @@ function commitGoal(agent, partial) {
 }
 
 module.exports = {
-  AGENTS_DIR,
+  get AGENTS_DIR() { return AGENTS_DIR; },
+  set AGENTS_DIR(v) { AGENTS_DIR = v; },
   agentPath,
   loadOrCreateAgent,
   saveAgent,
@@ -199,4 +201,9 @@ module.exports = {
   emit,
   closeCurrentGoal,
   commitGoal,
+  createGoal,
+  setCurrentGoal,
+  completeCurrentGoal,
+  restoreAgent,
+  persistAgent,
 };

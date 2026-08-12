@@ -323,6 +323,18 @@ class HermesBridge {
     this.onLog = typeof opts.onLog === 'function' ? opts.onLog : () => {};
   }
 
+  /** Phase 6: NPC cooperation — shares the bridge's bus + worldMemory. Built once, lazy. */
+  get cooperation() {
+    if (!this._cooperation) {
+      this._cooperation = new (require('./agent-bus').AgentCooperation)({
+        bus: this.bus,
+        worldMemory: this.worldMemory,
+        now: this.now,
+      });
+    }
+    return this._cooperation;
+  }
+
   /** Build the ConsultGate-compatible planner. */
   get planner() {
     return this.bridge;
