@@ -1,6 +1,17 @@
 # AI World — Learning Layer (Phase 3)
 
-> Status: **shipped + live-validated**. No RL. Offline dataset + shadow-mode metrics only.
+> Status: **shipped + live-validated**. No RL. Offline training step IMPLEMENTED and applied at runtime.
+
+## Offline training (IMPLEMENTADO)
+
+`scripts/aiworld-train.js` (exposto como `npm run aiworld:train`) lê o dataset JSONL, agrega
+reward por `(contexto → intent)`, e escreve `reports/aiworld-weights/weights-<agent>.json`
+(contextual bandit / preference learner: mean-centering de reward por contexto, clamp [-1,1],
+descontado por confiança). O `NeuralPolicy` carrega estes pesos no arranque (modo neural/shadow)
+e aplica `bias[context][intent]` em `scoreIntents`.
+
+**Loop fechado:** OBSERVE → REPRESENT → DECIDE (com pesos) → ACT → OUTCOME → REWARD →
+STORE (JSONL) → TRAIN (offline) → UPDATED POLICY. Sem RL; treino 100% offline e reproduzível.
 
 ## What this phase delivers
 
@@ -54,20 +65,24 @@ and neural scores), `chosenIntent`, `policyMode`, and the later `outcome.reward`
 
 Weights are configurable (`recordFocusOutcome(agentId, episodeId, outcome, rewardWeights)`).
 
-## Offline training (future, not in live path)
+## Offline training step (no live path)
 
-A separate script reads `reports/aiworld-experiences/*.jsonl` and writes
-`reports/aiworld-experiences/weights-<agent>.json` (or a shared artifact). The live process
-loads it via `ExperienceStore.loadWeights(path)` only when present; absence is the safe default
-(mirror baseline). This keeps LIVE ≠ TRAINING: the server never trains, it only produces data.
+A separate script (`scripts/aiworld-train.js`, `npm run aiworld:train`) reads
+`reports/aiworld-experiences/*.jsonl` and writes `reports/aiworld-weights/weights-<agent>.json`
+(or `weights-shared.json`). The live process loads it via `NeuralPolicy.loadWeights()` only when
+present; absence is the safe default (mirror baseline). This keeps LIVE ≠ TRAINING: the server
+never trains, it only produces data. Re-run `npm run aiworld:train` periodically to refine the
+policy as more experiences accumulate.
 
 ## Validation
 
 - `test/neural-policy.test.js` — state-rep encoding, NeuralPolicy safety invariants,
-  ExperienceStore decision+outcome+reward persistence.
+  ExperienceStore decision+outcome+reward persistence, **loadWeights applies bias**.
 - `test/learning-integration.test.js` — `recordFocusDecision` + `recordFocusOutcome` produce a
   complete experience (decision snapshot + outcome-appended line with finite reward) in the
   shared store.
-- **Live:** `reports/aiworld-experiences/experiences-Steve.jsonl` (and `-Alex.jsonl`) grow every
-  run; every line eventually carries an `outcome.reward`. Confirmed: 72 experiences for Steve
-  with 100% outcome attachment during a live monster-world run.
+- `test/aiworld-train.test.js` — offline aggregation + NeuralPolicy weight application.
+- **Live (QA server 192.168.152.149):** worker run in `AIWORLD_POLICY=neural` recorded 40+
+  experiences with `policyMode: neural` and non-null `neuralScores`. Isolated probe confirmed
+  the learned bias is applied at runtime: in SAFE context `farmer` 0.5→1.5, `survive` 0.5→-0.5.
+  Full unit suite: 268/268 passing.
