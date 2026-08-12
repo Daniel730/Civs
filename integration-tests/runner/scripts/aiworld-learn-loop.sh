@@ -22,7 +22,8 @@ SRC="${AIWORLD_EXP_DIR:-reports/aiworld-experiences}"
 OUT="${AIWORLD_FT_DIR:-reports/aiworld-finetune}"
 
 echo "== [1/3] generate fine-tune dataset from rated experiences =="
-python scripts/aiworld-finetune.py --src "$SRC" --out "$OUT" --base "$BASE_MODEL"
+PYBIN="$(command -v python3 || command -v python || echo python)"
+"$PYBIN" scripts/aiworld-finetune.py --src "$SRC" --out "$OUT" --base "$BASE_MODEL"
 
 echo "== [2/3] create Ollama model (skipped if 'ollama' not installed) =="
 if command -v ollama >/dev/null 2>&1; then

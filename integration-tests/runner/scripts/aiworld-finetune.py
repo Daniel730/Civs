@@ -91,7 +91,7 @@ def main():
     here = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     ap.add_argument("--src", default=os.path.join(here, "reports", "aiworld-experiences"))
     ap.add_argument("--out", default=os.path.join(here, "reports", "aiworld-finetune"))
-    ap.add_argument("--base", default=os.environ.get("OLLAMA_MODEL", "llama3.1:8b"))
+    ap.add_argument("--base", default=os.environ.get("OLLAMA_MODEL", "hermes-agent-mc:latest"))
     ap.add_argument("--max-per-agent", type=int, default=200)
     ap.add_argument("--min-reward", type=float, default=1.0)
     ap.add_argument("--max-neg", type=float, default=-2.0)
