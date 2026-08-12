@@ -723,11 +723,11 @@ function chooseObjective(state, assessment, focusCandidate) {
   const focus = focusCandidate.focus;
   const jobForFocus =
     {
-      survive: 'guard',
+      survive: 'miner',
       found: 'placeregion',
       build: 'builder',
       maintain: 'farmer',
-      secure: 'guard',
+      secure: 'miner',
     }[focus] || 'builder';
   const job =
     jobForFocus === 'placeregion' &&

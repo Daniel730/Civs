@@ -126,6 +126,16 @@ async function executeSurvival(harness, actorName, assessment, ctx = {}) {
           await cap.giveItem(actorName, 'DIAMOND_SWORD', 1).catch(() => {});
           await cap.hotbar(actorName, 0).catch(() => {});
         }
+        // AIM at the threat before swinging — otherwise we swing at the air and only
+        // connect by luck. The harness `look_at` points the actor; attackNearest then
+        // lands. Without this the NPC "beats the air like an idiot" (Dan, 2026-08-12).
+        const mob = (assessment && assessment.raw && assessment.raw.nearest_hostile) || null;
+        let aimed = false;
+        if (mob && typeof mob.x === 'number' && typeof mob.z === 'number') {
+          const la = await cap.lookAt(actorName, mob.x, typeof mob.y === 'number' ? mob.y : 80, mob.z).catch(() => null);
+          aimed = !!(la && la.success);
+          steps.push({ aim: aimed, at: [mob.x, typeof mob.y === 'number' ? mob.y : 80, mob.z] });
+        }
         for (let i = 0; i < 3; i++) {
           if (typeof cap.attackNearest !== 'function') break;
           const hit = await cap.attackNearest(actorName);
