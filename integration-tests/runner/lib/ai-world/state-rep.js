@@ -118,6 +118,7 @@ function buildExperience(rec = {}) {
     personality = {},
     candidates = [],
     chosenIntent,
+    survivalState = null, // persisted so offline training can key bias per survival context
     deterministicScores = {},
     neuralScores = null, // null when policy != neural/shadow
     policyMode = 'deterministic',
@@ -127,6 +128,7 @@ function buildExperience(rec = {}) {
 
   return {
     schema: 'aiworld.experience',
+    survivalState: survivalState ? String(survivalState).toUpperCase() : 'SAFE',
     version: VERSION,
     episodeId,
     agentId,

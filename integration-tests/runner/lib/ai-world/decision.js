@@ -219,6 +219,7 @@ function recordFocusDecision(rec = {}) {
       personality: rec.personality || {},
       candidates,
       chosenIntent: rec.focus,
+      survivalState: rec.survivalState || 'SAFE', // PERSISTED — offline training keys bias on this
       deterministicScores: Object.fromEntries(candidates.map((c) => [c.id, c.base])),
       neuralScores,
       policyMode: POLICY_MODE,

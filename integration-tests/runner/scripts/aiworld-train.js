@@ -62,11 +62,13 @@ function readExperiences() {
 }
 
 /**
- * Extract the survival context from a state representation.
- * Prefers an explicit survivalState/context field, then falls back to the
- * 'survival_state' column of stateRep.vec (see state-rep.js field order).
+ * Extract the survival context from an experience record.
+ * Prefers e.survivalState (top-level field written by worker), then e.context.survival,
+ * then falls back to the 'survival_state' column of stateRep.vec (for old records).
+ * Returns 'SAFE' as the default if nothing found.
  */
 function contextOf(e) {
+  // Top-level survivalState written by village-worker (modern records, after persistence fix)
   if (e.survivalState) return String(e.survivalState).toUpperCase();
   if (e.context && e.context.survival) return String(e.context.survival).toUpperCase();
   try {
@@ -80,6 +82,18 @@ function contextOf(e) {
       const map = ['SAFE', 'CAUTION', 'DANGER', 'RECOVER', 'ESCAPE'];
       if (Number.isFinite(v)) return map[Math.round(v)] || 'SAFE';
     }
+    // Derive from survival flags already encoded in the vec (old records without survival_state column):
+    // fields order: health_pct(0)..danger_flag(5), escape_flag(6), recover_flag(7)..
+    const getf = (name) => {
+      const i = fields.indexOf(name);
+      return i >= 0 && Array.isArray(rep.vec) ? rep.vec[i] : null;
+    };
+    const danger = getf('danger_flag');
+    const escape = getf('escape_flag');
+    const recover = getf('recover_flag');
+    if (escape === 1) return 'ESCAPE';
+    if (recover === 1) return 'RECOVER';
+    if (danger === 1) return 'DANGER';
   } catch (_) {
     /* ignore */
   }

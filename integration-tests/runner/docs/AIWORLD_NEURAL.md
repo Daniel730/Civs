@@ -120,7 +120,23 @@ Worker em `AIWORLD_POLICY=neural` confirmou o loop fechado **com influência na 
   (`reason: neural_policy(neural)`) — a policy aprendida **controla** o foco, não só observa
 - Em `ESCAPE`/DANGER o foco voltou a `survive` (safety gate: neural nunca sobrepõe sobrevivência)
 - Fallback intacto: sem pesos → `baseline_mirror`, sem crash
-- Unit suite: **271/271** passando (`test/aiworld-rerank.test.js` cobre o re-ranking + safety gate)
+- Unit suite: **274/274** passando (`test/aiworld-rerank.test.js` + `test/aiworld-survivalstate-persist.test.js`)
+
+## Bug fix: survivalState persistence (offline training used to see only SAFE)
+
+`recordFocusDecision` received `rec.survivalState` from the worker but **dropped it** before
+calling `recordDecision`, so `buildExperience` never persisted it. `contextOf()` then always fell
+back to `SAFE`, and the offline training step learned a single-context bias (`bias.SAFE` only).
+
+Fix:
+- `lib/ai-world/decision.js` — `recordFocusDecision` now passes `survivalState` into `recordDecision`.
+- `lib/ai-world/state-rep.js` — `buildExperience` persists `survivalState` (uppercased) on every record.
+- `scripts/aiworld-train.js` — `contextOf()` derives SAFE/DANGER/ESCAPE/RECOVER from the survival
+  flags already encoded in `stateRep.vec` for legacy records that predate the column.
+
+Result: training now learns **4 contexts** (SAFE/DANGER/ESCAPE/RECOVER) from the real 634-row
+dataset — `farmer:+1`/`maintain:-0.27` in SAFE, `survive:0` in danger contexts. Proven by
+`test/aiworld-survivalstate-persist.test.js` + `npm run aiworld:train`.
 
 ## Fallback behavior (invariantes de segurança)
 
