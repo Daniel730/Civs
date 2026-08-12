@@ -78,3 +78,37 @@ test('OllamaBrain.buildPrompt shows "nothing remembered" when memory empty', () 
   const [, user] = buildPrompt({ healthPct: 1, survivalState: 'SAFE', worldMemory: {}, currentFocus: 'maintain', completedPlaces: 0 });
   assert.ok(/memory: nothing remembered yet/.test(user.content), 'empty memory stated clearly');
 });
+
+test('OllamaBrain.decide uses injected transport and returns model focus (memory-aware E2E)', async () => {
+  const { OllamaBrain } = require(path.join(ROOT, 'lib', 'ai-world', 'ollama-brain'));
+  // Mock transport: /api/tags -> 200 (available); /api/generate -> model says "build"
+  const transport = async (endpoint, p, payload) => {
+    if (p === '/api/tags') return { status: 200, body: '{}' };
+    if (p === '/api/generate') {
+      // Echo back that the model chose 'build' with a memory-aware reason
+      return { status: 200, body: JSON.stringify({ response: '{"focus":"build","reason":"settlement needs walls; 3 threats remembered nearby","target":null}' }) };
+    }
+    return { status: 404, body: '' };
+  };
+  const brain = new OllamaBrain({ transport, model: 'hermes-agent-mc:latest' });
+  const decision = await brain.decide({
+    healthPct: 0.6, survivalState: 'CAUTION', x: 10, z: 20,
+    threats: ['zombie'], nearestThreatDist: 8, dangerZone: false,
+    worldMemory: { threatsRemembered: 3, blocksPlaced: 2, blocksBroken: 1 },
+    currentFocus: 'maintain', completedPlaces: 3,
+  });
+  assert.ok(decision && decision.focus === 'build', 'model focus (build) accepted');
+  assert.ok(/3 threats remembered/.test(decision.reason), 'model reason reflects memory context');
+});
+
+test('OllamaBrain.decide returns null on invalid focus from model (falls back)', async () => {
+  const { OllamaBrain } = require(path.join(ROOT, 'lib', 'ai-world', 'ollama-brain'));
+  const transport = async (endpoint, p) => {
+    if (p === '/api/tags') return { status: 200, body: '{}' };
+    if (p === '/api/generate') return { status: 200, body: JSON.stringify({ response: '{"focus":"fly_away","reason":"nonsense","target":null}' }) };
+    return { status: 404, body: '' };
+  };
+  const brain = new OllamaBrain({ transport, model: 'x' });
+  const decision = await brain.decide({ healthPct: 1, survivalState: 'SAFE', worldMemory: {} });
+  assert.strictEqual(decision, null, 'invalid focus -> null -> deterministic fallback');
+});

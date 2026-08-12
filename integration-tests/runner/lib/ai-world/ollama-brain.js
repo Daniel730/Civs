@@ -91,14 +91,23 @@ class OllamaBrain {
     this.model = opts.model || process.env.OLLAMA_MODEL || DEFAULT_MODEL;
     this.systemPrompt = opts.systemPrompt || null;
     this.timeoutMs = opts.timeoutMs || TIMEOUT_MS;
+    // transport: dependency-injected POST fn for testing without a real Ollama server.
+    // Signature matches postJSON(endpoint, path, payload, timeoutMs) -> Promise<{status, body}>.
+    // In production this stays undefined and the real postJSON (http) is used.
+    this.transport = typeof opts.transport === 'function' ? opts.transport : null;
     this._available = null; // lazy: checked on first decide()
+  }
+
+  async _post(path, payload, timeoutMs) {
+    if (this.transport) return this.transport(this.endpoint, path, payload, timeoutMs);
+    return postJSON(this.endpoint, path, payload, timeoutMs);
   }
 
   /** True if Ollama answers a lightweight ping. Cached until a failure flips it. */
   async isAvailable() {
     if (this._available !== null) return this._available;
     try {
-      const r = await postJSON(this.endpoint, '/api/tags', {}, Math.min(2000, this.timeoutMs));
+      const r = await this._post('/api/tags', {}, Math.min(2000, this.timeoutMs));
       this._available = r.status === 200;
     } catch (_) {
       this._available = false;
@@ -123,8 +132,7 @@ class OllamaBrain {
     const messages = buildPrompt(snapshot, this.systemPrompt);
     let res;
     try {
-      res = await postJSON(
-        this.endpoint,
+      res = await this._post(
         '/api/generate',
         { model: this.model, messages, stream: false, format: 'json' },
         this.timeoutMs
