@@ -210,10 +210,20 @@ closed outcome/reward loop (Task A) into an Ollama chat fine-tune dataset:
   gives the correct override (`survive` when a hostile was present)
 - mid-range rewards omitted (not informative)
 - writes `reports/aiworld-finetune/dataset.jsonl` (Ollama chat format), `Modelfile`, `manifest.json`
+- ALSO writes `Modelfile.civs-brain`: a prompt-only wrap of the local base (`hermes-agent-mc`) with the
+  NPC SYSTEM prompt and NO adapter. `ollama create civs-brain -f Modelfile.civs-brain` is instant
+  (base blob already cached) and gives a consumable `civs-brain` today.
 
-Operator step (needs the `ollama` CLI, not run here): `ollama create civs-brain -f Modelfile`, then
-set `OLLAMA_MODEL=civs-brain` when launching the worker. The trained model then biases future
-decisions toward what actually survived/built in the past.
+Operator step (needs the `ollama` CLI, not run here):
+`ollama create civs-brain -f Modelfile.civs-brain`, then set `OLLAMA_MODEL=civs-brain` when launching
+the worker. The model then biases future decisions with the NPC system prompt + local base.
+
+**LoRA training status (honest):** the `Modelfile` (with `ADAPTER dataset.jsonl`) targets a true
+learned LoRA. `ollama create civs-brain-lora -f Modelfile` works ONLY on llama/mistral bases. The
+default base `hermes-agent-mc` is a **gemma4** model and Ollama returns `400 Bad Request: unknown
+type` on the adapter — so the LoRA path is blocked for this base. The prompt-only `civs-brain` above
+is the working deliverable; for a genuinely learned LoRA, re-run finetune with `--base <llama/mistral>`
+(e.g. `llama3.1:8b` pulled locally) and create from `Modelfile`.
 
 **Verification:**
 - Unit: `test/ollama-brain.test.js` (offline fallback, JSON parse, focus vocabulary). Suite 286/286.

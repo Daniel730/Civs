@@ -904,7 +904,7 @@ async function main() {
   const lastEpisode = {};
   // W1: per-agent spatial/episodic memory of the world (threats seen, deaths, blocks).
   // Lets the agent "absorb" the world instead of re-deriving everything from one observe().
-  const { WorldMemory } = require('./lib/ai-world/world-memory');
+  const { WorldMemory } = require('../lib/ai-world/world-memory');
   const worldMemory = {};
   const getWorldMemory = (who) => (worldMemory[who] || (worldMemory[who] = new WorldMemory({ agentId: who, dir: path.join(os.tmpdir(), 'aiw-wm') })));
   // CONSULT_LLM hook: optional planner via AI_WORLD_CONSULT_PLANNER (default off → log only).
@@ -1179,6 +1179,9 @@ async function main() {
       // deterministic focus (never crashes, never overrides a broken model).
       let effectiveFocus = focusCandidate;
       const aiwMode = (process.env.AIWORLD_POLICY || 'deterministic').toLowerCase();
+      if (process.env.AIWORLD_DEBUG) {
+        console.log('[ollama-debug] aiwMode=' + aiwMode + ' policyEnv=' + process.env.AIWORLD_POLICY);
+      }
       if (aiwMode === 'neural' || aiwMode === 'shadow') {
         try {
           const pol = aiPolicy();
@@ -1235,6 +1238,9 @@ async function main() {
             completedPlaces: Object.keys(state.completedPlaces || {}).length,
           };
           const decision = await ollamaBrainInst.decide(snap);
+          if (process.env.AIWORLD_DEBUG) {
+            console.log('[ollama-debug] mode=' + aiwMode + ' model=' + ollamaBrainInst.model + ' decision=' + JSON.stringify(decision));
+          }
           if (decision && FOCUSES.includes(decision.focus)) {
             if (aiwMode === 'ollama') {
               effectiveFocus = {

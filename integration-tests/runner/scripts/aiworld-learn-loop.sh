@@ -31,7 +31,10 @@ if command -v ollama >/dev/null 2>&1; then
   echo "ollama found -> creating $TRAINED_MODEL (prompt-only, instant) from $OUT/Modelfile.civs-brain"
   ollama create "$TRAINED_MODEL" -f "$OUT/Modelfile.civs-brain"
   echo "created model: $TRAINED_MODEL"
-  echo "Optional LoRA training (needs dataset.jsonl + base blob pull): ollama create ${TRAINED_MODEL}-lora -f $OUT/Modelfile"
+  echo "NOTE: LoRA training (ollama create ${TRAINED_MODEL}-lora -f $OUT/Modelfile) only works on"
+  echo "      llama/mistral bases. The default base (hermes-agent-mc = gemma4) returns"
+  echo "      '400 unknown type' from Ollama, so stick with the prompt-only civs-brain above."
+  echo "      For a truly learned LoRA, re-run finetune with --base <llama/mistral model>."
 else
   echo "ollama NOT on PATH. Dataset written to $OUT; install Ollama and run:"
   echo "    ollama create $TRAINED_MODEL -f $OUT/Modelfile.civs-brain"
