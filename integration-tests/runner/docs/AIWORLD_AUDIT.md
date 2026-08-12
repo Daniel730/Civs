@@ -8,15 +8,20 @@ aprendizagem, objetivos, exploração, construção, cooperação, Hermes bridge
 
 ## 0. Conclusão executiva
 
-> **A maior parte do que o brief pede JÁ EXISTE como módulos em `lib/ai-world/` — mas está
-> ÓRFÃ.** O loop vivo (`scripts/village-worker.js`) NÃO importa `createAgent`, `createQuestLoop`,
-> `createMemory`, `createGoal`, `persistAgent`. Ele usa uma arquitetura paralela mais antiga
-> (`nextJob`/`chooseFocus`/`construction` em `lib/village/`) onde eu (Hermes) fui colando o
-> commitment layer e o survival fix.
+> **A maior parte do que o brief pede JÁ EXISTE como módulos em `lib/ai-world/` — e foi INTEGRADA
+> ao loop vivo.** O `scripts/village-worker.js` importa e chama `recordFocusDecision`/`recordFocusOutcome`
+> (linhas 26/1154/1074/1264), `rt.loadOrCreateAgent` (linhas 787/800), `AgentCooperation` (30) e
+> `HermesBridge` (31). O worker usa uma arquitetura híbrida: `ai-world` para memória/experiências/Hermes
+> + `lib/village/` (`chooseFocus`/`nextJob`/`runJob`) para execução determinística de jobs.
 
-**Implicação:** não reescrever nada. O trabalho real da Phase 1→4 é **INTEGRAR** a biblioteca
-`ai-world` existente no loop vivo, e construir o que FALTA (Hermes bridge, cooperação,
-detecção de espaço fechado na câmara). Isto é reaproveitamento massivo, não greenfield.
+**Estado (2026-08-12, HEAD `01cbad1e`):** não há mais biblioteca órfã. O pipeline de aprendizagem
+(OBSERVE→STATE VECTOR→EXPERIENCE→OUTCOME→REWARD→DATASET) está ligado e validado em corrida real
+(`reports/aiworld-experiences/experiences-{Steve,Alex}.jsonl` a crescer com rewards finitos).
+O que falta é o **offline training step** (JSONL→weights artifact) e **similarity retrieval** no
+decision path — ambos por design futuros (LIVE≠TRAIN). Ver `docs/STATUS-MATRIX.md`.
+
+**Implicação:** não reescrever nada. O trabalho restante é (a) offline training step separado,
+(b) retrieval por similaridade de state-vector, (c) manter docs sincronizados.
 
 ---
 
