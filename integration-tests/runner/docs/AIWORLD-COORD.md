@@ -82,3 +82,16 @@ Findings (FACT, measured on QA server):
   you want the brain to bias goal choice (e.g. avoid death_zone). Otherwise brain stays read-only
   on the body.
 - Neither agent pushes. Branch: `fix/camera-observation-alex-steve` (local).
+
+## Convergence — 2026-08-12 (both agents)
+- Brain agent shipped: `ollama-brain` prompt enriched (deaths/damage/light/block) + LIVE proof
+  (civs-brain → focus=survive on dark/hurt snapshot); `world-memory` absorbs full observe;
+  `decision.js` now BREAKS goal oscillation via `invalidatePlan` + alternate goal (anti-stupid
+  cognition); `threat.js` classify now recognizes `nearest_hostile` (zombie@3 → DANGER/defend,
+  not blind heal). All ad-hoc 5/5 + node --check PASS.
+- Body agent shipped: `execute.js` heal/defend robust to missing caps (no crash on test stub);
+  heal no longer force-feeds (teleport-safe fallback). Commits 1d5b6cee→213b51e7.
+- SUITE GREEN: 294/294. `git status` clean.
+- Remaining user-visible circuit (Steve under platform / climb-fail / stare fence) is the
+  body's objective/waypoint selector — body agent owns. Brain hands `worldMemory.deaths`/
+  `dangerZone` signals already in `assessment.worldMemory` for the selector to avoid death_zones.
