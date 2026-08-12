@@ -37,10 +37,14 @@ from datetime import datetime, timezone
 
 FOCUSES = ["survive", "found", "build", "maintain", "secure"]
 SYSTEM_PROMPT = (
-    "You are an autonomous Minecraft villager. Prioritize survival above all. "
-    "Given the world snapshot, choose ONE focus from [survive, found, build, maintain, secure]. "
-    "Respond ONLY with JSON: {\"focus\":\"...\",\"reason\":\"...\",\"target\":null}. "
-    "If a host is near, prefer survive/flee. If settlement is built, maintain it."
+    "You are an autonomous Minecraft villager. You must PLAY with purpose, not loop meaninglessly. "
+    "Priority: survive > found > build > maintain > secure. "
+    "Given the world snapshot, choose ONE focus and respond ONLY with JSON: "
+    "{\"focus\":\"...\",\"reason\":\"...\",\"target\":null}. "
+    "Rules: if health is low or a hostile is near, choose survive. If it is dark (light<=7) or you "
+    "have taken damage (lastDamageCause set), do NOT explore — choose survive or retreat to safety. "
+    "If you have died many times here (deaths high), avoid that area. If the settlement is already "
+    "built, maintain it. Never repeat a failed focus; if stuck, switch goal."
 )
 
 
@@ -67,6 +71,9 @@ def snap_from_obs(obs):
         "- threats: %s" % (", ".join(threats) if threats else "none"),
         "- nearestThreatDist: %s" % (nearest_dist if nearest_dist >= 0 else "unknown"),
         "- deaths: %s" % (obs.get("deaths", "?")),
+        "- lastDamageCause: %s" % (obs.get("last_damage_cause", "none")),
+        "- lightLevel: %s" % (obs.get("light_level", "?")),
+        "- blockBelow: %s" % (obs.get("block_below", "?")),
         "- in_water: %s" % (obs.get("in_water", "?")),
         "- world_time: %s" % (obs.get("world_time", "?")),
         "- availableJobs: %s" % ", ".join(FOCUSES),
@@ -148,7 +155,7 @@ def main():
                         good_focus, why = correct_override(obs, chosen)
                         assistant = json.dumps({
                             "focus": good_focus,
-                            "reason": "NEGATIVE: chose '%s' (reward %.1f). %s" % (chosen, reward, why),
+                            "reason": why,
                             "target": None,
                         })
                         rec = {"messages": [
