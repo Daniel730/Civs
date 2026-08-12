@@ -173,15 +173,15 @@ async function executeSurvival(harness, actorName, assessment, ctx = {}) {
       }
 
       if (action.kind === 'heal') {
-        // Hurt but not under attack: get food in hand and eat so natural regen can close
-        // the health gap. Try the harness `eat` action first, then generic `use` (right-click).
-        // If neither raises health we leave it to the next tick's assessment (the agent is not
-        // under attack, so standing and regenerating is acceptable) — we do NOT respawn here,
-        // because the harness respawn does not restore health and would just loop.
-        // Never throws — survival must not crash the tick.
-        if (typeof cap.giveItem === 'function') await cap.giveItem(actorName, 'COOKED_BEEF', 2).catch(() => {});
-        if (typeof cap.hotbar === 'function') await cap.hotbar(actorName, 0).catch(() => {});
-        if (typeof cap.act === 'function') { await cap.act(actorName, 'eat').catch(() => {}); await cap.act(actorName, 'use').catch(() => {}); }
+        // Hurt but not under attack: the agent should recover. NOTE: the CivsTestHarness RCON
+        // surface has no `eat`/`heal` action (verified by inspecting CivsTestHarness.jar — only
+        // attack/give_item/hotbar/jump/look/move_to/place_block/respawn/rpg/sprint/step/swing/
+        // teleport/walk_path exist), so we cannot force-feed or heal via commands. The honest,
+        // non-spammy behaviour is to move the agent to its safe work origin (already home in most
+        // cases — teleport is a no-op then) and let natural regen happen. Never throws.
+        try {
+          await cap.teleport(actorName, origin.x, origin.y + 1, origin.z);
+        } catch (_) { /* teleport best-effort */ }
         await sleep(3000);
         let hpAfter = null;
         try {
@@ -191,7 +191,7 @@ async function executeSurvival(harness, actorName, assessment, ctx = {}) {
             ? Number(d2.health) / Number(d2.max_health)
             : null;
         } catch (_) { /* observe may fail */ }
-        steps.push({ heal: { gave: 'COOKED_BEEF', healthPctAfter: hpAfter } });
+        steps.push({ heal: { movedTo: 'origin', healthPctAfter: hpAfter } });
         return { status: 'PASS', handled: true, kind: 'heal', steps };
       }
 
