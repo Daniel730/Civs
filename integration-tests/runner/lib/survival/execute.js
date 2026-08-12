@@ -148,7 +148,22 @@ async function executeSurvival(harness, actorName, assessment, ctx = {}) {
               allowTeleport: false,
             }
           );
-          steps.push({ retreat: { success: walk.success, reason: walk.reason } });
+          // D-AP-021: teleport only as last resort — mirror the flee branch so a
+          // stalled walk_path (server without walk_path, or the NPC wedged in a pit)
+          // still moves the agent home instead of leaving it idle in DANGER.
+          if (!walk.success && (walk.reason === 'stuck' || walk.reason === 'poll_timeout')) {
+            const tp = await cap.teleport(actorName, origin.x, origin.y + 1, origin.z);
+            countMetric(METRIC.GOAL_ABANDON, { actor: actorName, reason: 'retreat_stuck_recover' });
+            steps.push({
+              retreat: {
+                success: !!(tp && tp.success),
+                navigator: 'recovery_teleport',
+                reason: walk.reason,
+              },
+            });
+          } else {
+            steps.push({ retreat: { success: walk.success, reason: walk.reason } });
+          }
         }
         await cap.sprint(actorName, false);
         return { status: 'PASS', handled: true, kind: 'retreat', steps };

@@ -1045,6 +1045,7 @@ async function main() {
       // the agent keep building while a mob is killing it. This realizes the priority chain
       // EMERGENCY→DANGER→RECOVER→SURVIVE→TASK→EXPLORE/BUILD/MINE. Death is still handled below.
       if (assessment.state !== 'SAFE' && assessment.state !== 'CAUTION' && assessment.action && assessment.action.kind !== 'work') {
+        const od = (observed && observed.data) || {};
         log({
           status: 'DEGRADED',
           action: 'survival_preempt',
@@ -1052,16 +1053,27 @@ async function main() {
           state: assessment.state,
           recommended: assessment.action.kind,
           healthPct: assessment.healthPct,
+          food: od.food,
+          threats: assessment.threats,
+          walk_origin: cfg.origin,
         });
         try {
           const sv = await executeSurvival(harness, who, assessment, { workOrigin: cfg.origin });
+          log({
+            status: sv && sv.handled ? 'PASS' : 'DEGRADED',
+            action: 'survival_executed',
+            worker: who,
+            kind: assessment.action.kind,
+            handled: !!(sv && sv.handled),
+            steps: sv && sv.steps ? JSON.stringify(sv.steps) : null,
+          });
           if (sv && sv.handled) {
             observeMetric(METRIC.AIWORLD_POLICY_DISAGREEMENT, { agent: who, mode: 'survival_preempt' });
             saveState(state);
             return; // next tick (setInterval) — re-assess; do NOT run the work loop this tick
           }
-        } catch (_) {
-          /* best-effort: if survival execution fails, fall through to normal handling */
+        } catch (err) {
+          log({ status: 'DEGRADED', action: 'survival_exec_error', worker: who, error: String(err && err.message || err) });
         }
       }
 

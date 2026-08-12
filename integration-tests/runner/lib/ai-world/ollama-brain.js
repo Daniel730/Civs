@@ -89,7 +89,7 @@ function buildPrompt(snapshot, systemPrompt) {
   const light = snapshot.lightLevel != null ? snapshot.lightLevel : (wm.lightLevel != null ? wm.lightLevel : -1);
   const snap =
     'WORLD SNAPSHOT:\n' +
-    `- health: ${snapshot.healthPct != null ? Math.round(snapshot.healthPct * 100) : '?'}\%\n` +
+    `- health: ${snapshot.healthPct != null ? Math.round(snapshot.healthPct * 100) : '?'}%\n` +
     `- survivalState: ${snapshot.survivalState || 'SAFE'}\n` +
     `- position: (${snapshot.x ?? '?'}, ${snapshot.z ?? '?'})\n` +
     `- threats: ${snapshot.threats && snapshot.threats.length ? snapshot.threats.join(', ') : 'none'}\n` +
