@@ -1010,6 +1010,8 @@ async function main() {
         : { state: 'SAFE', action: { kind: 'work' }, changed: false };
 
       // W2: feed the world memory from this tick's observation so the agent "absorbs" the world.
+      // The observe payload carries deaths/last_damage/light even when no mob is in range, so the
+      // agent builds a memory of WHERE and HOW it gets hurt — not just when a hostile is visible.
       try {
         const wm = getWorldMemory(who);
         const od = (observed && observed.data) || {};
@@ -1023,6 +1025,17 @@ async function main() {
         if (od.nearest_hostile) {
           wm.noteThreat({ x: od.nearest_hostile.x, z: od.nearest_hostile.z, type: od.nearest_hostile.type, distance: od.nearest_hostile.distance });
         }
+        // Even without a visible mob, damage/death are ground-truth signals of a dangerous world.
+        if (typeof od.last_damage === 'number' && od.last_damage > 0) {
+          wm.noteDamage(od.last_damage_cause || 'unknown', od.last_damage);
+        }
+        if (typeof od.deaths === 'number') {
+          const prev = (state.lastDeaths && state.lastDeaths[who]) || 0;
+          if (od.deaths > prev) wm.noteDeath(od.deaths);
+          state.lastDeaths = state.lastDeaths || {};
+          state.lastDeaths[who] = od.deaths;
+        }
+        wm.noteSurroundings({ lightLevel: od.light_level, blockBelow: od.block_below });
         // expose memory features to the focus decision below
         assessment.worldMemory = wm.features(pos);
       } catch (_) { /* best-effort */ }
@@ -1233,8 +1246,14 @@ async function main() {
             nearestThreatDist: (assessment.worldMemory && assessment.worldMemory.nearestThreatDist) || -1,
             dangerZone: !!(assessment.worldMemory && assessment.worldMemory.dangerZone === 1),
             // W: pass the FULL world-memory object so the LLM decides with spatial context
-            // (remembered threats, blocks placed/broken) — not just the instantaneous observation.
+            // (remembered threats, blocks placed/broken, deaths, damage, darkness) — not just the
+            // instantaneous observation. This is what makes the NPC "absorb the world".
             worldMemory: assessment.worldMemory || {},
+            deaths: (assessment.worldMemory && assessment.worldMemory.deaths) || (od.deaths || 0),
+            lastDamageCause: (assessment.worldMemory && assessment.worldMemory.lastDamageCause) || od.last_damage_cause || null,
+            lightLevel: (assessment.worldMemory && assessment.worldMemory.lightLevel) >= 0 ? assessment.worldMemory.lightLevel : (od.light_level != null ? od.light_level : -1),
+            blockBelow: (assessment.worldMemory && assessment.worldMemory.blockBelow) || od.block_below || null,
+            nearestHostile: od.nearest_hostile || null,
             currentFocus: focusCandidate.focus,
             completedPlaces: Object.keys(state.completedPlaces || {}).length,
           };

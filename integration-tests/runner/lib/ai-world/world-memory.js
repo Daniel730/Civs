@@ -39,6 +39,11 @@ class WorldMemory {
     this.events = []; // { kind, x, z, at, meta }
     this.placed = new Map(); // "x,z" -> count (blocks placed)
     this.broken = new Map(); // "x,z" -> count (blocks broken)
+    this.deaths = 0; // cumulative death count observed
+    this.lastDamageCause = null; // e.g. 'ENTITY_ATTACK'
+    this.lastDamage = 0; // last damage amount
+    this.lightLevel = null; // current light level (low = dark = danger)
+    this.blockBelow = null; // block under feet (context)
     this._cleanAt = 0;
   }
 
@@ -82,6 +87,35 @@ class WorldMemory {
     m.set(key, (m.get(key) || 0) + 1);
   }
 
+  /** Record that the agent took damage (cause + amount). Feeds threat memory even without a
+   *  concrete mob position — last_damage_cause (e.g. ENTITY_ATTACK) is itself a signal. */
+  noteDamage(cause, amount) {
+    this._clean();
+    this.lastDamageCause = cause || null;
+    this.lastDamage = amount != null ? amount : 0;
+    if (cause) {
+      this.threats.push({ x: null, z: null, type: cause, distance: null, severity: 2, at: nowMs() });
+      this.events.push({ kind: 'damage', x: null, z: null, at: nowMs(), meta: { cause } });
+    }
+  }
+
+  /** Record a death (cumulative counter). Flags a death zone in threat memory. */
+  noteDeath(count) {
+    this._clean();
+    const prev = this.deaths || 0;
+    this.deaths = count != null ? count : prev + 1;
+    if (this.deaths > prev) {
+      this.events.push({ kind: 'death', x: null, z: null, at: nowMs(), meta: { deaths: this.deaths } });
+      this.threats.push({ x: null, z: null, type: 'death_zone', severity: 3, at: nowMs() });
+    }
+  }
+
+  /** Record ambient surroundings (light, ground block) so the agent knows if it is in the dark. */
+  noteSurroundings(s = {}) {
+    if (s.lightLevel != null) this.lightLevel = s.lightLevel;
+    if (s.blockBelow != null) this.blockBelow = s.blockBelow;
+  }
+
   /**
    * Compact features for encodeState().
    * @param {{x?:number,z?:number}} pos agent position
@@ -105,6 +139,11 @@ class WorldMemory {
       threatsRemembered: this.threats.length,
       blocksPlaced: this.placed.size,
       blocksBroken: this.broken.size,
+      deaths: this.deaths || 0,
+      lastDamageCause: this.lastDamageCause || null,
+      lastDamage: this.lastDamage || 0,
+      lightLevel: this.lightLevel == null ? -1 : this.lightLevel,
+      blockBelow: this.blockBelow || null,
     };
   }
 
