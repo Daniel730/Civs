@@ -52,3 +52,29 @@ test('OllamaBrain explicit model overrides env', () => {
     else process.env.OLLAMA_MODEL = prev;
   }
 });
+
+test('OllamaBrain.buildPrompt injects full world-memory into the user snapshot', () => {
+  const { buildPrompt } = require(path.join(ROOT, 'lib', 'ai-world', 'ollama-brain'));
+  const [system, user] = buildPrompt({
+    healthPct: 0.5,
+    survivalState: 'CAUTION',
+    x: 10, z: 20,
+    threats: ['zombie'],
+    nearestThreatDist: 8,
+    dangerZone: false,
+    worldMemory: { threatsRemembered: 3, blocksPlaced: 2, blocksBroken: 1 },
+    currentFocus: 'build',
+    completedPlaces: 3,
+  });
+  assert.ok(/memory:/.test(user.content), 'memory line present in prompt');
+  assert.ok(user.content.includes('3 threat(s) remembered'), 'remembered threats shown');
+  assert.ok(user.content.includes('placed 2 block(s)'), 'blocks placed shown');
+  assert.ok(user.content.includes('broke 1 block(s)'), 'blocks broken shown');
+  assert.ok(/health: 50%/.test(user.content), 'health percentage formatted');
+});
+
+test('OllamaBrain.buildPrompt shows "nothing remembered" when memory empty', () => {
+  const { buildPrompt } = require(path.join(ROOT, 'lib', 'ai-world', 'ollama-brain'));
+  const [, user] = buildPrompt({ healthPct: 1, survivalState: 'SAFE', worldMemory: {}, currentFocus: 'maintain', completedPlaces: 0 });
+  assert.ok(/memory: nothing remembered yet/.test(user.content), 'empty memory stated clearly');
+});

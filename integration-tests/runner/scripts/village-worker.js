@@ -1228,6 +1228,9 @@ async function main() {
             threats: assessment.threats || [],
             nearestThreatDist: (assessment.worldMemory && assessment.worldMemory.nearestThreatDist) || -1,
             dangerZone: !!(assessment.worldMemory && assessment.worldMemory.dangerZone === 1),
+            // W: pass the FULL world-memory object so the LLM decides with spatial context
+            // (remembered threats, blocks placed/broken) — not just the instantaneous observation.
+            worldMemory: assessment.worldMemory || {},
             currentFocus: focusCandidate.focus,
             completedPlaces: Object.keys(state.completedPlaces || {}).length,
           };

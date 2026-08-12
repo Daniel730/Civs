@@ -53,14 +53,20 @@ function buildPrompt(snapshot, systemPrompt) {
       'Given the world snapshot, choose ONE focus from [survive, found, build, maintain, secure]. ' +
       'Respond ONLY with JSON: {"focus":"...","reason":"...","target":null}. ' +
       'If a host is near, prefer survive/flee. If settlement is built, maintain it.';
+  const wm = snapshot.worldMemory || {};
+  const remembered =
+    (wm.threatsRemembered ? ` (${wm.threatsRemembered} threat(s) remembered)` : '') +
+    (wm.blocksPlaced ? `, placed ${wm.blocksPlaced} block(s)` : '') +
+    (wm.blocksBroken ? `, broke ${wm.blocksBroken} block(s)` : '');
   const snap =
     'WORLD SNAPSHOT:\n' +
-    `- health: ${snapshot.healthPct != null ? Math.round(snapshot.healthPct * 100) : '?'}%\n` +
+    `- health: ${snapshot.healthPct != null ? Math.round(snapshot.healthPct * 100) : '?'}\%\n` +
     `- survivalState: ${snapshot.survivalState || 'SAFE'}\n` +
     `- position: (${snapshot.x ?? '?'}, ${snapshot.z ?? '?'})\n` +
     `- threats: ${snapshot.threats && snapshot.threats.length ? snapshot.threats.join(', ') : 'none'}\n` +
     `- nearestThreatDist: ${snapshot.nearestThreatDist != null && snapshot.nearestThreatDist >= 0 ? snapshot.nearestThreatDist : 'unknown'}\n` +
     `- dangerZoneRemembered: ${snapshot.dangerZone ? 'yes' : 'no'}\n` +
+    `- memory:${remembered || ' nothing remembered yet'}\n` +
     `- currentFocus: ${snapshot.currentFocus || 'none'}\n` +
     `- completedPlaces: ${snapshot.completedPlaces || 0}\n` +
     `- availableJobs: ${FOCUSES.join(', ')}\n`;

@@ -196,6 +196,12 @@ focus) or `ollama-shadow` (logs only, deterministic still executes). **Safety in
 failure — timeout, bad JSON, model down — makes `decide()` return `null` and the worker falls back
 to the deterministic `chooseFocus`. The NPC never stalls or crashes because the brain hiccupped.
 
+**World memory in the prompt.** The snapshot the LLM receives is enriched with the agent's
+`worldMemory` (W1): it shows how many threats are *remembered* at/near the current spot, how many
+blocks were placed/broken, and whether a danger zone is flagged — so the model decides with spatial
+context from prior ticks, not just the instantaneous observation. This is what makes the NPC "absorb
+the world" instead of re-deriving everything each tick. When memory is empty the prompt states
+"nothing remembered yet" so the model does not invent context.
 **(b) Fine-tune (OFFLINE, makes it actually learn).** `scripts/aiworld-finetune.py` distills the
 closed outcome/reward loop (Task A) into an Ollama chat fine-tune dataset:
 - reads `reports/aiworld-experiences/experiences-*.jsonl` (rated lines only, `outcome != null`)
