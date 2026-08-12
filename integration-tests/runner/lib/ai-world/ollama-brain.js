@@ -46,6 +46,24 @@ function postJSON(endpoint, path, payload, timeoutMs) {
   });
 }
 
+function getJSON(endpoint, path, timeoutMs) {
+  return new Promise((resolve, reject) => {
+    const url = new URL(path, endpoint);
+    const req = http.request(
+      url,
+      { method: 'GET', timeout: timeoutMs },
+      (res) => {
+        let body = '';
+        res.on('data', (c) => (body += c));
+        res.on('end', () => resolve({ status: res.statusCode, body }));
+      }
+    );
+    req.on('timeout', () => req.destroy(new Error('ollama_timeout')));
+    req.on('error', reject);
+    req.end();
+  });
+}
+
 function buildPrompt(snapshot, systemPrompt) {
   const sys =
     systemPrompt ||
@@ -107,7 +125,9 @@ class OllamaBrain {
   async isAvailable() {
     if (this._available !== null) return this._available;
     try {
-      const r = await this._post('/api/tags', {}, Math.min(2000, this.timeoutMs));
+      // /api/tags is a GET endpoint; Ollama returns 405 on POST, which would wrongly mark the
+      // brain unavailable. Use GET so availability detection is correct.
+      const r = await getJSON(this.endpoint, '/api/tags', Math.min(5000, this.timeoutMs));
       this._available = r.status === 200;
     } catch (_) {
       this._available = false;

@@ -1213,6 +1213,7 @@ async function main() {
       // Ollama local-LLM brain: replaces the deterministic chooseFocus with a real decision.
       // In 'ollama' mode the LLM focus executes; in 'ollama-shadow' it only logs (deterministic
       // still executes) for side-by-side comparison. Any failure falls back to focusCandidate.
+      let ollamaBrainInst = null;
       if (aiwMode === 'ollama' || aiwMode === 'ollama-shadow') {
         try {
           if (!ollamaBrainInst) {
@@ -1237,6 +1238,9 @@ async function main() {
             currentFocus: focusCandidate.focus,
             completedPlaces: Object.keys(state.completedPlaces || {}).length,
           };
+          if (process.env.AIWORLD_DEBUG) {
+            console.log('[ollama-debug] snap=' + JSON.stringify(snap));
+          }
           const decision = await ollamaBrainInst.decide(snap);
           if (process.env.AIWORLD_DEBUG) {
             console.log('[ollama-debug] mode=' + aiwMode + ' model=' + ollamaBrainInst.model + ' decision=' + JSON.stringify(decision));
@@ -1259,7 +1263,8 @@ async function main() {
             });
             observeMetric(METRIC.AIWORLD_POLICY_DISAGREEMENT, { agent: who, mode: aiwMode });
           }
-        } catch (_) {
+        } catch (err) {
+          if (process.env.AIWORLD_DEBUG) console.log('[ollama-debug] decide threw: ' + (err && err.message));
           /* best-effort: keep deterministic focus */
         }
       }
