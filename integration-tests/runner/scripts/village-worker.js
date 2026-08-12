@@ -24,6 +24,9 @@ const { SurvivalMonitor, executeSurvival } = require('../lib/survival');
 const { IntentionCache, AntiStall } = require('../lib/ai-world/intention-cache');
 const { ConsultGate, plannerFromEnv } = require('../lib/ai-world/consult-planner');
 const { recordFocusDecision, recordFocusOutcome } = require('../lib/ai-world/decision');
+const { policy: aiPolicy } = require('../lib/ai-world/decision');
+const { encodeState } = require('../lib/ai-world/state-rep');
+const { FOCUSES } = require('../lib/village/focus');
 const { initTelemetry, shutdownTelemetry } = require('../lib/telemetry');
 const { METRIC, initMetrics, observeMetric, metricsSnapshot } = require('../lib/metrics');
 const rt = require('../lib/ai-world/agent-runtime');
@@ -1107,20 +1110,57 @@ async function main() {
         survivalState: assessment.state,
         townOk: !!(town && town.ok),
       });
-      const cached = intentions.get(who, focusCandidate.contextKey);
-      const intention = cached.hit ? cached.intention : focusCandidate;
+      // --- AI World: neural-mode focus re-ranking (LIVE inference, deterministic fallback) ---
+      // The neural policy has already been trained offline (scripts/aiworld-train.js) and its
+      // weights are loaded by NeuralPolicy at startup. In `neural` mode it may RE-RANK the focus
+      // candidates and pick a different one than the deterministic chooseFocus — but ONLY when
+      // that choice is safe (never overrides survival). In `shadow` mode the decision is recorded
+      // for comparison but the deterministic focus still executes. Any fault falls back to the
+      // deterministic focus (never crashes, never overrides a broken model).
+      let effectiveFocus = focusCandidate;
+      const aiwMode = (process.env.AIWORLD_POLICY || 'deterministic').toLowerCase();
+      if (aiwMode === 'neural' || aiwMode === 'shadow') {
+        try {
+          const pol = aiPolicy();
+          const stateRep = encodeState((observed && observed.data) || {}, {
+            survival: { state: assessment.state, distanceFromWork: assessment.distanceFromWork },
+          });
+          const candidates = FOCUSES.map((f) => ({ id: f, base: f === focusCandidate.focus ? 1 : 0.5 }));
+          const pick = pol.choose(stateRep.vec, candidates, assessment.state);
+          if (pick && pick.id && pick.id !== focusCandidate.focus) {
+            // Safety gate: never let the neural policy pick 'survive' when the survival monitor
+            // says SAFE/CAUTION (that would be over-reacting), and never pick a non-survive focus
+            // when the monitor says DANGER/ESCAPE/RECOVER (that would be under-reacting).
+            const monitorSafe = assessment.state === 'SAFE' || assessment.state === 'CAUTION';
+            const neuralSafe =
+              (pick.id === 'survive' && !monitorSafe) || (pick.id !== 'survive' && monitorSafe);
+            if (neuralSafe) {
+              effectiveFocus = {
+                ...focusCandidate,
+                focus: pick.id,
+                reason: `neural_policy(${pick.usedModel})`,
+              };
+              observeMetric(METRIC.AIWORLD_POLICY_DISAGREEMENT, { agent: who, mode: aiwMode });
+            }
+          }
+        } catch (_) {
+          /* best-effort: any fault keeps the deterministic focus */
+        }
+      }
+      const cached = intentions.get(who, effectiveFocus.contextKey);
+      const intention = cached.hit ? cached.intention : effectiveFocus;
       if (!cached.hit) {
-        intentions.set(who, focusCandidate, { contextKey: focusCandidate.contextKey });
+        intentions.set(who, effectiveFocus, { contextKey: effectiveFocus.contextKey });
         log({
           status: 'PASS',
           action: 'intention_set',
           worker: who,
-          focus: focusCandidate.focus,
-          reason: focusCandidate.reason,
+          focus: effectiveFocus.focus,
+          reason: effectiveFocus.reason,
           cacheMiss: cached.reason,
         });
       }
-      const objective = chooseObjective(state, assessment, focusCandidate);
+      const objective = chooseObjective(state, assessment, effectiveFocus);
       const step = biasJob(nextJob(state.tick, state), objective.focus, state.tick);
       // Override the blind rotation with the committed job so the agent keeps working
       // the same objective (site + job) until its progress goal is met.
@@ -1150,14 +1190,13 @@ async function main() {
       // dataset. In shadow/neural mode the policy also scores (recorded, not controlling).
       // Purely additive — never changes what the agent actually does.
       try {
-        const { FOCUSES } = require('../lib/village/focus');
         const ep = recordFocusDecision({
           agentId: who,
           observation: (observed && observed.data) || {},
-          focus: focusCandidate.focus,
+          focus: effectiveFocus.focus,
           candidates: FOCUSES.map((f) => ({
             id: f,
-            base: f === focusCandidate.focus ? 1 : 0.5,
+            base: f === effectiveFocus.focus ? 1 : 0.5,
             motive: 'focus',
           })),
           survivalState: assessment.state,

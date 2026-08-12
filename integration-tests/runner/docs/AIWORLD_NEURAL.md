@@ -102,9 +102,25 @@ STORE → TRAIN → UPDATED POLICY**. Sem RL; treino 100% offline e reproduzíve
 
 | modo | executado | neural scores | risco |
 |---|---|---|---|
-| `deterministic` (default) | baseline | não calculados | zero |
-| `shadow` | baseline | calculados + registados | zero (só observa) |
-| `neural` | neural | calculados + executados | baixo (fallback em falha) |
+| `deterministic` (default) | baseline (chooseFocus) | não calculados | zero |
+| `shadow` | baseline executa; neural **registado** p/ comparação | calculados + registados | zero (só observa) |
+| `neural` | **neural re-ranqueia o foco** e pode substituir chooseFocus | calculados + executados | baixo (fallback + safety gate) |
+
+Em modo `neural`, após o `chooseFocus` determinístico, o `NeuralPolicy.choose()` re-ranqueia
+os focos candidatos (`survive/found/build/maintain/secure`) usando os pesos treinados. Se a policy
+preferir um foco diferente e **seguro** (nunca sobrepõe sobrevivência: não escolhe `survive` em
+SAFE/CAUTION, não escolhe não-sobrevivência em DANGER/ESCAPE/RECOVER), esse foco executa. Qualquer
+falha → foco determinístico (nunca crasha, nunca override um modelo partido).
+
+## Validação ao vivo (QA server 192.168.152.149)
+
+Worker em `AIWORLD_POLICY=neural` confirmou o loop fechado **com influência na decisão executada**:
+- 40+ experiências gravadas com `policyMode: neural` e `neuralScores` não-null
+- Com pesos que favorecem `build` em SAFE, o worker mudou o foco de `maintain`→`build`
+  (`reason: neural_policy(neural)`) — a policy aprendida **controla** o foco, não só observa
+- Em `ESCAPE`/DANGER o foco voltou a `survive` (safety gate: neural nunca sobrepõe sobrevivência)
+- Fallback intacto: sem pesos → `baseline_mirror`, sem crash
+- Unit suite: **271/271** passando (`test/aiworld-rerank.test.js` cobre o re-ranking + safety gate)
 
 ## Fallback behavior (invariantes de segurança)
 

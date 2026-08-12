@@ -335,4 +335,5 @@ module.exports = {
   recordFocusDecision,
   recordFocusOutcome,
   recordDecisionExperience,
+  policy,
 };
