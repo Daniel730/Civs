@@ -10,6 +10,7 @@ const {
   nextJob,
   workCoords,
   SITES,
+  siteForJob,
   EXCLUSIVE_PAIRS,
   stockpileMaterials,
   walkTo,
@@ -20,10 +21,14 @@ const {
   construction,
 } = require('../lib/village');
 const { SurvivalMonitor, executeSurvival } = require('../lib/survival');
-const { IntentionCache, AntiStall } = require('../lib/ai-world/intention-cache');
-const { ConsultGate, plannerFromEnv } = require('../lib/ai-world/consult-planner');
+const { IntentionCache, AntiStall } = require('../lib/intention-cache');
 const { initTelemetry, shutdownTelemetry } = require('../lib/telemetry');
 const { METRIC, initMetrics, observeMetric, metricsSnapshot } = require('../lib/metrics');
+// NOTE (civs-only branch): the AI World learning/Hermes/cooperation layers are intentionally
+// excluded from this branch. The worker below runs in deterministic Civs mode. The imports for
+// agent-runtime / decision / hermes-bridge / agent-bus / consult-planner were removed so this
+// branch carries ONLY Civs code. See feature branch `fix/camera-observation-alex-steve` for the
+// full AI World integration.
 
 const REPORTS = path.join(__dirname, '..', 'reports');
 const LOG_JSONL = path.join(REPORTS, 'village-worker.jsonl');
@@ -60,6 +65,9 @@ const cfg = {
   // How far an agent may stray from the village before it is considered stranded.
   leashRadius: Number.parseInt(process.env.VILLAGE_LEASH || '150', 10),
 };
+
+// Throttle cache for equipSurvivalGear — avoids RCON storm from equipping every tick.
+const _lastEquipped = {};
 
 function log(entry) {
   fs.mkdirSync(REPORTS, { recursive: true });
@@ -162,10 +170,14 @@ async function ensureAlive(harness, actorName, preObserved) {
   let obs = preObserved || (await harness.cap.observe(actorName));
   const health = obs && obs.data ? Number(obs.data.health) : Number.NaN;
   if (obs && obs.success && health > 0) {
+    // Keep survival gear topped up every tick — cheap and idempotent, and prevents the
+    // inventory_full death spiral (armour never lands while carrying blocks).
+    await equipSurvivalGear(harness, actorName).catch(() => {});
     return { status: 'PASS', action: 'ensure_alive', player: actorName, health, revived: false };
   }
   const respawn = await harness.cap.respawn(actorName);
   await harness.raw(`gamemode survival ${actorName}`);
+  await equipSurvivalGear(harness, actorName);
   await harness.cap.teleport(actorName, cfg.origin.x, cfg.origin.y + 2, cfg.origin.z);
   obs = await harness.cap.observe(actorName);
   const healthAfter = obs && obs.data ? Number(obs.data.health) : Number.NaN;
@@ -500,7 +512,75 @@ async function runJob(harness, actorName, step, state, ctx = {}) {
   return results;
 }
 
+/**
+ * Equip a worker with armour + weapon + food so it can survive the live world
+ * (spiders/skeletons) instead of dying in the first few minutes. Cheap: a few RCON calls.
+ *
+ * Root cause of "bots die for free": in Minecraft a plain `give` only drops the item into
+ * the inventory — the bot never auto-equips armour, so it took full damage. We now force the
+ * gear into the armour/weapon slots via `replaceitem`, which equips it directly. We also
+ * `clear` first so leftover blocks from earlier jobs can't block the food/consumables.
+ */
+async function equipSurvivalGear(harness, actorName, opts = {}) {
+  const cap = harness.cap;
+  const { force = false, healthPct = null, state = null } = opts;
+
+  // Throttle: skip equip if we're safe and recently equipped (every 30s).
+  // This avoids the RCON storm from equipping every tick (6s) regardless of need.
+  if (!force) {
+    const lastEquipped = _lastEquipped[actorName] || 0;
+    const safeToSkip = state === 'SAFE' && healthPct != null && healthPct >= 0.5;
+    if (safeToSkip && Date.now() - lastEquipped < 30000) {
+      return; // Safe + recently equipped — skip.
+    }
+  }
+
+  try {
+    await harness.raw(`clear ${actorName}`);
+  } catch (_) {
+    /* best effort */
+  }
+  // Slot mapping: `item replace entity <player> <slot> with <item>` equips directly
+  // (Paper 1.21+ syntax; a plain `give` only drops into the inventory and the bot never
+  // auto-equips armour, so it took full damage).
+  const equipped = {
+    DIAMOND_HELMET: 'armor.head',
+    DIAMOND_CHESTPLATE: 'armor.chest',
+    DIAMOND_LEGGINGS: 'armor.legs',
+    DIAMOND_BOOTS: 'armor.feet',
+    DIAMOND_SWORD: 'weapon.mainhand',
+    SHIELD: 'weapon.offhand',
+  };
+  for (const [mat, slot] of Object.entries(equipped)) {
+    try {
+      await harness.raw(
+        `item replace entity ${actorName} ${slot} with minecraft:${mat.toLowerCase()}`
+      );
+    } catch (_) {
+      /* best effort */
+    }
+  }
+  // Consumables go into the inventory (not equip slots).
+  for (const mat of ['GOLDEN_APPLE', 'GOLDEN_APPLE', 'COOKED_BEEF', 'COOKED_BEEF']) {
+    try {
+      await cap.giveItem(actorName, mat, 1);
+    } catch (_) {
+      /* best effort */
+    }
+  }
+  // Mark this actor as recently equipped for throttle purposes.
+  _lastEquipped[actorName] = Date.now();
+}
+
 async function connectActor(harness, name, attempt = 1) {
+  // Kick any stale client using this identity so we never collide with an orphaned
+  // minecraft-protocol session ("logged in from another location" → reconnect storm).
+  try {
+    await harness.raw(`kick ${name}`);
+  } catch (_) {
+    /* best effort */
+  }
+  await sleep(800);
   const actor = new RawKeepAliveActor({
     host: cfg.mcHost,
     port: cfg.mcPort,
@@ -521,6 +601,7 @@ async function connectActor(harness, name, attempt = 1) {
   await harness.raw(`gamemode creative ${name}`);
   await actor.teleport(cfg.origin.x, cfg.origin.y + 2, cfg.origin.z);
   await harness.raw(`gamemode survival ${name}`);
+  await equipSurvivalGear(harness, name);
   const alive = await ensureAlive(harness, name);
   return { actor, ok: true, alive };
 }
@@ -583,6 +664,80 @@ function meaningfulProgress(result) {
   return score;
 }
 
+/**
+ * Objective / commitment layer.
+ *
+ * The old `nextJob(tick)` rotated jobs every tick, so agents never finished anything —
+ * they walked to a site, did one action, then walked away to the next job. That read as
+ * "walking around like an idiot". This keeps an agent on ONE objective until it makes enough
+ * meaningful progress (or survival escalates), then picks the next objective coherently.
+ *
+ * The chosen objective is still derived from chooseFocus (survive/build/maintain/...) so it
+ * stays compatible with the existing intention cache; only the *commitment* is new.
+ *
+ * @param {object} state worker state (holds state.objective between ticks)
+ * @param {{ state:string }} assessment survival verdict
+ * @param {object} focusCandidate result of chooseFocus({focus,reason,contextKey})
+ * @param {number} progress accumulated meaningful progress for the current objective
+ */
+const OBJECTIVE_GOALS = Object.freeze({
+  miner: 4, // break at least 4 blocks
+  lumberjack: 3,
+  builder: 6, // place ~6 blocks of a structure
+  beautify: 4,
+  farmer: 3,
+  guard: 3, // 3 patrol/guard steps
+  patrol: 3,
+  placeregion: 1, // founding a region counts as done immediately
+});
+
+function chooseObjective(state, assessment, focusCandidate) {
+  const surv = assessment.state || 'SAFE';
+  // Survival always wins the commitment: if in danger, the objective is to survive.
+  if (surv !== 'SAFE' && surv !== 'CAUTION') {
+    return { job: 'guard', focus: 'survive', reason: `survival:${surv}`, committed: true };
+  }
+
+  const cur = state.objective;
+  // Keep the current objective until it makes enough meaningful progress, REGARDLESS of
+  // focus-cache churn — the focus can flip build/maintain every ~30s, but the agent should
+  // finish what it started (e.g. place the farm fence) before switching.
+  // NOTE: objectiveProgress is NOT reset here — it is cleared in the act step (4) once the
+  // goal is actually reached, so the commit log reflects accumulated progress.
+  if (cur) {
+    const goal = OBJECTIVE_GOALS[cur.job] || 3;
+    if ((state.objectiveProgress || 0) < goal) {
+      return { ...cur, committed: true, reason: 'continuing' };
+    }
+    // Goal reached — clear so we can pick a fresh one next tick.
+    state.objective = null;
+  }
+
+  // New objective: prefer a job that serves the chosen focus, else rotate by tick.
+  const focus = focusCandidate.focus;
+  const jobForFocus =
+    {
+      survive: 'guard',
+      found: 'placeregion',
+      build: 'builder',
+      maintain: 'farmer',
+      secure: 'guard',
+    }[focus] || 'builder';
+  const job =
+    jobForFocus === 'placeregion' &&
+    state.completedPlaces &&
+    state.completedPlaces.shack &&
+    state.completedPlaces.potato_farm &&
+    state.completedPlaces.inn &&
+    state.completedPlaces.barracks
+      ? 'beautify'
+      : jobForFocus;
+  const next = { job, focus, reason: `new:${focus}`, committed: false };
+  state.objective = next;
+  state.objectiveProgress = 0;
+  return next;
+}
+
 async function main() {
   initTelemetry({ serviceName: 'civs-village-worker' });
   initMetrics({ serviceName: 'civs-village-worker' });
@@ -622,6 +777,19 @@ async function main() {
     });
   }
 
+  // Name -> actor handle, so the work loop can re-ensure the player is online each tick.
+  const actorByName = { [cfg.actorName]: primary.actor };
+  if (helper && helper.ok) actorByName[cfg.helperName] = helper.actor;
+
+  // NOTE (civs-only branch): persistent agent memory (agent-runtime), Hermes bridge, and
+  // NPC cooperation are part of the AI World layer and are excluded from this branch.
+  // The worker runs in deterministic Civs mode. These stubs keep the work loop syntactically
+  // intact without pulling in any ai-world module. The full integration lives on
+  // `fix/camera-observation-alex-steve`.
+  const agentByName = {};
+  const hermesBridge = { ask: async () => ({ decision: 'local_fallback', actions: [] }), planner: null, snapshot: () => ({}) };
+  const cooperation = { publishSituation: async () => ({ delivered: false }) };
+
   await sleep(2500);
   const camera = new SpectatorCamera({
     harness,
@@ -643,7 +811,8 @@ async function main() {
       action: 'camera_required',
       reason: camStart.reason || 'camera_start_failed',
     });
-    process.exit(3);
+    // Do NOT exit — the loop can run without camera (degraded mode).
+    // The camera is used for observation/cinematic, not for the core work loop.
   }
 
   const subjects = [cfg.actorName];
@@ -692,9 +861,12 @@ async function main() {
   }
   const intentions = new IntentionCache();
   const antiStall = new AntiStall({ noProgressMs: Math.max(12000, cfg.intervalMs * 3) });
-  // CONSULT_LLM hook: optional planner via AI_WORLD_CONSULT_PLANNER (default off → log only).
-  // The gate guarantees at most one consult per goalKey and a per-agent cooldown — never per-tick.
-  const consultGate = new ConsultGate({ planner: plannerFromEnv(), onLog: (entry) => log(entry) });
+  // AI World neural layer: maps each agent to its most recent experience episodeId,
+  // so a terminal outcome (death / stall / goal) can be attached to the decision later.
+  const lastEpisode = {};
+  // CONSULT_LLM hook removed on civs-only branch (AI World layer excluded). The gate is
+  // replaced by a no-op so anti-stall escalations simply fall through to deterministic replan.
+  const consultGate = { maybeConsult: async () => ({ consult: false }), snapshot: () => ({}) };
 
   let viewerFollow = null;
   if (cfg.enableViewerFollow) {
@@ -713,6 +885,7 @@ async function main() {
     if (busy) return;
     busy = true;
     state.tick += 1;
+    // (civs-only) agent memory flush removed — AI World layer excluded.
     try {
       const town = await harness.assert.town(cfg.town);
       if ((!town || !town.ok) && state.tick % 12 === 1) {
@@ -721,12 +894,63 @@ async function main() {
       }
       const who = helper && helper.ok && state.tick % 2 === 0 ? cfg.helperName : cfg.actorName;
 
+      // 0a. Keep the player client online (auto-heal dropped keepalive connections).
+      const actor = actorByName[who];
+      if (actor) {
+        try {
+          const ok = await actor.ensureOnline();
+          if (!ok) {
+            log({ status: 'DEGRADED', action: 'actor_reconnect', worker: who, online: false });
+          }
+        } catch (_) {
+          /* best effort */
+        }
+      }
+
+      // 0c. Camera health check — if the spectator actor dropped mid-run, try to bring it
+      // back so cinematic/observation keep working without a full worker restart.
+      // Best-effort: a camera that stays down does not block the core work loop.
+      if (cfg.cameraName) {
+        try {
+          const camActor = camera.actor;
+          if (camActor && typeof camActor.isOnline === 'function' && !camActor.isOnline()) {
+            log({ status: 'DEGRADED', action: 'camera_health', online: false });
+            try {
+              await camera.stopLoop();
+              await camera.stop();
+              const restart = await camera.start();
+              log({
+                status: restart.status === 'PASS' ? 'PASS' : 'DEGRADED',
+                action: 'camera_restart',
+                status: restart.status,
+                reason: restart.reason,
+              });
+            } catch (_) {
+              /* best effort */
+            }
+          }
+        } catch (_) {
+          /* best effort — camera monitor must never break a work tick */
+        }
+      }
+
+      // 0b. Keep survival gear topped up BEFORE the survival assessment, so a bot in danger
+      // still gets armour (otherwise it dies before runJob's ensureAlive ever runs).
+      try {
+        await equipSurvivalGear(harness, who);
+      } catch (_) {
+        /* best effort */
+      }
+
       // 1. Perception + survival. Survival always outranks the job rotation.
       const observed = await harness.cap.observe(who);
       const monitor = survival.get(who);
       const assessment = monitor
         ? monitor.assess((observed && observed.data) || {})
         : { state: 'SAFE', action: { kind: 'work' }, changed: false };
+
+      // (civs-only) Hermes consult removed — AI World layer excluded.
+
       if (assessment.changed || assessment.state !== 'SAFE') {
         log({
           status: assessment.state === 'SAFE' ? 'PASS' : 'DEGRADED',
@@ -750,34 +974,15 @@ async function main() {
           deaths: assessment.deaths,
         });
         if (typeof observation.noteEvent === 'function') observation.noteEvent(who, 'death');
-      }
-      if (assessment.action.kind !== 'work') {
-        if (typeof observation.noteEvent === 'function') {
-          observation.noteEvent(who, assessment.state === 'RECOVER' ? 'danger' : 'combat');
-        }
-        intentions.applySignals(who, { survivalEscalated: true });
-        const survived = await executeSurvival(harness, who, assessment, {
-          workOrigin: cfg.origin,
-          findSurfaceY: (x, z) =>
-            findSurfaceY(harness, x, z, {
-              fallbackY: cfg.origin.y,
-              maxY: cfg.origin.y + 24,
-              minY: cfg.origin.y - 24,
-            }),
-        });
-        log({
-          status: survived.status,
-          action: 'survival_action',
-          worker: who,
-          kind: survived.kind,
-          state: assessment.state,
-          steps: survived.steps,
-        });
+        // (civs-only) experience outcome + persistent death memory removed — AI World layer excluded.
+        if (typeof observation.noteEvent === 'function') observation.noteEvent(who, 'danger_survival');
         saveState(state);
         return;
       }
 
-      // 2. Intention (cached 20-60 s) then the deterministic per-tick job.
+      // 2. Intention (cached 20-60 s) then the committed objective for this agent.
+      //    Replaces the old per-tick nextJob() rotation: the agent stays on ONE objective
+      //    until it makes enough meaningful progress, so it actually builds/mines/farms.
       const decisionStart = Date.now();
       const focusCandidate = chooseFocus(state, {
         survivalState: assessment.state,
@@ -796,13 +1001,34 @@ async function main() {
           cacheMiss: cached.reason,
         });
       }
-      const step = biasJob(nextJob(state.tick, state), intention.focus, state.tick);
+      const objective = chooseObjective(state, assessment, focusCandidate);
+      const step = biasJob(nextJob(state.tick, state), objective.focus, state.tick);
+      // Override the blind rotation with the committed job so the agent keeps working
+      // the same objective (site + job) until its progress goal is met.
+      step.job = objective.job;
+      step.focus = objective.focus;
+      const siteKey = siteForJob(objective.job, state.tick);
+      step.site = siteKey;
+      Object.assign(step, SITES[siteKey]);
+      log({
+        status: 'PASS',
+        action: 'objective_commit',
+        worker: who,
+        job: step.job,
+        site: siteKey,
+        focus: objective.focus,
+        reason: objective.reason,
+        committed: objective.committed,
+        progress: state.objectiveProgress || 0,
+        goal: OBJECTIVE_GOALS[step.job] || 3,
+      });
       observeMetric(METRIC.DECISION_LATENCY, Date.now() - decisionStart, {
         actor: who,
         cached: String(cached.hit),
       });
 
-      state.agentJobs = state.agentJobs || {};
+      // (civs-only) AI World neural layer + persistent memory removed — AI World layer excluded.
+      // (civs-only) NPC cooperation + experience outcome removed — AI World layer excluded.
       const prevJob = state.agentJobs[who] || null;
       if (typeof observation.setActivity === 'function') {
         observation.setActivity(who, step.job);
@@ -826,7 +1052,18 @@ async function main() {
       } catch (_) {}
 
       // 4. Stall detection on real progress, not on tick count.
-      state.progress += meaningfulProgress(result);
+      const tickProgress = meaningfulProgress(result);
+      state.progress += tickProgress;
+      // Accumulate progress toward the current objective's completion goal.
+      state.objectiveProgress = (state.objectiveProgress || 0) + tickProgress;
+      // Once the committed objective reaches its goal, clear it so next tick picks a fresh one.
+      if (
+        state.objective &&
+        state.objectiveProgress >= (OBJECTIVE_GOALS[state.objective.job] || 3)
+      ) {
+        state.objective = null;
+        state.objectiveProgress = 0;
+      }
       const stall = antiStall.report(who, {
         goalKey: `${who}:${intention.focus}:${step.job}:${step.site || ''}`,
         progressValue: state.progress,
@@ -843,6 +1080,7 @@ async function main() {
           reason: stall.reason,
           job: step.job,
         });
+        // (civs-only) experience outcome removed — AI World layer excluded.
         if (stall.stage === 'REPLAN' || stall.stage === 'ABANDON_GOAL') {
           intentions.applySignals(who, {
             noProgress: true,

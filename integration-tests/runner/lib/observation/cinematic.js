@@ -17,6 +17,7 @@
 
 const { SubjectDirector } = require('./subject-scoring');
 const { selectShot, shotArgs } = require('./shots');
+const { detectContext } = require('./context');
 const { DirectorFSM, coverageState } = require('./director-fsm');
 const { METRIC, countMetric, observeMetric, gaugeMetric } = require('../metrics');
 
@@ -245,6 +246,12 @@ class CinematicDirector {
       const index = (this._shotIndex.get(subject) || 0) + (isNewSubject ? 0 : 1);
       this._shotIndex.set(subject, index);
       const activeEvent = this.subjectDirector.activeEvent(subject);
+      const context = detectContext({
+        activity: info && info.activity,
+        event: activeEvent,
+        novelty: info && info.novelty,
+        y: info && info.position && info.position.y,
+      });
       const plan = selectShot({
         subject,
         activity: info && info.activity,
@@ -253,6 +260,7 @@ class CinematicDirector {
         shotIndex: index,
         previousShot: this.plan && this.plan.shot,
         event: activeEvent,
+        context,
       });
       const applied = await this._applyShot(subject, plan);
       this.plan = { ...plan, activity: info && info.activity, applied: applied.status };
@@ -390,16 +398,31 @@ class CinematicDirector {
   async _observe(name) {
     try {
       const obs = await this.harness.cap.observe(name);
-      if (!obs || !obs.success || !obs.data) return null;
-      const x = obs.data.x ?? obs.data.loc_x;
-      const y = obs.data.y ?? obs.data.loc_y;
-      const z = obs.data.z ?? obs.data.loc_z;
-      if ([x, y, z].some((v) => typeof v !== 'number' || Number.isNaN(v))) return null;
-      if (obs.data.dead === true) return null;
-      return { x, y, z, data: obs.data };
+      if (obs && obs.success && obs.data) {
+        const x = obs.data.x ?? obs.data.loc_x;
+        const y = obs.data.y ?? obs.data.loc_y;
+        const z = obs.data.z ?? obs.data.loc_z;
+        if ([x, y, z].some((v) => typeof v !== 'number' || Number.isNaN(v))) {
+          // RCON returned no position this tick — fall back to last known (grace period)
+          // so a transient observe timeout doesn't flip the camera into RECOVERING.
+          return this._lastPos(name);
+        }
+        if (obs.data.dead === true) return null;
+        const pos = { x, y, z, data: obs.data };
+        this._positions.set(name, { ...pos, at: this.now() });
+        return pos;
+      }
     } catch (_) {
-      return null;
+      /* fall through to grace-period fallback */
     }
+    return this._lastPos(name);
+  }
+
+  /** Last known good position, valid for a short grace period after an observe miss. */
+  _lastPos(name) {
+    const prev = this._positions.get(name);
+    if (prev && this.now() - prev.at < 4000) return prev;
+    return null;
   }
 
   snapshot() {

@@ -14,19 +14,70 @@
  */
 
 const SHOTS = Object.freeze({
-  establishing: { dist: 20, height: 10, yaw: 35, lead: 0, transitionMs: 2400, minMs: 3500, maxMs: 7000 },
+  establishing: {
+    dist: 20,
+    height: 10,
+    yaw: 35,
+    lead: 0,
+    transitionMs: 2400,
+    minMs: 3500,
+    maxMs: 7000,
+  },
   wide: { dist: 13, height: 5.5, yaw: 55, lead: 4, transitionMs: 1600, minMs: 3000, maxMs: 8000 },
-  medium: { dist: 6.5, height: 2.4, yaw: 45, lead: 6, transitionMs: 1200, minMs: 3000, maxMs: 9000 },
-  over_shoulder: { dist: 3.4, height: 1.9, yaw: 18, lead: 8, transitionMs: 1000, minMs: 3500, maxMs: 10000 },
+  medium: {
+    dist: 6.5,
+    height: 2.4,
+    yaw: 45,
+    lead: 6,
+    transitionMs: 1200,
+    minMs: 3000,
+    maxMs: 9000,
+  },
+  over_shoulder: {
+    dist: 3.4,
+    height: 1.9,
+    yaw: 18,
+    lead: 8,
+    transitionMs: 1000,
+    minMs: 3500,
+    maxMs: 10000,
+  },
   close: { dist: 2.8, height: 1.7, yaw: 155, lead: 2, transitionMs: 900, minMs: 2500, maxMs: 6000 },
   low: { dist: 5, height: 0.6, yaw: 70, lead: 4, transitionMs: 1100, minMs: 3000, maxMs: 8000 },
-  profile: { dist: 7.5, height: 2.1, yaw: 90, lead: 10, transitionMs: 1200, minMs: 3000, maxMs: 9000 },
+  profile: {
+    dist: 7.5,
+    height: 2.1,
+    yaw: 90,
+    lead: 10,
+    transitionMs: 1200,
+    minMs: 3000,
+    maxMs: 9000,
+  },
   orbit: { dist: 8, height: 3.2, yaw: 45, lead: 4, transitionMs: 1400, minMs: 4000, maxMs: 12000 },
   top_down: { dist: 5, height: 15, yaw: 20, lead: 0, transitionMs: 1800, minMs: 3000, maxMs: 7000 },
-  reaction: { dist: 3.6, height: 1.9, yaw: 130, lead: 2, transitionMs: 900, minMs: 2500, maxMs: 5000 },
+  panoramic: {
+    dist: 26,
+    height: 13,
+    yaw: 35,
+    lead: 0,
+    transitionMs: 2600,
+    minMs: 5000,
+    maxMs: 14000,
+  },
+  reaction: {
+    dist: 3.6,
+    height: 1.9,
+    yaw: 130,
+    lead: 2,
+    transitionMs: 900,
+    minMs: 2500,
+    maxMs: 5000,
+  },
 });
 
 const SHOT_NAMES = Object.freeze(Object.keys(SHOTS));
+
+const { spaceRotation } = require('./context');
 
 /**
  * Per-activity shot rotations. Order matters: it is the cut rhythm for that activity.
@@ -87,6 +138,17 @@ function selectShot(ctx = {}) {
     const rot = ACTIVITY_ROTATIONS.travelling;
     shot = rot[index % rot.length];
     reason = 'travelling';
+  } else if (ctx.context && (ctx.context.space !== 'open' || ctx.context.discovery)) {
+    // Phase 7: modulate the rotation by the detected scene context. Enclosed/indoor spaces get
+    // tight shots; a fresh discovery opens on a slow panoramic. Open + non-discovery falls through
+    // to the normal activity rotation below.
+    const rot = spaceRotation(ctx.activity, ctx.context);
+    shot = rot[index % rot.length];
+    reason = `context:${ctx.context.reason}`;
+    if (shot === previous && rot.length > 1) {
+      shot = rot[(index + 1) % rot.length];
+      reason += ':rotated';
+    }
   } else {
     const rot = ACTIVITY_ROTATIONS[ctx.activity] || ACTIVITY_ROTATIONS.idle;
     shot = rot[index % rot.length];
@@ -120,4 +182,12 @@ function shotArgs(plan) {
   return [plan.shot, g.dist, g.height, plan.yaw, plan.transitionMs, g.lead];
 }
 
-module.exports = { SHOTS, SHOT_NAMES, ACTIVITY_ROTATIONS, TRAVEL_SPEED, selectShot, shotArgs };
+module.exports = {
+  SHOTS,
+  SHOT_NAMES,
+  ACTIVITY_ROTATIONS,
+  TRAVEL_SPEED,
+  selectShot,
+  shotArgs,
+  spaceRotation,
+};

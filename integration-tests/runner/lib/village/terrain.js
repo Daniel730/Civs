@@ -56,12 +56,17 @@ async function findSurfaceY(harness, x, z, opts = {}) {
   const key = `${ix},${iz},${minY},${maxY}`;
   if (surfaceCache.has(key)) return surfaceCache.get(key);
 
+  // A player is 2 blocks tall: the head sits in y+1, so a safe stand needs AIR in y+1 AND y+2.
+  // Without the y+2 check the agent can be placed with its head inside a block and suffocate.
+  const headClear = async (hx, hy, hz) =>
+    (await isAirish(harness, hx, hy + 1, hz)) && (await isAirish(harness, hx, hy + 2, hz));
+
   // Prefer common flat-world / pad height first
   for (const y of [fallbackY, fallbackY - 1, fallbackY + 1, fallbackY - 2, fallbackY + 2]) {
     if (y < minY || y > maxY) continue;
     const solidHere = !(await isAirish(harness, ix, y, iz));
     if (!solidHere) continue;
-    if (await isAirish(harness, ix, y + 1, iz)) {
+    if (await headClear(ix, y, iz)) {
       surfaceCache.set(key, y);
       return y;
     }
@@ -70,7 +75,7 @@ async function findSurfaceY(harness, x, z, opts = {}) {
   for (let y = maxY; y >= minY; y--) {
     const solidHere = !(await isAirish(harness, ix, y, iz));
     if (!solidHere) continue;
-    if (await isAirish(harness, ix, y + 1, iz)) {
+    if (await headClear(ix, y, iz)) {
       surfaceCache.set(key, y);
       return y;
     }

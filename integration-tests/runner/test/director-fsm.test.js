@@ -186,7 +186,8 @@ describe('CinematicDirector FSM integration', () => {
     });
     await d.tick();
     delete positions.Steve;
-    now += 1500;
+    // Advance past the observe grace period (4s) so the subject is genuinely marked offline.
+    now += 5000;
     const r = await d.tick();
     assert.equal(d.fsm.state, 'RECOVERING');
     assert.equal(r.fallback, 'orbit');

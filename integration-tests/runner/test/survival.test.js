@@ -2,7 +2,13 @@ const { describe, it, beforeEach } = require('node:test');
 const assert = require('node:assert/strict');
 const { SurvivalMonitor, bucketCause } = require('../lib/survival/threat');
 const { executeSurvival } = require('../lib/survival/execute');
-const { METRIC, initMetrics, resetMetrics, metricsSnapshot, counterBreakdown } = require('../lib/metrics');
+const {
+  METRIC,
+  initMetrics,
+  resetMetrics,
+  metricsSnapshot,
+  counterBreakdown,
+} = require('../lib/metrics');
 
 const WORK = { x: 5200, y: 80, z: 5200 };
 
@@ -61,7 +67,9 @@ describe('SurvivalMonitor', () => {
 
   it('retreats instead of fighting when health is nearly gone', () => {
     const m = new SurvivalMonitor({ actor: 'Steve', workOrigin: WORK });
-    const a = m.assess(obs({ health: 5, hostiles: 1, nearest_hostile: { type: 'ZOMBIE', distance: 3 } }));
+    const a = m.assess(
+      obs({ health: 5, hostiles: 1, nearest_hostile: { type: 'ZOMBIE', distance: 3 } })
+    );
     assert.equal(a.state, 'ESCAPE');
     assert.equal(a.action.kind, 'flee');
   });
@@ -133,7 +141,12 @@ describe('SurvivalMonitor', () => {
 
   it('escalates immediately even inside the calm window', () => {
     let now = 0;
-    const m = new SurvivalMonitor({ actor: 'Steve', workOrigin: WORK, calmMs: 10_000, now: () => now });
+    const m = new SurvivalMonitor({
+      actor: 'Steve',
+      workOrigin: WORK,
+      calmMs: 10_000,
+      now: () => now,
+    });
     m.assess(obs({ food: 3 }));
     assert.equal(m.state, 'CAUTION');
     now += 100;
@@ -195,7 +208,12 @@ describe('executeSurvival', () => {
 
   it('does nothing for a work recommendation', async () => {
     const h = fakeHarness();
-    const out = await executeSurvival(h, 'Steve', { action: { kind: 'work' } }, { workOrigin: WORK });
+    const out = await executeSurvival(
+      h,
+      'Steve',
+      { action: { kind: 'work' } },
+      { workOrigin: WORK }
+    );
     assert.equal(out.handled, false);
     assert.equal(h.calls.length, 0);
   });
@@ -213,18 +231,45 @@ describe('executeSurvival', () => {
     assert.ok(h.calls.some((c) => c[0] === 'teleport'));
   });
 
-  it('attacks on defend', async () => {
+  it('attacks on defend (diamond sword)', async () => {
     const h = fakeHarness();
-    const out = await executeSurvival(h, 'Steve', { action: { kind: 'defend', target: 'ZOMBIE' } }, { workOrigin: WORK });
+    const out = await executeSurvival(
+      h,
+      'Steve',
+      { action: { kind: 'defend', target: 'ZOMBIE' } },
+      { workOrigin: WORK }
+    );
     assert.equal(out.kind, 'defend');
     assert.ok(h.calls.some((c) => c[0] === 'attack'));
-    assert.ok(h.calls.some((c) => c[0] === 'give' && c[1] === 'IRON_SWORD'));
+    assert.ok(h.calls.some((c) => c[0] === 'give' && c[1] === 'DIAMOND_SWORD'));
   });
 
-  it('flees without teleporting', async () => {
+  it('flees without teleporting on a clean walk', async () => {
     const h = fakeHarness();
-    await executeSurvival(h, 'Steve', { action: { kind: 'flee', target: WORK } }, { workOrigin: WORK });
+    await executeSurvival(
+      h,
+      'Steve',
+      { action: { kind: 'flee', target: WORK } },
+      { workOrigin: WORK }
+    );
     assert.ok(h.calls.some((c) => c[0] === 'sprint' && c[1] === true));
     assert.ok(!h.calls.some((c) => c[0] === 'teleport'), 'flee must not teleport');
+  });
+
+  it('recovers via teleport when flee walk_path stalls (stuck)', async () => {
+    const h = fakeHarness();
+    const out = await executeSurvival(
+      h,
+      'Steve',
+      { action: { kind: 'flee', target: WORK } },
+      { workOrigin: WORK, walkTo: async () => ({ success: false, reason: 'stuck' }) }
+    );
+    const flee = out.steps.find((s) => s.flee);
+    assert.ok(flee, 'flee step recorded');
+    assert.equal(flee.flee.navigator, 'recovery_teleport', 'stuck flee must fall back to teleport');
+    assert.ok(
+      h.calls.some((c) => c[0] === 'teleport'),
+      'recovery teleport issued'
+    );
   });
 });

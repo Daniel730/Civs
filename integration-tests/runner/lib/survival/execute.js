@@ -30,77 +30,118 @@ async function executeSurvival(harness, actorName, assessment, ctx = {}) {
   }
   const origin = ctx.workOrigin || action.target || null;
   const steps = [];
+  // Allow callers (tests) to inject a walk implementation; default to the real one.
+  const walkToFn = ctx.walkTo || walkTo;
 
-  return timeMetric(METRIC.ACTION_LATENCY, { actor: actorName, action: `survival_${action.kind}` }, async () => {
-    if (action.kind === 'recover') {
-      if (action.respawn) {
-        const respawn = await cap.respawn(actorName);
-        steps.push({ respawn: respawn && respawn.success });
-        await harness.raw(`gamemode survival ${actorName}`);
-        await sleep(300);
+  return timeMetric(
+    METRIC.ACTION_LATENCY,
+    { actor: actorName, action: `survival_${action.kind}` },
+    async () => {
+      if (action.kind === 'recover') {
+        if (action.respawn) {
+          const respawn = await cap.respawn(actorName);
+          steps.push({ respawn: respawn && respawn.success });
+          await harness.raw(`gamemode survival ${actorName}`);
+          await sleep(300);
+        }
+        if (origin) {
+          // Respawn drops the bot at world spawn, which can be kilometres away: close the gap,
+          // then walk the last stretch so the arrival still reads as a person arriving.
+          const y = ctx.findSurfaceY
+            ? await ctx.findSurfaceY(origin.x + 3, origin.z + 3)
+            : origin.y;
+          const tp = await cap.teleport(actorName, origin.x + 3, (y || origin.y) + 1, origin.z + 3);
+          steps.push({ returnTeleport: !!(tp && tp.success) });
+          countMetric(METRIC.GOAL_ABANDON, { actor: actorName, reason: 'survival_recover' });
+          const walk = await walkToFn(
+            harness,
+            actorName,
+            { x: origin.x, y: (y || origin.y) + 1, z: origin.z },
+            {
+              arrive: 2.0,
+              timeoutMs: 9000,
+              allowTeleport: false,
+            }
+          );
+          steps.push({ walkHome: { success: walk.success, navigator: walk.navigator } });
+        }
+        return { status: 'PASS', handled: true, kind: 'recover', steps };
       }
-      if (origin) {
-        // Respawn drops the bot at world spawn, which can be kilometres away: close the gap,
-        // then walk the last stretch so the arrival still reads as a person arriving.
-        const y = ctx.findSurfaceY ? await ctx.findSurfaceY(origin.x + 3, origin.z + 3) : origin.y;
-        const tp = await cap.teleport(actorName, origin.x + 3, (y || origin.y) + 1, origin.z + 3);
-        steps.push({ returnTeleport: !!(tp && tp.success) });
-        countMetric(METRIC.GOAL_ABANDON, { actor: actorName, reason: 'survival_recover' });
-        const walk = await walkTo(harness, actorName, { x: origin.x, y: (y || origin.y) + 1, z: origin.z }, {
-          arrive: 2.0,
-          timeoutMs: 9000,
-          allowTeleport: false,
-        });
-        steps.push({ walkHome: { success: walk.success, navigator: walk.navigator } });
+
+      if (action.kind === 'flee') {
+        await cap.sprint(actorName, true);
+        if (origin) {
+          const walk = await walkToFn(
+            harness,
+            actorName,
+            { x: origin.x, y: origin.y, z: origin.z },
+            {
+              arrive: 3.0,
+              timeoutMs: 8000,
+              speed: 5.4,
+              allowTeleport: false,
+            }
+          );
+          // In ESCAPE the agent is critical: if real movement stalls (stuck/mob shove),
+          // fall back to a recovery teleport to the safe origin rather than standing still
+          // and dying. D-AP-021: teleport only as last resort — this branch is that last resort.
+          if (!walk.success && (walk.reason === 'stuck' || walk.reason === 'poll_timeout')) {
+            const tp = await cap.teleport(actorName, origin.x, origin.y + 1, origin.z);
+            countMetric(METRIC.GOAL_ABANDON, { actor: actorName, reason: 'flee_stuck_recover' });
+            steps.push({
+              flee: {
+                success: !!(tp && tp.success),
+                navigator: 'recovery_teleport',
+                reason: walk.reason,
+              },
+            });
+          } else {
+            steps.push({
+              flee: { success: walk.success, navigator: walk.navigator, reason: walk.reason },
+            });
+          }
+        }
+        await cap.sprint(actorName, false);
+        return { status: 'PASS', handled: true, kind: 'flee', steps };
       }
-      return { status: 'PASS', handled: true, kind: 'recover', steps };
+
+      if (action.kind === 'defend') {
+        // Gear is granted on spawn/respawn; ensure the sword is in hand before swinging.
+        await cap.giveItem(actorName, 'DIAMOND_SWORD', 1).catch(() => {});
+        await cap.hotbar(actorName, 0);
+        for (let i = 0; i < 3; i++) {
+          const hit = await cap.attackNearest(actorName);
+          steps.push({ attack: !!(hit && hit.success), reason: hit && hit.reason });
+          await cap.swing(actorName);
+          await sleep(250);
+          if (!hit || !hit.success) break;
+        }
+        return { status: 'PASS', handled: true, kind: 'defend', steps };
+      }
+
+      if (action.kind === 'retreat') {
+        await cap.sprint(actorName, true);
+        if (origin) {
+          const walk = await walkTo(
+            harness,
+            actorName,
+            { x: origin.x, y: origin.y, z: origin.z },
+            {
+              arrive: 3.0,
+              timeoutMs: 7000,
+              speed: 5.4,
+              allowTeleport: false,
+            }
+          );
+          steps.push({ retreat: { success: walk.success, reason: walk.reason } });
+        }
+        await cap.sprint(actorName, false);
+        return { status: 'PASS', handled: true, kind: 'retreat', steps };
+      }
+
+      return { status: 'PASS', handled: false, kind: action.kind, steps };
     }
-
-    if (action.kind === 'flee') {
-      await cap.sprint(actorName, true);
-      if (origin) {
-        const walk = await walkTo(harness, actorName, { x: origin.x, y: origin.y, z: origin.z }, {
-          arrive: 3.0,
-          timeoutMs: 8000,
-          speed: 5.4,
-          allowTeleport: false,
-        });
-        steps.push({ flee: { success: walk.success, navigator: walk.navigator, reason: walk.reason } });
-      }
-      await cap.sprint(actorName, false);
-      return { status: 'PASS', handled: true, kind: 'flee', steps };
-    }
-
-    if (action.kind === 'defend') {
-      await cap.giveItem(actorName, 'IRON_SWORD', 1);
-      await cap.hotbar(actorName, 0);
-      for (let i = 0; i < 3; i++) {
-        const hit = await cap.attackNearest(actorName);
-        steps.push({ attack: !!(hit && hit.success), reason: hit && hit.reason });
-        await cap.swing(actorName);
-        await sleep(250);
-        if (!hit || !hit.success) break;
-      }
-      return { status: 'PASS', handled: true, kind: 'defend', steps };
-    }
-
-    if (action.kind === 'retreat') {
-      await cap.sprint(actorName, true);
-      if (origin) {
-        const walk = await walkTo(harness, actorName, { x: origin.x, y: origin.y, z: origin.z }, {
-          arrive: 3.0,
-          timeoutMs: 7000,
-          speed: 5.4,
-          allowTeleport: false,
-        });
-        steps.push({ retreat: { success: walk.success, reason: walk.reason } });
-      }
-      await cap.sprint(actorName, false);
-      return { status: 'PASS', handled: true, kind: 'retreat', steps };
-    }
-
-    return { status: 'PASS', handled: false, kind: action.kind, steps };
-  });
+  );
 }
 
 module.exports = { executeSurvival };
