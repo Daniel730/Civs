@@ -901,6 +901,11 @@ async function main() {
   // AI World neural layer: maps each agent to its most recent experience episodeId,
   // so a terminal outcome (death / stall / goal) can be attached to the decision later.
   const lastEpisode = {};
+  // W1: per-agent spatial/episodic memory of the world (threats seen, deaths, blocks).
+  // Lets the agent "absorb" the world instead of re-deriving everything from one observe().
+  const { WorldMemory } = require('./lib/ai-world/world-memory');
+  const worldMemory = {};
+  const getWorldMemory = (who) => (worldMemory[who] || (worldMemory[who] = new WorldMemory({ agentId: who, dir: path.join(os.tmpdir(), 'aiw-wm') })));
   // CONSULT_LLM hook: optional planner via AI_WORLD_CONSULT_PLANNER (default off → log only).
   // The gate guarantees at most one consult per goalKey and a per-agent cooldown — never per-tick.
   // Phase 5: when AI_WORLD_CONSULT_PLANNER=hermes, the gate's planner is the HermesPlanner
@@ -1002,6 +1007,24 @@ async function main() {
       const assessment = monitor
         ? monitor.assess((observed && observed.data) || {})
         : { state: 'SAFE', action: { kind: 'work' }, changed: false };
+
+      // W2: feed the world memory from this tick's observation so the agent "absorbs" the world.
+      try {
+        const wm = getWorldMemory(who);
+        const od = (observed && observed.data) || {};
+        const pos = { x: od.x, z: od.z };
+        if (assessment.threats && assessment.threats.length) {
+          for (const t of assessment.threats) {
+            const h = (od.nearest_hostile) || {};
+            wm.noteThreat({ x: h.x, z: h.z, type: t, distance: h.distance, severity: assessment.state === 'ESCAPE' ? 3 : 1 });
+          }
+        }
+        if (od.nearest_hostile) {
+          wm.noteThreat({ x: od.nearest_hostile.x, z: od.nearest_hostile.z, type: od.nearest_hostile.type, distance: od.nearest_hostile.distance });
+        }
+        // expose memory features to the focus decision below
+        assessment.worldMemory = wm.features(pos);
+      } catch (_) { /* best-effort */ }
 
       // B1: survival has HIGHER priority than work. If the monitor says flee/defend/retreat/recover
       // (state not SAFE/CAUTION), execute that action and skip the work tick entirely — never let
@@ -1144,6 +1167,7 @@ async function main() {
       const focusCandidate = chooseFocus(state, {
         survivalState: assessment.state,
         townOk: !!(town && town.ok),
+        worldMemory: assessment.worldMemory,
       });
       // --- AI World: neural-mode focus re-ranking (LIVE inference, deterministic fallback) ---
       // The neural policy has already been trained offline (scripts/aiworld-train.js) and its

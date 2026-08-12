@@ -25,19 +25,25 @@ const FOCUS_JOBS = Object.freeze({
 
 /**
  * @param {{ completedPlaces?:object, blocked?:object, construction?:object, failCounts?:object }} state
- * @param {{ survivalState?:string, townOk?:boolean }} [ctx]
+ * @param {{ survivalState?:string, townOk?:boolean, worldMemory?:object }} [ctx]
  * @returns {{ focus:string, reason:string, contextKey:string }}
  */
 function chooseFocus(state = {}, ctx = {}) {
   const survival = ctx.survivalState || 'SAFE';
   const completed = Object.keys(state.completedPlaces || {}).length;
   const construction = (state.construction && state.construction.status) || null;
+  const wm = ctx.worldMemory || {};
 
   let focus;
   let reason;
+  // W3: a remembered threat in the immediate area overrides even CAUTION — if the agent knows
+  // (from world memory) that this spot is dangerous, it should survive, not keep working.
   if (survival !== 'SAFE' && survival !== 'CAUTION') {
     focus = 'survive';
     reason = `survival:${survival}`;
+  } else if (wm.dangerZone === 1) {
+    focus = 'survive';
+    reason = 'world_memory:danger_zone';
   } else if (ctx.townOk === false) {
     focus = 'found';
     reason = 'town_missing';
@@ -59,7 +65,7 @@ function chooseFocus(state = {}, ctx = {}) {
     focus,
     reason,
     // Digest of the facts the focus depends on — a change here is a cache miss.
-    contextKey: [survival === 'SAFE' || survival === 'CAUTION' ? 'ok' : survival, ctx.townOk !== false ? 'town' : 'no_town', completed, construction || 'none'].join('|'),
+    contextKey: [survival === 'SAFE' || survival === 'CAUTION' ? 'ok' : survival, ctx.townOk !== false ? 'town' : 'no_town', completed, construction || 'none', wm.dangerZone === 1 ? 'dz' : 'no_dz'].join('|'),
   };
 }
 

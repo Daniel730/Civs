@@ -150,3 +150,36 @@ circles like a roach, teleporting, dying without reacting".
 - Swim (aquatic pathfinding in `lib/village/walk.js`).
 - Active exploration objective in `chooseFocus`.
 These are tracked as follow-ups; the agent already flees, builds, mines, and no longer teleports.
+
+## Body behaviour (Task B, Phase 2) — travels, flees directionally, absorbs the world
+
+**Before (continued live observation):** even after B1/B2 the agent still teleported on far goals
+(Stage-1 recovery teleport was untouched), fled blindly toward origin instead of away from the
+threat ("apanha sem saber de quem"), and re-derived everything each tick — "não absorve o mundo".
+
+**Fix:**
+- **B3** `lib/village/walk.js` Stage-1: when `allowTeleport:false`, instead of teleporting the gap
+  for goals beyond `recoverDistance` (40), it now walks in intermediate `walk_path` hops (each
+  within A* range) and reports `stuck` honestly if a hop fails. Teleport remains only when the
+  caller explicitly allows it (legacy behaviour preserved behind the flag).
+- **B4** `lib/survival/execute.js` flee: reads `assessment.raw.nearest_hostile.{x,z}`, computes a
+  point OPPOSITE the threat (vector away from it) and walks there; falls back to origin only if the
+  threat position is unknown. No more running *toward* danger blindly.
+- **W1** `lib/ai-world/world-memory.js` (new): per-agent spatial/episodic memory — threats seen at
+  a place (with TTL), deaths/damage events, blocks placed/broken. Exposes compact `features()`
+  (nearestThreatDist, threatSeen, dangerZone, counts).
+- **W2** `scripts/village-worker.js`: each tick feeds the observation into `getWorldMemory(who)`
+  (threats, deaths) and attaches `assessment.worldMemory` to the focus decision.
+- **W3** `lib/village/focus.js`: `chooseFocus` now takes `worldMemory`; if `dangerZone` is set it
+  forces `survive` even in CAUTION (the agent remembers a dangerous spot and stops working there).
+
+**Verification:**
+- Unit: `test/aiworld-body-phase2.test.js` (B3 no-teleport branch, B4 directional flee, W1-W3
+  memory+focus). Full suite: **285/285 passing**.
+- Ad-hoc (`hermes-verify-aiworld-body-p2.js`): 10/10 — B3 branch, B4 flee z>100 away from threat,
+  W1 danger-zone flag, W3 focus override, worker wires worldMemory into chooseFocus.
+
+**Status:** the body now travels on foot (no teleport-as-locomotion anywhere), flees *away* from the
+known threat, and remembers dangerous places across ticks. The agent is no longer a blind script —
+but the *decision* layer is still a deterministic `if/else` (chooseFocus). Next step (per Dan's
+direction): replace that with a local LLM brain (Ollama) for true autonomy/learning — see plan.

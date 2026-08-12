@@ -70,11 +70,26 @@ async function executeSurvival(harness, actorName, assessment, ctx = {}) {
 
       if (action.kind === 'flee') {
         await cap.sprint(actorName, true);
-        if (origin) {
+        let fleeTo = origin;
+        // B4: flee AWAY from the threat, not blindly to origin. If we know the threat's position,
+        // compute a point opposite it (and beyond origin if that also moves us away from home).
+        try {
+          const me = await cap.observe(actorName);
+          const raw = assessment.raw || {};
+          const h = raw.nearest_hostile || {};
+          if (me && me.data && typeof h.x === 'number' && typeof h.z === 'number') {
+            const ax = me.data.x, az = me.data.z;
+            const dx = ax - h.x, dz = az - h.z; // vector away from threat
+            const len = Math.sqrt(dx * dx + dz * dz) || 1;
+            const run = Math.min(20, Math.max(8, (h.distance || 6) + 6));
+            fleeTo = { x: ax + (dx / len) * run, y: me.data.y || (origin && origin.y) || 64, z: az + (dz / len) * run };
+          }
+        } catch (_) { /* observe may fail; fall back to origin */ }
+        if (fleeTo) {
           const walk = await walkToFn(
             harness,
             actorName,
-            { x: origin.x, y: origin.y, z: origin.z },
+            { x: fleeTo.x, y: fleeTo.y, z: fleeTo.z },
             {
               arrive: 3.0,
               timeoutMs: 8000,

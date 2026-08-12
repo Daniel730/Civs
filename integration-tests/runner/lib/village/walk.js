@@ -232,14 +232,52 @@ async function walkTo(harness, actorName, stand, opts = {}) {
 
   // Beyond A* range there is nothing to path over — close the gap, then walk in properly.
   if (initial > recoverDistance) {
-    const ax = Math.floor(goal.x) - 3;
-    const az = Math.floor(goal.z) - 3;
-    if (opts.clearFooting) await opts.clearFooting(ax, goal.y, az);
-    const tp = await cap.teleport(actorName, ax + 0.5, goal.y, az + 0.5);
-    recoverTeleport = true;
-    countMetric(METRIC.GOAL_ABANDON, { actor: actorName, reason: 'out_of_path_range' });
-    actions.push({ recoverTeleport: true, reason: 'too_far', distance: initial, ok: !!(tp && tp.success) });
-    cur = posFromObserve(await cap.observe(actorName)) || cur;
+    if (allowTeleport) {
+      // Legacy behaviour: teleport to just outside the goal, then walk the last stretch.
+      const ax = Math.floor(goal.x) - 3;
+      const az = Math.floor(goal.z) - 3;
+      if (opts.clearFooting) await opts.clearFooting(ax, goal.y, az);
+      const tp = await cap.teleport(actorName, ax + 0.5, goal.y, az + 0.5);
+      recoverTeleport = true;
+      countMetric(METRIC.GOAL_ABANDON, { actor: actorName, reason: 'out_of_path_range' });
+      actions.push({ recoverTeleport: true, reason: 'too_far', distance: initial, ok: !!(tp && tp.success) });
+      cur = posFromObserve(await cap.observe(actorName)) || cur;
+    } else {
+      // B3: no-teleport mode. Walk the gap in foot-steps via intermediate waypoints so the
+      // agent actually travels (and is observable) instead of teleporting as "locomotion".
+      // Each hop is within A* range; if any hop stalls we report stuck honestly.
+      const stepDist = Math.max(8, Math.floor(recoverDistance * 0.8));
+      let from = cur;
+      let remaining = initial;
+      while (remaining > recoverDistance) {
+        const dx = goal.x - from.x;
+        const dz = goal.z - from.z;
+        const len = Math.sqrt(dx * dx + dz * dz) || 1;
+        const hop = {
+          x: Math.floor(from.x + (dx / len) * stepDist) + 0.5,
+          y: goal.y,
+          z: Math.floor(from.z + (dz / len) * stepDist) + 0.5,
+        };
+        const leg = await runPathLeg(harness, actorName, hop, { ...opts, timeoutMs: 6000 });
+        actions.push({ walkPathHop: { status: leg.status, reason: leg.reason, to: hop } });
+        if (leg.status !== 'ARRIVED' && leg.status !== 'UNSUPPORTED') {
+          countMetric(METRIC.GOAL_ABANDON, { actor: actorName, reason: 'out_of_path_range_stuck' });
+          return {
+            success: false,
+            reason: 'stuck',
+            steps: actions.length,
+            final_distance: horizDist(from, goal),
+            recoverTeleport: false,
+            navigator: 'walk_path_hops',
+            actions,
+            ...from,
+          };
+        }
+        from = posFromObserve(await cap.observe(actorName)) || from;
+        remaining = horizDist(from, goal);
+      }
+      cur = from;
+    }
   }
 
   const useLegacy = opts.forceLegacy === true || _pathCapability === false;
