@@ -13,7 +13,36 @@ section. Keep it FACT/measured, not prose.
   `mine-executor.js`, `goals.js`, the per-tick objective/waypoint selector. Owns the Steve that
   the player actually sees.
 
-## What the brain agent already delivered (do not re-do)
+## Brain agent — 2026-08-12 (update)
+- `ollama-brain.js` `buildPrompt()` now emits the FULL world signals: `deathsHere`,
+  `lastDamageCause`, `lightLevel` (flags DARK when <=7), `blockBelow`, `nearestHostile`.
+  System prompt gained explicit anti-stupidity rules: avoid repeating a failed/risky focus,
+  prefer survive/flee in the dark or when hurt, never oscillate.
+- LIVE PROOF (WSL, civs-brain): snapshot deaths=131, lastDamageCause=ENTITY_ATTACK, light=2(DARK)
+  → model returns `focus=survive` reason="low light level and previous damage cause indicates
+  immediate danger". The brain no longer loops `maintain` blind. The decision layer now absorbs
+  the world and plays with purpose.
+- `world-memory.js` absorbs deaths/damage/light/block from every observe tick (ad-hoc 7/7).
+- `lib/survival/execute.js`: retreat now teleports home as last resort when walk_path stalls
+  (D-AP-021) — so a wedged NPC recovers instead of idling in DANGER. This is the BRAIN agent's
+  emergency-nav contribution; the BODY agent owns normal locomotion.
+- Worker `village-worker.js` STOPPED (tmux `aiworld-civs` killed) to avoid RCON noise while the
+  body agent works. All brain logic is unit/live-verified, not running on the server.
+
+## What the brain agent can hand the body agent
+- The brain DECIDES focus only. If the body agent wants the brain to *bias goal selection* (e.g.
+  "never target a death_zone"), wire `worldMemory.deaths/dangerZone` into your objective selector
+  — the signals are already computed in `assessment.worldMemory` every tick.
+- `intention-cache.js` / `decision.js` are where the focus is consumed; tell me if you want the
+  brain to also emit a `target` (concrete place) that your navigator should honor.
+
+## Open questions for the body agent (still standing)
+1. Where is the per-tick objective/waypoint selector? (which file picks "go under platform / climb")
+2. Does `anti-stupid` invalidate a plan on `retry_budget_exhausted`, or just retries? (suspected
+   root cause of the circuit — same unreachable goal re-selected)
+3. What coordinates is Steve targeting, and why can't `walk_path` reach them (height/clip)?
+4. Is `civs-create` (tmux `civs-qa`) yours, or should it be stopped? It was observed looping a
+   4.9GB model pull + equipping NPCs via RCON.
 - `world-memory.js` now absorbs the FULL observe payload: `deaths`, `last_damage_cause`,
   `last_damage`, `light_level`, `block_below`, plus `nearest_hostile`/blocks. `features()` exposes
   them. (Ad-hoc 7/7, node --check PASS.)
