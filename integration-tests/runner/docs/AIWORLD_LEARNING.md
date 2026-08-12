@@ -118,3 +118,35 @@ decision — so even the few outcomes were misattributed.
 **Milestone reached:** the loop `decision → action → world consequence → outcome → reward →
 learning → next decision` is now genuinely closed. Only now does sustained Steve+Alex play
 actually accumulate *learning signal* rather than logs of an agent that never knew if it won.
+
+## Body behaviour (Task B, Phase 1) — survival priority + no teleport-as-locomotion
+
+**Before (live observation on QA server):** Steve kept building while a mob killed him (no survival
+preemption — the worker only reacted on death), and teleported every tick (`walkTo` work path fell
+through to Stage-4 recovery teleport because `allowTeleport` defaulted to `true`). Read as "walking in
+circles like a roach, teleporting, dying without reacting".
+
+**Fix:**
+- **B1** In the work loop, right after `monitor.assess`, if `state ∉ {SAFE,CAUTION}` and the
+  recommended action is `flee`/`defend`/`retreat`/`recover`, call `executeSurvival(...)` and `return`
+  (next `setInterval` tick re-assesses). This realizes the priority chain
+  EMERGENCY→DANGER→RECOVER→SURVIVE→TASK→EXPLORE/BUILD/MINE — the body obeys the brain's survival
+  verdict instead of blindly working.
+- **B2** All work-path `walkTo` calls (founding, stand, block-place) now pass `allowTeleport: false`.
+  Teleport is no longer "normal movement"; the agent walks or stalls, and real recovery teleport only
+  happens in `executeSurvival` `recover` (dead/too-far-from-work), never per-tick.
+
+**Live evidence (QA server, neural mode, ~90s run):**
+- Every `walk`/`walkBlock` in `work_tick` shows `recoverTeleport: false` — no more per-tick teleport.
+- `survival_preempt` fired on `ESCAPE` (healthPct 0.07, recommended `flee`) and `RECOVER`
+  (healthPct 0, recommended `recover`) — the agent STOPPED working and fled/recovered instead of
+  dying mid-construction. While `CAUTION` (hostile nearby, HP 53%) it kept building (correct).
+- Tests: `test/aiworld-body-behavior.test.js` (Stage-4 no-teleport, monitor→non-work mapping,
+  executeSurvival handled, SAFE→work). Full suite: **282/282 passing**.
+
+**Phase 2 (NOT yet done — needs harness extension, not just runner):**
+- Eat when hungry (`cap.eat` / `harness.raw('eat')` — not yet exposed in `lib/capabilities.js`).
+- Inventory management / deposit-to-stockpile (`cap.getInventory` / deposit API — not exposed).
+- Swim (aquatic pathfinding in `lib/village/walk.js`).
+- Active exploration objective in `chooseFocus`.
+These are tracked as follow-ups; the agent already flees, builds, mines, and no longer teleports.

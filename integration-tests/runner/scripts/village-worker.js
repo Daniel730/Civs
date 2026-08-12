@@ -228,7 +228,7 @@ async function runJob(harness, actorName, step, state, ctx = {}) {
       harness,
       actorName,
       { x: px + 1, y: py + 1, z: pz + 1 },
-      { clearFooting: (x, y, z) => clearFooting(harness, x, y, z), timeoutMs: 12000 }
+      { clearFooting: (x, y, z) => clearFooting(harness, x, y, z), timeoutMs: 12000, allowTeleport: false }
     );
     results.actions.push({ walk });
     await cap.lookAt(actorName, px, py + 1, pz);
@@ -285,6 +285,7 @@ async function runJob(harness, actorName, step, state, ctx = {}) {
     timeoutMs: 14000,
     stepLen: 0.45,
     pauseMs: 140,
+    allowTeleport: false,
   });
   results.actions.push({
     walk: {
@@ -406,6 +407,7 @@ async function runJob(harness, actorName, step, state, ctx = {}) {
         timeoutMs: 8000,
         stepLen: 0.45,
         pauseMs: 100,
+        allowTeleport: false,
       });
       results.actions.push({
         walkBlock: { steps: w2.steps, success: w2.success, recoverTeleport: w2.recoverTeleport },
@@ -1000,6 +1002,31 @@ async function main() {
       const assessment = monitor
         ? monitor.assess((observed && observed.data) || {})
         : { state: 'SAFE', action: { kind: 'work' }, changed: false };
+
+      // B1: survival has HIGHER priority than work. If the monitor says flee/defend/retreat/recover
+      // (state not SAFE/CAUTION), execute that action and skip the work tick entirely — never let
+      // the agent keep building while a mob is killing it. This realizes the priority chain
+      // EMERGENCY→DANGER→RECOVER→SURVIVE→TASK→EXPLORE/BUILD/MINE. Death is still handled below.
+      if (assessment.state !== 'SAFE' && assessment.state !== 'CAUTION' && assessment.action && assessment.action.kind !== 'work') {
+        log({
+          status: 'DEGRADED',
+          action: 'survival_preempt',
+          worker: who,
+          state: assessment.state,
+          recommended: assessment.action.kind,
+          healthPct: assessment.healthPct,
+        });
+        try {
+          const sv = await executeSurvival(harness, who, assessment, { workOrigin: cfg.origin });
+          if (sv && sv.handled) {
+            observeMetric(METRIC.AIWORLD_POLICY_DISAGREEMENT, { agent: who, mode: 'survival_preempt' });
+            saveState(state);
+            return; // next tick (setInterval) — re-assess; do NOT run the work loop this tick
+          }
+        } catch (_) {
+          /* best-effort: if survival execution fails, fall through to normal handling */
+        }
+      }
 
       // Phase 5: consult Hermes by the brief §15 triggers — evaluated RIGHT AFTER the
       // assessment (before the survival early-return) so it also fires when the agent is
