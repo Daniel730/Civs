@@ -6,7 +6,7 @@
 const { applyPersonality } = require('./personality');
 const { createGoal, setCurrentGoal, reconsiderGoals } = require('./goals');
 const { selectQuest } = require('./quest-eval');
-const { noteGoal } = require('./anti-stupid');
+const { noteGoal, invalidatePlan, isPlanValid } = require('./anti-stupid');
 const { setWorking } = require('./memory');
 const { encodeState, buildExperience } = require('./state-rep');
 const { NeuralPolicy } = require('./neural-policy');
@@ -95,11 +95,23 @@ function decide(agent, observation, opts = {}) {
 
   const osc = noteGoal(agent.guard, agent.goals.current ? agent.goals.current.id : 'idle');
   if (osc.oscillating) {
+    // D-AP-021 / anti-stupidity: oscillation means the current goal is unreachable or stuck
+    // (e.g. trying to climb under a platform). Holding it (old behaviour) just replays the
+    // same failed loop. Invalidate it and pick a DIFFERENT need so the agent breaks the cycle
+    // instead of staring at the same fence.
+    const currentId = agent.goals.current ? agent.goals.current.id : 'idle';
+    invalidatePlan(agent.guard, currentId);
+    const needs = scoreNeeds(agent, observation);
+    const alt = needs.find((c) => c.id !== currentId) || { id: 'seek_safety', title: 'Seek safety (anti-loop)', motive: 'safety', score: 0.9 };
+    const goal = createGoal({ kind: 'current', title: alt.title, motive: alt.motive, priority: alt.score });
+    setCurrentGoal(agent, goal);
+    setWorking(agent.memory, { decision: alt.id, brokeOscillation: true });
     return {
-      intent: 'stabilize',
-      reason: 'goal_oscillation',
+      intent: alt.id,
+      goal,
+      reason: 'goal_oscillation_break',
       model: 'deterministic',
-      holdGoal: agent.goals.current,
+      needScores: needs,
     };
   }
 
