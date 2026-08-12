@@ -1073,12 +1073,20 @@ async function main() {
           deaths: assessment.deaths,
         });
         if (typeof observation.noteEvent === 'function') observation.noteEvent(who, 'death');
+        // A3: attach outcome to the CURRENT tick's decision (not lastEpisode from the previous
+        // tick). Record a fresh 'survive' decision for this tick and close it — so death is
+        // attributed to the decision that was actually live, not a stale one.
         try {
-          recordFocusOutcome(who, lastEpisode[who], {
-            died: true,
-            goalFailed: true,
-            damageTaken: 20,
+          const epNow = recordFocusDecision({
+            agentId: who,
+            observation: (observed && observed.data) || {},
+            focus: 'survive',
+            candidates: FOCUSES.map((f) => ({ id: f, base: f === 'survive' ? 1 : 0.5, motive: 'focus' })),
+            survivalState: assessment.state,
+            distWork: assessment.distanceFromWork,
+            personality: { occupation: cfg.actorName === who ? 'builder' : 'helper' },
           });
+          if (epNow) recordFocusOutcome(who, epNow, { died: true, goalFailed: true, damageTaken: 20 });
         } catch (_) {
           /* best-effort */
         }
@@ -1258,6 +1266,7 @@ async function main() {
       observeMetric(METRIC.ACTION_LATENCY, Date.now() - actionStart, { actor: who, job: step.job });
 
       let agentPos = null;
+      let afterHealthPct = assessment.healthPct != null ? assessment.healthPct : 1;
       try {
         const obs = await harness.cap.observe(who);
         if (obs && obs.success && obs.data) {
@@ -1266,6 +1275,9 @@ async function main() {
             y: obs.data.y ?? obs.data.loc_y,
             z: obs.data.z ?? obs.data.loc_z,
           };
+          if (typeof obs.data.health === 'number' && typeof obs.data.max_health === 'number' && obs.data.max_health > 0) {
+            afterHealthPct = obs.data.health / obs.data.max_health;
+          }
         }
       } catch (_) {}
 
@@ -1343,6 +1355,29 @@ async function main() {
         }
       }
       state.agentJobs[who] = step.job;
+
+      // A1/A2: close the current tick's focus decision with a real outcome.
+      // The ExperienceStore is idempotent (recordOutcome deletes from `open`), so if a
+      // death/stall already closed this episode, this is a harmless no-op. Otherwise we
+      // attach the actual consequence of the work tick: progress made, objective completed,
+      // and damage taken — so offline training sees REWARD, not just pending decisions.
+      try {
+        const epNow = lastEpisode[who];
+        if (epNow) {
+          const goalJustCompleted =
+            state.objective == null && (state.objectiveProgress || 0) === 0 && tickProgress > 0;
+          const dmgTaken = Math.max(0, (assessment.healthPct != null ? assessment.healthPct : 1) - afterHealthPct) * 20;
+          recordFocusOutcome(who, epNow, {
+            progressDelta: Number((tickProgress / (OBJECTIVE_GOALS[step.job] || 3)).toFixed(3)),
+            goalCompleted: goalJustCompleted,
+            damageTaken: Number(dmgTaken.toFixed(2)),
+            recovered: false,
+          });
+        }
+      } catch (_) {
+        /* best-effort */
+      }
+
       state.lastAgent = {
         worker: who,
         job: step.job,

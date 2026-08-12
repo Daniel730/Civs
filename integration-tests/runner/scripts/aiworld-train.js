@@ -134,7 +134,7 @@ function aggregate(rows, minN) {
   // This is a mean-centering preference shift: intents that beat the context average
   // get a positive nudge; those that underperform get a negative nudge.
   const bias = {};
-  const stats = { contexts: 0, intents: 0, usableSamples: usable, ratedSamples: 0 };
+  const stats = { contexts: 0, intents: 0, usableSamples: usable, ratedSamples: 0, ratedByIntent: {}, rewardByIntent: {} };
   for (const ctx of Object.keys(ctxMap)) {
     const intents = ctxMap[ctx];
     let totalSum = 0, totalRated = 0;
@@ -143,10 +143,15 @@ function aggregate(rows, minN) {
       totalRated += intents[it].rated;
     }
     const grandMean = totalRated > 0 ? totalSum / totalRated : 0;
-    stats.ratedSamples = totalRated;
+    stats.ratedSamples += totalRated; // accumulate across contexts (was overwritten per-ctx)
     bias[ctx] = {};
     for (const it of Object.keys(intents)) {
       const c = intents[it];
+      // A4: reward distribution + closure rate per intent (not just a flat count)
+      if (!stats.ratedByIntent[it]) stats.ratedByIntent[it] = 0;
+      stats.ratedByIntent[it] += c.rated;
+      if (!stats.rewardByIntent[it]) stats.rewardByIntent[it] = 0;
+      stats.rewardByIntent[it] = Number((stats.rewardByIntent[it] + c.sum).toFixed(3));
       if (c.rated < minN) continue; // insufficient EVIDENCE (rated samples) — skip (no bias)
       const mean = c.sum / c.rated;
       let delta = mean - grandMean;

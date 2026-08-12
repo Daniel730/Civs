@@ -86,3 +86,35 @@ policy as more experiences accumulate.
   experiences with `policyMode: neural` and non-null `neuralScores`. Isolated probe confirmed
   the learned bias is applied at runtime: in SAFE context `farmer` 0.5→1.5, `survive` 0.5→-0.5.
   Full unit suite: 268/268 passing.
+
+## Outcome closure (Task A) — decision→action→consequence→reward→learning
+
+**Before:** `recordFocusOutcome` only fired on death (`village-worker.js` l1077) and stall
+(l1303). Success/goal ticks never closed → ~672/674 experiences stayed `pending` (only
+`ratedSamples: 2/674`). Worse, the death path closed `lastEpisode[who]` — the PREVIOUS tick's
+decision — so even the few outcomes were misattributed.
+
+**Fix:**
+- **A1** Every work tick now closes its own focus decision with a real outcome (after `runJob` +
+  stall detection). `ExperienceStore.recordOutcome` is idempotent (deletes from `open`), so
+  death/stall closures and the success closure don't double-count.
+- **A2** Success closure carries objective-reflecting reward: `progressDelta` (normalized by
+  `OBJECTIVE_GOALS[job]`), `goalCompleted` (objective reached its progress goal), `damageTaken`
+  (health before/after the tick). `computeReward` already maps these to `+`/`-` reward.
+- **A3** Death now records a fresh `survive` decision for the CURRENT tick and closes it, so
+  death is attributed to the decision that was actually live (not a stale previous-tick one).
+- **A4** `aiworld-train.js` `aggregate` now reports `ratedByIntent` (closure rate per intent) and
+  `rewardByIntent` (reward distribution per intent), not just a flat `ratedSamples` count. Also
+  fixed `stats.ratedSamples` to ACCUMULATE across contexts (was overwritten per-context).
+
+**Live evidence (QA server, neural mode, ~3 min run):**
+- `ratedSamples: 266 / 721` (was 2/674) — 37% of experiences now carry a real outcome.
+- `rewardByIntent`: `farmer:+54`, `build:+2`, `maintain:-159`, `survive:-44` — a *varied*
+  distribution, so the learner can tell good decisions (farm/build → progress) from bad ones
+  (maintain/survive in danger → damage/death). Not "674 with +1 for everything".
+- Tests: `test/aiworld-outcome-closure.test.js` (4 cases: reward shape, success closure,
+  decision.js closure, aggregate distribution). Full suite: **278/278 passing**.
+
+**Milestone reached:** the loop `decision → action → world consequence → outcome → reward →
+learning → next decision` is now genuinely closed. Only now does sustained Steve+Alex play
+actually accumulate *learning signal* rather than logs of an agent that never knew if it won.
