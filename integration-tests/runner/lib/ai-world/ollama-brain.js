@@ -17,7 +17,7 @@
 const http = require('http');
 
 const DEFAULT_ENDPOINT = process.env.OLLAMA_ENDPOINT || 'http://localhost:11434';
-const DEFAULT_MODEL = process.env.OLLAMA_MODEL || 'llama3.1:8b';
+const DEFAULT_MODEL = process.env.OLLAMA_MODEL || 'civs-brain';
 const TIMEOUT_MS = Number(process.env.OLLAMA_TIMEOUT_MS || 8000);
 
 const FOCUSES = ['survive', 'found', 'build', 'maintain', 'secure'];
