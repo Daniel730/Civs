@@ -8,32 +8,21 @@ cd "$(dirname "$0")/.."
 SRC_BRANCH="$(git branch --show-current)"
 CLEAN_BRANCH="civs-clean"
 
-# Paths that are AI World, not Civs plugin.
-AIWORLD_PATHS=(
-  "integration-tests/runner"
-  "lib/ai-world"
-  "lib/survival"
-  "reports/aiworld-experiences"
-  "reports/aiworld-finetune"
-  "scripts/aiworld-finetune.py"
-  "docs/AIWORLD-COORD.md"
-  "docs/AIWORLD_AUDIT.md"
-  "docs/AIWORLD_LEARNING.md"
-  "docs/AIWORLD_NEURAL.md"
-)
+# Regex matching every AI World path (not Civs plugin). Validated to cover all 155 AI World
+# files in this repo and 0 Civs files (see docs/CIVS-VS-AIWORLD.md).
+AIWORLD_REGEX='^(integration-tests/runner|lib/ai-world|lib/survival|reports/aiworld|scripts/aiworld|docs/AIWORLD)'
 
 echo "Creating branch '$CLEAN_BRANCH' from '$SRC_BRANCH' (working tree untouched)..."
 git checkout -b "$CLEAN_BRANCH"
 
 # Untrack AI World files but keep them on disk.
-to_rm=()
-while IFS= read -r f; do [ -n "$f" ] && to_rm+=("$f"); done < <(git ls-files "${AIWORLD_PATHS[@]}")
+mapfile -t to_rm < <(git ls-files | grep -E "$AIWORLD_REGEX" || true)
 if [ "${#to_rm[@]}" -gt 0 ]; then
   git rm --cached -q -- "${to_rm[@]}"
 fi
 
 # Persist the exclusion so future commits on this branch stay Civs-only.
-printf '%s\n' "${AIWORLD_PATHS[@]}" >> .gitignore.aiworld-excluded
+printf '%s\n' "$AIWORLD_REGEX" >> .gitignore.aiworld-excluded
 
 git commit -q -m "chore: civs-clean branch — untrack AI World paths for safe Civs push" || \
   echo "(nothing to commit — already clean)"
