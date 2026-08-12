@@ -134,6 +134,7 @@ class SurvivalMonitor {
     const maxHealth = Number(d.max_health) > 0 ? Number(d.max_health) : 20;
     const pct = Number.isFinite(health) ? health / maxHealth : 1;
     const hostiles = Number(d.hostiles) || 0;
+    const hasNearestHostile = !!(d.nearest_hostile && Number.isFinite(Number(d.nearest_hostile.distance)));
     const nearest = d.nearest_hostile && Number(d.nearest_hostile.distance);
     const pos = { x: d.x, y: d.y, z: d.z };
     const fromWork = this.distanceFromWork(pos);
@@ -160,7 +161,7 @@ class SurvivalMonitor {
     }
 
     if (pct <= this.cfg.lowHealthPct) threats.push('low_health');
-    if (hostiles > 0 && Number.isFinite(nearest) && nearest <= this.cfg.hostileDangerRange) {
+    if ((hostiles > 0 || hasNearestHostile) && Number.isFinite(nearest) && nearest <= this.cfg.hostileDangerRange) {
       threats.push('hostile_close');
     }
     if (threats.length) {
@@ -249,9 +250,19 @@ class SurvivalMonitor {
           reason: raw.reason,
         };
       case 'DANGER': {
+        const hasHostile = raw.threats.includes('hostile_close');
         const canFight =
-          raw.healthPct > this.cfg.criticalHealthPct &&
-          raw.threats.includes('hostile_close');
+          raw.healthPct > this.cfg.criticalHealthPct && hasHostile;
+        // D-AP-021-adjacent: low health with NO hostile nearby means the agent is just
+        // hurt, not under attack. Retreating home is a no-op if already home (it just
+        // stands idle), so heal instead — give food and let regen close the gap.
+        if (!hasHostile && raw.threats.includes('low_health')) {
+          return {
+            kind: 'heal',
+            priority: 60,
+            reason: raw.reason,
+          };
+        }
         return {
           kind: canFight ? 'defend' : 'retreat',
           target: canFight

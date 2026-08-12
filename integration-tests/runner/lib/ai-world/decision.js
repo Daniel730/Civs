@@ -6,7 +6,7 @@
 const { applyPersonality } = require('./personality');
 const { createGoal, setCurrentGoal, reconsiderGoals } = require('./goals');
 const { selectQuest } = require('./quest-eval');
-const { noteGoal, invalidatePlan, isPlanValid } = require('./anti-stupid');
+const { noteGoal, invalidatePlan } = require('./anti-stupid');
 const { setWorking } = require('./memory');
 const { encodeState, buildExperience } = require('./state-rep');
 const { NeuralPolicy } = require('./neural-policy');

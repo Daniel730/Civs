@@ -169,6 +169,35 @@ async function executeSurvival(harness, actorName, assessment, ctx = {}) {
         return { status: 'PASS', handled: true, kind: 'retreat', steps };
       }
 
+      if (action.kind === 'heal') {
+        // Hurt but not under attack: get food in hand and eat so natural regen can close
+        // the health gap. Try the harness `eat` action first, then generic `use` (right-click).
+        // If neither raises health we fall back to a respawn (mirrors the recover path) so the
+        // agent never stays pinned in DANGER forever. Never throws — survival must not crash.
+        await cap.giveItem(actorName, 'COOKED_BEEF', 2).catch(() => {});
+        await cap.hotbar(actorName, 0).catch(() => {});
+        await cap.act(actorName, 'eat').catch(() => {});
+        await cap.act(actorName, 'use').catch(() => {});
+        await sleep(3000);
+        let hpAfter = null;
+        try {
+          const after = await cap.observe(actorName);
+          const d2 = (after && after.data) || {};
+          hpAfter = Number.isFinite(Number(d2.health)) && Number(d2.max_health) > 0
+            ? Number(d2.health) / Number(d2.max_health)
+            : null;
+        } catch (_) { /* observe may fail */ }
+        // Last resort: respawn restores full health if eating did not close the gap.
+        if (hpAfter == null || hpAfter <= (assessment.healthPct || 0) + 0.01) {
+          await cap.respawn(actorName).catch(() => {});
+          await cap.teleport(actorName, origin.x, origin.y + 1, origin.z).catch(() => {});
+          steps.push({ heal: { gave: 'COOKED_BEEF', healthPctAfter: hpAfter, fellBackTo: 'respawn' } });
+        } else {
+          steps.push({ heal: { gave: 'COOKED_BEEF', healthPctAfter: hpAfter } });
+        }
+        return { status: 'PASS', handled: true, kind: 'heal', steps };
+      }
+
       return { status: 'PASS', handled: false, kind: action.kind, steps };
     }
   );
