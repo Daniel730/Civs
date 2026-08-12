@@ -183,3 +183,34 @@ threat ("apanha sem saber de quem"), and re-derived everything each tick — "n�
 known threat, and remembers dangerous places across ticks. The agent is no longer a blind script —
 but the *decision* layer is still a deterministic `if/else` (chooseFocus). Next step (per Dan's
 direction): replace that with a local LLM brain (Ollama) for true autonomy/learning — see plan.
+
+## Local LLM brain (Ollama) — inference + offline fine-tune
+
+**Per Dan's direction:** NPCs should be autonomous entities that *learn*, not scripts. Two parts:
+
+**(a) Inference (LIVE).** `lib/ai-world/ollama-brain.js` talks to a local Ollama server
+(`http://localhost:11434` by default; override with `OLLAMA_ENDPOINT` / `OLLAMA_MODEL`). It builds a
+human-readable world snapshot (health, survivalState, threats, remembered danger zone) and parses a
+JSON `{focus, reason, target}`. The worker runs it via `AIWORLD_POLICY=ollama` (executes the LLM
+focus) or `ollama-shadow` (logs only, deterministic still executes). **Safety invariant:** any
+failure — timeout, bad JSON, model down — makes `decide()` return `null` and the worker falls back
+to the deterministic `chooseFocus`. The NPC never stalls or crashes because the brain hiccupped.
+
+**(b) Fine-tune (OFFLINE, makes it actually learn).** `scripts/aiworld-finetune.py` distills the
+closed outcome/reward loop (Task A) into an Ollama chat fine-tune dataset:
+- reads `reports/aiworld-experiences/experiences-*.jsonl` (rated lines only, `outcome != null`)
+- `reward >= 1` -> POSITIVE example: assistant recommends the `chosenIntent`
+- `reward <= -2` (died / heavy damage) -> NEGATIVE example: assistant explains what NOT to do and
+  gives the correct override (`survive` when a hostile was present)
+- mid-range rewards omitted (not informative)
+- writes `reports/aiworld-finetune/dataset.jsonl` (Ollama chat format), `Modelfile`, `manifest.json`
+
+Operator step (needs the `ollama` CLI, not run here): `ollama create civs-brain -f Modelfile`, then
+set `OLLAMA_MODEL=civs-brain` when launching the worker. The trained model then biases future
+decisions toward what actually survived/built in the past.
+
+**Verification:**
+- Unit: `test/ollama-brain.test.js` (offline fallback, JSON parse, focus vocabulary). Suite 286/286.
+- Ad-hoc: 12/12 (ollama wiring + coexistence with B1/B2/W1).
+- Fine-tune dataset: generated from 319 rated experiences -> **122 valid examples (32 pos / 90 neg),
+  0 malformed**; `manifest.json` records per-agent counts (Steve 107, Alex 15, LearnBot 0).
