@@ -85,10 +85,15 @@ describe('neural-policy safety invariants', () => {
   });
 
   it('missing model artifact falls back (weights null => mirror)', () => {
-    const p = new NeuralPolicy({ mode: 'neural' });
+    const os = require('os');
+    const fs = require('fs');
+    const path = require('path');
+    const emptyDir = fs.mkdtempSync(path.join(os.tmpdir(), 'aw-empty-'));
+    const p = new NeuralPolicy({ mode: 'neural', weightsDir: emptyDir });
     assert.equal(p.weights, null);
     const { fellBack } = p.scoreIntents(vec, candidates);
     assert.equal(fellBack, false); // mirror is not a "fallback", it is the safe default
+    fs.rmSync(emptyDir, { recursive: true, force: true });
   });
 });
 

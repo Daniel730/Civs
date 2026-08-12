@@ -10,7 +10,8 @@ Evolução do sistema de decisão dos NPCs para uma arquitetura de
 2. **JS puro, sem dependências pesadas.** O stub corre em qualquer Node; inferência < 1 ms.
 3. **Não substituir `scoreNeeds()`.** O determinístico é o *baseline* e o *fallback* obrigatório.
 4. **LIVE INFERENCE ≠ OFFLINE TRAINING.** O servidor só produz experiências e executa um
-   modelo já treinado. O treino é um passo separado e reproduzível (ainda não implementado).
+   modelo já treinado. O treino é um passo separado e reproduzível (`scripts/aiworld-train.js`,
+   exposto como `npm run aiworld:train`). **Implementado** — fecha o loop de aprendizagem.
 5. **Shadow mode** permite comparar neural vs determinístico sem risco de regressão.
 6. **Invariantes de segurança** nunca podem ser quebrados pela policy neural (ver abaixo).
 7. **Direção futura: shared learned policy + memória/estado/personalidade individual.**
@@ -71,9 +72,31 @@ Consumível por Python/jq/DuckDB para o treino offline futuro.
 
 `NeuralPolicy`:
 
-- `scoreIntents(stateVec, candidates)` → `{ scores, usedModel, fellBack }`
-- `choose(stateVec, candidates)` → `{ id, scores, usedModel, fellBack }`
-- `weights: null` (MVP) = espelho do baseline; interface pronta para pesos treinados.
+- `scoreIntents(stateVec, candidates, ctx)` → `{ scores, usedModel, fellBack }`
+  (`ctx` = contexto de sobrevivência: SAFE/CAUTION/DANGER/RECOVER/ESCAPE)
+- `choose(stateVec, candidates, ctx)` → `{ id, scores, usedModel, fellBack }`
+- `loadWeights(agentId?)` → carrega `reports/aiworld-weights/weights-<agent>.json`
+  ou `weights-shared.json` (best-effort; `weights: null` se ausente/corrupto).
+- `saveWeights(agentId?, dir?)` → persiste o artifact (usado pelo offline training step).
+- `weights: null` (sem treino) = espelho do baseline; com treino aplica bias por contexto.
+
+Os pesos aprendidos são um **contextual bandit / preference learner** explicável:
+`neuralScore(intent) = base + bias[context][intent]`, onde `bias` é a diferença entre
+o reward médio daquele intent e o reward médio de todos os intents naquele contexto
+(mean-centering), clampado a [-1, +1] e descontado por confiança (nº de amostras).
+
+## Offline training step (IMPLEMENTADO)
+
+`npm run aiworld:train [--agent Steve|Alex|shared] [--minN 5]`
+
+1. Lê `reports/aiworld-experiences/*.jsonl` (decisões + outcomes já recolhidos pelo worker).
+2. Agrega por `(contexto → intent)` o reward médio (só amostras com outcome; `minN` mínimo).
+3. Escreve `reports/aiworld-weights/weights-<agent>.json` (ou `weights-shared.json`).
+4. O worker, no arranque (modo `neural`/`shadow`), carrega estes pesos via `loadWeights()`
+   e a `NeuralPolicy` aplica o bias por contexto em `scoreIntents`.
+
+Loop fechado: **OBSERVE → REPRESENT → DECIDE (com pesos) → ACT → OUTCOME → REWARD →
+STORE → TRAIN → UPDATED POLICY**. Sem RL; treino 100% offline e reproduzível.
 
 ## Modos (AIWORLD_POLICY)
 
@@ -113,12 +136,15 @@ buildExperience context richness.
 
 ## Próximos passos
 
-1. **Coletar dados** em corridas reais (shadow mode) sem treinar.
+1. **Coletar mais dados** em corridas reais (shadow/neural mode) para enriquecer o dataset.
 2. **Analisar qualidade** do dataset: cobertura de estados, diversidade de outcomes,
-   taxa de disagreement neural vs determinístico.
-3. **Decidir o modelo com base nos dados**, não por preferência:
-   regressão/preferência | MLP | ranking model | contextual bandit | (eventualmente) RL.
-4. **Offline training step** separado: lê JSONL → escreve artifact de weights → carregado por
-   `NeuralPolicy.loadWeights` (já tem `loadWeights` no ExperienceStore; `NeuralPolicy.weights` pronto).
-5. **Shared policy**: treinar uma única policy e injetá-la em todos os NPCs; manter memória/
-   personalidade/objetivos individuais.
+   taxa de disagreement neural vs determinístico, estabilidade dos pesos entre runs.
+3. **Decidir evolução do modelo com base nos dados**, não por preferência:
+   regressão/preferência | MLP | ranking model | contextual bandit (atual) | (eventualmente) RL.
+4. **Offline training step** — **IMPLEMENTADO** (`scripts/aiworld-train.js`):
+   lê JSONL → agrega (contexto→intent) → escreve `weights-<agent>.json` → carregado por
+   `NeuralPolicy.loadWeights`. Re-executar periodicamente (ex: cron) para refinar a policy.
+5. **Shared policy**: treinar uma única policy (`weights-shared.json`) e injetá-la em todos
+   os NPCs; manter memória/personalidade/objetivos individuais. Já suportado (modo `shared`).
+6. **Similarity retrieval** (spec "reconhecer situações semelhantes"): usar o state vector
+   para encontrar experiências passadas semanticamente próximas e influenciar a decisão.

@@ -22,7 +22,10 @@ function experienceStore() {
   return _experienceStore;
 }
 
-// One policy instance per process; weights are null (mirror) until an offline training step writes them.
+// One policy instance per process; weights are null (mirror) until an offline training step
+// writes reports/aiworld-weights/weights-<agent>.json (or weights-shared.json). In neural/shadow
+// mode the policy attempts to load trained weights at construction (best-effort; falls back to
+// baseline mirror if absent or corrupt).
 let _policy = null;
 function policy() {
   if (!_policy) _policy = new NeuralPolicy({ mode: POLICY_MODE });
@@ -205,7 +208,7 @@ function recordFocusDecision(rec = {}) {
     const pol = policy();
     let neuralScores = null;
     if (POLICY_MODE !== 'deterministic') {
-      const res = pol.scoreIntents(stateRep.vec, candidates);
+      const res = pol.scoreIntents(stateRep.vec, candidates, rec.survivalState || 'SAFE');
       neuralScores = res.scores;
       if (res.fellBack) countMetric(METRIC.AIWORLD_POLICY_FALLBACK, { agent: rec.agentId });
     }
