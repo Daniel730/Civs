@@ -101,6 +101,28 @@ test('OllamaBrain.decide uses injected transport and returns model focus (memory
   assert.ok(/3 threats remembered/.test(decision.reason), 'model reason reflects memory context');
 });
 
+test('OllamaBrain.decide reads thinking field when response is empty (hermes-* models)', async () => {
+  const { OllamaBrain } = require(path.join(ROOT, 'lib', 'ai-world', 'ollama-brain'));
+  // hermes-* fine-tunes emit reasoning in `thinking` and leave `response` blank.
+  const transport = async (ep, p) => {
+    if (p === '/api/tags') return { status: 200, body: '{}' };
+    if (p === '/api/generate') {
+      return {
+        status: 200,
+        body: JSON.stringify({
+          response: '',
+          thinking: 'I should build a wall. {"focus":"build","reason":"build wall near threat","target":null}',
+        }),
+      };
+    }
+    return { status: 404, body: '' };
+  };
+  const brain = new OllamaBrain({ transport, model: 'hermes-fast-mc:latest' });
+  const dec = await brain.decide({ healthPct: 0.6, survivalState: 'CAUTION', worldMemory: { threatsRemembered: 2 } });
+  assert.ok(dec && dec.focus === 'build', 'focus extracted from thinking field');
+  assert.ok(/build wall/.test(dec.reason), 'reason from thinking field');
+});
+
 test('OllamaBrain.decide returns null on invalid focus from model (falls back)', async () => {
   const { OllamaBrain } = require(path.join(ROOT, 'lib', 'ai-world', 'ollama-brain'));
   const transport = async (endpoint, p) => {

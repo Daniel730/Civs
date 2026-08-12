@@ -130,11 +130,15 @@ class OllamaBrain {
     if (!available) return null;
 
     const messages = buildPrompt(snapshot, this.systemPrompt);
+    // Hermes-* fine-tunes expect a LEGACY `prompt` (not chat `messages`); sending `messages`
+    // makes them return done_reason:"load" with no output. Concatenate system+user into one
+    // prompt string. Models that prefer chat still parse this fine.
+    const prompt = messages.map((m) => (m.role === 'system' ? `<<SYSTEM>>\n${m.content}\n` : `${m.content}`)).join('\n');
     let res;
     try {
       res = await this._post(
         '/api/generate',
-        { model: this.model, messages, stream: false, format: 'json' },
+        { model: this.model, prompt, stream: false, format: 'json' },
         this.timeoutMs
       );
     } catch (_) {
@@ -149,7 +153,15 @@ class OllamaBrain {
     let parsed = null;
     try {
       const json = JSON.parse(res.body);
-      parsed = extractJSON(json.response || '');
+      // Models with thinking/reasoning enabled (e.g. hermes-* fine-tunes) put the generated text in
+      // `thinking` / `reasoning_content` and leave `response` empty. Fall back to those so the
+      // brain still works instead of silently nulling out.
+      const rawText =
+        json.response ||
+        json.thinking ||
+        json.reasoning_content ||
+        '';
+      parsed = extractJSON(rawText);
     } catch (_) {
       return null;
     }
