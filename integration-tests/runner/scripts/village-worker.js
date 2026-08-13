@@ -536,6 +536,42 @@ async function runJob(harness, actorName, step, state, ctx = {}) {
     await cap.sprint(actorName, false);
   }
 
+  // Explore: travel to scattered waypoints around the origin and scan the horizon.
+  // Gives the agent purposeful movement across the map instead of loitering.
+  if (step.job === 'explore') {
+    const ring = 40 + ((state.tick || 0) % 4) * 10; // 40..70 blocks out, rotating
+    const ang = ((state.tick || 0) * 2.39996) % (Math.PI * 2); // golden-angle spread
+    const tx = Math.floor(cfg.origin.x + Math.cos(ang) * ring);
+    const tz = Math.floor(cfg.origin.z + Math.sin(ang) * ring);
+    const ty = (groundY || cfg.origin.y) + 1;
+    await walkTo(harness, actorName, { x: tx, y: ty, z: tz },
+      { arrive: 3, timeoutMs: 9000, speed: 4.5, allowTeleport: false }).catch(() => {});
+    for (let d = 0; d < 4; d++) {
+      await cap.lookAt(actorName, tx + Math.cos(d * 1.57) * 8, ty + 2, tz + Math.sin(d * 1.57) * 8);
+      await sleep(150);
+    }
+    await cap.swing(actorName);
+    results.actions.push({ explore: { target: { x: tx, y: ty, z: tz } } });
+  }
+
+  // Hunt: find the nearest hostile, walk to it, and attack it down (Fix A already
+  // makes defend aim; hunt is the proactive version — go find one).
+  if (step.job === 'hunt') {
+    const near = await cap.worldNearby(actorName, { radius: 24, types: 'hostile' }).catch(() => null);
+    const hostile = near && near.success && near.data && near.data.entities && near.data.entities[0];
+    if (hostile) {
+      await walkTo(harness, actorName,
+        { x: hostile.x, y: (hostile.y || groundY) + 1, z: hostile.z },
+        { arrive: 2.5, timeoutMs: 7000, speed: 4.5, allowTeleport: false }).catch(() => {});
+      await cap.lookAt(actorName, hostile.x, (hostile.y || groundY) + 1, hostile.z);
+      const atk = await cap.attackNearest(actorName, 'hostile').catch(() => null);
+      results.actions.push({ hunt: { target: hostile, attack: atk } });
+    } else {
+      // No hostiles nearby — roam toward the nearest mob spawn / dark patch.
+      results.actions.push({ hunt: { target: null, note: 'no_hostiles_nearby' } });
+    }
+  }
+
   const obs = await cap.observe(actorName);
   results.observe =
     obs && obs.data ? { x: obs.data.x, y: obs.data.y, z: obs.data.z, held: obs.data.held } : null;
@@ -726,6 +762,8 @@ const OBJECTIVE_GOALS = Object.freeze({
   guard: 3, // 3 patrol/guard steps
   patrol: 3,
   placeregion: 1, // founding a region counts as done immediately
+  explore: 5, // travel to + scan 5 distinct waypoints
+  hunt: 3, // defeat 3 hostiles
 });
 
 function chooseObjective(state, assessment, focusCandidate) {
@@ -765,10 +803,10 @@ function chooseObjective(state, assessment, focusCandidate) {
   const jobForFocus =
     {
       survive: 'guard',
-      found: 'placeregion',
+      found: 'explore', // founding done -> roam the map and scan (was placeregion)
       build: 'builder',
       maintain: 'farmer',
-      secure: 'miner',
+      secure: 'hunt', // proactively hunt hostiles (was miner)
     }[focus] || 'builder';
   const job =
     jobForFocus === 'placeregion' &&
