@@ -1494,7 +1494,27 @@ async function main() {
           if (process.env.AIWORLD_DEBUG) {
             console.log('[ollama-debug] snap=' + JSON.stringify(snap));
           }
-          const decision = await ollamaBrainInst.decide(snap);
+          // DECISION CACHE: calling Ollama every tick freezes the Steve for ~60-120s while he
+          // waits (looked "burro" — stood still between actions). Cache the brain's focus for
+          // FOCUS_TTL ms and only re-query when it expires OR survival escalates to DANGER/ESCAPE
+          // (so he still reacts instantly to real threats). Between calls the cached focus drives
+          // per-tick sub-actions (mine/break/walk) with ZERO brain latency -> looks autonomous.
+          const FOCUS_TTL = 45000;
+          const survEscalated = assessment.state === 'DANGER' || assessment.state === 'ESCAPE';
+          const cacheFresh =
+            state.cachedFocus &&
+            (state.cachedFocusUntil || 0) > Date.now() &&
+            !(survEscalated && state.cachedFocusSafe);
+          let decision = cacheFresh ? state.cachedDecision : null;
+          if (!decision) {
+            decision = await ollamaBrainInst.decide(snap);
+            if (decision && FOCUSES.includes(decision.focus)) {
+              state.cachedFocus = decision.focus;
+              state.cachedFocusUntil = Date.now() + FOCUS_TTL;
+              state.cachedFocusSafe = assessment.state === 'SAFE' || assessment.state === 'CAUTION';
+              state.cachedDecision = decision;
+            }
+          }
           if (process.env.AIWORLD_DEBUG) {
             console.log('[ollama-debug] mode=' + aiwMode + ' model=' + ollamaBrainInst.model + ' decision=' + JSON.stringify(decision));
           }
