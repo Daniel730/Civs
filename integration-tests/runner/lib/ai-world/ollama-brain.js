@@ -17,7 +17,7 @@
 const http = require('http');
 const fs = require('fs');
 
-const DEFAULT_ENDPOINT = process.env.OLLAMA_ENDPOINT || 'http://localhost:11434';
+const DEFAULT_ENDPOINT = process.env.OLLAMA_ENDPOINT || 'http://127.0.0.1:11434';
 const DEFAULT_MODEL = process.env.OLLAMA_MODEL || 'civs-brain';
 const TIMEOUT_MS = Number(process.env.OLLAMA_TIMEOUT_MS || 8000);
 // Where scripts/aiworld-train.js writes the offline-learned weights (closed learning loop).

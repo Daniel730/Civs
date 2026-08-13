@@ -870,10 +870,18 @@ function chooseObjective(state, assessment, focusCandidate) {
         committed: false,
       };
     }
-    // All region types done or blocked (Civs build-reqs can block placeregion in QA). Keep the
-    // Steve visibly constructing real blocks (builder) so he's never idle, instead of the
-    // explore/torch loop that looked "burro".
-    return { job: 'builder', focus: 'build', reason: 'growth:build_blocks_fallback', committed: false };
+    // All region types done or blocked (Civs build-reqs / disabled types in QA). Instead of
+    // building blocks forever (looked "burro"), rotate the Steve across the FULL Minecraft loop —
+    // mine the quarry, chop wood, forage, farm, and occasionally build — so he's visibly doing
+    // everything, not stuck in one job.
+    const LOOP = ['miner', 'lumberjack', 'gather', 'farmer', 'builder'];
+    const loopJob = LOOP[(state.tick || 0) % LOOP.length];
+    return {
+      job: loopJob,
+      focus: loopJob === 'builder' ? 'build' : 'maintain',
+      reason: 'growth:loop_' + loopJob,
+      committed: false,
+    };
   }
   // Keep the current objective until it makes enough meaningful progress, REGARDLESS of
   // focus-cache churn — the focus can flip build/maintain every ~30s, but the agent should
