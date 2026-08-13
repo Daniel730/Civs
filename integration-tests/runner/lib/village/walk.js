@@ -334,12 +334,13 @@ async function walkTo(harness, actorName, stand, opts = {}) {
   // goal cell. We only fall back to it when the caller explicitly wants legacy movement
   // (old harness without walk_path). Otherwise we report the goal as unreachable so the caller
   // can INVALIDATE the bad target (anti-stupid) instead of letting Steve hurt himself on a fence.
-  const allowLegacyFallback = opts.forceLegacy === true;
+  const allowLegacyFallback = opts.forceLegacy === true || (leg && (leg.status === 'UNSUPPORTED' || leg.status === 'INCOMPLETE' || leg.status === 'NO_PATH')) || _pathCapability === false;
+  let legacy = null;
   if (allowLegacyFallback) {
     if (opts.clearFooting) {
       await opts.clearFooting(Math.floor(goal.x), goal.y, Math.floor(goal.z));
     }
-    const legacy = await legacyStepWalk(harness, actorName, goal, opts, cur);
+    legacy = await legacyStepWalk(harness, actorName, goal, opts, cur);
     actions.push({ legacyWalk: { steps: legacy.steps, arrived: legacy.arrived, reason: legacy.reason } });
     cur = legacy.position || cur;
     dist = horizDist(cur, goal);

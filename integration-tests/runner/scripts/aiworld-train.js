@@ -10,7 +10,7 @@
  *
  * Model (matches NeuralPolicy.linearScore):
  *   neuralScore(intent) = base + bias[context][intent]
- * where bias[ctx][intent] = clamp( avgReward(ctx,intent) - globalAvgReward, -1, 1 ).
+ * where bias[ctx][intent] = clamp( avgReward(ctx,intent) - globalAvg, -1, 1 ).
  * Intents that yielded above-average reward in a context get a positive boost there.
  *
  * Usage:
@@ -52,22 +52,74 @@ function loadExperiences(dir) {
 }
 
 function train(exps, minCount) {
-  // Accumulate (ctx, intent) -> {sum, n}
-  const acc = {};
+  const { weights, ctxsWithData, totalN } = aggregate(exps, minCount);
+  return { weights, ctxsWithData, totalN };
+}
+
+/**
+ * Derive a survival context bucket from a stateRep's legacy flag fields.
+ * stateRep.fields includes ['danger_flag','escape_flag','recover_flag'] and
+ * vec is aligned to fields. Returns 'DANGER' | 'ESCAPE' | 'RECOVER' | 'SAFE'.
+ * @param {{stateRep?:{fields?:string[],vec?:number[]}}} exp
+ */
+function contextOf(exp) {
+  const sr = (exp && exp.stateRep) || {};
+  const fields = sr.fields || [];
+  const vec = sr.vec || [];
+  const idx = (name) => fields.indexOf(name);
+  if (idx('danger_flag') >= 0 && vec[idx('danger_flag')] === 1) return 'DANGER';
+  if (idx('escape_flag') >= 0 && vec[idx('escape_flag')] === 1) return 'ESCAPE';
+  if (idx('recover_flag') >= 0 && vec[idx('recover_flag')] === 1) return 'RECOVER';
+  return 'SAFE';
+}
+
+/**
+ * Aggregate an array of experience rows into per-context intent bias + summary stats.
+ * Groups by (context, intent), averages rewards, and computes
+ *   bias[ctx][intent] = clamp( avgReward(ctx,intent) - globalAvg, -1, 1 )
+ * Rows without a numeric outcome.reward are excluded (pending decisions).
+ *
+ * @param {object[]} rows  experience rows
+ * @param {number} [minCount=3]  minimum samples per (ctx,intent) to produce a bias entry
+ * @returns {{ bias: object, stats: { ratedSamples, contexts, intents,
+ *            ratedByIntent, rewardByIntent, rewardByContext,
+ *            globalAvgReward, ctxsWithData } }}
+ */
+function aggregate(rows, minCount = 3) {
+  const acc = {};         // ctx -> intent -> { sum, n }
+  const byIntent = {};    // intent -> { sum, n }
+  const byCtx = {};       // ctx -> { sum, n }
   let totalSum = 0, totalN = 0;
-  for (const e of exps) {
-    const ctx = String(e.survivalState || e.context || 'SAFE').toUpperCase();
-    const intent = e.chosenIntent || e.action || e.focus || null;
-    if (!intent) continue;
-    const r = Number(e.outcome.reward);
+  const contexts = new Set();
+  const intents = new Set();
+
+  for (const e of rows || []) {
+    const outcome = e.outcome || {};
+    const r = Number(outcome.reward);
     if (!Number.isFinite(r)) continue;
+    const ctx = String(e.survivalState || e.context || contextOf(e) || 'SAFE').toUpperCase();
+    const intent = String(e.chosenIntent || e.action || e.focus || '').toLowerCase();
+    if (!intent) continue;
+
     acc[ctx] = acc[ctx] || {};
     acc[ctx][intent] = acc[ctx][intent] || { sum: 0, n: 0 };
     acc[ctx][intent].sum += r;
     acc[ctx][intent].n += 1;
+
+    byIntent[intent] = byIntent[intent] || { sum: 0, n: 0 };
+    byIntent[intent].sum += r;
+    byIntent[intent].n += 1;
+
+    byCtx[ctx] = byCtx[ctx] || { sum: 0, n: 0 };
+    byCtx[ctx].sum += r;
+    byCtx[ctx].n += 1;
+
     totalSum += r;
     totalN += 1;
+    contexts.add(ctx);
+    intents.add(intent);
   }
+
   const globalAvg = totalN ? totalSum / totalN : 0;
   const bias = {};
   let ctxsWithData = 0;
@@ -84,15 +136,30 @@ function train(exps, minCount) {
     }
     if (ctxHasEnough) ctxsWithData++;
   }
-  const weights = {
-    version: 1,
-    trainedAt: new Date().toISOString(),
-    samples: totalN,
+
+  const rewardByIntent = {};
+  const ratedByIntent = {};
+  for (const intent of Object.keys(byIntent)) {
+    ratedByIntent[intent] = byIntent[intent].n;
+    rewardByIntent[intent] = Math.round((byIntent[intent].sum / byIntent[intent].n) * 1000) / 1000;
+  }
+
+  const rewardByContext = {};
+  for (const ctx of Object.keys(byCtx)) {
+    rewardByContext[ctx] = Math.round((byCtx[ctx].sum / byCtx[ctx].n) * 1000) / 1000;
+  }
+
+  const stats = {
+    ratedSamples: totalN,
+    contexts: contexts.size,
+    intents: intents.size,
+    ratedByIntent,
+    rewardByIntent,
+    rewardByContext,
     globalAvgReward: Math.round(globalAvg * 1000) / 1000,
-    default: 0,
-    bias,
+    ctxsWithData,
   };
-  return { weights, ctxsWithData, totalN };
+  return { bias, stats };
 }
 
 function main() {
@@ -112,4 +179,4 @@ function main() {
 }
 
 if (require.main === module) main();
-module.exports = { train, loadExperiences };
+module.exports = { train, loadExperiences, aggregate, contextOf };

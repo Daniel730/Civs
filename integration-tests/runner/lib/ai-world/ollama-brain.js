@@ -336,11 +336,11 @@ class OllamaBrain {
       available = false;
     }
     if (!available) {
-      // Model down: apply learning offline — pick the best-weighted focus for this context,
-      // biased toward diversity so the Steve keeps exercising the full skill set.
-      const w = loadWeights(WEIGHTS_PATH);
-      const fb = diversifyFocus(w, snapshot.survivalState || 'SAFE');
-      return fb ? { focus: fb, reason: 'learned_diversify(offline)', target: null } : null;
+      // Model down: return null so the worker falls back to the deterministic focus.
+      // The worker (scripts/village-worker.js) already holds a valid focusCandidate
+      // from chooseFocus(), so the NPC never breaks — but decide() must honor its
+      // contract: null = caller decides the fallback.
+      return null;
     }
 
     // Lazy-load the offline-trained weights once per process (best-effort; {} if missing).
@@ -368,17 +368,15 @@ class OllamaBrain {
         { model: this.model, prompt, stream: false, format: 'json' },
         this.timeoutMs
       );
-    } catch (_) {
+    } catch (e) {
       this._available = false;
-      // Model call failed mid-flight: still apply learning + diversity via the offline path.
-      const fb = diversifyFocus(this._weights, survivalState);
-      return fb ? { focus: fb, reason: 'learned_diversify(call_failed)', target: null } : null;
+      // Model call failed mid-flight: return null so the worker falls back to deterministic focus.
+      return null;
     }
     if (!res || res.status !== 200) {
       this._available = false;
       this._availableAt = Date.now();
-      const fb = diversifyFocus(this._weights, survivalState);
-      return fb ? { focus: fb, reason: 'learned_diversify(bad_status)', target: null } : null;
+      return null;
     }
     // Successful Ollama call — mark the brain available again so it recovers immediately
     // (no need to wait out the availability cooldown).
@@ -408,10 +406,9 @@ class OllamaBrain {
         recordRecentFocus(norm);
         return { focus: norm, reason: (parsed && parsed.reason) || 'ollama(normalized)', target: parsed && parsed.target != null ? parsed.target : null };
       }
-      // Truly invalid: prefer the learned+diversity fallback over a hard null — but never
-      // collapse to 'rest' unless genuinely low-health (handled inside diversifyFocus).
-      const fb = diversifyFocus(this._weights, survivalState);
-      return fb ? { focus: fb, reason: 'learned_diversify(invalid_focus)', target: null } : null;
+      // Truly invalid: return null so the worker falls back to deterministic focus.
+      // (The worker holds a valid focusCandidate from chooseFocus(); see decide() contract.)
+      return null;
     }
     chosen = parsed.focus;
     // Hard safety net: never flee from a phantom threat (LLM invented a mob). If the snapshot

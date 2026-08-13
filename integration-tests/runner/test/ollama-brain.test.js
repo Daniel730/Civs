@@ -5,7 +5,7 @@
 const test = require('node:test');
 const assert = require('node:assert');
 const path = require('path');
-const ROOT = 'C:\\Users\\Danie\\Downloads\\Civs-1.11.6\\Civs-1.11.6\\integration-tests\\runner';
+const ROOT = path.resolve(__dirname, '..');
 
 test('OllamaBrain.decide returns null when no server is reachable (fallback path)', async () => {
   const { OllamaBrain } = require(path.join(ROOT, 'lib', 'ai-world', 'ollama-brain'));

@@ -8,7 +8,7 @@
 const test = require('node:test');
 const assert = require('node:assert');
 const path = require('path');
-const ROOT = 'C:\\Users\\Danie\\Downloads\\Civs-1.11.6\\Civs-1.11.6\\integration-tests\\runner';
+const ROOT = path.resolve(__dirname, '..');
 
 test('B3: walkTo Stage-1 has a no-teleport branch when allowTeleport:false', () => {
   // Deterministic static check: the Stage-1 block must branch on allowTeleport so that, with
