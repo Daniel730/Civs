@@ -323,15 +323,27 @@ async function runJob(harness, actorName, step, state, ctx = {}) {
 
   // Mine / chop existing terrain only — never spawn a block then break it (#66).
   if (step.job === 'miner') {
-    const digX = Math.floor(cfg.origin.x + (step.dx || 0) + 5);
-    const digZ = Math.floor(cfg.origin.z + (step.dz || 0) + 5);
-    const digY = await findSurfaceY(harness, digX, digZ, {
+    // Find a REAL solid block nearby and dig THAT — otherwise we swing at air
+    // (already_air) and look stuck. Prefer stone/dirt/grass within reach.
+    let digX = Math.floor(cfg.origin.x + (step.dx || 0) + 5);
+    let digZ = Math.floor(cfg.origin.z + (step.dz || 0) + 5);
+    let digY = await findSurfaceY(harness, digX, digZ, {
       fallbackY: groundY,
       maxY: groundY + 8,
       minY: groundY - 8,
     });
+    const fb = await cap.findBlock(actorName, 'STONE', 12).catch(() => null);
+    if (fb && fb.success && fb.data && fb.data.nearest) {
+      digX = fb.data.nearest.x;
+      digZ = fb.data.nearest.z;
+      digY = fb.data.nearest.y;
+      // Walk to the block first so the swing actually connects (don't dig from afar).
+      await walkTo(harness, actorName, { x: digX, y: digY, z: digZ }, {
+        arrive: 2.5, timeoutMs: 6000, speed: 4.5, allowTeleport: false,
+      }).catch(() => {});
+    }
     const br = await cap.breakBlock(actorName, digX, digY, digZ);
-    results.actions.push({ breakBlock: br, spawned: false });
+    results.actions.push({ breakBlock: br, spawned: false, target: { x: digX, y: digY, z: digZ } });
     await cap.swing(actorName);
   } else if (step.job === 'lumberjack') {
     const digX = Math.floor(cfg.origin.x + (step.dx || 0) + 5);
@@ -704,6 +716,16 @@ function chooseObjective(state, assessment, focusCandidate) {
     return { job: 'guard', focus: 'survive', reason: `survival:${surv}`, committed: true };
   }
 
+  // Brain said "survive" with a real threat (hostile nearby or dark + danger) — interrupt the
+  // current objective and switch to guard (flee/defend), even if the prior job had progress.
+  // Without this the agent keeps mining in a death zone because `reason:continuing` overrides
+  // the survive signal (the "stuck in the quarry" bug).
+  const threatNear = Array.isArray(assessment.threats) &&
+    (assessment.threats.includes('hostile_nearby') || assessment.threats.includes('dark'));
+  if (focusCandidate.focus === 'survive' && threatNear) {
+    return { job: 'guard', focus: 'survive', reason: 'ollama_survive_threat', committed: true };
+  }
+
   const cur = state.objective;
   // Keep the current objective until it makes enough meaningful progress, REGARDLESS of
   // focus-cache churn — the focus can flip build/maintain every ~30s, but the agent should
@@ -723,7 +745,7 @@ function chooseObjective(state, assessment, focusCandidate) {
   const focus = focusCandidate.focus;
   const jobForFocus =
     {
-      survive: 'miner',
+      survive: 'guard',
       found: 'placeregion',
       build: 'builder',
       maintain: 'farmer',
