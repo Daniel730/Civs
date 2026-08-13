@@ -1446,15 +1446,18 @@ async function main() {
           /* best-effort: keep deterministic focus */
         }
       }
-      // Anti-fixation: when the agent is safe-ish (SAFE/CAUTION), rotate the focus across the
-      // rich job set so the Steve actually exercises the FULL action space
-      // (explore/hunt/gather/torch/rest) instead of farming forever. The brain may pick
-      // 'maintain' every tick; this guarantees variety without overriding survival
-      // (never fires in DANGER/ESCAPE/RECOVER). No 'established' gate — chooseObjective maps
-      // every focus to a sensible job even before the settlement is built.
-      if (assessment.state === 'SAFE' || assessment.state === 'CAUTION') {
+      // Honor an explicit BUILD intent from the brain so the village actually grows. The
+      // anti-fixation rotation below would otherwise silently discard 'build' and keep Steve
+      // farming/exploring/torching forever — leaving completedPlaces stuck (the "burro" bug).
+      // Only rotate non-build foci; a build decision is respected as-is.
+      if ((assessment.state === 'SAFE' || assessment.state === 'CAUTION') && effectiveFocus.focus !== 'build') {
         const RICH = ['explore', 'hunt', 'gather', 'torch', 'rest', 'maintain'];
-        const rotated = RICH[(state.tick || 0) % RICH.length];
+        // TENURE: hold a focus for N ticks before rotating. Flipping every tick reset objective
+        // progress each loop -> the Steve never finished a goal (goal_completed ~0). With a
+        // tenure, the same job/site runs repeatedly and reaches OBJECTIVE_GOALS, so he
+        // actually completes what he starts while still varying over time.
+        const TENURE = 14;
+        const rotated = RICH[Math.floor((state.tick || 0) / TENURE) % RICH.length];
         effectiveFocus = {
           ...effectiveFocus,
           focus: rotated,

@@ -78,7 +78,9 @@ function buildPrompt(snapshot, systemPrompt) {
       'Respond ONLY with JSON: {"focus":"...","reason":"...","target":null|"<concrete place or action>"}. ' +
       'Rules to AVOID stupidity: ' +
       '(1) ONLY flee (focus survive) when a HOSTILE is actually NEAR (nearestHostile distance < 12) or you are taking damage RIGHT NOW. Dying in the past (deaths high) or being in the dark is NOT an emergency by itself. ' +
-      '(2) If it is dark (lightLevel <=7) but NO hostile is near, WORK anyway: choose torch (light the area) or build/maintain. Do not stand still. ' +
+      '(2) If it is dark (lightLevel <=7) but NO hostile is near, WORK anyway — do NOT stand still. ' +
+      'If the settlement is already established (completedPlaces >= 3) and no hostile is near, PREFER build/maintain ' +
+      '(keep growing the village, and building also lights the area) over endless torching. Only torch if you are literally in an unlit spot with no build site. ' +
       '(3) If deathsHere is high, do NOT repeat the same spot — when you work, pick a DIFFERENT site than where you died, and prefer building shelter/lighting over mining there. ' +
       '(4) If you are SAFE and lit, maintain the settlement (farm, repair, build) OR gather resources OR explore new ground — vary your focus so you do not loop one task. ' +
       '(5) NEVER oscillate: if your last focus failed, pick a DIFFERENT focus this time. ' +
@@ -107,7 +109,7 @@ function buildPrompt(snapshot, systemPrompt) {
     `- dangerZoneRemembered: ${snapshot.dangerZone ? 'yes' : 'no'}\n` +
     `- deathsHere: ${deaths}\n` +
     `- lastDamageCause: ${lastDmg || 'none'}\n` +
-    `- lightLevel: ${light >= 0 ? light : 'unknown'}${light >= 0 && light <= 7 ? ' (DARK)' : ''}\n` +
+    `- lightLevel: ${light >= 0 ? light : 'unknown'}${light > 0 && light <= 7 ? ' (DARK)' : ''}\n` +
     `- blockBelow: ${snapshot.blockBelow || wm.blockBelow || 'unknown'}\n` +
     `- memory:${remembered || ' nothing remembered yet'}\n` +
     `- currentFocus: ${snapshot.currentFocus || 'none'}\n` +
