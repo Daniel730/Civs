@@ -15,10 +15,15 @@
  * fall back to chooseFocus. The NPC must never stall or crash because the brain hiccupped.
  */
 const http = require('http');
+const fs = require('fs');
 
 const DEFAULT_ENDPOINT = process.env.OLLAMA_ENDPOINT || 'http://localhost:11434';
 const DEFAULT_MODEL = process.env.OLLAMA_MODEL || 'civs-brain';
 const TIMEOUT_MS = Number(process.env.OLLAMA_TIMEOUT_MS || 8000);
+// Where scripts/aiworld-train.js writes the offline-learned weights (closed learning loop).
+const WEIGHTS_PATH =
+  process.env.AIWORLD_WEIGHTS_PATH ||
+  require('path').join(__dirname, '..', '..', 'reports', 'aiworld-weights', 'weights-shared.json');
 
 const FOCUSES = ['survive', 'found', 'build', 'maintain', 'secure', 'explore', 'hunt', 'gather', 'torch', 'rest'];
 
@@ -122,6 +127,45 @@ function extractJSON(text) {
   }
 }
 
+// Load the offline-trained weights written by scripts/aiworld-train.js
+// (shape: { context: { intent: bias } }, contexts like SAFE/DANGER/CAUTION...).
+// Returns {} on any failure — learning is best-effort and never breaks the brain.
+function loadWeights(path) {
+  try {
+    const raw = fs.readFileSync(path, 'utf8');
+    const w = JSON.parse(raw);
+    return w && typeof w === 'object' ? w : {};
+  } catch (_) {
+    return {};
+  }
+}
+
+// Build a short "what you've learned works" appendix for the current survival context,
+// steering the LLM toward the intents that earned positive reward and away from negative.
+function learnedBiasAppendix(weights, survivalState) {
+  const ctx = weights[survivalState] || weights.SAFE || weights.DEFAULT || {};
+  const entries = Object.entries(ctx).filter(([k]) => FOCUSES.includes(k));
+  if (!entries.length) return '';
+  const ranked = entries.sort((a, b) => b[1] - a[1]);
+  const good = ranked.filter(([, v]) => v > 0).map(([k]) => k);
+  const bad = ranked.filter(([, v]) => v < 0).map(([k]) => k);
+  let s = '\nLEARNED PREFERENCES (from your own experience, context=' + survivalState + '):';
+  if (good.length) s += ' prefer ' + good.join(', ') + ';';
+  if (bad.length) s += ' avoid ' + bad.join(', ') + ';';
+  s += ' these were reinforced by past outcomes.';
+  return s;
+}
+
+// Offline fallback: when the model is down, pick the highest-weighted valid FOCUS for the
+// current context (applies learning even without inference). Falls back to 'maintain'.
+function fallbackFocus(weights, survivalState) {
+  const ctx = weights[survivalState] || weights.SAFE || weights.DEFAULT || {};
+  const ranked = Object.entries(ctx)
+    .filter(([k]) => FOCUSES.includes(k))
+    .sort((a, b) => b[1] - a[1]);
+  return ranked.length ? ranked[0][0] : 'maintain';
+}
+
 class OllamaBrain {
   constructor(opts = {}) {
     this.endpoint = opts.endpoint || DEFAULT_ENDPOINT;
@@ -167,9 +211,24 @@ class OllamaBrain {
     } catch (_) {
       available = false;
     }
-    if (!available) return null;
+    if (!available) {
+      // Model down: apply learning offline — pick the best-weighted focus for this context.
+      const w = loadWeights(WEIGHTS_PATH);
+      const fb = fallbackFocus(w, snapshot.survivalState || 'SAFE');
+      return fb ? { focus: fb, reason: 'learned_fallback(offline)', target: null } : null;
+    }
+
+    // Lazy-load the offline-trained weights once per process (best-effort; {} if missing).
+    if (this._weights === undefined) {
+      this._weights = loadWeights(WEIGHTS_PATH);
+    }
 
     const messages = buildPrompt(snapshot, this.systemPrompt);
+    // Inject learned preferences into the user snapshot so the LLM is steered by its own
+    // accumulated experience (closes the learning loop: experiences -> train -> brain bias).
+    const survivalState = snapshot.survivalState || 'SAFE';
+    const bias = learnedBiasAppendix(this._weights, survivalState);
+    if (bias) messages[1].content += bias;
     // Hermes-* fine-tunes expect a LEGACY `prompt` (not chat `messages`); sending `messages`
     // makes them return done_reason:"load" with no output. Concatenate system+user into one
     // prompt string. Models that prefer chat still parse this fine.
@@ -183,11 +242,14 @@ class OllamaBrain {
       );
     } catch (_) {
       this._available = false;
-      return null;
+      // Model call failed mid-flight: still apply learning via the offline fallback.
+      const fb = fallbackFocus(this._weights, survivalState);
+      return fb ? { focus: fb, reason: 'learned_fallback(call_failed)', target: null } : null;
     }
     if (!res || res.status !== 200) {
       this._available = false;
-      return null;
+      const fb = fallbackFocus(this._weights, survivalState);
+      return fb ? { focus: fb, reason: 'learned_fallback(bad_status)', target: null } : null;
     }
 
     let parsed = null;
@@ -205,7 +267,11 @@ class OllamaBrain {
     } catch (_) {
       return null;
     }
-    if (!parsed || !FOCUSES.includes(parsed.focus)) return null;
+    if (!parsed || !FOCUSES.includes(parsed.focus)) {
+      // Invalid focus from the model: prefer the learned fallback over a hard null.
+      const fb = fallbackFocus(this._weights, survivalState);
+      return fb ? { focus: fb, reason: 'learned_fallback(invalid_focus)', target: null } : null;
+    }
     return {
       focus: parsed.focus,
       reason: parsed.reason || 'ollama',
@@ -214,4 +280,4 @@ class OllamaBrain {
   }
 }
 
-module.exports = { OllamaBrain, FOCUSES, extractJSON, buildPrompt };
+module.exports = { OllamaBrain, FOCUSES, extractJSON, buildPrompt, loadWeights, learnedBiasAppendix, fallbackFocus };
