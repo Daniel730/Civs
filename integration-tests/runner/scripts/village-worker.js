@@ -221,6 +221,9 @@ async function runJob(harness, actorName, step, state, ctx = {}) {
   await harness.raw(`gamemode ${founding ? 'creative' : 'survival'} ${actorName}`);
 
   if (step.job === 'placeregion') {
+    // Ensure the town exists AND Steve is a member (Civs pre-reqs for regions require
+    // member=settlement:...). ensureTown founds NpcPad as Steve (runAs) which enrolls him.
+    try { await ensureTown(harness, actorName); } catch (_) {}
     const px = cfg.origin.x + (step.dx || 0);
     const pz = cfg.origin.z + (step.dz || 0);
     const py = cfg.origin.y;
@@ -760,7 +763,7 @@ async function ensureTown(harness, actorName) {
   await harness.raw(
     `item replace entity ${actorName} weapon.mainhand from entity ${actorName} container.0`
   );
-  await harness.cap.runAs(actorName, `cv town ${cfg.town}`);
+  await harness.cap.runAs(actorName, `cv town ${cfg.town} settlement`);
   await sleep(400);
   await harness.raw(`gamemode survival ${actorName}`);
   const again = await harness.assert.town(cfg.town);
