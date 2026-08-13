@@ -60,7 +60,13 @@ class ExperienceStore {
   recordOutcome(episodeId, outcome = {}, rewardWeights) {
     const exp = this.open.get(episodeId);
     if (!exp) return null; // already flushed or unknown
-    const { reward, components } = computeReward(outcome, rewardWeights);
+    // Pass the decision context (survivalState + chosenIntent recorded at decision time) so
+    // computeReward can score how well the focus FIT the situation — the signal that makes
+    // learning differentiate behaviour instead of rewarding every tick equally.
+    const { reward, components } = computeReward(outcome, rewardWeights, {
+      survivalState: exp.survivalState,
+      chosenIntent: exp.chosenIntent,
+    });
     exp.outcome = { ...outcome, reward, rewardComponents: components };
     this.open.delete(episodeId);
     this._append(exp.agentId, exp);

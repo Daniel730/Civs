@@ -151,18 +151,38 @@ function buildExperience(rec = {}) {
 /**
  * Compute an explicit, simple, configurable reward from an outcome.
  * Weights are documented and tunable via `weights`.
+ *
+ * CRITICAL (why the Steve "learns nothing" before): the only signal was per-tick
+ * `progress` (almost always positive in QA) plus death/stall/damage. With god-mode the
+ * Steve never dies or stalls, so EVERY experience scored ~+2 and the trained weights were
+ * near-flat — no behaviour was ever reinforced as better or worse. To make learning real we
+ * add CONTEXT-APPROPRIATENESS rewards: a choice is good/bad relative to the survival
+ * situation it was made in (e.g. torching a dark CAUTION village is smart; maintaining while
+ * DANGER is suicidal). That gives the trainer a genuine spread to differentiate foci on.
+ *
+ * @param {object} outcome { goalCompleted, progressDelta, died, damageTaken, stalled,
+ *                           abandonedUseful, recovered, survivalState?, chosenIntent? }
+ * @param {object} [weights]
+ * @param {object} [ctx]    decision context: { survivalState, chosenIntent } (read from the
+ *                           recorded episode by ExperienceStore).
  */
-function computeReward(outcome = {}, weights = {}) {
+function computeReward(outcome = {}, weights = {}, ctx = {}) {
   const w = {
     goalCompleted: 1.0,
-    progress: 0.1, // per 0.01 progress delta, scaled below
+    progress: 0.02, // per 0.01 progress delta — SMALL so context-appropriateness dominates the signal
     death: -1.0,
     unnecessaryDamage: -0.1, // per 0.1 health lost without a kill
     stall: -0.2, // per stall event
     abandonUseful: -0.3,
     recoverySuccess: 0.4,
+    // Context-appropriateness (the signal that actually differentiates behaviour):
+    contextAppropriate: 0.5, // bonus when the focus fits the situation
+    contextWrong: -0.6, // penalty when the focus is wrong for the situation
     ...weights,
   };
+
+  const survivalState = String(ctx.survivalState || outcome.survivalState || 'SAFE').toUpperCase();
+  const intent = String(ctx.chosenIntent || outcome.chosenIntent || '').toLowerCase();
 
   let r = 0;
   const log = [];
@@ -183,6 +203,28 @@ function computeReward(outcome = {}, weights = {}) {
   if (outcome.stalled) add('stall', w.stall);
   if (outcome.abandonedUseful) add('abandonUseful', w.abandonUseful);
   if (outcome.recovered) add('recoverySuccess', w.recoverySuccess);
+
+  // --- Context-appropriateness: does the chosen focus fit the survival situation? ---
+  const DEFENSIVE = ['survive', 'hunt', 'defend', 'flee', 'guard', 'patrol'];
+  const PRODUCTIVE = ['build', 'maintain', 'gather', 'explore', 'farmer', 'miner', 'lumberjack', 'beautify', 'torch', 'rest'];
+  if (survivalState === 'DANGER' || survivalState === 'ESCAPE') {
+    // Under threat, anything but a defensive action is reckless.
+    if (!DEFENSIVE.includes(intent)) add('contextWrong', w.contextWrong);
+    else add('contextAppropriate', w.contextAppropriate);
+  } else if (survivalState === 'CAUTION') {
+    // CAUTION = partial risk (e.g. dark, a distant mob). Torch/defend are the smart moves;
+    // pure farming/exploring is okay but not optimal.
+    if (intent === 'torch') add('contextAppropriate', w.contextAppropriate);
+    else if (PRODUCTIVE.includes(intent) && intent !== 'torch') add('contextAppropriate', w.contextAppropriate * 0.4);
+    else if (DEFENSIVE.includes(intent)) add('contextAppropriate', w.contextAppropriate * 0.6);
+  } else if (survivalState === 'RECOVER') {
+    if (intent === 'rest' || DEFENSIVE.includes(intent)) add('contextAppropriate', w.contextAppropriate);
+    else add('contextWrong', w.contextWrong * 0.5);
+  } else {
+    // SAFE: productive work is rewarded; wasting a defensive action with no threat is mildly bad.
+    if (PRODUCTIVE.includes(intent)) add('contextAppropriate', w.contextAppropriate * 0.5);
+    else if (DEFENSIVE.includes(intent)) add('contextWrong', w.contextWrong * 0.4);
+  }
 
   r = Math.max(-2, Math.min(2, r)); // clamp for stability
   return { reward: Math.round(r * 1000) / 1000, components: log, weights: w };

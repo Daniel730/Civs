@@ -844,6 +844,17 @@ function chooseObjective(state, assessment, focusCandidate) {
   if (focusCandidate.focus === 'survive' && dark) {
     return { job: 'torch', focus: 'survive', reason: 'ollama_survive_torch', committed: true };
   }
+  // Build-for-growth: once the settlement is established, the village must KEEP GROWING or the
+  // agent looks "burro" (explores/torches forever, completedPlaces frozen at 3). When we are
+  // safe, lit, and no hostile is near, bias toward BUILD so structures actually get placed.
+  // Without this, the LLM brain almost never self-selects 'build' and the village never expands.
+  const established = Object.keys(state.completedPlaces || {}).length >= 3;
+  if (established && (surv === 'SAFE' || surv === 'CAUTION') && !threatNear && !dark) {
+    // Build on ~60% of eligible ticks; the rest let the brain's focus (maintain/explore) play.
+    if ((state.tick || 0) % 5 !== 0) {
+      return { job: 'builder', focus: 'build', reason: 'growth:established_build', committed: false };
+    }
+  }
   // Keep the current objective until it makes enough meaningful progress, REGARDLESS of
   // focus-cache churn — the focus can flip build/maintain every ~30s, but the agent should
   // finish what it started (e.g. place the farm fence) before switching.
