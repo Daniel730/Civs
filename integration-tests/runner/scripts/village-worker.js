@@ -524,6 +524,11 @@ async function runJob(harness, actorName, step, state, ctx = {}) {
         const safeZ = cfg.origin.z + 22;
         await walkTo(harness, actorName, { x: safeX, y: (groundY || cfg.origin.y) + 2, z: safeZ },
           { arrive: 2, timeoutMs: 8000, speed: 4.5, allowTeleport: true }).catch(() => {});
+        // Light up the fight zone so fewer mobs spawn — breaks the survive-forever loop.
+        const ty = (groundY || cfg.origin.y) + 1;
+        for (const [dx, dz] of [[2,2],[-2,2],[2,-2],[-2,-2],[3,0],[-3,0],[0,3],[0,-3]]) {
+          await harness.raw(`test setblock ${Math.floor(safeX+dx)} ${ty} ${Math.floor(safeZ+dz)} TORCH`).catch(() => {});
+        }
       }
       await cap.lookAt(actorName, cfg.origin.x, groundY + 1, cfg.origin.z);
       await cap.swing(actorName);
