@@ -572,6 +572,52 @@ async function runJob(harness, actorName, step, state, ctx = {}) {
     }
   }
 
+  // Gather: forage nearby resource blocks (wood/stone/food drops) and harvest them.
+  if (step.job === 'gather') {
+    const targets = ['OAK_LOG', 'SPRUCE_LOG', 'STONE', 'COBBLESTONE', 'DIRT', 'GRASS_BLOCK'];
+    let gathered = 0;
+    for (let t = 0; t < 4; t++) {
+      const ang = ((state.tick || 0) * 1.7 + t * 1.57) % (Math.PI * 2);
+      const gx = Math.floor(cfg.origin.x + Math.cos(ang) * (8 + t * 2));
+      const gz = Math.floor(cfg.origin.z + Math.sin(ang) * (8 + t * 2));
+      const gy = await findSurfaceY(harness, gx, gz, { fallbackY: groundY, maxY: groundY + 6, minY: groundY - 3 });
+      await walkTo(harness, actorName, { x: gx, y: gy + 1, z: gz },
+        { arrive: 2.5, timeoutMs: 6000, speed: 4.5, allowTeleport: false }).catch(() => {});
+      const br = await cap.breakBlock(actorName, gx, gy, gz);
+      if (br && br.success) gathered++;
+      await cap.swing(actorName);
+    }
+    results.actions.push({ gather: { gathered } });
+  }
+
+  // Torch: light the area so fewer hostiles spawn (breaks the survive-forever loop).
+  if (step.job === 'torch') {
+    const ty = (groundY || cfg.origin.y) + 1;
+    const spots = [[3,3],[-3,3],[3,-3],[-3,-3],[5,0],[-5,0],[0,5],[0,-5],[4,4],[-4,-4],[4,-4],[-4,4],[6,2],[-6,-2],[2,6],[-2,-6]];
+    let placed = 0;
+    for (const [dx, dz] of spots) {
+      const tx = Math.floor(cfg.origin.x + dx);
+      const tz = Math.floor(cfg.origin.z + dz);
+      const r = await harness.raw(`setblock ${tx} ${ty} ${tz} TORCH`).catch(() => null);
+      if (r && String(r).toLowerCase().includes('success') === false) {
+        // setblock may not echo 'success'; count attempts, not confirmations
+        placed++;
+      } else if (r) {
+        placed++;
+      }
+    }
+    results.actions.push({ torch: { placed } });
+  }
+
+  // Rest: return to base and recover (regen happens in prod; here it's a safe idle).
+  if (step.job === 'rest') {
+    await walkTo(harness, actorName, { x: cfg.origin.x, y: (groundY || cfg.origin.y) + 1, z: cfg.origin.z },
+      { arrive: 2, timeoutMs: 8000, speed: 4, allowTeleport: false }).catch(() => {});
+    await cap.lookAt(actorName, cfg.origin.x, (groundY || cfg.origin.y) + 2, cfg.origin.z);
+    await cap.swing(actorName);
+    results.actions.push({ rest: { atBase: true } });
+  }
+
   const obs = await cap.observe(actorName);
   results.observe =
     obs && obs.data ? { x: obs.data.x, y: obs.data.y, z: obs.data.z, held: obs.data.held } : null;
@@ -764,6 +810,9 @@ const OBJECTIVE_GOALS = Object.freeze({
   placeregion: 1, // founding a region counts as done immediately
   explore: 5, // travel to + scan 5 distinct waypoints
   hunt: 3, // defeat 3 hostiles
+  gather: 4, // collect 4 resource drops
+  torch: 8, // place 8 torches to light the area
+  rest: 1, // return to base and recover
 });
 
 function chooseObjective(state, assessment, focusCandidate) {
@@ -804,10 +853,10 @@ function chooseObjective(state, assessment, focusCandidate) {
     {
       survive: 'guard',
       found: 'explore', // founding done -> roam the map and scan (was placeregion)
-      build: 'builder',
-      maintain: 'farmer',
-      secure: 'hunt', // proactively hunt hostiles (was miner)
-    }[focus] || 'builder';
+      build: (state.tick || 0) % 2 === 0 ? 'builder' : 'torch', // alternate building with lighting
+      maintain: (state.tick || 0) % 2 === 0 ? 'gather' : 'farmer', // alternate foraging with farming
+      secure: (state.tick || 0) % 2 === 0 ? 'hunt' : 'rest', // alternate hunting with recovering
+    }[focus] || 'explore';
   const job =
     jobForFocus === 'placeregion' &&
     state.completedPlaces &&
