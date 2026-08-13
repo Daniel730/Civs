@@ -8,6 +8,7 @@ const { SpectatorCamera } = require('../lib/camera');
 const { CinematicDirector, ObservationDirector, ViewerFollowLoop } = require('../lib/observation');
 const {
   nextJob,
+  nextPlaceAttempt,
   workCoords,
   SITES,
   siteForJob,
@@ -845,14 +846,25 @@ function chooseObjective(state, assessment, focusCandidate) {
     return { job: 'torch', focus: 'survive', reason: 'ollama_survive_torch', committed: true };
   }
   // Build-for-growth: once the settlement is established, the village must KEEP GROWING or the
-  // agent looks "burro" (explores/torches forever, completedPlaces frozen at 3). When we are
-  // safe, lit, and no hostile is near, bias toward BUILD so structures actually get placed.
-  // Without this, the LLM brain almost never self-selects 'build' and the village never expands.
+  // agent looks "burro" (explores/torches forever, completedPlaces frozen at 3). When safe,
+  // no hostile, not dark — found the NEXT unbuilt Civs region via placeregion (the only path
+  // that actually increments completedPlaces and grows the village). Fall back to builder
+  // (decorative blocks) only if every region type is already done/blocked.
   const established = Object.keys(state.completedPlaces || {}).length >= 3;
   if (established && (surv === 'SAFE' || surv === 'CAUTION') && !threatNear && !dark) {
-    // Build on ~60% of eligible ticks; the rest let the brain's focus (maintain/explore) play.
-    if ((state.tick || 0) % 5 !== 0) {
-      return { job: 'builder', focus: 'build', reason: 'growth:established_build', committed: false };
+    const attempt = nextPlaceAttempt(state);
+    if (attempt) {
+      return {
+        job: 'placeregion',
+        focus: 'build',
+        type: attempt.type,
+        site: attempt.site,
+        dx: attempt.dx,
+        dz: attempt.dz,
+        stockpile: attempt.stockpile,
+        reason: 'growth:found_next_region',
+        committed: false,
+      };
     }
   }
   // Keep the current objective until it makes enough meaningful progress, REGARDLESS of
@@ -1500,6 +1512,15 @@ async function main() {
       const siteKey = siteForJob(objective.job, state.tick);
       step.site = siteKey;
       Object.assign(step, SITES[siteKey]);
+      // Carry founding metadata (placeregion type/dx/dz/stockpile) from chooseObjective so the
+      // village actually grows (completedPlaces increments). On non-11 ticks nextJob omits these.
+      if (objective.type) {
+        step.type = objective.type;
+        step.dx = objective.dx;
+        step.dz = objective.dz;
+        step.stockpile = objective.stockpile;
+        if (objective.site) step.site = objective.site;
+      }
       log({
         status: 'PASS',
         action: 'objective_commit',
