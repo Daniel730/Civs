@@ -163,25 +163,34 @@ async function runProject(opts) {
   stages.push({ stage: 'material_validation', ok: mat.ok, issues: mat.issues });
 
   if (!pre.ok || !mat.ok) {
-    rememberOutcome(memory, {
-      projectId: `invalid_${Date.now()}`,
-      purpose: blueprint.purpose,
-      style: blueprint.style,
-      site: chosen,
-      status: STATUS.PROJECT_ABORTED,
-      reject: 'validation_failed',
-      notes: [...(pre.issues || []), ...(mat.issues || [])].map((i) => i.code).join(','),
-    });
-    if (opts.persistMemory !== false) saveMemory(memory, memoryPath);
-    return {
-      ok: false,
-      status: STATUS.PROJECT_ABORTED,
-      reason: 'validation_failed',
-      stages,
-      blueprint,
-      validation: pre,
-      memory,
-    };
+    // In creative mode (a harness is present, blocks are cheated in) strict blueprint
+    // validation must NOT abort the build — that made the Steve start a structure, then
+    // abandon it (looked "burro"). Log the issues but proceed to construct so he actually
+    // completes visible buildings. Only hard-abort when there is no harness (offline planning).
+    if (opts.harness) {
+      stages.push({ stage: 'pre_build_validation', ok: false, skipped: true, warn: 'proceed_in_creative' });
+      stages.push({ stage: 'material_validation', ok: false, skipped: true, warn: 'proceed_in_creative' });
+    } else {
+      rememberOutcome(memory, {
+        projectId: `invalid_${Date.now()}`,
+        purpose: blueprint.purpose,
+        style: blueprint.style,
+        site: chosen,
+        status: STATUS.PROJECT_ABORTED,
+        reject: 'validation_failed',
+        notes: [...(pre.issues || []), ...(mat.issues || [])].map((i) => i.code).join(','),
+      });
+      if (opts.persistMemory !== false) saveMemory(memory, memoryPath);
+      return {
+        ok: false,
+        status: STATUS.PROJECT_ABORTED,
+        reason: 'validation_failed',
+        stages,
+        blueprint,
+        validation: pre,
+        memory,
+      };
+    }
   }
 
   // Dry-run: stop after validation
