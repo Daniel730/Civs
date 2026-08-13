@@ -128,13 +128,20 @@ function extractJSON(text) {
 }
 
 // Load the offline-trained weights written by scripts/aiworld-train.js
-// (shape: { context: { intent: bias } }, contexts like SAFE/DANGER/CAUTION...).
+// (shape: { version, bias: { context: { intent: bias } }, ... }). aiworld-train nests the
+// per-context intents under `bias`, so normalize to a { context: { intent: bias } } map.
 // Returns {} on any failure — learning is best-effort and never breaks the brain.
 function loadWeights(path) {
   try {
     const raw = fs.readFileSync(path, 'utf8');
     const w = JSON.parse(raw);
-    return w && typeof w === 'object' ? w : {};
+    if (!w || typeof w !== 'object') return {};
+    // Preferred shape from aiworld-train.js: contexts live under `bias`.
+    if (w.bias && typeof w.bias === 'object') return w.bias;
+    // Backward-compat: flat { SAFE: {...}, DANGER: {...} } at top level.
+    const ctxKeys = Object.keys(w).filter((k) => /^(SAFE|DANGER|CAUTION|ESCAPE|RECOVER|DEFAULT)$/i.test(k));
+    if (ctxKeys.length) return w;
+    return {};
   } catch (_) {
     return {};
   }
