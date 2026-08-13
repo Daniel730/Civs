@@ -1,207 +1,115 @@
 #!/usr/bin/env node
 /**
- * AI World — OFFLINE TRAINING STEP (LIVE ≠ TRAIN).
+ * aiworld-train.js — OFFLINE training step that closes the AI World learning loop.
  *
- * Reads the experience dataset (reports/aiworld-experiences/*.jsonl), aggregates
- * reward evidence per (context -> intent), and writes a small, explainable weights
- * artifact that the live NeuralPolicy loads at startup.
+ * The live server only RECORDS experiences (ExperienceStore) + INFERS from weights
+ * (NeuralPolicy). This script reads the recorded dataset (JSONL) and writes a small
+ * explainable weights artifact that NeuralPolicy loads at startup. So the more Steve
+ * plays, the more experiences accumulate, and re-running this step makes his policy
+ * better — that is "learn in the process".
  *
- * This is NOT reinforcement learning. It is a dependency-free contextual-bandit /
- * preference learner: which intent tended to produce better outcomes in which
- * survival context, based on the rewards the running server already collected.
+ * Model (matches NeuralPolicy.linearScore):
+ *   neuralScore(intent) = base + bias[context][intent]
+ * where bias[ctx][intent] = clamp( avgReward(ctx,intent) - globalAvgReward, -1, 1 ).
+ * Intents that yielded above-average reward in a context get a positive boost there.
  *
  * Usage:
- *   node scripts/aiworld-train.js [--agent Steve|Alex|shared] [--minN 5] [--out <dir>]
- *
- * Output:
- *   reports/aiworld-weights/weights-<agent>.json   (or weights-shared.json)
- *   { version, trainedAt, contexts, bias: { [ctx]: { [intent]: number } }, default, stats }
- *
- * Safety: never writes weights if a context/intent has fewer than --minN samples
- * (avoids overfitting to noise). Missing/corrupt data is skipped, never throws.
+ *   node scripts/aiworld-train.js [--dir <experiences-dir>] [--out <weights.json>] [--min-count N]
  */
-
 const fs = require('fs');
 const path = require('path');
 
 const ROOT = path.join(__dirname, '..');
-const EXP_DIR = path.join(ROOT, 'reports', 'aiworld-experiences');
-const DEFAULT_OUT = path.join(ROOT, 'reports', 'aiworld-weights');
+const DEFAULT_EXP_DIR = path.join(ROOT, 'reports', 'aiworld-experiences');
+const DEFAULT_OUT = path.join(ROOT, 'reports', 'aiworld-weights', 'weights-shared.json');
+const MIN_COUNT = 3; // ignore contexts/intents with too few samples (noise)
 
 function parseArgs(argv) {
-  const a = { agent: 'shared', minN: 5, out: DEFAULT_OUT };
-  for (let i = 2; i < argv.length; i++) {
-    const t = argv[i];
-    if (t === '--agent') a.agent = argv[++i] || a.agent;
-    else if (t === '--minN') a.minN = Number(argv[++i]) || a.minN;
-    else if (t === '--out') a.out = argv[++i] || a.out;
+  const a = { dir: DEFAULT_EXP_DIR, out: DEFAULT_OUT, minCount: MIN_COUNT };
+  for (let i = 0; i < argv.length; i++) {
+    if (argv[i] === '--dir') a.dir = argv[++i];
+    else if (argv[i] === '--out') a.out = argv[++i];
+    else if (argv[i] === '--min-count') a.minCount = Number(argv[++i]) || MIN_COUNT;
   }
   return a;
 }
 
-function readExperiences() {
-  if (!fs.existsSync(EXP_DIR)) return [];
-  const rows = [];
-  for (const f of fs.readdirSync(EXP_DIR)) {
-    if (!f.endsWith('.jsonl')) continue;
-    const full = path.join(EXP_DIR, f);
-    for (const line of fs.readFileSync(full, 'utf8').split('\n')) {
-      const s = line.trim();
-      if (!s) continue;
+function loadExperiences(dir) {
+  if (!fs.existsSync(dir)) return [];
+  const files = fs.readdirSync(dir).filter((f) => f.endsWith('.jsonl'));
+  const out = [];
+  for (const f of files) {
+    const lines = fs.readFileSync(path.join(dir, f), 'utf8').split('\n');
+    for (const ln of lines) {
+      if (!ln.trim()) continue;
       try {
-        const e = JSON.parse(s);
-        // Accept experiences that at least have a state representation (decision recorded).
-        // Outcome may be attached later by the worker; training uses whatever is present.
-        if (e && e.schema === 'aiworld.experience' && e.stateRep && e.stateRep.vec) rows.push(e);
-      } catch (_) {
-        /* skip malformed line */
-      }
+        const e = JSON.parse(ln);
+        if (e && e.outcome && typeof e.outcome.reward === 'number') out.push(e);
+      } catch (_) { /* skip bad line */ }
     }
   }
-  return rows;
+  return out;
 }
 
-/**
- * Extract the survival context from an experience record.
- * Prefers e.survivalState (top-level field written by worker), then e.context.survival,
- * then falls back to the 'survival_state' column of stateRep.vec (for old records).
- * Returns 'SAFE' as the default if nothing found.
- */
-function contextOf(e) {
-  // Top-level survivalState written by village-worker (modern records, after persistence fix)
-  if (e.survivalState) return String(e.survivalState).toUpperCase();
-  if (e.context && e.context.survival) return String(e.context.survival).toUpperCase();
-  try {
-    const rep = e.stateRep;
-    const fields = rep.fields || [];
-    const idx = fields.indexOf('survival_state');
-    if (idx >= 0 && Array.isArray(rep.vec)) {
-      const v = rep.vec[idx];
-      if (typeof v === 'string') return v.toUpperCase();
-      // numeric encoding: 0=SAFE,1=CAUTION,2=DANGER,3=RECOVER,4=ESCAPE (see state-rep)
-      const map = ['SAFE', 'CAUTION', 'DANGER', 'RECOVER', 'ESCAPE'];
-      if (Number.isFinite(v)) return map[Math.round(v)] || 'SAFE';
-    }
-    // Derive from survival flags already encoded in the vec (old records without survival_state column):
-    // fields order: health_pct(0)..danger_flag(5), escape_flag(6), recover_flag(7)..
-    const getf = (name) => {
-      const i = fields.indexOf(name);
-      return i >= 0 && Array.isArray(rep.vec) ? rep.vec[i] : null;
-    };
-    const danger = getf('danger_flag');
-    const escape = getf('escape_flag');
-    const recover = getf('recover_flag');
-    if (escape === 1) return 'ESCAPE';
-    if (recover === 1) return 'RECOVER';
-    if (danger === 1) return 'DANGER';
-  } catch (_) {
-    /* ignore */
-  }
-  return 'SAFE';
-}
-
-/**
- * Aggregate reward by (context, intent).
- * Context = survivalState of the decision (SAFE/DANGER/RECOVER/CAUTION/...).
- * Intent = chosenIntent (the focus the worker actually executed).
- * Reward = outcome.reward (already computed by state-rep.computeReward).
- */
-function aggregate(rows, minN) {
-  // per-context: intent -> { sum, n, deathN, goalN }
-  const ctxMap = {};
-  let usable = 0;
-  for (const e of rows) {
-    const ctx = contextOf(e);
-    const intent = e.chosenIntent || (e.action && e.action.intent);
-    // Reward: prefer recorded outcome; if absent, this decision has no learning signal yet.
-    const r = e.outcome && typeof e.outcome.reward === 'number' ? e.outcome.reward : null;
+function train(exps, minCount) {
+  // Accumulate (ctx, intent) -> {sum, n}
+  const acc = {};
+  let totalSum = 0, totalN = 0;
+  for (const e of exps) {
+    const ctx = String(e.survivalState || e.context || 'SAFE').toUpperCase();
+    const intent = e.chosenIntent || e.action || e.focus || null;
     if (!intent) continue;
-    if (!ctxMap[ctx]) ctxMap[ctx] = {};
-    if (!ctxMap[ctx][intent]) ctxMap[ctx][intent] = { sum: 0, n: 0, deathN: 0, goalN: 0, rated: 0 };
-    const cell = ctxMap[ctx][intent];
-    if (r !== null) {
-      cell.sum += r;
-      cell.rated += 1;
-      if (e.outcome.died) cell.deathN += 1;
-      if (e.outcome.goalCompleted) cell.goalN += 1;
-    }
-    cell.n += 1; // decisions recorded (even without outcome yet)
-    usable += 1;
+    const r = Number(e.outcome.reward);
+    if (!Number.isFinite(r)) continue;
+    acc[ctx] = acc[ctx] || {};
+    acc[ctx][intent] = acc[ctx][intent] || { sum: 0, n: 0 };
+    acc[ctx][intent].sum += r;
+    acc[ctx][intent].n += 1;
+    totalSum += r;
+    totalN += 1;
   }
-
-  // Convert per-context sums into bias adjustments.
-  // bias[intent] = (meanReward_thisIntent - meanReward_allIntentsInCtx), clamped.
-  // This is a mean-centering preference shift: intents that beat the context average
-  // get a positive nudge; those that underperform get a negative nudge.
+  const globalAvg = totalN ? totalSum / totalN : 0;
   const bias = {};
-  const stats = { contexts: 0, intents: 0, usableSamples: usable, ratedSamples: 0, ratedByIntent: {}, rewardByIntent: {} };
-  for (const ctx of Object.keys(ctxMap)) {
-    const intents = ctxMap[ctx];
-    let totalSum = 0, totalRated = 0;
-    for (const it of Object.keys(intents)) {
-      totalSum += intents[it].sum;
-      totalRated += intents[it].rated;
+  let ctxsWithData = 0;
+  for (const ctx of Object.keys(acc)) {
+    bias[ctx] = bias[ctx] || {};
+    let ctxHasEnough = false;
+    for (const intent of Object.keys(acc[ctx])) {
+      const { sum, n } = acc[ctx][intent];
+      if (n < minCount) continue;
+      const avg = sum / n;
+      const b = Math.max(-1, Math.min(1, avg - globalAvg));
+      bias[ctx][intent] = Math.round(b * 1000) / 1000;
+      ctxHasEnough = true;
     }
-    const grandMean = totalRated > 0 ? totalSum / totalRated : 0;
-    stats.ratedSamples += totalRated; // accumulate across contexts (was overwritten per-ctx)
-    bias[ctx] = {};
-    for (const it of Object.keys(intents)) {
-      const c = intents[it];
-      // A4: reward distribution + closure rate per intent (not just a flat count)
-      if (!stats.ratedByIntent[it]) stats.ratedByIntent[it] = 0;
-      stats.ratedByIntent[it] += c.rated;
-      if (!stats.rewardByIntent[it]) stats.rewardByIntent[it] = 0;
-      stats.rewardByIntent[it] = Number((stats.rewardByIntent[it] + c.sum).toFixed(3));
-      if (c.rated < minN) continue; // insufficient EVIDENCE (rated samples) — skip (no bias)
-      const mean = c.sum / c.rated;
-      let delta = mean - grandMean;
-      // clamp the learned adjustment to a safe range so it can only nudge, never dominate
-      delta = Math.max(-1, Math.min(1, delta));
-      // also discount by confidence: small n -> smaller nudge
-      const conf = Math.min(1, c.rated / (minN * 2));
-      bias[ctx][it] = Number((delta * (0.5 + 0.5 * conf)).toFixed(4));
-      stats.intents += 1;
-    }
-    if (Object.keys(bias[ctx]).length === 0) delete bias[ctx];
-    else stats.contexts += 1;
+    if (ctxHasEnough) ctxsWithData++;
   }
-  return { bias, stats };
+  const weights = {
+    version: 1,
+    trainedAt: new Date().toISOString(),
+    samples: totalN,
+    globalAvgReward: Math.round(globalAvg * 1000) / 1000,
+    default: 0,
+    bias,
+  };
+  return { weights, ctxsWithData, totalN };
 }
 
 function main() {
-  const args = parseArgs(process.argv);
-  const rows = readExperiences();
-  console.log(`[aiworld-train] read ${rows.length} experience records`);
-  if (rows.length === 0) {
-    console.log('[aiworld-train] no experiences yet — run the worker to collect a dataset first.');
+  const a = parseArgs(process.argv.slice(2));
+  const exps = loadExperiences(a.dir);
+  if (!exps.length) {
+    console.log(`[train] no experiences with outcomes in ${a.dir} — nothing to learn yet.`);
     process.exit(0);
   }
-  const { bias, stats } = aggregate(rows, args.minN);
-  if (stats.contexts === 0) {
-    console.log(`[aiworld-train] insufficient samples (<${args.minN}) per context — no weights written.`);
-    console.log('[aiworld-train] keep running the worker to collect more experiences, then re-run this step.');
-    process.exit(0);
-  }
-  const artifact = {
-    version: 1,
-    trainedAt: new Date().toISOString(),
-    agent: args.agent,
-    minN: args.minN,
-    bias,
-    default: 0,
-    stats,
-  };
-  if (!fs.existsSync(args.out)) fs.mkdirSync(args.out, { recursive: true });
-  const outFile =
-    args.agent === 'shared'
-      ? path.join(args.out, 'weights-shared.json')
-      : path.join(args.out, `weights-${args.agent}.json`);
-  fs.writeFileSync(outFile, JSON.stringify(artifact, null, 2));
-  console.log(`[aiworld-train] wrote weights -> ${outFile}`);
-  console.log(`[aiworld-train] stats: ${stats.contexts} context(s), ${stats.intents} intent bias(es), ${stats.usableSamples} usable samples`);
-  console.log('[aiworld-train] live server will load these on next start (AIWORLD_POLICY=neural|shadow).');
+  const { weights, ctxsWithData, totalN } = train(exps, a.minCount);
+  fs.mkdirSync(path.dirname(a.out), { recursive: true });
+  fs.writeFileSync(a.out, JSON.stringify(weights, null, 2));
+  console.log(`[train] wrote ${a.out}`);
+  console.log(`[train] samples=${totalN} contexts_with_data=${ctxsWithData} globalAvgReward=${weights.globalAvgReward}`);
+  console.log('[train] bias=', JSON.stringify(weights.bias));
+  process.exit(0);
 }
 
-// Export internals for unit testing; only run main() when invoked as a CLI script.
-module.exports = { readExperiences, contextOf, aggregate, parseArgs };
 if (require.main === module) main();
+module.exports = { train, loadExperiences };
