@@ -899,11 +899,16 @@ function chooseObjective(state, assessment, focusCandidate) {
       survive: 'hunt', // actively fight nearby mobs (progress via hunt goal) instead of standing guard forever
       found: 'explore', // founding done -> roam the map and scan (was placeregion)
       build: (state.tick || 0) % 2 === 0 ? 'builder' : 'torch', // alternate building with lighting
-      maintain: (state.tick || 0) % 2 === 0 ? 'gather' : 'farmer', // alternate foraging with farming
+      // maintain rotates across ALL the productive village jobs (gather/farm/miner/lumberjack)
+      // so the Steve actually exercises the full Minecraft loop (forage, farm, dig stone/ore, chop wood)
+      // instead of just farming forever.
+      maintain: ['gather', 'farmer', 'miner', 'lumberjack'][(state.tick || 0) % 4],
       secure: (state.tick || 0) % 2 === 0 ? 'hunt' : 'rest', // alternate hunting with recovering
       explore: 'explore', // roam + scan the map
       hunt: 'hunt', // seek and defeat hostiles
       gather: 'gather', // forage wood/stone/food
+      miner: 'miner', // dig the quarry for stone/ore (core Minecraft resource loop)
+      lumberjack: 'lumberjack', // chop wood for building materials
       torch: 'torch', // light the area to suppress spawns
       rest: 'rest', // return to base and recover
     }[focus] || 'explore';
@@ -1381,7 +1386,10 @@ async function main() {
       // for comparison but the deterministic focus still executes. Any fault falls back to the
       // deterministic focus (never crashes, never overrides a broken model).
       let effectiveFocus = focusCandidate;
-      const aiwMode = (process.env.AIWORLD_POLICY || 'deterministic').toLowerCase();
+      // Default to the Ollama local-LLM brain (Dan wants the Steve autonomous + intelligent).
+      // Only an explicit 'deterministic' / 'neural' / 'shadow' env overrides it. A missing/lost
+      // AIWORLD_POLICY env must NOT silently drop the brain back to the dumb deterministic path.
+      const aiwMode = (process.env.AIWORLD_POLICY || 'ollama').toLowerCase();
       if (process.env.AIWORLD_DEBUG) {
         console.log('[ollama-debug] aiwMode=' + aiwMode + ' policyEnv=' + process.env.AIWORLD_POLICY);
       }
@@ -1482,7 +1490,7 @@ async function main() {
       // farming/exploring/torching forever — leaving completedPlaces stuck (the "burro" bug).
       // Only rotate non-build foci; a build decision is respected as-is.
       if ((assessment.state === 'SAFE' || assessment.state === 'CAUTION') && effectiveFocus.focus !== 'build') {
-        const RICH = ['explore', 'hunt', 'gather', 'torch', 'rest', 'maintain'];
+        const RICH = ['explore', 'hunt', 'gather', 'torch', 'rest', 'maintain', 'miner', 'lumberjack'];
         // TENURE: hold a focus for N ticks before rotating. Flipping every tick reset objective
         // progress each loop -> the Steve never finished a goal (goal_completed ~0). With a
         // tenure, the same job/site runs repeatedly and reaches OBJECTIVE_GOALS, so he
