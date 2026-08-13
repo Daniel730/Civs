@@ -1025,36 +1025,57 @@ async function main() {
   const cooperation = hermesBridge.cooperation;
 
   await sleep(2500);
-  const camera = new SpectatorCamera({
-    harness,
-    host: cfg.mcHost,
-    port: cfg.mcPort,
-    name: cfg.cameraName,
-    version: cfg.version,
-    targetName: cfg.actorName,
-  });
-  // The camera (spectator Cam) must NEVER block the core work loop. If it can't log in
-  // (no client / server unreachable), camera.start() may hang forever — race it against a
-  // timeout and proceed in degraded mode so Steve keeps working autonomously.
+  // The camera (spectator Cam) must NEVER block the core work loop. Both the SpectatorCamera
+  // *constructor* (it connects to the MC server as Cam) and camera.start() can hang forever when
+  // the spectator account can't log in / server unreachable. Race the whole setup against a timeout
+  // and proceed headless on ANY failure so Steve keeps working autonomously.
   const withTimeout = (p, ms, label) =>
     Promise.race([
       p,
       new Promise((res) => setTimeout(() => res({ status: 'TIMEOUT', reason: label + '_timeout' }), ms)),
     ]);
-  let camStart = await withTimeout(camera.start(), 20000, 'camera_start');
-  if (camStart.status !== 'PASS' && camStart.status !== 'TIMEOUT') {
-    await sleep(3000);
-    camStart = await withTimeout(camera.start(), 20000, 'camera_start_retry');
+  let camera = null;
+  let camStart = { status: 'BLOCKED', reason: 'camera_setup_skipped' };
+  try {
+    camera = await withTimeout(
+      (async () => {
+        const cam = new SpectatorCamera({
+          harness,
+          host: cfg.mcHost,
+          port: cfg.mcPort,
+          name: cfg.cameraName,
+          version: cfg.version,
+          targetName: cfg.actorName,
+        });
+        const s = await withTimeout(cam.start(), 20000, 'camera_start');
+        return { cam, s };
+      })(),
+      25000,
+      'camera_setup'
+    );
+    if (camera && camera.cam && camera.s && camera.s.status === 'PASS') {
+      camera = camera.cam;
+      camStart = camera.s;
+    } else {
+      camera = null;
+      const reason = (camera && camera.s && camera.s.reason) || 'camera_start_failed';
+      camStart = { status: 'BLOCKED', reason };
+    }
+  } catch (_) {
+    camera = null;
+    camStart = { status: 'BLOCKED', reason: 'camera_setup_exception' };
   }
-  if (camStart.status === 'TIMEOUT' || camStart.status !== 'PASS') {
-    camStart = { status: 'BLOCKED', reason: (camStart && camStart.reason) || 'camera_start_failed' };
+  // Hard safety net: guarantee camStart is a valid object so the observation/director
+  // selection below can never crash on `camStart.status`.
+  if (!camStart || typeof camStart.status !== 'string') {
+    camStart = { status: 'BLOCKED', reason: (camStart && camStart.reason) || 'camStart_normalized' };
   }
-  log({ status: camStart.status, action: 'camera_start', ...camStart });
-  if (camStart.status !== 'PASS') {
+  log({ status: (camStart && camStart.status) || 'BLOCKED', action: 'camera_start', ...(camStart || {}) });
+  if ((camStart && camStart.status) !== 'PASS') {
     log({
       status: 'BLOCKED',
       action: 'camera_required',
-      reason: camStart.reason || 'camera_start_failed',
+      reason: (camStart && camStart.reason) || 'camera_start_failed',
     });
     // Do NOT exit — the loop can run without camera (degraded mode).
     // The camera is used for observation/cinematic, not for the core work loop.
