@@ -29,7 +29,9 @@ const harness = new Harness({
     process.exit(1);
   }
   console.log('[steve-chat] RCON connected. Listening on', chatFile);
-  startChatListener({ harness, chatInFile: chatFile, actorName: 'Steve', pollMs: 500 });
+  // useSay=true => Steve replies via `say Steve: <reply>` (broadcast, visible to all players
+  // in chat). tell Steve would send the reply only to Steve himself (invisible to Dan).
+  startChatListener({ harness, chatInFile: chatFile, actorName: 'Steve', pollMs: 500, useSay: true });
 })().catch((e) => {
   console.log('[steve-chat] fatal:', e && e.message);
   process.exit(1);
