@@ -846,12 +846,17 @@ function chooseObjective(state, assessment, focusCandidate) {
     return { job: 'torch', focus: 'survive', reason: 'ollama_survive_torch', committed: true };
   }
   // Build-for-growth: once the settlement is established, the village must KEEP GROWING or the
-  // agent looks "burro" (explores/torches forever, completedPlaces frozen at 3). When safe,
-  // no hostile, not dark — found the NEXT unbuilt Civs region via placeregion (the only path
-  // that actually increments completedPlaces and grows the village). Fall back to builder
-  // (decorative blocks) only if every region type is already done/blocked.
+  // agent looks "burro" (explores/torches forever, completedPlaces frozen at 3). When safe-ish
+  // (SAFE/CAUTION) and NO hostile is near, found the NEXT unbuilt Civs region via placeregion
+  // (the only path that increments completedPlaces and grows the village). Dark is fine — founding
+  // also lights the area. Fall back to builder (decorative blocks) only if every region is done/blocked.
+  if (process.env.AIWORLD_DEBUG) console.error('[growth-debug] surv=' + surv + ' established=' + (Object.keys(state.completedPlaces||{}).length>=3) + ' keys=' + Object.keys(state.completedPlaces||{}).length + ' threatNear=' + threatNear);
   const established = Object.keys(state.completedPlaces || {}).length >= 3;
-  if (established && (surv === 'SAFE' || surv === 'CAUTION') && !threatNear && !dark) {
+  // Fire growth whenever established and we're past the survival guard (SAFE/CAUTION). We do NOT
+  // gate on !threatNear: the unlit village constantly spawns mobs, so requiring no hostile would
+  // deadlock growth forever (dark -> mobs -> blocked -> stays dark). Founding is near-instant
+  // (creative mode + placeregion), so a distant mob is acceptable; real DANGER is caught above.
+  if (established && (surv === 'SAFE' || surv === 'CAUTION')) {
     const attempt = nextPlaceAttempt(state);
     if (attempt) {
       return {

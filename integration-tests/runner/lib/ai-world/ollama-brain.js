@@ -114,7 +114,7 @@ function buildPrompt(snapshot, systemPrompt) {
     `- memory:${remembered || ' nothing remembered yet'}\n` +
     `- currentFocus: ${snapshot.currentFocus || 'none'}\n` +
     `- completedPlaces: ${snapshot.completedPlaces || 0}\n` +
-    `- availableJobs: ${FOCUSES.join(', ')}\n`;
+    `- availableJobs: ${FOCUSES.join(', ')}}\n`;
   return [{ role: 'system', content: sys }, { role: 'user', content: snap }];
 }
 
@@ -175,6 +175,63 @@ function fallbackFocus(weights, survivalState) {
   return ranked.length ? ranked[0][0] : 'maintain';
 }
 
+// --- Anti-monotony / full-action-space driver -------------------------------------------
+// The Steve must exercise EVERYTHING Minecraft offers, not loop the same 2-3 foci. We track
+// the recently-chosen foci (module-level, per process) and, when survival allows, demote foci
+// done recently and promote ones the Steve hasn't tried — learned weights break ties. This is
+// what makes "fazer tudo" real and visible instead of "hunt/gather/explore forever".
+const _recentFoci = [];
+const RECENT_WINDOW = 6;
+
+function recordRecentFocus(focus) {
+  if (!focus) return;
+  _recentFoci.push(focus);
+  while (_recentFoci.length > RECENT_WINDOW) _recentFoci.shift();
+}
+
+/**
+ * Given the learned weights + survival context + recent foci, choose a focus that:
+ *  - respects survival (defensive foci win under threat),
+ *  - otherwise PREFERS a focus the Steve hasn't done lately (diversity),
+ *  - uses learned weights as the tie-breaker among equally-fresh candidates.
+ * @returns {string} focus
+ */
+function diversifyFocus(weights, survivalState, recent) {
+  const SURVIVAL_URGENT = survivalState === 'DANGER' || survivalState === 'ESCAPE' || survivalState === 'RECOVER';
+  const DEFENSIVE = ['survive', 'hunt', 'defend', 'flee', 'guard', 'patrol'];
+  const ctx = weights[survivalState] || weights.SAFE || weights.DEFAULT || {};
+  const rec = recent && recent.length ? recent : _recentFoci;
+
+  // Under threat, a defensive action is non-negotiable — don't diversify into danger.
+  if (SURVIVAL_URGENT) {
+    const def = FOCUSES.filter((f) => DEFENSIVE.includes(f));
+    const ranked = def
+      .map((f) => [f, ctx[f] || 0])
+      .sort((a, b) => b[1] - a[1]);
+    return ranked.length ? ranked[0][0] : 'hunt';
+  }
+
+  // Score each focus: learned weight MINUS a freshness penalty for recently-used foci.
+  const scored = FOCUSES.map((f) => {
+    const learned = ctx[f] || 0;
+    const recentCount = rec.filter((r) => r === f).length;
+    const freshnessPenalty = recentCount * 0.5; // strongly prefer unexplored foci
+    return { f, score: learned - freshnessPenalty };
+  });
+  scored.sort((a, b) => b.score - a.score);
+  return scored[0].f;
+}
+
+// Short diversity hint for the LLM prompt (so Ollama also avoids repeating itself).
+function diversityHint(recent) {
+  const rec = recent && recent.length ? recent : _recentFoci;
+  if (!rec.length) return '';
+  const counts = {};
+  rec.forEach((f) => (counts[f] = (counts[f] || 0) + 1));
+  const top = Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 3).map(([k]) => k);
+  return `\nRECENTLY DONE (avoid repeating): ${top.join(', ')}. Prefer a different useful focus to keep exercising the full skill set.`;
+}
+
 class OllamaBrain {
   constructor(opts = {}) {
     this.endpoint = opts.endpoint || DEFAULT_ENDPOINT;
@@ -221,10 +278,11 @@ class OllamaBrain {
       available = false;
     }
     if (!available) {
-      // Model down: apply learning offline — pick the best-weighted focus for this context.
+      // Model down: apply learning offline — pick the best-weighted focus for this context,
+      // biased toward diversity so the Steve keeps exercising the full skill set.
       const w = loadWeights(WEIGHTS_PATH);
-      const fb = fallbackFocus(w, snapshot.survivalState || 'SAFE');
-      return fb ? { focus: fb, reason: 'learned_fallback(offline)', target: null } : null;
+      const fb = diversifyFocus(w, snapshot.survivalState || 'SAFE');
+      return fb ? { focus: fb, reason: 'learned_diversify(offline)', target: null } : null;
     }
 
     // Lazy-load the offline-trained weights once per process (best-effort; {} if missing).
@@ -232,12 +290,15 @@ class OllamaBrain {
       this._weights = loadWeights(WEIGHTS_PATH);
     }
 
+    const survivalState = snapshot.survivalState || 'SAFE';
     const messages = buildPrompt(snapshot, this.systemPrompt);
     // Inject learned preferences into the user snapshot so the LLM is steered by its own
     // accumulated experience (closes the learning loop: experiences -> train -> brain bias).
-    const survivalState = snapshot.survivalState || 'SAFE';
     const bias = learnedBiasAppendix(this._weights, survivalState);
     if (bias) messages[1].content += bias;
+    // Inject the recently-done hint so the LLM avoids looping the same 2-3 foci.
+    const hint = diversityHint();
+    if (hint) messages[1].content += hint;
     // Hermes-* fine-tunes expect a LEGACY `prompt` (not chat `messages`); sending `messages`
     // makes them return done_reason:"load" with no output. Concatenate system+user into one
     // prompt string. Models that prefer chat still parse this fine.
@@ -251,14 +312,14 @@ class OllamaBrain {
       );
     } catch (_) {
       this._available = false;
-      // Model call failed mid-flight: still apply learning via the offline fallback.
-      const fb = fallbackFocus(this._weights, survivalState);
-      return fb ? { focus: fb, reason: 'learned_fallback(call_failed)', target: null } : null;
+      // Model call failed mid-flight: still apply learning + diversity via the offline path.
+      const fb = diversifyFocus(this._weights, survivalState);
+      return fb ? { focus: fb, reason: 'learned_diversify(call_failed)', target: null } : null;
     }
     if (!res || res.status !== 200) {
       this._available = false;
-      const fb = fallbackFocus(this._weights, survivalState);
-      return fb ? { focus: fb, reason: 'learned_fallback(bad_status)', target: null } : null;
+      const fb = diversifyFocus(this._weights, survivalState);
+      return fb ? { focus: fb, reason: 'learned_diversify(bad_status)', target: null } : null;
     }
 
     let parsed = null;
@@ -276,17 +337,33 @@ class OllamaBrain {
     } catch (_) {
       return null;
     }
+    let chosen;
     if (!parsed || !FOCUSES.includes(parsed.focus)) {
-      // Invalid focus from the model: prefer the learned fallback over a hard null.
-      const fb = fallbackFocus(this._weights, survivalState);
-      return fb ? { focus: fb, reason: 'learned_fallback(invalid_focus)', target: null } : null;
+      // Invalid focus from the model: prefer the learned+diversity fallback over a hard null.
+      chosen = diversifyFocus(this._weights, survivalState);
+      return chosen ? { focus: chosen, reason: 'learned_diversify(invalid_focus)', target: null } : null;
     }
+    chosen = parsed.focus;
+    // Remember this choice so future decisions diversify away from it (anti-monotony).
+    recordRecentFocus(chosen);
     return {
-      focus: parsed.focus,
+      focus: chosen,
       reason: parsed.reason || 'ollama',
       target: parsed.target != null ? parsed.target : null,
     };
   }
 }
 
-module.exports = { OllamaBrain, FOCUSES, extractJSON, buildPrompt, loadWeights, learnedBiasAppendix, fallbackFocus };
+module.exports = {
+  OllamaBrain,
+  FOCUSES,
+  extractJSON,
+  buildPrompt,
+  loadWeights,
+  learnedBiasAppendix,
+  fallbackFocus,
+  diversifyFocus,
+  recordRecentFocus,
+  diversityHint,
+  _recentFoci,
+};
