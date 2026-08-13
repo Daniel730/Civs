@@ -19,7 +19,7 @@ const fs = require('fs');
 
 const DEFAULT_ENDPOINT = process.env.OLLAMA_ENDPOINT || 'http://127.0.0.1:11434';
 const DEFAULT_MODEL = process.env.OLLAMA_MODEL || 'civs-brain';
-const TIMEOUT_MS = Number(process.env.OLLAMA_TIMEOUT_MS || 8000);
+const TIMEOUT_MS = Number(process.env.OLLAMA_TIMEOUT_MS || 60000);
 // Where scripts/aiworld-train.js writes the offline-learned weights (closed learning loop).
 const WEIGHTS_PATH =
   process.env.AIWORLD_WEIGHTS_PATH ||
@@ -304,16 +304,21 @@ class OllamaBrain {
     return postJSON(this.endpoint, path, payload, timeoutMs);
   }
 
-  /** True if Ollama answers a lightweight ping. Cached until a failure flips it. */
+  /** True if Ollama answers a lightweight ping. Cached, but a FAILED check is only cached for a
+   *  short cooldown (AVAIL_RECHECK_MS) — NOT forever — so a single transient Ollama blip cannot
+   *  permanently disable the brain. Without this, one slow/failed call set _available=false and the
+   *  Steve fell back to the dumb deterministic diversify FOREVER (the "still burro" symptom). */
   async isAvailable() {
-    if (this._available !== null) return this._available;
+    const now = Date.now();
+    if (this._available === true) return true;
+    if (this._available === false && now - (this._availableAt || 0) < 30000) return false;
     try {
-      // /api/tags is a GET endpoint; Ollama returns 405 on POST, which would wrongly mark the
-      // brain unavailable. Use GET so availability detection is correct.
       const r = await getJSON(this.endpoint, '/api/tags', Math.min(5000, this.timeoutMs));
       this._available = r.status === 200;
+      this._availableAt = now;
     } catch (_) {
       this._available = false;
+      this._availableAt = now;
     }
     return this._available;
   }
@@ -371,9 +376,14 @@ class OllamaBrain {
     }
     if (!res || res.status !== 200) {
       this._available = false;
+      this._availableAt = Date.now();
       const fb = diversifyFocus(this._weights, survivalState);
       return fb ? { focus: fb, reason: 'learned_diversify(bad_status)', target: null } : null;
     }
+    // Successful Ollama call — mark the brain available again so it recovers immediately
+    // (no need to wait out the availability cooldown).
+    this._available = true;
+    this._availableAt = Date.now();
 
     let parsed = null;
     try {
