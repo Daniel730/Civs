@@ -20,7 +20,7 @@ const DEFAULT_ENDPOINT = process.env.OLLAMA_ENDPOINT || 'http://localhost:11434'
 const DEFAULT_MODEL = process.env.OLLAMA_MODEL || 'civs-brain';
 const TIMEOUT_MS = Number(process.env.OLLAMA_TIMEOUT_MS || 8000);
 
-const FOCUSES = ['survive', 'found', 'build', 'maintain', 'secure'];
+const FOCUSES = ['survive', 'found', 'build', 'maintain', 'secure', 'explore', 'hunt', 'gather', 'torch', 'rest'];
 
 function postJSON(endpoint, path, payload, timeoutMs) {
   return new Promise((resolve, reject) => {
@@ -69,14 +69,18 @@ function buildPrompt(snapshot, systemPrompt) {
     systemPrompt ||
     'You are an autonomous Minecraft villager. You must PLAY with purpose, not loop meaninglessly. ' +
       'Priority: survival above all. Given the world snapshot, choose ONE focus from ' +
-      '[survive, found, build, maintain, secure]. ' +
+      '[survive, found, build, maintain, secure, explore, hunt, gather, torch, rest]. ' +
       'Respond ONLY with JSON: {"focus":"...","reason":"...","target":null|"<concrete place or action>"}. ' +
       'Rules to AVOID stupidity: ' +
       '(1) ONLY flee (focus survive) when a HOSTILE is actually NEAR (nearestHostile distance < 12) or you are taking damage RIGHT NOW. Dying in the past (deaths high) or being in the dark is NOT an emergency by itself. ' +
-      '(2) If it is dark (lightLevel <=7) but NO hostile is near, WORK anyway: choose build/maintain and light up / repair / farm with a torch. Do not stand still. ' +
+      '(2) If it is dark (lightLevel <=7) but NO hostile is near, WORK anyway: choose torch (light the area) or build/maintain. Do not stand still. ' +
       '(3) If deathsHere is high, do NOT repeat the same spot — when you work, pick a DIFFERENT site than where you died, and prefer building shelter/lighting over mining there. ' +
-      '(4) If you are SAFE and lit, maintain the settlement (farm, repair, build). ' +
+      '(4) If you are SAFE and lit, maintain the settlement (farm, repair, build) OR gather resources OR explore new ground — vary your focus so you do not loop one task. ' +
       '(5) NEVER oscillate: if your last focus failed, pick a DIFFERENT focus this time. ' +
+      '(6) When a hostile is within ~20 blocks, choose hunt (go find and defeat it) instead of just guarding. ' +
+      '(7) When food/hunger is low or you have no resources, choose gather (forage wood/stone/food). ' +
+      '(8) When health is low but no hostile is near, choose rest (return to base and recover) rather than risking a fight. ' +
+      '(9) When the settlement is established and you are safe, choose explore to discover new terrain and scan for threats/resources.' +
       'When you survive, set target to a safe lit place AWAY from where you died (e.g. a lit hilltop), not the same death spot.';
       'Be concrete: target should name where to go or what to do when you can.';
   const wm = snapshot.worldMemory || {};

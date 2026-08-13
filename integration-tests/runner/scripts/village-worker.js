@@ -828,11 +828,16 @@ function chooseObjective(state, assessment, focusCandidate) {
   // otherwise the agent would get stuck standing still "guarding" forever (the burro bug).
   const threatNear = Array.isArray(assessment.threats) &&
     assessment.threats.includes('hostile_nearby');
-  if (focusCandidate.focus === 'survive' && threatNear) {
-    return { job: 'guard', focus: 'survive', reason: 'ollama_survive_threat', committed: true };
-  }
-
   const cur = state.objective;
+  if (focusCandidate.focus === 'survive' && threatNear) {
+    // Don't re-enter guard forever: if we're ALREADY guarding and hit the guard goal, let the
+    // commit logic below rotate to a useful job (hunt/torch) so the agent makes progress
+    // instead of standing still "guarding" forever (the burro loop).
+    const alreadyGuarding = cur && cur.job === 'guard' && (state.objectiveProgress || 0) >= OBJECTIVE_GOALS.guard;
+    if (!alreadyGuarding) {
+      return { job: 'guard', focus: 'survive', reason: 'ollama_survive_threat', committed: true };
+    }
+  }
   // Keep the current objective until it makes enough meaningful progress, REGARDLESS of
   // focus-cache churn — the focus can flip build/maintain every ~30s, but the agent should
   // finish what it started (e.g. place the farm fence) before switching.
@@ -851,7 +856,7 @@ function chooseObjective(state, assessment, focusCandidate) {
   const focus = focusCandidate.focus;
   const jobForFocus =
     {
-      survive: 'guard',
+      survive: 'hunt', // actively fight nearby mobs (progress via hunt goal) instead of standing guard forever
       found: 'explore', // founding done -> roam the map and scan (was placeregion)
       build: (state.tick || 0) % 2 === 0 ? 'builder' : 'torch', // alternate building with lighting
       maintain: (state.tick || 0) % 2 === 0 ? 'gather' : 'farmer', // alternate foraging with farming
