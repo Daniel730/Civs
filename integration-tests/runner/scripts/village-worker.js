@@ -644,13 +644,14 @@ async function equipSurvivalGear(harness, actorName, opts = {}) {
   const cap = harness.cap;
   const { force = false, healthPct = null, state = null } = opts;
 
-  // Throttle: skip equip if we're safe and recently equipped (every 30s).
-  // This avoids the RCON storm from equipping every tick (6s) regardless of need.
+  // Throttle: skip equip if we equipped recently (every 30s), regardless of state.
+  // This stops the RCON storm that occurs when the agent is stuck in DANGER/RECOVER
+  // (never SAFE) and would otherwise re-gift diamond gear every tick. In prod the
+  // 30s re-equip is cheap and keeps the bot geared; in QA it removes the spam.
   if (!force) {
     const lastEquipped = _lastEquipped[actorName] || 0;
-    const safeToSkip = state === 'SAFE' && healthPct != null && healthPct >= 0.5;
-    if (safeToSkip && Date.now() - lastEquipped < 30000) {
-      return; // Safe + recently equipped — skip.
+    if (Date.now() - lastEquipped < 30000) {
+      return; // Recently equipped — skip until the next window.
     }
   }
 
