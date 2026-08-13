@@ -11,6 +11,7 @@ const { setWorking } = require('./memory');
 const { encodeState, buildExperience } = require('./state-rep');
 const { NeuralPolicy } = require('./neural-policy');
 const { ExperienceStore } = require('./experience-store');
+const selfTrain = require('./self-train');
 
 // MVP policy mode: deterministic | neural | shadow. No RL; neural mirrors baseline until trained.
 const POLICY_MODE = (process.env.AIWORLD_POLICY || 'deterministic').toLowerCase();
@@ -334,6 +335,9 @@ function recordFocusOutcome(agentId, episodeId, outcome = {}, rewardWeights) {
         countMetric(METRIC.AIWORLD_UNNECESSARY_DAMAGE, { agent: agentId });
       }
       observeMetric(METRIC.AIWORLD_REWARD_PER_EPISODE, r, { agent: agentId, mode: POLICY_MODE });
+      // Live learning loop: once enough outcomes accumulate, retrain + hot-reload
+      // the policy so the running NPC improves from its own experience.
+      selfTrain.noteOutcome({ policy: policy() });
     }
     return exp;
   } catch (_) {
