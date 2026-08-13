@@ -1430,6 +1430,24 @@ async function main() {
           /* best-effort: keep deterministic focus */
         }
       }
+      // Anti-fixation: when the agent is safe-ish (SAFE/CAUTION), rotate the focus across the
+      // rich job set so the Steve actually exercises the FULL action space
+      // (explore/hunt/gather/torch/rest) instead of farming forever. The brain may pick
+      // 'maintain' every tick; this guarantees variety without overriding survival
+      // (never fires in DANGER/ESCAPE/RECOVER). No 'established' gate — chooseObjective maps
+      // every focus to a sensible job even before the settlement is built.
+      if (assessment.state === 'SAFE' || assessment.state === 'CAUTION') {
+        const RICH = ['explore', 'hunt', 'gather', 'torch', 'rest', 'maintain'];
+        const rotated = RICH[(state.tick || 0) % RICH.length];
+        effectiveFocus = {
+          ...effectiveFocus,
+          focus: rotated,
+          // also rotate the cache key so the IntentionCache doesn't return the
+          // previously-cached (stale) focus and silently discard this rotation.
+          contextKey: 'rich_' + rotated,
+          reason: `rich_rotation(${rotated})`,
+        };
+      }
       const cached = intentions.get(who, effectiveFocus.contextKey);
       const intention = cached.hit ? cached.intention : effectiveFocus;
       if (!cached.hit) {
