@@ -591,20 +591,21 @@ async function runJob(harness, actorName, step, state, ctx = {}) {
   }
 
   // Torch: light the area so fewer hostiles spawn (breaks the survive-forever loop).
+  // Cover a wider radius (grid ±15) so the whole village lights up, not just the center tiles.
   if (step.job === 'torch') {
     const ty = (groundY || cfg.origin.y) + 1;
-    const spots = [[3,3],[-3,3],[3,-3],[-3,-3],[5,0],[-5,0],[0,5],[0,-5],[4,4],[-4,-4],[4,-4],[-4,4],[6,2],[-6,-2],[2,6],[-2,-6]];
+    const spots = [];
+    for (let dx = -15; dx <= 15; dx += 5) {
+      for (let dz = -15; dz <= 15; dz += 5) {
+        spots.push([dx, dz]);
+      }
+    }
     let placed = 0;
     for (const [dx, dz] of spots) {
       const tx = Math.floor(cfg.origin.x + dx);
       const tz = Math.floor(cfg.origin.z + dz);
       const r = await harness.raw(`setblock ${tx} ${ty} ${tz} TORCH`).catch(() => null);
-      if (r && String(r).toLowerCase().includes('success') === false) {
-        // setblock may not echo 'success'; count attempts, not confirmations
-        placed++;
-      } else if (r) {
-        placed++;
-      }
+      if (r) placed++;
     }
     results.actions.push({ torch: { placed } });
   }
@@ -835,6 +836,13 @@ function chooseObjective(state, assessment, focusCandidate) {
     // hunt completes after 3 kills, so the agent makes real progress and rotates to other jobs,
     // rather than re-entering an endless guard loop (the burro bug).
     return { job: 'hunt', focus: 'survive', reason: 'ollama_survive_hunt', committed: true };
+  }
+  // Brain said "survive" because it's DARK (unlit village) but no mob is right next to us.
+  // Light the area (torch job) so fewer hostiles spawn and we exit the CAUTION/dark state,
+  // instead of loitering in the dark forever.
+  const dark = Array.isArray(assessment.threats) && assessment.threats.includes('dark');
+  if (focusCandidate.focus === 'survive' && dark) {
+    return { job: 'torch', focus: 'survive', reason: 'ollama_survive_torch', committed: true };
   }
   // Keep the current objective until it makes enough meaningful progress, REGARDLESS of
   // focus-cache churn — the focus can flip build/maintain every ~30s, but the agent should
