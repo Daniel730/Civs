@@ -852,6 +852,9 @@ function chooseObjective(state, assessment, focusCandidate) {
 
   // New objective: prefer a job that serves the chosen focus, else rotate by tick.
   const focus = focusCandidate.focus;
+  // Map EVERY focus (including the rich rotation set explore/hunt/gather/torch/rest) to its
+  // OWN job. Without explicit keys here, the rich foci fell through to the `|| 'explore'`
+  // default and the rotation produced no variety (Steve only ever explored/farmed).
   const jobForFocus =
     {
       survive: 'hunt', // actively fight nearby mobs (progress via hunt goal) instead of standing guard forever
@@ -859,6 +862,11 @@ function chooseObjective(state, assessment, focusCandidate) {
       build: (state.tick || 0) % 2 === 0 ? 'builder' : 'torch', // alternate building with lighting
       maintain: (state.tick || 0) % 2 === 0 ? 'gather' : 'farmer', // alternate foraging with farming
       secure: (state.tick || 0) % 2 === 0 ? 'hunt' : 'rest', // alternate hunting with recovering
+      explore: 'explore', // roam + scan the map
+      hunt: 'hunt', // seek and defeat hostiles
+      gather: 'gather', // forage wood/stone/food
+      torch: 'torch', // light the area to suppress spawns
+      rest: 'rest', // return to base and recover
     }[focus] || 'explore';
   const job =
     jobForFocus === 'placeregion' &&
