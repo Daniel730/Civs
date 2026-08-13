@@ -850,7 +850,6 @@ function chooseObjective(state, assessment, focusCandidate) {
   // (SAFE/CAUTION) and NO hostile is near, found the NEXT unbuilt Civs region via placeregion
   // (the only path that increments completedPlaces and grows the village). Dark is fine — founding
   // also lights the area. Fall back to builder (decorative blocks) only if every region is done/blocked.
-  if (process.env.AIWORLD_DEBUG) console.error('[growth-debug] surv=' + surv + ' established=' + (Object.keys(state.completedPlaces||{}).length>=3) + ' keys=' + Object.keys(state.completedPlaces||{}).length + ' threatNear=' + threatNear);
   const established = Object.keys(state.completedPlaces || {}).length >= 3;
   // Fire growth whenever established and we're past the survival guard (SAFE/CAUTION). We do NOT
   // gate on !threatNear: the unlit village constantly spawns mobs, so requiring no hostile would
@@ -871,6 +870,10 @@ function chooseObjective(state, assessment, focusCandidate) {
         committed: false,
       };
     }
+    // All region types done or blocked (Civs build-reqs can block placeregion in QA). Keep the
+    // Steve visibly constructing real blocks (builder) so he's never idle, instead of the
+    // explore/torch loop that looked "burro".
+    return { job: 'builder', focus: 'build', reason: 'growth:build_blocks_fallback', committed: false };
   }
   // Keep the current objective until it makes enough meaningful progress, REGARDLESS of
   // focus-cache churn — the focus can flip build/maintain every ~30s, but the agent should
