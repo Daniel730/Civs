@@ -88,6 +88,7 @@ function buildPrompt(snapshot, systemPrompt) {
       '(7) When food/hunger is low or you have no resources, choose gather (forage wood/stone/food). ' +
       '(8) When health is low but no hostile is near, choose rest (return to base and recover) rather than risking a fight. ' +
       '(9) When the settlement is established and you are safe, choose explore to discover new terrain and scan for threats/resources.' +
+      '(10) CRITICAL: never pick "survive" unless there is a REAL threat in the snapshot. If "nearestHostile" is "none" AND "nearestThreatDist" is unknown or >= 12 AND survivalState is SAFE/CAUTION, you MUST pick a productive focus (build/maintain/gather/explore/torch) — never survive. Do not invent mobs that are not in the snapshot.' +
       'When you survive, set target to a safe lit place AWAY from where you died (e.g. a lit hilltop), not the same death spot.';
       'Be concrete: target should name where to go or what to do when you can.';
   const wm = snapshot.worldMemory || {};
@@ -156,7 +157,26 @@ function normalizeFocus(raw) {
   if (FOCUS_SYNONYMS[head]) return FOCUS_SYNONYMS[head];
   return null;
 }
-// Load the offline-trained weights written by scripts/aiworld-train.js
+// The LLM sometimes invents a threat and returns 'survive' even when the snapshot shows
+// NO hostile nearby and the survival monitor is SAFE/CAUTION. Fleeing from a ghost makes the
+// Steve look dumb ("there's a mob! let's run!" with hostiles:0). This hard post-filter
+// overrides a phantom survive with a productive focus when there is genuinely no threat.
+function realThreat(snapshot) {
+  if (snapshot.survivalState === 'DANGER' || snapshot.survivalState === 'ESCAPE' || snapshot.survivalState === 'RECOVER') return true;
+  if (snapshot.nearestHostile && typeof snapshot.nearestHostile === 'object') return true;
+  if (snapshot.threats && Array.isArray(snapshot.threats) && snapshot.threats.length) return true;
+  const d = snapshot.nearestThreatDist;
+  if (typeof d === 'number' && d >= 0 && d < 12) return true;
+  return false;
+}
+function sanitizeFocus(focus, snapshot) {
+  if (focus !== 'survive') return focus;
+  if (realThreat(snapshot)) return 'survive'; // genuine emergency — keep it
+  // Phantom survive: no real threat. Pick a productive focus instead (prefer what the
+  // model actually wanted if it named a target/other focus, else diversification).
+  const alt = diversifyFocus(loadWeights(WEIGHTS_PATH), snapshot.survivalState || 'SAFE');
+  return alt && alt !== 'survive' ? alt : 'build';
+}
 // (shape: { version, bias: { context: { intent: bias } }, ... }). aiworld-train nests the
 // per-context intents under `bias`, so normalize to a { context: { intent: bias } } map.
 // Returns {} on any failure — learning is best-effort and never breaks the brain.
@@ -384,6 +404,13 @@ class OllamaBrain {
       return fb ? { focus: fb, reason: 'learned_diversify(invalid_focus)', target: null } : null;
     }
     chosen = parsed.focus;
+    // Hard safety net: never flee from a phantom threat (LLM invented a mob). If the snapshot
+    // shows no real hostile, override a 'survive' with a productive focus.
+    const safeFocus = sanitizeFocus(chosen, snapshot);
+    if (safeFocus !== chosen) {
+      recordRecentFocus(safeFocus);
+      return { focus: safeFocus, reason: (parsed.reason || 'ollama') + ' [sanitized:no_real_threat]', target: parsed.target != null ? parsed.target : null };
+    }
     // Remember this choice so future decisions diversify away from it (anti-monotony).
     recordRecentFocus(chosen);
     return {
@@ -398,6 +425,8 @@ module.exports = {
   OllamaBrain,
   FOCUSES,
   normalizeFocus,
+  sanitizeFocus,
+  realThreat,
   extractJSON,
   buildPrompt,
   loadWeights,

@@ -640,9 +640,11 @@ async function runJob(harness, actorName, step, state, ctx = {}) {
 async function equipSurvivalGear(harness, actorName, opts = {}) {
   // QA-only escape hatch: when the harness/operator grants god-mode (resistance +
   // regen) the NPC cannot die, so re-equipping diamond gear every tick is pure RCON
-  // spam with no survival benefit. Set AIWORLD_NO_EQUIP=1 in QA to silence it.
-  // Production never sets this (the gear is what keeps the bot alive there).
-  if (process.env.AIWORLD_NO_EQUIP === '1') return;
+  // spam with no survival benefit. Default OFF (i.e. NO equipping) because the gear
+  // storm is a QA artifact and god-mode is always applied here; a missing/lost env
+  // var must NOT silently re-enable the storm. Set AIWORLD_NO_EQUIP=0 in PRODUCTION
+  // to re-enable gear (it is what keeps the bot alive there).
+  if (process.env.AIWORLD_NO_EQUIP !== '0') return;
   const cap = harness.cap;
   const { force = false, healthPct = null, state = null } = opts;
 
