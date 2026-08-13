@@ -1030,10 +1030,21 @@ async function main() {
     version: cfg.version,
     targetName: cfg.actorName,
   });
-  let camStart = await camera.start();
-  if (camStart.status !== 'PASS') {
+  // The camera (spectator Cam) must NEVER block the core work loop. If it can't log in
+  // (no client / server unreachable), camera.start() may hang forever — race it against a
+  // timeout and proceed in degraded mode so Steve keeps working autonomously.
+  const withTimeout = (p, ms, label) =>
+    Promise.race([
+      p,
+      new Promise((res) => setTimeout(() => res({ status: 'TIMEOUT', reason: label + '_timeout' }), ms)),
+    ]);
+  let camStart = await withTimeout(camera.start(), 20000, 'camera_start');
+  if (camStart.status !== 'PASS' && camStart.status !== 'TIMEOUT') {
     await sleep(3000);
-    camStart = await camera.start();
+    camStart = await withTimeout(camera.start(), 20000, 'camera_start_retry');
+  }
+  if (camStart.status === 'TIMEOUT' || camStart.status !== 'PASS') {
+    camStart = { status: 'BLOCKED', reason: (camStart && camStart.reason) || 'camera_start_failed' };
   }
   log({ status: camStart.status, action: 'camera_start', ...camStart });
   if (camStart.status !== 'PASS') {
@@ -1049,28 +1060,43 @@ async function main() {
   const subjects = [cfg.actorName];
   if (helper && helper.ok) subjects.push(cfg.helperName);
 
-  const observation = cfg.legacyCamera
-    ? new ObservationDirector({
-        camera,
-        harness,
-        subjects,
-        dwellMs: cfg.camDwellMs,
-        tickMs: Math.min(2000, cfg.intervalMs),
-        onLog: (entry) => log(entry),
-        forceTarget: process.env.CAM_FORCE_TARGET || null,
-      })
-    : new CinematicDirector({
-        camera,
-        harness,
-        subjects,
-        tickMs: cfg.camTickMs,
-        minDwellMs: cfg.camMinDwellMs,
-        preferredDwellMs: cfg.camDwellMs,
-        maxDwellMs: cfg.camMaxDwellMs,
-        fallbackOrigin: cfg.origin,
-        onLog: (entry) => log(entry),
-        forceTarget: process.env.CAM_FORCE_TARGET || null,
-      });
+  // When the camera failed to start, run HEADLESS: a no-op observation so the core work
+  // loop still executes (Steve keeps mining/building/farming without the cinematic camera).
+  // The camera is purely for observation/cinematic — it must never gate actual work.
+  const headlessObservation = {
+    start() {},
+    stop() {},
+    tick() {},
+    biasTo() {},
+    noteEvent() {},
+    snapshot() { return { headless: true }; },
+    get currentSubject() { return null; },
+  };
+
+  const observation = camStart.status === 'PASS'
+    ? (cfg.legacyCamera
+      ? new ObservationDirector({
+          camera,
+          harness,
+          subjects,
+          dwellMs: cfg.camDwellMs,
+          tickMs: Math.min(2000, cfg.intervalMs),
+          onLog: (entry) => log(entry),
+          forceTarget: process.env.CAM_FORCE_TARGET || null,
+        })
+      : new CinematicDirector({
+          camera,
+          harness,
+          subjects,
+          tickMs: cfg.camTickMs,
+          minDwellMs: cfg.camMinDwellMs,
+          preferredDwellMs: cfg.camDwellMs,
+          maxDwellMs: cfg.camMaxDwellMs,
+          fallbackOrigin: cfg.origin,
+          onLog: (entry) => log(entry),
+          forceTarget: process.env.CAM_FORCE_TARGET || null,
+        }))
+    : headlessObservation;
   observation.start();
   log({
     status: 'PASS',
