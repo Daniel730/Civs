@@ -129,6 +129,33 @@ function extractJSON(text) {
   }
 }
 
+// The model may emit synonyms not in FOCUSES (farm/mine/chop/guard/defend/patrol...). Normalize
+// them to the canonical focus vocabulary so valid intent is never discarded as "invalid".
+const FOCUS_SYNONYMS = {
+  farm: 'gather', farming: 'gather', harvest: 'gather', forage: 'gather',
+  mine: 'gather', mining: 'gather', dig: 'gather', quarry: 'gather',
+  chop: 'gather', chopwood: 'gather', wood: 'gather', lumber: 'gather', forestry: 'gather',
+  craft: 'build', buildh: 'build', buildhouse: 'build', construct: 'build', repair: 'maintain',
+  guard: 'secure', defend: 'secure', defence: 'secure', protect: 'secure', patrol: 'secure',
+  fight: 'hunt', kill: 'hunt', attack: 'hunt', combat: 'hunt',
+  explore: 'explore', scout: 'explore', wander: 'explore',
+  light: 'torch', lightup: 'torch',
+  rest: 'rest', sleep: 'rest', recover: 'rest', heal: 'rest',
+  found: 'found', settle: 'found', establish: 'found',
+  survive: 'survive', flee: 'survive', escape: 'survive', run: 'survive',
+  maintain: 'maintain', upkeep: 'maintain', tidy: 'maintain',
+};
+function normalizeFocus(raw) {
+  if (!raw || typeof raw !== 'string') return null;
+  const f = raw.trim().toLowerCase();
+  if (FOCUSES.includes(f)) return f;
+  if (FOCUS_SYNONYMS[f]) return FOCUS_SYNONYMS[f];
+  // allow "<verb>:<target>" style (e.g. "hunt:zombie") — take the verb part
+  const head = f.split(/[:#\-]/)[0];
+  if (FOCUSES.includes(head)) return head;
+  if (FOCUS_SYNONYMS[head]) return FOCUS_SYNONYMS[head];
+  return null;
+}
 // Load the offline-trained weights written by scripts/aiworld-train.js
 // (shape: { version, bias: { context: { intent: bias } }, ... }). aiworld-train nests the
 // per-context intents under `bias`, so normalize to a { context: { intent: bias } } map.
@@ -212,11 +239,17 @@ function diversifyFocus(weights, survivalState, recent) {
   }
 
   // Score each focus: learned weight MINUS a freshness penalty for recently-used foci.
+  // 'rest' is a RECOVERY action, not a default job — keep it strictly last unless we are in
+  // RECOVER (where it is appropriate) or it is the only fresh option. This stops the Steve
+  // from idling/looking dumb when the model output is invalid or the weights favour rest.
+  const isRecover = survivalState === 'RECOVER';
   const scored = FOCUSES.map((f) => {
     const learned = ctx[f] || 0;
     const recentCount = rec.filter((r) => r === f).length;
     const freshnessPenalty = recentCount * 0.5; // strongly prefer unexplored foci
-    return { f, score: learned - freshnessPenalty };
+    let restPenalty = 0;
+    if (f === 'rest' && !isRecover) restPenalty = 5; // almost never pick rest unless recovering
+    return { f, score: learned - freshnessPenalty - restPenalty };
   });
   scored.sort((a, b) => b.score - a.score);
   return scored[0].f;
@@ -339,9 +372,16 @@ class OllamaBrain {
     }
     let chosen;
     if (!parsed || !FOCUSES.includes(parsed.focus)) {
-      // Invalid focus from the model: prefer the learned+diversity fallback over a hard null.
-      chosen = diversifyFocus(this._weights, survivalState);
-      return chosen ? { focus: chosen, reason: 'learned_diversify(invalid_focus)', target: null } : null;
+      // The model may have used a synonym (farm/mine/guard/...) — normalize before discarding.
+      const norm = normalizeFocus(parsed && parsed.focus);
+      if (norm) {
+        recordRecentFocus(norm);
+        return { focus: norm, reason: (parsed && parsed.reason) || 'ollama(normalized)', target: parsed && parsed.target != null ? parsed.target : null };
+      }
+      // Truly invalid: prefer the learned+diversity fallback over a hard null — but never
+      // collapse to 'rest' unless genuinely low-health (handled inside diversifyFocus).
+      const fb = diversifyFocus(this._weights, survivalState);
+      return fb ? { focus: fb, reason: 'learned_diversify(invalid_focus)', target: null } : null;
     }
     chosen = parsed.focus;
     // Remember this choice so future decisions diversify away from it (anti-monotony).
@@ -357,6 +397,7 @@ class OllamaBrain {
 module.exports = {
   OllamaBrain,
   FOCUSES,
+  normalizeFocus,
   extractJSON,
   buildPrompt,
   loadWeights,
