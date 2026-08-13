@@ -516,6 +516,15 @@ async function runJob(harness, actorName, step, state, ctx = {}) {
     }
     await cap.swing(actorName);
     if (step.job === 'guard') {
+      // When the brain says survive, actually RETREAT to a safe spot away from the death zone
+      // (e.g. iron bars under the center where the agent suffocates) instead of standing still
+      // and re-suffocating. Walk (teleport-allowed) to an offset clear of the current tile.
+      if (step.focus === 'survive') {
+        const safeX = cfg.origin.x + 22;
+        const safeZ = cfg.origin.z + 22;
+        await walkTo(harness, actorName, { x: safeX, y: (groundY || cfg.origin.y) + 2, z: safeZ },
+          { arrive: 2, timeoutMs: 8000, speed: 4.5, allowTeleport: true }).catch(() => {});
+      }
       await cap.lookAt(actorName, cfg.origin.x, groundY + 1, cfg.origin.z);
       await cap.swing(actorName);
     }
@@ -716,12 +725,12 @@ function chooseObjective(state, assessment, focusCandidate) {
     return { job: 'guard', focus: 'survive', reason: `survival:${surv}`, committed: true };
   }
 
-  // Brain said "survive" with a real threat (hostile nearby or dark + danger) — interrupt the
-  // current objective and switch to guard (flee/defend), even if the prior job had progress.
-  // Without this the agent keeps mining in a death zone because `reason:continuing` overrides
-  // the survive signal (the "stuck in the quarry" bug).
+  // Brain said "survive" with a REAL threat (hostile nearby) — interrupt the current objective
+  // and switch to guard (flee/defend), even if the prior job had progress. Being merely DARK is
+  // not a threat by itself (the village is unlit) — only an actual mob nearby forces a flee,
+  // otherwise the agent would get stuck standing still "guarding" forever (the burro bug).
   const threatNear = Array.isArray(assessment.threats) &&
-    (assessment.threats.includes('hostile_nearby') || assessment.threats.includes('dark'));
+    assessment.threats.includes('hostile_nearby');
   if (focusCandidate.focus === 'survive' && threatNear) {
     return { job: 'guard', focus: 'survive', reason: 'ollama_survive_threat', committed: true };
   }
