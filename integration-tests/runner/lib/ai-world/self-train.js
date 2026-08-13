@@ -28,7 +28,10 @@ let _training = false;
 let _lastTrainedAt = 0;
 
 function enabled() {
-  if (_enabled === null) _enabled = process.env.AIWORLD_SELFTRAIN === '1';
+  // Default ON: Dan explicitly wants the Steve to learn in the process, and a missing/lost
+  // env var must not silently disable the loop. Only an explicit '0' turns it off (so QA /
+  // the body agent can still disable it when needed).
+  if (_enabled === null) _enabled = process.env.AIWORLD_SELFTRAIN !== '0';
   return _enabled;
 }
 
@@ -42,8 +45,8 @@ function enabled() {
  */
 function noteOutcome(opts = {}) {
   if (!enabled()) return;
-  const threshold = opts.threshold || 8;
-  const cooldownMs = opts.cooldownMs || 60000;
+  const threshold = opts.threshold || 6;
+  const cooldownMs = opts.cooldownMs || 45000;
   _sinceTrain += 1;
   const now = Date.now();
   if (_training) return;
