@@ -549,6 +549,11 @@ async function runJob(harness, actorName, step, state, ctx = {}) {
  * `clear` first so leftover blocks from earlier jobs can't block the food/consumables.
  */
 async function equipSurvivalGear(harness, actorName, opts = {}) {
+  // QA-only escape hatch: when the harness/operator grants god-mode (resistance +
+  // regen) the NPC cannot die, so re-equipping diamond gear every tick is pure RCON
+  // spam with no survival benefit. Set AIWORLD_NO_EQUIP=1 in QA to silence it.
+  // Production never sets this (the gear is what keeps the bot alive there).
+  if (process.env.AIWORLD_NO_EQUIP === '1') return;
   const cap = harness.cap;
   const { force = false, healthPct = null, state = null } = opts;
 
