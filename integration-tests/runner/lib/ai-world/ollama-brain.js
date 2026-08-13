@@ -72,12 +72,12 @@ function buildPrompt(snapshot, systemPrompt) {
       '[survive, found, build, maintain, secure]. ' +
       'Respond ONLY with JSON: {"focus":"...","reason":"...","target":null|"<concrete place or action>"}. ' +
       'Rules to AVOID stupidity: ' +
-      '(1) If you have died many times here (deaths high) or lastDamageCause is set, you are in danger — ' +
-      'prefer survive/flee and set target to a safe lit place; do NOT repeat the same risky focus. ' +
-      '(2) If lightLevel is low (<=7) you are in the dark and exposed — prefer survive/secure, not explore/build. ' +
-      '(3) If a hostile is near, prefer survive/flee. ' +
-      '(4) If the settlement is built and you are SAFE and lit, maintain it. ' +
+      '(1) ONLY flee (focus survive) when a HOSTILE is actually NEAR (nearestHostile distance < 12) or you are taking damage RIGHT NOW. Dying in the past (deaths high) or being in the dark is NOT an emergency by itself. ' +
+      '(2) If it is dark (lightLevel <=7) but NO hostile is near, WORK anyway: choose build/maintain and light up / repair / farm with a torch. Do not stand still. ' +
+      '(3) If deathsHere is high, do NOT repeat the same spot — when you work, pick a DIFFERENT site than where you died, and prefer building shelter/lighting over mining there. ' +
+      '(4) If you are SAFE and lit, maintain the settlement (farm, repair, build). ' +
       '(5) NEVER oscillate: if your last focus failed, pick a DIFFERENT focus this time. ' +
+      'When you survive, set target to a safe lit place AWAY from where you died (e.g. a lit hilltop), not the same death spot.';
       'Be concrete: target should name where to go or what to do when you can.';
   const wm = snapshot.worldMemory || {};
   const remembered =
