@@ -40,6 +40,46 @@ const LOG_JSONL = path.join(REPORTS, 'village-worker.jsonl');
 const STATE_FILE = path.join(REPORTS, 'village-worker-state.json');
 const MEMORY_PATH = path.join(REPORTS, 'construction-memory.json');
 
+/**
+ * safeWalk — stable locomotion wrapper around walkTo (server-side A* walk_path).
+ * Guarantees: (a) never teleports (allowTeleport:false), (b) uses walk_path hops for any
+ * distance (low recoverDistance) so the agent actually travels instead of blinking,
+ * (c) anti-stuck: if walk_path stalls/falls back to legacy stepping, retries the goal with
+ * small standable offsets (±2, ±4) before giving up. This kills the "teleporting, walking in
+ * circles, hitting walls, falling in holes, climbing fences" stupidity from greedy-step fallbacks.
+ */
+async function safeWalk(harness, actorName, stand, opts = {}) {
+  const baseOpts = Object.assign(
+    { allowTeleport: false, recoverDistance: 18, speed: 4.0, timeoutMs: 12000, arrive: 1.6 },
+    opts,
+    { allowTeleport: false } // HARD: safeWalk NEVER teleports — locomotion must be real travel
+  );
+  const offsets = [
+    [0, 0],
+    [2, 0],
+    [-2, 0],
+    [0, 2],
+    [0, -2],
+    [3, 3],
+    [-3, -3],
+  ];
+  let last = null;
+  for (const [dx, dz] of offsets) {
+    const goal = { x: stand.x + dx, y: stand.y, z: stand.z + dz };
+    const w = await walkTo(harness, actorName, goal, baseOpts).catch(() => ({
+      success: false,
+      reason: 'walk_threw',
+      navigator: 'error',
+    }));
+    last = w;
+    const badNavigator = w.navigator === 'walk_step' || w.navigator === 'walk_step_fallback' || w.navigator === 'recovery_teleport';
+    if (w.success && !badNavigator) {
+      return Object.assign({ recoveredOffset: dx || dz ? [dx, dz] : null }, w);
+    }
+  }
+  return last || { success: false, reason: 'all_offsets_failed', navigator: 'none' };
+}
+
 const cfg = {
   rconHost: process.env.RCON_HOST || '127.0.0.1',
   rconPort: Number.parseInt(process.env.RCON_PORT || '25575', 10),
@@ -229,7 +269,7 @@ async function runJob(harness, actorName, step, state, ctx = {}) {
     const py = cfg.origin.y;
     // Founding exception: stockpile fill then placeregion (documented in VILLAGE-AESTHETICS).
     await stockpile(harness, px, py, pz, step.stockpile || 'utility');
-    const walk = await walkTo(
+    const walk = await safeWalk(
       harness,
       actorName,
       { x: px + 1, y: py + 1, z: pz + 1 },
@@ -285,7 +325,7 @@ async function runJob(harness, actorName, step, state, ctx = {}) {
   const stand = { x: standX, y: groundY + 1, z: standZ };
   results.groundY = groundY;
 
-  const walk = await walkTo(harness, actorName, stand, {
+  const walk = await safeWalk(harness, actorName, stand, {
     clearFooting: (x, y, z) => clearFooting(harness, x, y, z),
     timeoutMs: 14000,
     stepLen: 0.45,
@@ -342,7 +382,7 @@ async function runJob(harness, actorName, step, state, ctx = {}) {
       digZ = fb.data.nearest.z;
       digY = fb.data.nearest.y;
       // Walk to the block first so the swing actually connects (don't dig from afar).
-      await walkTo(harness, actorName, { x: digX, y: digY, z: digZ }, {
+      await safeWalk(harness, actorName, { x: digX, y: digY, z: digZ }, {
         arrive: 2.5, timeoutMs: 6000, speed: 4.5, allowTeleport: false,
       }).catch(() => {});
     }
@@ -419,7 +459,7 @@ async function runJob(harness, actorName, step, state, ctx = {}) {
         y: Math.max(block.y, groundY + 1),
         z: block.z + (block.role === 'path' ? 0 : 1),
       };
-      const w2 = await walkTo(harness, actorName, near, {
+      const w2 = await safeWalk(harness, actorName, near, {
         arrive: 2.5,
         timeoutMs: 8000,
         stepLen: 0.45,
@@ -526,7 +566,7 @@ async function runJob(harness, actorName, step, state, ctx = {}) {
       if (step.focus === 'survive') {
         const safeX = cfg.origin.x + 22;
         const safeZ = cfg.origin.z + 22;
-        await walkTo(harness, actorName, { x: safeX, y: (groundY || cfg.origin.y) + 2, z: safeZ },
+        await safeWalk(harness, actorName, { x: safeX, y: (groundY || cfg.origin.y) + 2, z: safeZ },
           { arrive: 2, timeoutMs: 8000, speed: 4.5, allowTeleport: true }).catch(() => {});
         // Light up the fight zone so fewer mobs spawn — breaks the survive-forever loop.
         const ty = (groundY || cfg.origin.y) + 1;
@@ -548,7 +588,7 @@ async function runJob(harness, actorName, step, state, ctx = {}) {
     const tx = Math.floor(cfg.origin.x + Math.cos(ang) * ring);
     const tz = Math.floor(cfg.origin.z + Math.sin(ang) * ring);
     const ty = (groundY || cfg.origin.y) + 1;
-    await walkTo(harness, actorName, { x: tx, y: ty, z: tz },
+    await safeWalk(harness, actorName, { x: tx, y: ty, z: tz },
       { arrive: 3, timeoutMs: 9000, speed: 4.5, allowTeleport: false }).catch(() => {});
     for (let d = 0; d < 4; d++) {
       await cap.lookAt(actorName, tx + Math.cos(d * 1.57) * 8, ty + 2, tz + Math.sin(d * 1.57) * 8);
@@ -564,7 +604,7 @@ async function runJob(harness, actorName, step, state, ctx = {}) {
     const near = await cap.worldNearby(actorName, { radius: 24, types: 'hostile' }).catch(() => null);
     const hostile = near && near.success && near.data && near.data.entities && near.data.entities[0];
     if (hostile) {
-      await walkTo(harness, actorName,
+      await safeWalk(harness, actorName,
         { x: hostile.x, y: (hostile.y || groundY) + 1, z: hostile.z },
         { arrive: 2.5, timeoutMs: 7000, speed: 4.5, allowTeleport: false }).catch(() => {});
       await cap.lookAt(actorName, hostile.x, (hostile.y || groundY) + 1, hostile.z);
@@ -585,7 +625,7 @@ async function runJob(harness, actorName, step, state, ctx = {}) {
       const gx = Math.floor(cfg.origin.x + Math.cos(ang) * (8 + t * 2));
       const gz = Math.floor(cfg.origin.z + Math.sin(ang) * (8 + t * 2));
       const gy = await findSurfaceY(harness, gx, gz, { fallbackY: groundY, maxY: groundY + 6, minY: groundY - 3 });
-      await walkTo(harness, actorName, { x: gx, y: gy + 1, z: gz },
+      await safeWalk(harness, actorName, { x: gx, y: gy + 1, z: gz },
         { arrive: 2.5, timeoutMs: 6000, speed: 4.5, allowTeleport: false }).catch(() => {});
       const br = await cap.breakBlock(actorName, gx, gy, gz);
       if (br && br.success) gathered++;
@@ -616,7 +656,7 @@ async function runJob(harness, actorName, step, state, ctx = {}) {
 
   // Rest: return to base and recover (regen happens in prod; here it's a safe idle).
   if (step.job === 'rest') {
-    await walkTo(harness, actorName, { x: cfg.origin.x, y: (groundY || cfg.origin.y) + 1, z: cfg.origin.z },
+    await safeWalk(harness, actorName, { x: cfg.origin.x, y: (groundY || cfg.origin.y) + 1, z: cfg.origin.z },
       { arrive: 2, timeoutMs: 8000, speed: 4, allowTeleport: false }).catch(() => {});
     await cap.lookAt(actorName, cfg.origin.x, (groundY || cfg.origin.y) + 2, cfg.origin.z);
     await cap.swing(actorName);
@@ -879,8 +919,18 @@ function chooseObjective(state, assessment, focusCandidate) {
     // building blocks forever (looked "burro"), rotate the Steve across the FULL Minecraft loop —
     // mine the quarry, chop wood, forage, farm, and occasionally build — so he's visibly doing
     // everything, not stuck in one job.
+    // STABLE-FOCUS FIX: do NOT re-pick from the LOOP every tick — that made Steve jump between 5
+    // pads each tick (looked like wandering / stopping for no reason). Keep the current loop job
+    // until its goal is reached, THEN advance to the next LOOP entry. We track loop position in
+    // state.loopIdx so progress is monotonic, not tick%-driven.
     const LOOP = ['miner', 'lumberjack', 'gather', 'farmer', 'builder'];
-    const loopJob = LOOP[(state.tick || 0) % LOOP.length];
+    const curLoopJob = cur && LOOP.includes(cur.job) ? cur.job : null;
+    if (curLoopJob && (state.objectiveProgress || 0) < (OBJECTIVE_GOALS[curLoopJob] || 3)) {
+      return { ...cur, committed: true, reason: 'continuing_loop:' + curLoopJob };
+    }
+    const loopIdx = Number.isFinite(state.loopIdx) ? state.loopIdx : 0;
+    const loopJob = LOOP[loopIdx % LOOP.length];
+    state.loopIdx = (loopIdx + 1) % LOOP.length;
     return {
       job: loopJob,
       focus: loopJob === 'builder' ? 'build' : 'maintain',

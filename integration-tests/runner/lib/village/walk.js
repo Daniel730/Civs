@@ -329,22 +329,46 @@ async function walkTo(harness, actorName, stand, opts = {}) {
   }
 
   // Stage 3: legacy stepping. Still real movement, just slower and uglier.
-  if (opts.clearFooting) {
-    await opts.clearFooting(Math.floor(goal.x), goal.y, Math.floor(goal.z));
-  }
-  const legacy = await legacyStepWalk(harness, actorName, goal, opts, cur);
-  actions.push({ legacyWalk: { steps: legacy.steps, arrived: legacy.arrived, reason: legacy.reason } });
-  cur = legacy.position || cur;
-  dist = horizDist(cur, goal);
-  if (legacy.arrived) {
-    observeMetric(METRIC.ACTION_LATENCY, Date.now() - t0, { actor: actorName, action: 'walk' });
+  // ANTI-STUPID WALK FIX: the legacy step loop is what made Steve climb fences, sink into
+  // holes, and walk head-first into leaves — it blindly steps toward an (often non-standable)
+  // goal cell. We only fall back to it when the caller explicitly wants legacy movement
+  // (old harness without walk_path). Otherwise we report the goal as unreachable so the caller
+  // can INVALIDATE the bad target (anti-stupid) instead of letting Steve hurt himself on a fence.
+  const allowLegacyFallback = opts.forceLegacy === true;
+  if (allowLegacyFallback) {
+    if (opts.clearFooting) {
+      await opts.clearFooting(Math.floor(goal.x), goal.y, Math.floor(goal.z));
+    }
+    const legacy = await legacyStepWalk(harness, actorName, goal, opts, cur);
+    actions.push({ legacyWalk: { steps: legacy.steps, arrived: legacy.arrived, reason: legacy.reason } });
+    cur = legacy.position || cur;
+    dist = horizDist(cur, goal);
+    if (legacy.arrived) {
+      observeMetric(METRIC.ACTION_LATENCY, Date.now() - t0, { actor: actorName, action: 'walk' });
+      return {
+        success: true,
+        reason: null,
+        steps: legacy.steps,
+        final_distance: dist,
+        recoverTeleport,
+        navigator: 'walk_step',
+        replans,
+        actions,
+        ...cur,
+      };
+    }
+  } else {
+    // Honest: walk_path + standable offsets failed. Report unreachable so the caller invalidates
+    // this target (anti-stupid) rather than Steve face-planting into a fence/hole/leaves.
+    countMetric(METRIC.NO_PROGRESS, { actor: actorName, reason: 'unreachable_standable' });
+    actions.push({ unreachable: { reason: (leg && leg.reason) || 'no_path_or_offsets_failed', goal } });
     return {
-      success: true,
-      reason: null,
-      steps: legacy.steps,
+      success: false,
+      reason: (leg && leg.reason) || 'unreachable_standable',
+      steps: 0,
       final_distance: dist,
       recoverTeleport,
-      navigator: useLegacy ? 'walk_step' : 'walk_step_fallback',
+      navigator: 'walk_path',
       replans,
       actions,
       ...cur,
@@ -354,7 +378,7 @@ async function walkTo(harness, actorName, stand, opts = {}) {
   observeMetric(METRIC.NO_PROGRESS, Date.now() - t0, { actor: actorName });
   countMetric(METRIC.PATH_FAILURE, { actor: actorName, reason: legacy.reason || 'stuck' });
 
-  // Stage 4: last resort. Callers that must not cheat pass allowTeleport:false.
+  // Stage 4: last resort (legacy path only). Callers that must not cheat pass allowTeleport:false.
   if (allowTeleport && !recoverTeleport) {
     await cap.teleport(actorName, goal.x, goal.y, goal.z);
     countMetric(METRIC.GOAL_ABANDON, { actor: actorName, reason: 'recovery_teleport' });
