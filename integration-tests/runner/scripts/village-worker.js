@@ -831,13 +831,10 @@ function chooseObjective(state, assessment, focusCandidate) {
     assessment.threats.includes('hostile_nearby');
   const cur = state.objective;
   if (focusCandidate.focus === 'survive' && threatNear) {
-    // Don't re-enter guard forever: if we're ALREADY guarding and hit the guard goal, let the
-    // commit logic below rotate to a useful job (hunt/torch) so the agent makes progress
-    // instead of standing still "guarding" forever (the burro loop).
-    const alreadyGuarding = cur && cur.job === 'guard' && (state.objectiveProgress || 0) >= OBJECTIVE_GOALS.guard;
-    if (!alreadyGuarding) {
-      return { job: 'guard', focus: 'survive', reason: 'ollama_survive_threat', committed: true };
-    }
+    // Actively HUNT nearby mobs (progress via hunt goal of 3) instead of standing guard forever.
+    // hunt completes after 3 kills, so the agent makes real progress and rotates to other jobs,
+    // rather than re-entering an endless guard loop (the burro bug).
+    return { job: 'hunt', focus: 'survive', reason: 'ollama_survive_hunt', committed: true };
   }
   // Keep the current objective until it makes enough meaningful progress, REGARDLESS of
   // focus-cache churn — the focus can flip build/maintain every ~30s, but the agent should
