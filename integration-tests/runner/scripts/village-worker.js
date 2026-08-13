@@ -1266,7 +1266,12 @@ async function main() {
       // (state not SAFE/CAUTION), execute that action and skip the work tick entirely — never let
       // the agent keep building while a mob is killing it. This realizes the priority chain
       // EMERGENCY→DANGER→RECOVER→SURVIVE→TASK→EXPLORE/BUILD/MINE. Death is still handled below.
-      if (assessment.state !== 'SAFE' && assessment.state !== 'CAUTION' && assessment.action && assessment.action.kind !== 'work') {
+      // Connection blips (no login within 15s / ECONNRESET) make the monitor report DANGER,
+      // but that is NOT a real threat — the actor auto-reconnects. Freezing on it halts the
+      // whole agent forever (0 objectives). Skip the survival-preempt when the actor link is
+      // down so the normal loop keeps running and the reconnect recovers.
+      const connDown = actor && actor.available === false;
+      if (!connDown && assessment.state !== 'SAFE' && assessment.state !== 'CAUTION' && assessment.action && assessment.action.kind !== 'work') {
         const od = (observed && observed.data) || {};
         log({
           status: 'DEGRADED',
@@ -1679,9 +1684,22 @@ async function main() {
         observation.setActivity(who, step.job);
       }
 
-      // 3. Act.
+      // 3. Act. Guard against a HANGING job (e.g. construction.runProject awaiting an
+      // unresolved call) so ONE stuck job can never stall the whole work loop. The loop
+      // must keep ticking and executing the jobs that DO work (mine/gather/torch/explore) —
+      // otherwise the Steve looks frozen (only survival/defend runs, everything else stalls).
       const actionStart = Date.now();
-      const result = await runJob(harness, who, step, state, { observed });
+      const RUN_JOB_TIMEOUT_MS = 25000;
+      const runJobResult = await Promise.race([
+        runJob(harness, who, step, state, { observed }),
+        new Promise((res) =>
+          setTimeout(
+            () => res({ status: 'TIMEOUT', job: step.job, reason: 'runJob_exceeded_' + RUN_JOB_TIMEOUT_MS + 'ms' }),
+            RUN_JOB_TIMEOUT_MS
+          )
+        ),
+      ]);
+      const result = runJobResult;
       observeMetric(METRIC.ACTION_LATENCY, Date.now() - actionStart, { actor: who, job: step.job });
 
       let agentPos = null;
