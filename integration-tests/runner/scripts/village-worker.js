@@ -163,42 +163,54 @@ async function sleep(ms) {
   return new Promise((r) => setTimeout(r, ms));
 }
 
-/** Clear head+feet air at an approach tile without cutting the floor. */
-async function clearFooting(harness, x, y, z) {
+/**
+ * PLAYER-LIKE ONLY: clear head+feet at an approach tile by actually MINING the blocks
+ * (cap.breakBlock), never `setblock ... air`. If the break fails the agent simply walks
+ * around — no admin fallback.
+ */
+async function clearFooting(harness, x, y, z, actorName = cfg.actorName) {
   const ix = Math.floor(x);
   const iy = Math.floor(y);
   const iz = Math.floor(z);
-  await harness.raw(`setblock ${ix} ${iy} ${iz} air`);
-  await harness.raw(`setblock ${ix} ${iy + 1} ${iz} air`);
-}
-
-/** Honest stockpile fills ONLY for Civs placeregion founding (#66 exception). */
-async function stockpile(harness, x, y, z, profile) {
-  await stockpileMaterials(harness, x, y, z, profile);
+  await harness.cap.breakBlock(actorName, ix, iy, iz).catch(() => {});
+  await harness.cap.breakBlock(actorName, ix, iy + 1, iz).catch(() => {});
 }
 
 /**
- * Place one blueprint block via capability. Prefer place_block; setblock only for
- * slabs/paths/fences the capability cannot place — never pre-clear the ground pad.
+ * Founding stockpile is an ADMIN FILL (cheat). Disabled by default (player-like policy).
+ * Set AIWORLD_ALLOW_FOUNDING_FILL=1 to re-enable for Civs build-reqs QA only.
+ */
+async function stockpile(harness, x, y, z, profile) {
+  if (process.env.AIWORLD_ALLOW_FOUNDING_FILL !== '1') {
+    return { skipped: true, reason: 'playerlike_no_admin_fill' };
+  }
+  await stockpileMaterials(harness, x, y, z, profile);
+  return { skipped: false };
+}
+
+/**
+ * Place one blueprint block as a REAL PLAYER would: mine the obstructing cell with
+ * breakBlock, then placeBlock from the NPC's OWN inventory. No giveItem, no setblock
+ * fallback — if the NPC has no material the placement fails and the caller must go
+ * collect/craft it.
  */
 async function placeAesthetic(harness, actorName, block) {
   const mat = block.material;
-  // Paths replace surface; walls/roof need empty air — clear only the target cell if not path
   if (block.role !== 'path') {
-    await harness.raw(`setblock ${block.x} ${block.y} ${block.z} air`);
+    // Mine the target cell for real instead of `setblock air`.
+    await harness.cap.breakBlock(actorName, block.x, block.y, block.z).catch(() => {});
   }
-  await harness.cap.giveItem(actorName, mat.toUpperCase(), 8);
   await harness.cap.lookAt(actorName, block.x, block.y, block.z);
   const pl = await harness.cap.placeBlock(actorName, block.x, block.y, block.z, mat);
   if (pl && pl.success) {
     await harness.cap.swing(actorName);
     return { via: 'place_block', ...pl, material: mat, role: block.role };
   }
-  await harness.raw(`setblock ${block.x} ${block.y} ${block.z} ${mat}`);
   await harness.cap.swing(actorName);
   return {
-    via: 'setblock',
-    success: true,
+    via: 'place_block_failed',
+    success: false,
+    reason: (pl && (pl.reason || pl.error)) || 'no_material_in_inventory',
     material: mat,
     role: block.role,
     x: block.x,
@@ -221,9 +233,13 @@ async function ensureAlive(harness, actorName, preObserved) {
     return { status: 'PASS', action: 'ensure_alive', player: actorName, health, revived: false };
   }
   const respawn = await harness.cap.respawn(actorName);
-  await harness.raw(`gamemode survival ${actorName}`);
-  await equipSurvivalGear(harness, actorName);
-  await harness.cap.teleport(actorName, cfg.origin.x, cfg.origin.y + 2, cfg.origin.z);
+  // PLAYER-LIKE: no `gamemode`, no admin teleport, no gear handout after respawn.
+  // The agent respawns like a player and walks back to the village on its own.
+  await safeWalk(harness, actorName, {
+    x: cfg.origin.x,
+    y: cfg.origin.y + 1,
+    z: cfg.origin.z,
+  }).catch(() => {});
   obs = await harness.cap.observe(actorName);
   const healthAfter = obs && obs.data ? Number(obs.data.health) : Number.NaN;
   return {
@@ -256,9 +272,8 @@ async function runJob(harness, actorName, step, state, ctx = {}) {
     alive,
   };
 
-  // Creative ONLY for Civs founding stockpile (build-reqs). All other jobs: survival.
-  const founding = step.job === 'placeregion';
-  await harness.raw(`gamemode ${founding ? 'creative' : 'survival'} ${actorName}`);
+  // PLAYER-LIKE: never switch gamemode. The QA/prod server is survival with
+  // allow-cheats=false; the NPC works with exactly the same rules as a human player.
 
   if (step.job === 'placeregion') {
     // Ensure the town exists AND Steve is a member (Civs pre-reqs for regions require
@@ -268,14 +283,18 @@ async function runJob(harness, actorName, step, state, ctx = {}) {
     const pz = cfg.origin.z + (step.dz || 0);
     const py = cfg.origin.y;
     // Founding exception: stockpile fill then placeregion (documented in VILLAGE-AESTHETICS).
-    await stockpile(harness, px, py, pz, step.stockpile || 'utility');
+    const stock = await stockpile(harness, px, py, pz, step.stockpile || 'utility');
     const walk = await safeWalk(
       harness,
       actorName,
       { x: px + 1, y: py + 1, z: pz + 1 },
-      { clearFooting: (x, y, z) => clearFooting(harness, x, y, z), timeoutMs: 12000, allowTeleport: false }
+      {
+        clearFooting: (x, y, z) => clearFooting(harness, x, y, z, actorName),
+        timeoutMs: 12000,
+        allowTeleport: false,
+      }
     );
-    results.actions.push({ walk });
+    results.actions.push({ walk, stockpile: stock });
     await cap.lookAt(actorName, px, py + 1, pz);
     await cap.swing(actorName);
     const placeReply = await harness.raw(
@@ -290,9 +309,8 @@ async function runJob(harness, actorName, step, state, ctx = {}) {
       placeReply: String(placeReply || '').slice(0, 240),
       after,
       ok,
-      cheat: 'stockpile_fill_for_civs_founding',
+      cheat: stock && stock.skipped ? null : 'stockpile_fill_for_civs_founding',
     });
-    await harness.raw(`gamemode survival ${actorName}`);
     if (ok) {
       state.completedPlaces[step.type] = true;
       const exclusiveOther = EXCLUSIVE_PAIRS[step.type];
