@@ -5,7 +5,7 @@ Labels: **FACT** · **OBSERVED** · **INFERRED**
 ## Root causes (2026-08-11)
 
 1. **Cam only targeted Steve** — `SpectatorCamera.targetName` and `getTargetPos` ignored Alex. **FACT**
-2. **Viewer follow was one-shot** — `launch-viewer.ps1` ran `/spectate Cam` once on join; drops were never repaired. **FACT**
+1. **Cam only targeted Steve** — `SpectatorCamera.targetName` and `getTargetPos` ignored Alex in the observed session. **FACT**
 3. **Nested spectate** (`Viewer→Cam→Steve`) is unreliable for continuous watching. **OBSERVED**
 4. **FallbackDirector** teleported Cam to pad offsets / wide shots instead of living agent positions. **FACT**
 5. **Actor connect via WSL eth0** caused `ECONNRESET` / Cam login timeouts; actors must use `127.0.0.1` from the WSL worker. **OBSERVED**
@@ -22,7 +22,7 @@ Steve / Alex  (workers — village-worker jobs)
 ```
 
 - `ObservationDirector` dwells on Steve then Alex (default 15–20s), logs real switches only.
-- Soft `biasTo`: queues mid-dwell; switches after half-dwell or if subject never focused.
+6. **Work-tick bias reset dwell every job** and `_index` desync caused `Alex→Alex` no-op switches in the observed session. **FACT** (fixed: soft bias + index sync + no-op skip)
 - `ViewerFollowLoop` re-asserts Viewer→Cam every 2.5s.
 - Agent logs: `agent_state_transition`, `agent_action`, `observation_summary`.
 

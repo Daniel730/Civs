@@ -66,7 +66,7 @@ behaviour explicit; it does not change shot logic. Mapping:
 
 Every transition increments `camera_fsm_transition_count{from,to,reason}` and emits a
 `director_fsm_transition` log line. Out-of-grammar edges are counted + logged DEGRADED
-but never wedge the stream. Interest scoring uses activity, novelty, and event
+Live validation on an online server remains **TODO** for #72; do not claim livestream “AI cinematography” beyond unit tests and harness probes.
 priority — **no LLM in the tick** (D-AP-021).
 
 ## Camera modes

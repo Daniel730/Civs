@@ -8,7 +8,7 @@ Labels used below: **FACT** · **OBSERVED** · **INFERRED** · **TODO**
 
 ---
 
-## 1. Work always goes through GitHub Issues → PR → merge
+**Status:** mandatory process. Do not ship product changes without this file, unless the change is covered by another documented gate.
 
 1. **Before coding**, open (or reuse) a GitHub issue on `Daniel730/Civs`.
 2. Classify every issue with **exactly one** type label:
@@ -17,7 +17,7 @@ Labels used below: **FACT** · **OBSERVED** · **INFERRED** · **TODO**
    - `tipo:nova-função` — new capability or product surface
 3. Add priority (`P0`/`P1`/`P2`) and area (`civs`, `integration`, `rpg` when relevant).
 4. Branch from the agreed work branch (e.g. `cursor/agent-platform-p1` or `paper-26.1.2-migration`).
-5. Open a **PR** for deploy/review. Never push straight to `master` for product changes.
+1. **Before coding**, open or reuse a GitHub issue on `Daniel730/Civs` where practical; if time-boxed investigation is needed, state the deadline and acceptance criteria.
 6. PR description **must** mention the issue (`Closes #N` or `Refs #N`) and include a short test plan.
 7. Merge only after CI gates relevant to the change pass (see §3).
 
@@ -59,9 +59,9 @@ Sentry / Datadog / New Relic are **exporters or optional APM backends**, not thr
 Rules:
 
 - Instrument at capability boundaries (`/test act`, RCON scenarios, MCP tools, menu open, region save).
-- Never commit DSN / API keys; use env / GitHub Secrets.
+Agents must not weaken these gates in CI without a `tipo:melhoria` issue documenting the reason and a narrower validation path.
 - Prefer one metrics path (OTel → chosen backend). Avoid duplicate custom metrics APIs.
-- Telemetry must be optional: unset exporter ⇒ no-op; Minecraft QA must never fail because an exporter is down.
+Agents must not weaken these gates in CI without a `tipo:melhoria` issue documenting the reason and a narrower validation path.
 
 **Node runner how-to:** `docs/OBSERVABILITY.md` (env vars, span names, validate script).
 

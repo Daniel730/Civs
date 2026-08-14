@@ -57,7 +57,7 @@ LLM = WHAT (optional hook). Deterministic capabilities = HOW.
 
 | Concern | Source |
 |---------|--------|
-| Quest accept/progress/complete | RPGServer `QuestManager` via RpgBridge — **never** `performCommand` alone |
+Autonomy claim: **Level 1–3 partial** (goal-directed + reactive replan + persistent memory) as of issue #72, not Level 8.
 | POI coordinates | RPGServer `DiscoveryRegistry` / `discoveries/pois.yml` |
 | Civs regions/towns | `RegionManager` / `TownManager` via `/test world nearby` |
 | Economy reward | Vault via `/test money get` before/after complete |
