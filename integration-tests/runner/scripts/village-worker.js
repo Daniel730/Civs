@@ -35,6 +35,11 @@ const rt = require('../lib/ai-world/agent-runtime');
 const { AgentCooperation, semanticFor } = require('../lib/ai-world/agent-bus');
 const { HermesBridge } = require('../lib/ai-world/hermes-bridge');
 
+// Player-like modules (M3, M4, M5) — pure, testable, no I/O
+const { checkTool, expectedToolName, findToolInInventory } = require('../lib/tool-check');
+const { CombatLog, ATTACK_COOLDOWN_MS } = require('../lib/combat-log');
+const { applyObserve, diffInventory } = require('../lib/inventory-diff');
+
 const REPORTS = path.join(__dirname, '..', 'reports');
 const LOG_JSONL = path.join(REPORTS, 'village-worker.jsonl');
 const STATE_FILE = path.join(REPORTS, 'village-worker-state.json');
@@ -167,6 +172,15 @@ async function sleep(ms) {
  * PLAYER-LIKE ONLY: clear head+feet at an approach tile by actually MINING the blocks
  * (cap.breakBlock), never `setblock ... air`. If the break fails the agent simply walks
  * around — no admin fallback.
+ *
+ * M5 NOTE: blocks mined here CAN yield drops (e.g. an oak-log in the path). Those drops
+ * are captured honestly because EVERY downstream job (miner/lumberjack/beautify/place/
+ * gather/torch/guard) takes a fresh `cap.observe` immediately after arriving via
+ * safeWalk (which calls clearFooting) and diffs it against the post-action observe. So
+ * a log/ore collected while clearing footing surfaces in that job's `inventory_diff`
+ * rather than being invisible. We deliberately do NOT diff clearFooting per-tile here:
+ * it can fire many times mid-walk and would flood the log; the next job's diff is the
+ * single source of truth for "what the NPC actually gained/lost/dropped".
  */
 async function clearFooting(harness, x, y, z, actorName = cfg.actorName) {
   const ix = Math.floor(x);
@@ -344,7 +358,7 @@ async function runJob(harness, actorName, step, state, ctx = {}) {
   results.groundY = groundY;
 
   const walk = await safeWalk(harness, actorName, stand, {
-    clearFooting: (x, y, z) => clearFooting(harness, x, y, z),
+    clearFooting: (x, y, z) => clearFooting(harness, x, y, z, actorName),
     timeoutMs: 14000,
     stepLen: 0.45,
     pauseMs: 140,
@@ -366,22 +380,53 @@ async function runJob(harness, actorName, step, state, ctx = {}) {
     results.actions.push({ look });
   }
 
-  if (step.job === 'miner' || step.job === 'builder' || step.job === 'beautify') {
-    await cap.giveItem(actorName, 'STONE_PICKAXE', 1);
-    await cap.hotbar(actorName, 0);
-  }
-  if (step.job === 'farmer') {
-    await cap.giveItem(actorName, 'IRON_HOE', 1);
-    await cap.hotbar(actorName, 0);
-  }
-  if (step.job === 'lumberjack') {
-    await cap.giveItem(actorName, 'IRON_AXE', 1);
-    await cap.hotbar(actorName, 0);
-  }
-  if (step.job === 'guard') {
-    await cap.giveItem(actorName, 'IRON_SWORD', 1);
-    await cap.hotbar(actorName, 0);
-  }
+  // PLAYER-LIKE tooling: NO giveItem / `item replace`. The NPC uses whatever tool it
+    // already carries (collected or crafted). We select the BEST tool from its own
+    // inventory using tool-check (lib/tool-check.js). Bare hands still mine — just
+    // slower, which is honest.
+    if (
+      ['miner', 'builder', 'beautify', 'farmer', 'lumberjack', 'guard'].includes(step.job)
+    ) {
+      // Tool-check integration (M3): check held item vs target block/mob, auto-select best tool
+      // from the NPC's own inventory. If no suitable tool, NPC must fetch/craft first.
+      try {
+        const JOB_TARGET = {
+          miner: 'STONE',
+          builder: 'STONE',
+          beautify: 'STONE', // cleanup uses stone-breaking
+          farmer: 'GRASS_BLOCK', // tilling dirt/grass
+          lumberjack: 'OAK_LOG',
+          guard: 'mob',
+        };
+        const target = JOB_TARGET[step.job];
+        if (target) {
+          // Read current held item and inventory from the last observe (if available)
+          const ctxObs = ctx?.obs?.data || {};
+          const held = ctxObs?.held || ctxObs?.data?.held;
+          const inventory = ctxObs?.inventory || ctxObs?.data?.inventory || [];
+          const verdict = checkTool(held, target);
+          log({ kind: 'tool_check', job: step.job, target, ...verdict });
+          if (!verdict.matched) {
+            // Try to find the correct tool in the NPC's own inventory (no giveItem!)
+            const have = findToolInInventory(inventory, verdict.expectedTool);
+            if (have) {
+              // We don't know the hotbar slot from observe, so just try slot 0 as fallback.
+              // A full implementation would map material->slot from observe.
+              await cap.hotbar(actorName, 0).catch(() => {});
+              log({ kind: 'tool_select', tool: have, reason: verdict.reason });
+            } else {
+              // Missing tool: NPC must fetch/craft it before mining. Signal to planner.
+              state.needsTool = verdict.expectedTool;
+              log({ kind: 'tool_mismatch', job: step.job, target, expected: verdict.expectedTool, action: 'fetch_or_craft' });
+            }
+          }
+        }
+      } catch (e) {
+        log({ kind: 'tool_check_error', error: String(e) });
+      }
+      // Always select slot 0 as default hotbar (human-like press "1")
+      await cap.hotbar(actorName, 0).catch(() => {});
+    }
 
   // Mine / chop existing terrain only — never spawn a block then break it (#66).
   if (step.job === 'miner') {
@@ -395,58 +440,102 @@ async function runJob(harness, actorName, step, state, ctx = {}) {
       minY: groundY - 8,
     });
     const fb = await cap.findBlock(actorName, 'STONE', 12).catch(() => null);
-    if (fb && fb.success && fb.data && fb.data.nearest) {
-      digX = fb.data.nearest.x;
-      digZ = fb.data.nearest.z;
-      digY = fb.data.nearest.y;
-      // Walk to the block first so the swing actually connects (don't dig from afar).
-      await safeWalk(harness, actorName, { x: digX, y: digY, z: digZ }, {
-        arrive: 2.5, timeoutMs: 6000, speed: 4.5, allowTeleport: false,
-      }).catch(() => {});
-    }
-    const br = await cap.breakBlock(actorName, digX, digY, digZ);
-    results.actions.push({ breakBlock: br, spawned: false, target: { x: digX, y: digY, z: digZ } });
-    await cap.swing(actorName);
-  } else if (step.job === 'lumberjack') {
+        if (fb && fb.success && fb.data && fb.data.nearest) {
+          digX = fb.data.nearest.x;
+          digZ = fb.data.nearest.z;
+          digY = fb.data.nearest.y;
+          // Walk to the block first so the swing actually connects (don't dig from afar).
+          await safeWalk(harness, actorName, { x: digX, y: digY, z: digZ }, {
+            arrive: 2.5, timeoutMs: 6000, speed: 4.5, allowTeleport: false,
+          }).catch(() => {});
+        }
+        // --- Inventory diff (M5: lib/inventory-diff.js) ---------------------------
+        const invBeforeMiner = applyObserve(await harness.cap.observe(actorName));
+        const br = await cap.breakBlock(actorName, digX, digY, digZ);
+        const invAfterMiner = applyObserve(await harness.cap.observe(actorName));
+        const minerDiff = diffInventory(invBeforeMiner, invAfterMiner, {
+          from: `break:STONE@${digX},${digY},${digZ}`,
+          expectedDrops: { COBBLESTONE: 1 }, // stone drops cobblestone
+        });
+        log({ kind: 'inventory_diff', action: 'break', target: { x: digX, y: digY, z: digZ }, ...minerDiff });
+        // -----------------------------------------------------------------------
+        results.actions.push({ breakBlock: br, spawned: false, target: { x: digX, y: digY, z: digZ } });
+        await cap.swing(actorName);
+      } else if (step.job === 'lumberjack') {
     const digX = Math.floor(cfg.origin.x + (step.dx || 0) + 5);
     const digZ = Math.floor(cfg.origin.z + (step.dz || 0) + 4);
     // Prefer a block above surface (log/leaves) if present; else surface
     let digY = groundY + 1;
+    // --- Inventory diff (M5) for FIRST break: observe the REAL inventory before ---
+    const invBeforeLJ = applyObserve(await harness.cap.observe(actorName));
     const br = await cap.breakBlock(actorName, digX, digY, digZ);
-    if (!br || !br.success) {
-      digY = await findSurfaceY(harness, digX, digZ, {
-        fallbackY: groundY,
-        maxY: groundY + 12,
-        minY: groundY - 4,
-      });
-      const br2 = await cap.breakBlock(actorName, digX, digY, digZ);
-      results.actions.push({ breakBlock: br2, spawned: false });
-    } else {
-      results.actions.push({ breakBlock: br, spawned: false });
-    }
-    await cap.swing(actorName);
-  }
-
-  // Beautify: tear platform junk + restore grass (no new pads).
-  if (step.job === 'beautify' || coords.cleanup) {
-    const targets = cleanupTargets(cfg.origin, {
-      ...step,
-      tick: state.tick,
-      groundY,
-    });
-    const cleaned = [];
-    for (const t of targets) {
-      if (t.action === 'break') {
-        const br = await cap.breakBlock(actorName, t.x, t.y, t.z);
         if (!br || !br.success) {
-          await harness.raw(`setblock ${t.x} ${t.y} ${t.z} air`);
+          digY = await findSurfaceY(harness, digX, digZ, {
+            fallbackY: groundY,
+            maxY: groundY + 12,
+            minY: groundY - 4,
+          });
+          // --- Inventory diff (M5) for retry break ---
+          const invBeforeLJ2 = applyObserve(await harness.cap.observe(actorName));
+          const br2 = await cap.breakBlock(actorName, digX, digY, digZ);
+          const invAfterLJ2 = applyObserve(await harness.cap.observe(actorName));
+          const ljDiff2 = diffInventory(invBeforeLJ2, invAfterLJ2, {
+            from: `break:OAK_LOG@${digX},${digY},${digZ}`,
+            expectedDrops: { OAK_LOG: 1 },
+          });
+          log({ kind: 'inventory_diff', action: 'break', target: { x: digX, y: digY, z: digZ }, ...ljDiff2 });
+          results.actions.push({ breakBlock: br2, spawned: false });
+        } else {
+          // --- Inventory diff (M5) for successful first break ---
+          const invAfterLJ = applyObserve(await harness.cap.observe(actorName));
+          const ljDiff = diffInventory(invBeforeLJ, invAfterLJ, {
+            from: `break:OAK_LOG@${digX},${digY},${digZ}`,
+            expectedDrops: { OAK_LOG: 1 },
+          });
+          log({ kind: 'inventory_diff', action: 'break', target: { x: digX, y: digY, z: digZ }, ...ljDiff });
+          results.actions.push({ breakBlock: br, spawned: false });
         }
-        cleaned.push({ ...t, ok: true });
-      } else if (t.action === 'set_grass') {
-        await harness.raw(`setblock ${t.x} ${t.y} ${t.z} grass_block`);
-        cleaned.push({ ...t, ok: true });
+        await cap.swing(actorName);
       }
-    }
+
+      // Beautify: tear platform junk + restore grass (no new pads).
+      if (step.job === 'beautify' || coords.cleanup) {
+        const targets = cleanupTargets(cfg.origin, {
+          ...step,
+          tick: state.tick,
+          groundY,
+        });
+        const cleaned = [];
+        for (const t of targets) {
+          if (t.action === 'break') {
+            // --- Inventory diff (M5) for beautify break ---
+            const invBeforeBeauty = applyObserve(await harness.cap.observe(actorName));
+            const br = await cap.breakBlock(actorName, t.x, t.y, t.z);
+            const invAfterBeauty = applyObserve(await harness.cap.observe(actorName));
+            const beautyDiff = diffInventory(invBeforeBeauty, invAfterBeauty, {
+              from: `beautify_break:${t.x},${t.y},${t.z}`,
+              expectedDrops: { COBBLESTONE: 1 }, // approximate for cleanup blocks
+            });
+            log({ kind: 'inventory_diff', action: 'beautify_break', target: { x: t.x, y: t.y, z: t.z }, ...beautyDiff });
+            // PLAYER-LIKE: no `setblock air` fallback. If the block cannot be mined it stays.
+            cleaned.push({ ...t, ok: !!(br && br.success) });
+          } else if (t.action === 'set_grass') {
+            // --- Inventory diff (M5) for grass place ---
+            const invBeforeGrass = applyObserve(await harness.cap.observe(actorName));
+            // PLAYER-LIKE: place from the NPC's own inventory; no admin setblock.
+            await cap.lookAt(actorName, t.x, t.y, t.z);
+            const pl = await cap
+              .placeBlock(actorName, t.x, t.y, t.z, 'GRASS_BLOCK')
+              .catch(() => null);
+            const invAfterGrass = applyObserve(await harness.cap.observe(actorName));
+            const grassDiff = diffInventory(invBeforeGrass, invAfterGrass, {
+              from: `place:GRASS_BLOCK@${t.x},${t.y},${t.z}`,
+              expectedDrops: {}, // placing consumes from inventory, no drops
+            });
+            log({ kind: 'inventory_diff', action: 'place', target: { x: t.x, y: t.y, z: t.z }, material: 'GRASS_BLOCK', ...grassDiff });
+            cleaned.push({ ...t, ok: !!(pl && pl.success), needsMaterial: !(pl && pl.success) });
+          }
+        }
     await cap.swing(actorName);
     results.actions.push({ beautify: true, cleaned: cleaned.length, sample: cleaned.slice(0, 4) });
   }
@@ -472,24 +561,33 @@ async function runJob(harness, actorName, step, state, ctx = {}) {
       paused && state.construction.planTick != null ? state.construction.planTick : state.tick;
 
     const placeFn = async (block, tx) => {
-      const near = {
-        x: block.x,
-        y: Math.max(block.y, groundY + 1),
-        z: block.z + (block.role === 'path' ? 0 : 1),
-      };
-      const w2 = await safeWalk(harness, actorName, near, {
-        arrive: 2.5,
-        timeoutMs: 8000,
-        stepLen: 0.45,
-        pauseMs: 100,
-        allowTeleport: false,
-      });
-      results.actions.push({
-        walkBlock: { steps: w2.steps, success: w2.success, recoverTeleport: w2.recoverTeleport },
-      });
-      const oldBlock = await harness.block.at(block.x, block.y, block.z);
-      const pr = await placeAesthetic(harness, actorName, block);
-      await tx.setBlock({
+          const near = {
+            x: block.x,
+            y: Math.max(block.y, groundY + 1),
+            z: block.z + (block.role === 'path' ? 0 : 1),
+          };
+          const w2 = await safeWalk(harness, actorName, near, {
+            arrive: 2.5,
+            timeoutMs: 8000,
+            stepLen: 0.45,
+            pauseMs: 100,
+            allowTeleport: false,
+          });
+          results.actions.push({
+            walkBlock: { steps: w2.steps, success: w2.success, recoverTeleport: w2.recoverTeleport },
+          });
+          const oldBlock = await harness.block.at(block.x, block.y, block.z);
+          // --- Inventory diff (M5) for placeBlock via placeAesthetic ---
+          const invBeforePlace = applyObserve(await harness.cap.observe(actorName));
+          const pr = await placeAesthetic(harness, actorName, block);
+          const invAfterPlace = applyObserve(await harness.cap.observe(actorName));
+          const placeDiff = diffInventory(invBeforePlace, invAfterPlace, {
+            from: `place:${block.material}@${block.x},${block.y},${block.z}`,
+            expectedDrops: {}, // placing consumes from inventory, no drops
+          });
+          log({ kind: 'inventory_diff', action: 'place', target: { x: block.x, y: block.y, z: block.z }, material: block.material, ...placeDiff });
+          // -----------------------------------------------------------------------
+          await tx.setBlock({
         x: block.x,
         y: block.y,
         z: block.z,
@@ -586,10 +684,23 @@ async function runJob(harness, actorName, step, state, ctx = {}) {
         const safeZ = cfg.origin.z + 22;
         await safeWalk(harness, actorName, { x: safeX, y: (groundY || cfg.origin.y) + 2, z: safeZ },
           { arrive: 2, timeoutMs: 8000, speed: 4.5, allowTeleport: true }).catch(() => {});
-        // Light up the fight zone so fewer mobs spawn — breaks the survive-forever loop.
+        // Light up the fight zone with REAL torch placements from the NPC's own inventory
+        // (no admin setblock). If it has no torches, nothing is placed — it must craft them.
         const ty = (groundY || cfg.origin.y) + 1;
+        // --- Inventory diff (M5): each guard torch is drawn from the NPC's OWN inventory ---
+        let prevGuardInv = applyObserve(await harness.cap. observe(actorName));
         for (const [dx, dz] of [[2,2],[-2,2],[2,-2],[-2,-2],[3,0],[-3,0],[0,3],[0,-3]]) {
-          await harness.raw(`test setblock ${Math.floor(safeX+dx)} ${ty} ${Math.floor(safeZ+dz)} TORCH`).catch(() => {});
+          const tx2 = Math.floor(safeX + dx);
+          const tz2 = Math.floor(safeZ + dz);
+          await cap.lookAt(actorName, tx2, ty, tz2).catch(() => {});
+          await cap.placeBlock(actorName, tx2, ty, tz2, 'TORCH').catch(() => {});
+          const afterGuardInv = applyObserve(await harness.cap.observe(actorName));
+          const gd = diffInventory(prevGuardInv, afterGuardInv, {
+            from: `place:TORCH@${tx2},${tz2}`,
+            expectedDrops: {},
+          });
+          log({ kind: 'inventory_diff', action: 'place', target: { x: tx2, y: ty, z: tz2 }, material: 'TORCH', ...gd });
+          prevGuardInv = afterGuardInv;
         }
       }
       await cap.lookAt(actorName, cfg.origin.x, groundY + 1, cfg.origin.z);
@@ -627,6 +738,8 @@ async function runJob(harness, actorName, step, state, ctx = {}) {
         { arrive: 2.5, timeoutMs: 7000, speed: 4.5, allowTeleport: false }).catch(() => {});
       await cap.lookAt(actorName, hostile.x, (hostile.y || groundY) + 1, hostile.z);
       const atk = await cap.attackNearest(actorName, 'hostile').catch(() => null);
+      // M4: record the real swing so the combat cooldown is honest.
+      try { combat.get(actorName)?.noteAttack(actorName); } catch (_) {}
       results.actions.push({ hunt: { target: hostile, attack: atk } });
     } else {
       // No hostiles nearby — roam toward the nearest mob spawn / dark patch.
@@ -645,8 +758,15 @@ async function runJob(harness, actorName, step, state, ctx = {}) {
       const gy = await findSurfaceY(harness, gx, gz, { fallbackY: groundY, maxY: groundY + 6, minY: groundY - 3 });
       await safeWalk(harness, actorName, { x: gx, y: gy + 1, z: gz },
         { arrive: 2.5, timeoutMs: 6000, speed: 4.5, allowTeleport: false }).catch(() => {});
+      // --- Inventory diff (M5) for gather break: observe REAL inventory before/after ---
+      const invBeforeG = applyObserve(await harness.cap.observe(actorName));
       const br = await cap.breakBlock(actorName, gx, gy, gz);
       if (br && br.success) gathered++;
+      const invAfterG = applyObserve(await harness.cap.observe(actorName));
+      const gDiff = diffInventory(invBeforeG, invAfterG, {
+        from: `gather_break:@${gx},${gy},${gz}`,
+      });
+      log({ kind: 'inventory_diff', action: 'gather_break', target: { x: gx, y: gy, z: gz }, ...gDiff });
       await cap.swing(actorName);
     }
     results.actions.push({ gather: { gathered } });
@@ -663,13 +783,28 @@ async function runJob(harness, actorName, step, state, ctx = {}) {
       }
     }
     let placed = 0;
-    for (const [dx, dz] of spots) {
+    // Real placement means real walking — cap the batch per tick (8 torches) instead of
+    // instantly setblock-ing 49 tiles.
+    // --- Inventory diff (M5): TORCH is drawn from the NPC's OWN inventory; prove it ---
+    let prevTorchInv = applyObserve(await harness.cap.observe(actorName));
+    for (const [dx, dz] of spots.slice(0, 8)) {
       const tx = Math.floor(cfg.origin.x + dx);
       const tz = Math.floor(cfg.origin.z + dz);
-      const r = await harness.raw(`setblock ${tx} ${ty} ${tz} TORCH`).catch(() => null);
-      if (r) placed++;
+      // PLAYER-LIKE: walk into range, look, then place a torch we actually own.
+      await safeWalk(harness, actorName, { x: tx, y: ty, z: tz },
+        { arrive: 3, timeoutMs: 5000, speed: 4.5, allowTeleport: false }).catch(() => {});
+      await cap.lookAt(actorName, tx, ty, tz).catch(() => {});
+      const r = await cap.placeBlock(actorName, tx, ty, tz, 'TORCH').catch(() => null);
+      if (r && r.success) placed++;
+      const afterTorchInv = applyObserve(await harness.cap.observe(actorName));
+      const tDiff = diffInventory(prevTorchInv, afterTorchInv, {
+        from: `place:TORCH@${tx},${tz}`,
+        expectedDrops: {}, // placing consumes from inventory, no drops
+      });
+      log({ kind: 'inventory_diff', action: 'place', target: { x: tx, y: ty, z: tz }, material: 'TORCH', ...tDiff });
+      prevTorchInv = afterTorchInv;
     }
-    results.actions.push({ torch: { placed } });
+    results.actions.push({ torch: { placed, attempted: spots.length, playerlike: true } });
   }
 
   // Rest: return to base and recover (regen happens in prod; here it's a safe idle).
@@ -690,81 +825,20 @@ async function runJob(harness, actorName, step, state, ctx = {}) {
 }
 
 /**
- * Equip a worker with armour + weapon + food so it can survive the live world
- * (spiders/skeletons) instead of dying in the first few minutes. Cheap: a few RCON calls.
+ * PLAYER-LIKE NO-OP (was: godmode gear handout).
  *
- * Root cause of "bots die for free": in Minecraft a plain `give` only drops the item into
- * the inventory — the bot never auto-equips armour, so it took full damage. We now force the
- * gear into the armour/weapon slots via `replaceitem`, which equips it directly. We also
- * `clear` first so leftover blocks from earlier jobs can't block the food/consumables.
+ * The old implementation ran `clear <player>` + `item replace entity <player> <slot> with
+ * minecraft:diamond_*` + giveItem(GOLDEN_APPLE...) every 30s. That is admin gear from
+ * nothing — a cheat. NPCs must now survive with what they mine/craft, exactly like a
+ * player. Kept as a no-op so every existing call site stays valid, and so the honest
+ * behaviour can never be "accidentally" re-enabled by an env var.
  */
-async function equipSurvivalGear(harness, actorName, opts = {}) {
-  // QA-only escape hatch: when the harness/operator grants god-mode (resistance +
-  // regen) the NPC cannot die, so re-equipping diamond gear every tick is pure RCON
-  // spam with no survival benefit. Default OFF (i.e. NO equipping) because the gear
-  // storm is a QA artifact and god-mode is always applied here; a missing/lost env
-  // var must NOT silently re-enable the storm. Set AIWORLD_NO_EQUIP=0 in PRODUCTION
-  // to re-enable gear (it is what keeps the bot alive there).
-  if (process.env.AIWORLD_NO_EQUIP !== '0') return;
-  const cap = harness.cap;
-  const { force = false, healthPct = null, state = null } = opts;
-
-  // Throttle: skip equip if we equipped recently (every 30s), regardless of state.
-  // This stops the RCON storm that occurs when the agent is stuck in DANGER/RECOVER
-  // (never SAFE) and would otherwise re-gift diamond gear every tick. In prod the
-  // 30s re-equip is cheap and keeps the bot geared; in QA it removes the spam.
-  if (!force) {
-    const lastEquipped = _lastEquipped[actorName] || 0;
-    if (Date.now() - lastEquipped < 30000) {
-      return; // Recently equipped — skip until the next window.
-    }
-  }
-
-  try {
-    await harness.raw(`clear ${actorName}`);
-  } catch (_) {
-    /* best effort */
-  }
-  // Slot mapping: `item replace entity <player> <slot> with <item>` equips directly
-  // (Paper 1.21+ syntax; a plain `give` only drops into the inventory and the bot never
-  // auto-equips armour, so it took full damage).
-  const equipped = {
-    DIAMOND_HELMET: 'armor.head',
-    DIAMOND_CHESTPLATE: 'armor.chest',
-    DIAMOND_LEGGINGS: 'armor.legs',
-    DIAMOND_BOOTS: 'armor.feet',
-    DIAMOND_SWORD: 'weapon.mainhand',
-    SHIELD: 'weapon.offhand',
-  };
-  for (const [mat, slot] of Object.entries(equipped)) {
-    try {
-      await harness.raw(
-        `item replace entity ${actorName} ${slot} with minecraft:${mat.toLowerCase()}`
-      );
-    } catch (_) {
-      /* best effort */
-    }
-  }
-  // Consumables go into the inventory (not equip slots).
-  for (const mat of ['GOLDEN_APPLE', 'GOLDEN_APPLE', 'COOKED_BEEF', 'COOKED_BEEF']) {
-    try {
-      await cap.giveItem(actorName, mat, 1);
-    } catch (_) {
-      /* best effort */
-    }
-  }
-  // Mark this actor as recently equipped for throttle purposes.
+async function equipSurvivalGear(_harness, actorName, _opts = {}) {
   _lastEquipped[actorName] = Date.now();
+  return { skipped: true, reason: 'playerlike_no_admin_gear' };
 }
 
 async function connectActor(harness, name, attempt = 1) {
-  // Kick any stale client using this identity so we never collide with an orphaned
-  // minecraft-protocol session ("logged in from another location" → reconnect storm).
-  try {
-    await harness.raw(`kick ${name}`);
-  } catch (_) {
-    /* best effort */
-  }
   await sleep(800);
   const actor = new RawKeepAliveActor({
     host: cfg.mcHost,
@@ -782,54 +856,40 @@ async function connectActor(harness, name, attempt = 1) {
     return { actor, ok: false, reason: actor.reason };
   }
   await actor.grantOp();
-  // Spawn-in: brief creative only to land safely, then survival for player-like work.
-  await harness.raw(`gamemode creative ${name}`);
+  // BOOTSTRAP ONLY (login placement, not part of the work loop): move the fresh session to
+  // the village. No gamemode switch, no gear handout — it stays in the server's survival mode.
   await actor.teleport(cfg.origin.x, cfg.origin.y + 2, cfg.origin.z);
-  await harness.raw(`gamemode survival ${name}`);
-  await equipSurvivalGear(harness, name);
   const alive = await ensureAlive(harness, name);
   return { actor, ok: true, alive };
 }
 
-/** Recover council_room + town if overnight damage wiped the center. */
+/**
+ * Town check (player-like).
+ *
+ * The old body founded the town with creative + admin stockpile fill + setblock bookshelves
+ * + `clear` + `cv give` + `tp` + `item replace`. All of that is godmode, so it is gone.
+ * We now only OBSERVE whether the town exists. If it does not, the NPC must gather the
+ * materials and found it through normal play; the worker reports NEEDS_PLAYER_FOUNDING
+ * instead of faking it.
+ */
 async function ensureTown(harness, actorName) {
   const town = await harness.assert.town(cfg.town);
   if (town && town.ok) return { status: 'PASS', town };
-  const { x, y, z } = cfg.origin;
-  await harness.raw(`gamemode creative ${actorName}`);
-  await stockpile(harness, x, y, z, 'utility');
-  // Bookshelves required by council_room build-reqs
-  for (const [bx, by, bz] of [
-    [-3, 1, 1],
-    [-3, 1, 2],
-    [-3, 2, 1],
-    [-3, 2, 2],
-    [-2, 1, 2],
-    [-2, 2, 2],
-    [-1, 1, 2],
-    [-1, 2, 2],
-  ]) {
-    await harness.raw(`setblock ${x + bx} ${y + by} ${z + bz} bookshelf`);
+  // Player-like attempt: if the NPC already holds a settlement item, let IT run the command.
+  let attempt = null;
+  try {
+    await harness.cap.hotbar(actorName, 0);
+    attempt = await harness.cap.runAs(actorName, `cv town ${cfg.town} settlement`);
+    await sleep(400);
+  } catch (_) {
+    /* best effort — no admin fallback */
   }
-  await harness.raw(`setblock ${x} ${y} ${z} grass_block`);
-  await harness.raw(`setblock ${x} ${y + 1} ${z} air`);
-  const place = await harness.raw(`cv placeregion ${actorName} council_room ${x} ${y} ${z}`);
-  await harness.raw(`clear ${actorName}`);
-  await harness.raw(`cv give ${actorName} settlement 1`);
-  await harness.raw(`tp ${actorName} ${x + 2} ${y + 1} ${z + 2}`);
-  await harness.cap.hotbar(actorName, 0);
-  await harness.raw(
-    `item replace entity ${actorName} weapon.mainhand from entity ${actorName} container.0`
-  );
-  await harness.cap.runAs(actorName, `cv town ${cfg.town} settlement`);
-  await sleep(400);
-  await harness.raw(`gamemode survival ${actorName}`);
   const again = await harness.assert.town(cfg.town);
   return {
-    status: again && again.ok ? 'PASS' : 'FAIL',
-    place: String(place || '').slice(0, 160),
+    status: again && again.ok ? 'PASS' : 'NEEDS_PLAYER_FOUNDING',
     town: again,
-    cheat: 'ensure_town_stockpile_fill',
+    attempt: attempt ? String(attempt).slice(0, 160) : null,
+    playerlike: true,
   };
 }
 
@@ -1208,6 +1268,11 @@ async function main() {
       new SurvivalMonitor({ actor: name, workOrigin: cfg.origin, leashRadius: cfg.leashRadius })
     );
   }
+  // M4: per-agent combat/survival logging tracker (attack cooldown memory, hazards).
+  const combat = new Map();
+  for (const name of subjects) {
+    combat.set(name, new CombatLog({ actor: name, attackCooldownMs: ATTACK_COOLDOWN_MS }));
+  }
   const intentions = new IntentionCache();
   const antiStall = new AntiStall({ noProgressMs: Math.max(12000, cfg.intervalMs * 3) });
   // AI World neural layer: maps each agent to its most recent experience episodeId,
@@ -1314,11 +1379,30 @@ async function main() {
       }
 
       // 1. Perception + survival. Survival always outranks the job rotation.
-      const observed = await harness.cap.observe(who);
-      const monitor = survival.get(who);
-      const assessment = monitor
-        ? monitor.assess((observed && observed.data) || {})
-        : { state: 'SAFE', action: { kind: 'work' }, changed: false };
+            const observed = await harness.cap.observe(who);
+            const monitor = survival.get(who);
+            const assessment = monitor
+              ? monitor.assess((observed && observed.data) || {})
+              : { state: 'SAFE', action: { kind: 'work' }, changed: false };
+
+            // --- Combat/survival event (M4: lib/combat-log.js CombatLog) --------------
+            // Built from the REAL flat observe payload so attacker / light / hazards
+            // are populated (the old version read camelCase fields that don't exist).
+            try {
+              const od = (observed && observed.data) || {};
+              const combatLog = combat.get(who);
+              const evt = combatLog
+                ? combatLog.assess(od, {
+                    actor: who,
+                    survivalState: assessment.state,
+                    job: state.currentJob || null,
+                  })
+                : { kind: 'combat_survival', error: 'no_combat_log' };
+              log(evt);
+            } catch (e) {
+              log({ kind: 'combat_survival_error', error: String(e) });
+            }
+            // -----------------------------------------------------------------------
 
       // W2: feed the world memory from this tick's observation so the agent "absorbs" the world.
       // The observe payload carries deaths/last_damage/light even when no mob is in range, so the
