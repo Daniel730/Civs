@@ -35,10 +35,12 @@ const rt = require('../lib/ai-world/agent-runtime');
 const { AgentCooperation, semanticFor } = require('../lib/ai-world/agent-bus');
 const { HermesBridge } = require('../lib/ai-world/hermes-bridge');
 
-// Player-like modules (M3, M4, M5) — pure, testable, no I/O
+// Player-like modules (M3, M4, M5, M6) — pure, testable, no I/O
 const { checkTool, expectedToolName, findToolInInventory } = require('../lib/tool-check');
 const { CombatLog, ATTACK_COOLDOWN_MS } = require('../lib/combat-log');
 const { applyObserve, diffInventory } = require('../lib/inventory-diff');
+// M6: typed, agent-oriented action events (break/mine/gather/place) with full context.
+const { buildMineEvent, buildBreakEvent, buildGatherEvent, buildPlaceEvent, SCHEMA_VERSION: agentEventsSchema } = require('../lib/agent-events');
 
 const REPORTS = path.join(__dirname, '..', 'reports');
 const LOG_JSONL = path.join(REPORTS, 'village-worker.jsonl');
@@ -278,6 +280,19 @@ async function runJob(harness, actorName, step, state, ctx = {}) {
   }
   const coords = workCoords(cfg.origin, { ...step, tick: state.tick });
   const cap = harness.cap;
+  // M6: carry the most-recent tool-check verdict + held item across the per-job
+  // action blocks so every typed event (mine/break/gather/place) embeds it.
+  let lastToolVerdict = null;
+  // The work-loop caller passes the fresh observe as ctx.observed (parsed result
+  // whose .data carries the flat snake_case fields: held / inventory — verified
+  // live). Fall back across the older ctx.obs shape too, so the held item is ALWAYS
+  // read from real data. The previous ctx.obs?.data path was always undefined, so
+  // held was never seen and a false mismatch was logged on every tick.
+  const _obsData =
+    (ctx && ctx.observed && ctx.observed.data) ||
+    (ctx && ctx.obs && ctx.obs.data) ||
+    {};
+  let lastHeldItem = _obsData.held != null ? _obsData.held : null;
   const results = {
     job: step.job,
     site: step.site || step.label,
@@ -380,53 +395,129 @@ async function runJob(harness, actorName, step, state, ctx = {}) {
     results.actions.push({ look });
   }
 
-  // PLAYER-LIKE tooling: NO giveItem / `item replace`. The NPC uses whatever tool it
-    // already carries (collected or crafted). We select the BEST tool from its own
-    // inventory using tool-check (lib/tool-check.js). Bare hands still mine — just
-    // slower, which is honest.
-    if (
-      ['miner', 'builder', 'beautify', 'farmer', 'lumberjack', 'guard'].includes(step.job)
-    ) {
-      // Tool-check integration (M3): check held item vs target block/mob, auto-select best tool
-      // from the NPC's own inventory. If no suitable tool, NPC must fetch/craft first.
+  // --- Tool-check guard (M3, lib/tool-check.js) ---------------------------------
+  // Before any mine/break, check the held item against the target block/mob. If the
+  // wrong tool (or none) is in hand, LOG the mismatch and route the NPC to
+  // fetch / craft / equip the correct tool BEFORE it wastes swings. Player-like: a
+  // real player never bare-hands obsidian, and bare-handing stone is slow / often
+  // blocked. No giveItem, no item-replace, no gamemode — the tool must come from the
+  // NPC's OWN inventory or be crafted/fetched.
+  let toolReady = true;
+  let toolNeed = null; // {job,target,expectedTool,reason,ownedInInventory,action}
+  if (
+    ['miner', 'builder', 'beautify', 'farmer', 'lumberjack', 'guard'].includes(step.job)
+  ) {
+    const JOB_TARGET = {
+      miner: 'STONE',
+      builder: 'STONE',
+      beautify: 'STONE', // cleanup uses stone-breaking
+      farmer: 'GRASS_BLOCK', // tilling dirt/grass
+      lumberjack: 'OAK_LOG',
+      guard: 'mob',
+    };
+    const target = JOB_TARGET[step.job];
+    if (target) {
       try {
-        const JOB_TARGET = {
-          miner: 'STONE',
-          builder: 'STONE',
-          beautify: 'STONE', // cleanup uses stone-breaking
-          farmer: 'GRASS_BLOCK', // tilling dirt/grass
-          lumberjack: 'OAK_LOG',
-          guard: 'mob',
-        };
-        const target = JOB_TARGET[step.job];
-        if (target) {
-          // Read current held item and inventory from the last observe (if available)
-          const ctxObs = ctx?.obs?.data || {};
-          const held = ctxObs?.held || ctxObs?.data?.held;
-          const inventory = ctxObs?.inventory || ctxObs?.data?.inventory || [];
-          const verdict = checkTool(held, target);
-          log({ kind: 'tool_check', job: step.job, target, ...verdict });
-          if (!verdict.matched) {
-            // Try to find the correct tool in the NPC's own inventory (no giveItem!)
-            const have = findToolInInventory(inventory, verdict.expectedTool);
-            if (have) {
-              // We don't know the hotbar slot from observe, so just try slot 0 as fallback.
-              // A full implementation would map material->slot from observe.
-              await cap.hotbar(actorName, 0).catch(() => {});
-              log({ kind: 'tool_select', tool: have, reason: verdict.reason });
-            } else {
-              // Missing tool: NPC must fetch/craft it before mining. Signal to planner.
-              state.needsTool = verdict.expectedTool;
-              log({ kind: 'tool_mismatch', job: step.job, target, expected: verdict.expectedTool, action: 'fetch_or_craft' });
-            }
+        // Read REAL held + inventory from the fresh observe (ctx.observed.data). The
+        // flat snake_case fields (held / inventory) are verified against live QA logs.
+        const held = _obsData.held != null ? _obsData.held : null;
+        const inventory = Array.isArray(_obsData.inventory) ? _obsData.inventory : [];
+        const verdict = checkTool(held, target);
+        // M6: stash the verdict so the typed mine/break/gather/place events below
+        // embed it in their `tool` field (full context: right tool?).
+        lastToolVerdict = verdict;
+        lastHeldItem = held || lastHeldItem;
+        // M6: typed tool_check event (replaces free-form kind:'tool_check').
+        log({
+          schemaVersion: agentEventsSchema,
+          ts: new Date().toISOString(),
+          kind: 'tool_check',
+          action: 'tool_check',
+          actor: actorName,
+          job: step.job,
+          target,
+          ...verdict,
+        });
+        if (!verdict.matched) {
+          // Is the correct tool somewhere in the NPC's OWN inventory (no giveItem!)?
+          const have = findToolInInventory(inventory, verdict.expectedTool);
+          if (have) {
+            // Tool owned but not in hand. The flat observe payload carries NO hotbar
+            // slot index, so we CANNOT honestly hotbar-select it here (selecting slot 0
+            // would put the wrong item in hand). Signal the planner to equip/route it
+            // instead of pretending. toolReady=false so pure-break jobs skip the swing.
+            toolNeed = {
+              job: step.job,
+              target,
+              expectedTool: verdict.expectedTool,
+              reason: verdict.reason,
+              ownedInInventory: have,
+              action: 'equip',
+            };
+            log({
+              schemaVersion: agentEventsSchema,
+              ts: new Date().toISOString(),
+              kind: 'tool_owned_not_held',
+              action: 'tool_owned_not_held',
+              actor: actorName,
+              job: step.job,
+              tool: have,
+              expected: verdict.expectedTool,
+              reason: verdict.reason,
+            });
+          } else {
+            // Truly missing: NPC must fetch / craft the right tool before mining.
+            toolNeed = {
+              job: step.job,
+              target,
+              expectedTool: verdict.expectedTool,
+              reason: verdict.reason,
+              ownedInInventory: null,
+              action: 'fetch_or_craft',
+            };
+            log({
+              schemaVersion: agentEventsSchema,
+              ts: new Date().toISOString(),
+              kind: 'tool_mismatch',
+              action: 'tool_mismatch',
+              actor: actorName,
+              job: step.job,
+              target,
+              expected: verdict.expectedTool,
+              action: 'fetch_or_craft',
+              reason: verdict.reason,
+            });
           }
+          toolReady = false;
+          // Consulted by the planner / next tick to route the NPC to fetch/craft/equip.
+          state.needsTool = toolNeed;
         }
       } catch (e) {
         log({ kind: 'tool_check_error', error: String(e) });
       }
-      // Always select slot 0 as default hotbar (human-like press "1")
-      await cap.hotbar(actorName, 0).catch(() => {});
     }
+  }
+
+  // M3: for PURE-BREAK jobs, do NOT bare-hand the block when the right tool is
+  // missing / not equipped (slow, and impossible for obsidian). Log + return so the
+  // planner / next tick fetches-crafts-equips. Non-break jobs (guard/farmer/builder)
+  // keep their other actions; they only get the mismatch logged above.
+  if (!toolReady && (step.job === 'miner' || step.job === 'lumberjack' || step.job === 'beautify')) {
+    results.status = 'TOOL_REQUIRED';
+    results.toolRequired = toolNeed;
+    results.actions.push({
+      tool_skip_break: {
+        job: step.job,
+        target: toolNeed && toolNeed.target,
+        expectedTool: toolNeed && toolNeed.expectedTool,
+        action: toolNeed && toolNeed.action,
+        ownedInInventory: toolNeed && toolNeed.ownedInInventory,
+      },
+    });
+    state.actions += 1;
+    return results;
+  }
+
 
   // Mine / chop existing terrain only — never spawn a block then break it (#66).
   if (step.job === 'miner') {
@@ -450,14 +541,29 @@ async function runJob(harness, actorName, step, state, ctx = {}) {
           }).catch(() => {});
         }
         // --- Inventory diff (M5: lib/inventory-diff.js) ---------------------------
-        const invBeforeMiner = applyObserve(await harness.cap.observe(actorName));
+        const obsBeforeMiner = await harness.cap.observe(actorName);
+        const invBeforeMiner = applyObserve(obsBeforeMiner);
+        const minerPos = obsBeforeMiner && obsBeforeMiner.data
+          ? { x: obsBeforeMiner.data.x, y: obsBeforeMiner.data.y, z: obsBeforeMiner.data.z }
+          : null;
         const br = await cap.breakBlock(actorName, digX, digY, digZ);
         const invAfterMiner = applyObserve(await harness.cap.observe(actorName));
         const minerDiff = diffInventory(invBeforeMiner, invAfterMiner, {
           from: `break:STONE@${digX},${digY},${digZ}`,
           expectedDrops: { COBBLESTONE: 1 }, // stone drops cobblestone
         });
-        log({ kind: 'inventory_diff', action: 'break', target: { x: digX, y: digY, z: digZ }, ...minerDiff });
+        // M6: typed `mine` event with full context (target+pos, tool, inventory diff, result).
+        log(buildMineEvent({
+          actor: actorName,
+          job: step.job,
+          target: { blockType: 'STONE', x: digX, y: digY, z: digZ },
+          held: lastHeldItem,
+          toolVerdict: lastToolVerdict,
+          invDiff: minerDiff,
+          success: !!(br && br.success),
+          reason: br && !br.success ? (br.reason || br.error || 'break_failed') : null,
+          position: minerPos,
+        }));
         // -----------------------------------------------------------------------
         results.actions.push({ breakBlock: br, spawned: false, target: { x: digX, y: digY, z: digZ } });
         await cap.swing(actorName);
@@ -467,7 +573,11 @@ async function runJob(harness, actorName, step, state, ctx = {}) {
     // Prefer a block above surface (log/leaves) if present; else surface
     let digY = groundY + 1;
     // --- Inventory diff (M5) for FIRST break: observe the REAL inventory before ---
-    const invBeforeLJ = applyObserve(await harness.cap.observe(actorName));
+    const obsBeforeLJ = await harness.cap.observe(actorName);
+    const invBeforeLJ = applyObserve(obsBeforeLJ);
+    const ljPos = obsBeforeLJ && obsBeforeLJ.data
+      ? { x: obsBeforeLJ.data.x, y: obsBeforeLJ.data.y, z: obsBeforeLJ.data.z }
+      : null;
     const br = await cap.breakBlock(actorName, digX, digY, digZ);
         if (!br || !br.success) {
           digY = await findSurfaceY(harness, digX, digZ, {
@@ -483,7 +593,18 @@ async function runJob(harness, actorName, step, state, ctx = {}) {
             from: `break:OAK_LOG@${digX},${digY},${digZ}`,
             expectedDrops: { OAK_LOG: 1 },
           });
-          log({ kind: 'inventory_diff', action: 'break', target: { x: digX, y: digY, z: digZ }, ...ljDiff2 });
+          // M6: typed `mine` event (lumberjack) with full context.
+          log(buildMineEvent({
+            actor: actorName,
+            job: step.job,
+            target: { blockType: 'OAK_LOG', x: digX, y: digY, z: digZ },
+            held: lastHeldItem,
+            toolVerdict: lastToolVerdict,
+            invDiff: ljDiff2,
+            success: !!(br2 && br2.success),
+            reason: br2 && !br2.success ? (br2.reason || br2.error || 'break_failed') : null,
+            position: ljPos,
+          }));
           results.actions.push({ breakBlock: br2, spawned: false });
         } else {
           // --- Inventory diff (M5) for successful first break ---
@@ -492,7 +613,18 @@ async function runJob(harness, actorName, step, state, ctx = {}) {
             from: `break:OAK_LOG@${digX},${digY},${digZ}`,
             expectedDrops: { OAK_LOG: 1 },
           });
-          log({ kind: 'inventory_diff', action: 'break', target: { x: digX, y: digY, z: digZ }, ...ljDiff });
+          // M6: typed `mine` event (lumberjack) with full context.
+          log(buildMineEvent({
+            actor: actorName,
+            job: step.job,
+            target: { blockType: 'OAK_LOG', x: digX, y: digY, z: digZ },
+            held: lastHeldItem,
+            toolVerdict: lastToolVerdict,
+            invDiff: ljDiff,
+            success: !!(br && br.success),
+            reason: br && !br.success ? (br.reason || br.error || 'break_failed') : null,
+            position: ljPos,
+          }));
           results.actions.push({ breakBlock: br, spawned: false });
         }
         await cap.swing(actorName);
@@ -509,19 +641,38 @@ async function runJob(harness, actorName, step, state, ctx = {}) {
         for (const t of targets) {
           if (t.action === 'break') {
             // --- Inventory diff (M5) for beautify break ---
-            const invBeforeBeauty = applyObserve(await harness.cap.observe(actorName));
+            const obsBeforeBeauty = await harness.cap.observe(actorName);
+            const invBeforeBeauty = applyObserve(obsBeforeBeauty);
+            const beautyPos = obsBeforeBeauty && obsBeforeBeauty.data
+              ? { x: obsBeforeBeauty.data.x, y: obsBeforeBeauty.data.y, z: obsBeforeBeauty.data.z }
+              : null;
             const br = await cap.breakBlock(actorName, t.x, t.y, t.z);
             const invAfterBeauty = applyObserve(await harness.cap.observe(actorName));
             const beautyDiff = diffInventory(invBeforeBeauty, invAfterBeauty, {
               from: `beautify_break:${t.x},${t.y},${t.z}`,
               expectedDrops: { COBBLESTONE: 1 }, // approximate for cleanup blocks
             });
-            log({ kind: 'inventory_diff', action: 'beautify_break', target: { x: t.x, y: t.y, z: t.z }, ...beautyDiff });
+            // M6: typed `break` event (beautify tear-down) with full context.
+            log(buildBreakEvent({
+              actor: actorName,
+              job: step.job || 'beautify',
+              target: { x: t.x, y: t.y, z: t.z },
+              held: lastHeldItem,
+              toolVerdict: lastToolVerdict,
+              invDiff: beautyDiff,
+              success: !!(br && br.success),
+              reason: br && !br.success ? (br.reason || br.error || 'break_failed') : null,
+              position: beautyPos,
+            }));
             // PLAYER-LIKE: no `setblock air` fallback. If the block cannot be mined it stays.
             cleaned.push({ ...t, ok: !!(br && br.success) });
           } else if (t.action === 'set_grass') {
             // --- Inventory diff (M5) for grass place ---
-            const invBeforeGrass = applyObserve(await harness.cap.observe(actorName));
+            const obsBeforeGrass = await harness.cap.observe(actorName);
+            const invBeforeGrass = applyObserve(obsBeforeGrass);
+            const grassPos = obsBeforeGrass && obsBeforeGrass.data
+              ? { x: obsBeforeGrass.data.x, y: obsBeforeGrass.data.y, z: obsBeforeGrass.data.z }
+              : null;
             // PLAYER-LIKE: place from the NPC's own inventory; no admin setblock.
             await cap.lookAt(actorName, t.x, t.y, t.z);
             const pl = await cap
@@ -532,7 +683,18 @@ async function runJob(harness, actorName, step, state, ctx = {}) {
               from: `place:GRASS_BLOCK@${t.x},${t.y},${t.z}`,
               expectedDrops: {}, // placing consumes from inventory, no drops
             });
-            log({ kind: 'inventory_diff', action: 'place', target: { x: t.x, y: t.y, z: t.z }, material: 'GRASS_BLOCK', ...grassDiff });
+            // M6: typed `place` event (beautify grass) with full context.
+            log(buildPlaceEvent({
+              actor: actorName,
+              job: step.job || 'beautify',
+              material: 'GRASS_BLOCK',
+              target: { x: t.x, y: t.y, z: t.z },
+              held: lastHeldItem,
+              invDiff: grassDiff,
+              success: !!(pl && pl.success),
+              reason: pl && !pl.success ? (pl.reason || pl.error || 'place_failed') : null,
+              position: grassPos,
+            }));
             cleaned.push({ ...t, ok: !!(pl && pl.success), needsMaterial: !(pl && pl.success) });
           }
         }
@@ -578,14 +740,29 @@ async function runJob(harness, actorName, step, state, ctx = {}) {
           });
           const oldBlock = await harness.block.at(block.x, block.y, block.z);
           // --- Inventory diff (M5) for placeBlock via placeAesthetic ---
-          const invBeforePlace = applyObserve(await harness.cap.observe(actorName));
+          const obsBeforePlace = await harness.cap.observe(actorName);
+          const invBeforePlace = applyObserve(obsBeforePlace);
+          const placePos = obsBeforePlace && obsBeforePlace.data
+            ? { x: obsBeforePlace.data.x, y: obsBeforePlace.data.y, z: obsBeforePlace.data.z }
+            : null;
           const pr = await placeAesthetic(harness, actorName, block);
           const invAfterPlace = applyObserve(await harness.cap.observe(actorName));
           const placeDiff = diffInventory(invBeforePlace, invAfterPlace, {
             from: `place:${block.material}@${block.x},${block.y},${block.z}`,
             expectedDrops: {}, // placing consumes from inventory, no drops
           });
-          log({ kind: 'inventory_diff', action: 'place', target: { x: block.x, y: block.y, z: block.z }, material: block.material, ...placeDiff });
+          // M6: typed `place` event (builder construction) with full context.
+          log(buildPlaceEvent({
+            actor: actorName,
+            job: step.job || 'builder',
+            material: block.material,
+            target: { x: block.x, y: block.y, z: block.z },
+            held: lastHeldItem,
+            invDiff: placeDiff,
+            success: !!(pr && pr.success),
+            reason: pr && !pr.success ? (pr.reason || pr.error || 'place_failed') : null,
+            position: placePos,
+          }));
           // -----------------------------------------------------------------------
           await tx.setBlock({
         x: block.x,
@@ -699,7 +876,18 @@ async function runJob(harness, actorName, step, state, ctx = {}) {
             from: `place:TORCH@${tx2},${tz2}`,
             expectedDrops: {},
           });
-          log({ kind: 'inventory_diff', action: 'place', target: { x: tx2, y: ty, z: tz2 }, material: 'TORCH', ...gd });
+          // M6: typed `place` event (guard torch) with full context.
+          log(buildPlaceEvent({
+            actor: actorName,
+            job: step.job || 'guard',
+            material: 'TORCH',
+            target: { x: tx2, y: ty, z: tz2 },
+            held: lastHeldItem,
+            invDiff: gd,
+            success: gd.lost && gd.lost.some((l) => String(l.item).includes('TORCH')),
+            reason: null,
+            position: { x: safeX, y: ty, z: safeZ },
+          }));
           prevGuardInv = afterGuardInv;
         }
       }
@@ -759,14 +947,30 @@ async function runJob(harness, actorName, step, state, ctx = {}) {
       await safeWalk(harness, actorName, { x: gx, y: gy + 1, z: gz },
         { arrive: 2.5, timeoutMs: 6000, speed: 4.5, allowTeleport: false }).catch(() => {});
       // --- Inventory diff (M5) for gather break: observe REAL inventory before/after ---
-      const invBeforeG = applyObserve(await harness.cap.observe(actorName));
+      const obsBeforeG = await harness.cap.observe(actorName);
+      const invBeforeG = applyObserve(obsBeforeG);
+      const gPos = obsBeforeG && obsBeforeG.data
+        ? { x: obsBeforeG.data.x, y: obsBeforeG.data.y, z: obsBeforeG.data.z }
+        : null;
       const br = await cap.breakBlock(actorName, gx, gy, gz);
       if (br && br.success) gathered++;
       const invAfterG = applyObserve(await harness.cap.observe(actorName));
       const gDiff = diffInventory(invBeforeG, invAfterG, {
         from: `gather_break:@${gx},${gy},${gz}`,
       });
-      log({ kind: 'inventory_diff', action: 'gather_break', target: { x: gx, y: gy, z: gz }, ...gDiff });
+      // M6: typed `gather` event (forage resource block) with full context.
+      log(buildGatherEvent({
+        actor: actorName,
+        job: step.job,
+        target: { x: gx, y: gy, z: gz },
+        held: lastHeldItem,
+        toolVerdict: lastToolVerdict,
+        invDiff: gDiff,
+        gathered: br && br.success ? 1 : 0,
+        success: !!(br && br.success),
+        reason: br && !br.success ? (br.reason || br.error || 'break_failed') : null,
+        position: gPos,
+      }));
       await cap.swing(actorName);
     }
     results.actions.push({ gather: { gathered } });
@@ -786,7 +990,11 @@ async function runJob(harness, actorName, step, state, ctx = {}) {
     // Real placement means real walking — cap the batch per tick (8 torches) instead of
     // instantly setblock-ing 49 tiles.
     // --- Inventory diff (M5): TORCH is drawn from the NPC's OWN inventory; prove it ---
-    let prevTorchInv = applyObserve(await harness.cap.observe(actorName));
+    const obsBeforeTorch = await harness.cap.observe(actorName);
+    let prevTorchInv = applyObserve(obsBeforeTorch);
+    const torchPos = obsBeforeTorch && obsBeforeTorch.data
+      ? { x: obsBeforeTorch.data.x, y: obsBeforeTorch.data.y, z: obsBeforeTorch.data.z }
+      : { x: cfg.origin.x, y: ty, z: cfg.origin.z };
     for (const [dx, dz] of spots.slice(0, 8)) {
       const tx = Math.floor(cfg.origin.x + dx);
       const tz = Math.floor(cfg.origin.z + dz);
@@ -801,7 +1009,18 @@ async function runJob(harness, actorName, step, state, ctx = {}) {
         from: `place:TORCH@${tx},${tz}`,
         expectedDrops: {}, // placing consumes from inventory, no drops
       });
-      log({ kind: 'inventory_diff', action: 'place', target: { x: tx, y: ty, z: tz }, material: 'TORCH', ...tDiff });
+      // M6: typed `place` event (torch lighting) with full context.
+      log(buildPlaceEvent({
+        actor: actorName,
+        job: step.job,
+        material: 'TORCH',
+        target: { x: tx, y: ty, z: tz },
+        held: lastHeldItem,
+        invDiff: tDiff,
+        success: !!(r && r.success),
+        reason: r && !r.success ? (r.reason || r.error || 'place_failed') : null,
+        position: torchPos,
+      }));
       prevTorchInv = afterTorchInv;
     }
     results.actions.push({ torch: { placed, attempted: spots.length, playerlike: true } });
@@ -819,7 +1038,9 @@ async function runJob(harness, actorName, step, state, ctx = {}) {
   const obs = await cap.observe(actorName);
   results.observe =
     obs && obs.data ? { x: obs.data.x, y: obs.data.y, z: obs.data.z, held: obs.data.held } : null;
-  results.status = 'PASS';
+  // Preserve any status already set by an early-return path (e.g. M3 TOOL_REQUIRED);
+  // only default to PASS when nothing more specific was recorded.
+  results.status = results.status || 'PASS';
   state.actions += 1;
   return results;
 }
@@ -1458,7 +1679,7 @@ async function main() {
           walk_origin: cfg.origin,
         });
         try {
-          const sv = await executeSurvival(harness, who, assessment, { workOrigin: cfg.origin });
+          const sv = await executeSurvival(harness, who, assessment, { workOrigin: cfg.origin, combatLogger: combat.get(who) });
           log({
             status: sv && sv.handled ? 'PASS' : 'DEGRADED',
             action: 'survival_executed',

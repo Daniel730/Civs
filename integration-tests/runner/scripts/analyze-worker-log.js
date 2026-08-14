@@ -56,6 +56,13 @@ async function main() {
   let observeMissing = 0;
   let constructionPaused = 0;
   let constructionAborted = 0;
+  // M6: typed action-event aggregation (break/mine/gather/place) + inventory reality.
+  const typedEvents = { mine: 0, break: 0, gather: 0, place: 0, combat_survival: 0 };
+  const typedByJob = {};
+  const typedFails = {};
+  let itemsGained = 0;
+  let itemsDropped = 0;
+  let wrongToolEvents = 0;
   const buffer = [];
 
   for await (const line of rl) {
@@ -89,6 +96,20 @@ async function main() {
     if (action === 'ensure_alive') {
       ensureAlive += 1;
       if (row.revived) revives += 1;
+    }
+    // M6: aggregate typed action events (mine/break/gather/place/combat_survival).
+    if (typedEvents[row.kind] != null) {
+      typedEvents[row.kind] += 1;
+      const job = row.job || 'unknown';
+      typedByJob[job] = typedByJob[job] || { mine: 0, break: 0, gather: 0, place: 0, combat_survival: 0 };
+      if (typedByJob[job][row.kind] != null) typedByJob[job][row.kind] += 1;
+      if (row.result && row.result.success === false) {
+        typedFails[row.kind] = (typedFails[row.kind] || 0) + 1;
+      }
+      if (row.tool && row.tool.matched === false) wrongToolEvents += 1;
+      const inv = row.inventory || {};
+      if (Array.isArray(inv.gained)) for (const g of inv.gained) itemsGained += (g.qty || 0);
+      if (Array.isArray(inv.dropped)) for (const d of inv.dropped) itemsDropped += (d.qty || 0);
     }
     if (action !== 'work_tick') return;
     if (row.ts) tickAt.push(Date.parse(row.ts));
@@ -143,6 +164,11 @@ async function main() {
     workTicks: tickAt.length,
     workStatus,
     jobs,
+    // M6: agent-oriented typed action events — answer "what did the NPC do / pick up / with what tool".
+    typedEvents,
+    typedByJob,
+    typedFails,
+    inventoryReality: { itemsGained, itemsDropped, wrongToolEvents },
     tickGapMs: { p50: q(gaps, 0.5), p90: q(gaps, 0.9), p99: q(gaps, 0.99), max: gaps[gaps.length - 1] || null },
     walk: {
       total: walks,
