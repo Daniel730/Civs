@@ -931,7 +931,7 @@ async function runJob(harness, actorName, step, state, ctx = {}) {
           };
           const w2 = await safeWalk(harness, actorName, near, {
             arrive: 2.5,
-            timeoutMs: 8000,
+            timeoutMs: 3000,
             stepLen: 0.45,
             pauseMs: 100,
             allowTeleport: false,
@@ -983,7 +983,7 @@ async function runJob(harness, actorName, step, state, ctx = {}) {
       actorName,
       memoryPath: MEMORY_PATH,
       persistMemory: true,
-      maxBlocks: 10,
+      maxBlocks: 2,
       startIndex: paused ? state.construction.nextIndex || 0 : 0,
       projectId: paused ? state.construction.projectId : undefined,
       priorLog: paused ? state.construction.log || [] : undefined,
@@ -1902,7 +1902,9 @@ async function main() {
       // agent builds a memory of WHERE and HOW it gets hurt — not just when a hostile is visible.
       _mark('worldMemory_start');
       try {
+        _mark('wm_get');
         const wm = getWorldMemory(who);
+        _mark('wm_got');
         const od = (observed && observed.data) || {};
         const pos = { x: od.x, y: od.y, z: od.z };
         if (assessment.threats && assessment.threats.length) {
@@ -1929,7 +1931,9 @@ async function main() {
         // and populate the SpatialWorldMemory cells.
         if (Number.isFinite(pos.x) && Number.isFinite(pos.z)) {
           try {
+            _mark('perceive_around_pre');
             await perceiveAround(harness, wm, pos, state.tick);
+            _mark('perceive_around_post');
           } catch (perr) {
             log({ status: 'ERROR', action: 'spatial_perceive_failed', worker: who, error: String(perr && perr.message || perr) });
           }
@@ -1937,7 +1941,9 @@ async function main() {
           log({ status: 'DEBUG', action: 'spatial_perceive_skip', worker: who, reason: 'pos_not_finite', pos });
         }
         // expose memory features to the focus decision below
+        _mark('wm_features_pre');
         assessment.worldMemory = wm.features(pos);
+        _mark('wm_features_post');
       } catch (wmErr) {
         log({ status: 'ERROR', action: 'world_memory_failed', worker: who, error: String(wmErr && wmErr.message || wmErr), stack: wmErr && wmErr.stack ? wmErr.stack.split('\n').slice(0, 4) : null });
       }

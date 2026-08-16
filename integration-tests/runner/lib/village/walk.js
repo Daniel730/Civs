@@ -104,11 +104,11 @@ async function runPathLeg(harness, actorName, goal, opts) {
       // wandered into water OR is suffocating under a 1x1 overhang. The Paper pathfinder happily
       // walks through both — the agent takes suffocation/drowning damage every tick it stays
       // there ("GTA SA bug"). Aborting + REPLAN keeps the NPC player-like.
-      if (Date.now() % 1200 < pollMs) {
+      if (Date.now() % 400 < pollMs) {
         try {
           const obs = await cap.observe(actorName);
           const od = (obs && obs.data) || {};
-          if (od.in_water === true || od.head_in_water === true) {
+          if (od.in_water === true || od.head_in_water === true || od.block_below === 'WATER' || od.block_below === 'water') {
             abortedForHazard = 'in_water';
           } else if (od.last_damage_cause === 'SUFFOCATION' || od.suffocating === true) {
             abortedForHazard = 'suffocating';
@@ -116,6 +116,11 @@ async function runPathLeg(harness, actorName, goal, opts) {
           if (abortedForHazard) {
             countMetric(METRIC.HAZARD_ABORT, { actor: actorName, hazard: abortedForHazard });
             try { await cap.act(actorName, 'walk_cancel'); } catch (_) { /* best effort */ }
+            // PLAYER-LIKE: if we aborted because the body is in water, make the NPC swim UP
+            // (jump) instead of sitting on the riverbed. A real player doesn't walk the floor.
+            if (abortedForHazard === 'in_water') {
+              try { await cap.act(actorName, 'jump'); } catch (_) { /* best effort */ }
+            }
             break;
           }
         } catch (_) { /* observe is best effort */ }
