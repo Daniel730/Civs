@@ -124,8 +124,11 @@ class Capabilities {
     return this.act(player, 'hotbar', slot);
   }
   giveItem(player, material, amount = 1) {
-    return this.act(player, 'give_item', material, amount);
-  }
+      return this.act(player, 'give_item', material, amount);
+    }
+    craftItem(player, material, amount = 1) {
+      return this.act(player, 'craft_item', material, amount);
+    }
   runAs(player, command) {
     return this.act(player, 'run_as', ...String(command).replace(/^\//, '').split(/\s+/));
   }

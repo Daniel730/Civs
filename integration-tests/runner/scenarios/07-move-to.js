@@ -1,6 +1,10 @@
 /**
  * Empirically validates greedy server-side move_to / step (no Mineflayer pathfinder).
  * Open flat pad: teleport to A, move_to B ~8 blocks away, assert arrival distance.
+ *
+ * NOTE (D-AP-021): greedy move_to is now the documented FALLBACK rung only — production
+ * callers navigate via lib/village/walk.walkTo (walk_path/walk_status). This scenario is
+ * kept deliberately on the raw capability so the fallback stays regression-tested.
  */
 const { scenario } = require('../lib/dsl');
 

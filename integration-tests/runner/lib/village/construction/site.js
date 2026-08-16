@@ -265,24 +265,27 @@ async function selectBestSite(harness, candidates, ctx = {}) {
 }
 
 /**
- * Default candidate ring around a site stand (apron offsets).
+ * Default candidate ring around the settlement — search WIDE (spiral radii 8..50) so the
+ * agent can find flat, buildable ground instead of giving up on 7 cramped spots next to the
+ * center (which all fail scoreSite -> no_safe_site -> PROJECT_ABORTED -> village frozen).
  * @param {{x:number,z:number}} origin
  * @param {{dx?:number,dz?:number,width?:number,depth?:number}} step
  */
 function defaultCandidates(origin, step = {}) {
-  const cx = Math.floor(origin.x + (step.dx || 0));
-  const cz = Math.floor(origin.z + (step.dz || 0) - 8);
   const w = step.width || 5;
   const d = step.depth || 5;
+  const cx = Math.floor(origin.x + (step.dx || 0));
+  const cz = Math.floor(origin.z + (step.dz || 0));
   const offsets = [
-    [0, 0],
-    [2, 0],
-    [-2, 0],
-    [0, 2],
-    [0, -2],
-    [3, 3],
-    [-3, 3],
+    [0, 0], [2, 0], [-2, 0], [0, 2], [0, -2], [3, 3], [-3, 3],
   ];
+  // Wide spiral so flat ground away from the cramped center is considered.
+  for (let r = 8; r <= 50; r += 6) {
+    for (let a = 0; a < 8; a++) {
+      const ang = (a * Math.PI) / 4 + (r / 12);
+      offsets.push([Math.round(Math.cos(ang) * r), Math.round(Math.sin(ang) * r)]);
+    }
+  }
   return offsets.map(([ox, oz]) => ({ x: cx + ox, z: cz + oz, width: w, depth: d }));
 }
 

@@ -62,7 +62,12 @@ public class TestHarnessPlugin extends JavaPlugin implements CommandExecutor {
         getCommand("test").setExecutor(this);
         getLogger().info("CivsTestHarness enabled (economy=" + (economy != null) + ", civs="
                 + (getServer().getPluginManager().getPlugin("Civs") != null)
-                + ", capabilities=act/observe)");
+                + ", capabilities=act/observe/motion)");
+    }
+
+    @Override
+    public void onDisable() {
+        MotionActions.shutdown();
     }
 
     /**

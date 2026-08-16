@@ -5,6 +5,45 @@ const { withSpan, setSpanAttrs, recordResultStatus } = require('./telemetry');
 const STRIP_COLOR = /\u00a7[0-9a-fk-or]|\u00a7x(\u00a7[0-9a-f]){6}|\x1b\[[0-9;]*m/gi;
 
 /**
+ * Parse a Vault balance reply into integer cents (exact decimal, no float drift).
+ *
+ * Why not `Number.parseFloat`: on the #67 live run a reward delta at balance=1000000
+ * read as 0 because the harness echoes large balances in locale/scientific-ish forms
+ * ("1,000,000.00", "1.0E6") and float subtraction of near-equal large doubles hid the
+ * small reward. Working in integer cents keeps deltas exact up to 2^53 cents.
+ *
+ * @param {string|number|null|undefined} raw
+ * @returns {number|null} balance in cents, or null when unparseable
+ */
+function parseBalance(raw) {
+  if (raw == null) return null;
+  let s = String(raw).trim().replace(/[$\s]/g, '');
+  if (!s) return null;
+  // Locale thousands separators: strip commas used as grouping (1,000,000.25).
+  if (/^\d{1,3}(,\d{3})+(\.\d+)?$/.test(s)) s = s.replace(/,/g, '');
+  // Scientific notation ("1.0E6") has no exact decimal digits — expand via Number,
+  // then re-render with cent precision.
+  if (/[eE]/.test(s)) {
+    const n = Number(s);
+    if (!Number.isFinite(n)) return null;
+    s = n.toFixed(2);
+  }
+  const m = /^(-?)(\d+)(?:\.(\d+))?$/.exec(s);
+  if (!m) return null;
+  const sign = m[1] === '-' ? -1n : 1n;
+  const frac = ((m[3] || '') + '00').slice(0, 2);
+  const cents = sign * (BigInt(m[2]) * 100n + BigInt(frac));
+  const abs = cents < 0n ? -cents : cents;
+  if (abs > BigInt(Number.MAX_SAFE_INTEGER)) return null;
+  return Number(cents);
+}
+
+/** Convert integer cents back to a currency number for display. */
+function centsToMoney(cents) {
+  return cents == null ? null : cents / 100;
+}
+
+/**
  * Typed client for the CivsTestHarness plugin (and raw `/cv` admin commands) over RCON.
  * Every harness reply is a single line: TEST-OK / TEST-FAIL / TEST-RESULT / TEST-ERROR.
  * Assertion helpers return { ok, message }; query helpers return parsed key/value objects.
@@ -12,7 +51,7 @@ const STRIP_COLOR = /\u00a7[0-9a-fk-or]|\u00a7x(\u00a7[0-9a-f]){6}|\x1b\[[0-9;]*
 class Harness {
   constructor(opts) {
     this.opts = Object.assign(
-      { host: '127.0.0.1', port: 25575, password: 'civs-itest', timeout: 15000 },
+      { host: '127.0.0.1', port: 25576, password: 'civsqa', timeout: 15000 },
       opts
     );
     this.rcon = null;
@@ -95,7 +134,10 @@ class Harness {
   }
 
   money = {
-    get: async (p) => Number.parseFloat(this._kv(await this.raw(`test money get ${p}`)).balance),
+    get: async (p) =>
+      centsToMoney(parseBalance(this._kv(await this.raw(`test money get ${p}`)).balance)),
+    /** Exact integer-cents read for delta probes (no float subtraction). */
+    getCents: async (p) => parseBalance(this._kv(await this.raw(`test money get ${p}`)).balance),
     set: async (p, amt) => this.raw(`test money set ${p} ${amt}`),
     add: async (p, amt) => this.raw(`test money add ${p} ${amt}`),
   };
@@ -178,4 +220,4 @@ class Harness {
   };
 }
 
-module.exports = { Harness };
+module.exports = { Harness, parseBalance, centsToMoney };

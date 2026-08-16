@@ -75,17 +75,54 @@ class RawKeepAliveActor {
             this.reason = e.message;
             setSpanAttrs(span, { 'error.type': 'ActorConnectError' });
             recordResultStatus(span, 'FAIL');
+            // Auto-reconnect so a dropped keepalive doesn't kill the whole run.
+            this._scheduleReconnect();
             resolve(this);
           });
           this.client.on('end', () => {
             this.available = false;
+            // Server closed the connection — try to come back automatically.
+            this._scheduleReconnect();
           });
         });
       }
     );
   }
 
-  /** Run an arbitrary command in the player's context (production sender path). */
+  /**
+   * Schedule a background reconnect (debounced) so a transient drop heals itself.
+   * Uses a guard flag to avoid stacking reconnect storms.
+   */
+  _scheduleReconnect(delayMs = 1500) {
+    if (this._reconnecting) return;
+    this._reconnecting = true;
+    setTimeout(async () => {
+      try {
+        await this.reconnect(1000);
+      } catch (_) {
+        /* will be retried on next end/error */
+      } finally {
+        this._reconnecting = false;
+      }
+    }, delayMs);
+  }
+
+  /** True if the actor client is currently logged in. */
+  isOnline() {
+    return !!(this.client && this.available);
+  }
+
+  /** Ensure the actor is online; reconnect if needed. Safe to call every tick. */
+  async ensureOnline() {
+    if (this.isOnline()) return true;
+    try {
+      await this.reconnect(1000);
+    } catch (_) {
+      /* best effort */
+    }
+    return this.isOnline();
+  }
+
   async runCommand(cmd) {
     const c = cmd.replace(/^\//, '');
     return withSpan(

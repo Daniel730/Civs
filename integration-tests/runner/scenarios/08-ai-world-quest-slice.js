@@ -11,7 +11,8 @@
  */
 const path = require('node:path');
 const { scenario } = require('../lib/dsl');
-const { createAgent, createQuestLoop, persistAgent, EVENT } = require('../lib/ai-world');
+const { createAgent, createQuestLoop, persistAgent, EVENT } = require('@daniel730/aiworld');
+const { walkTo } = require('../lib/village/walk');
 
 const ACTOR = process.env.ACTOR_NAME || 'QaBot';
 const QUEST = process.env.RPG_TEST_QUEST || 'ai_world_mine_probe';
@@ -93,14 +94,20 @@ module.exports = scenario('AiWorldPhysicalMine')
         return ctx.harness.cap.rpgAccept(ACTOR, id);
       },
       findBlock: (mat, radius) => ctx.harness.cap.findBlock(ACTOR, mat, radius, 5),
-      moveTo: (x, y, z) => ctx.harness.cap.moveTo(ACTOR, x, y, z, 8000, 2.0, 0.9),
+      // D-AP-021: primary navigation is the server-side walk_path/walk_status mover via
+      // walkTo (greedy cap.moveTo remains only as walkTo's documented legacy fallback rung).
+      moveTo: async (x, y, z) => {
+        const w = await walkTo(ctx.harness, ACTOR, { x, y, z }, { arrive: 2.0, timeoutMs: 8000 });
+        return { success: w.success === true, reason: w.reason, data: w };
+      },
       breakBlock: (x, y, z) => ctx.harness.cap.breakBlock(ACTOR, x, y, z),
       giveItem: (mat, n) => ctx.harness.cap.act(ACTOR, 'give_item', mat, n),
       setblock: async (x, y, z, mat) => {
         const line = await ctx.harness.raw(`test setblock ${x} ${y} ${z} ${mat}`);
         return { success: /TEST-OK|TEST-RESULT/.test(line), _raw: line };
       },
-      getMoney: () => ctx.harness.money.get(ACTOR),
+      // Integer cents: exact reward delta even at balance=1e6 (see harness.parseBalance).
+      getMoney: () => ctx.harness.money.getCents(ACTOR),
       persist: async (a) => persistAgent(a, statePath),
     });
 
