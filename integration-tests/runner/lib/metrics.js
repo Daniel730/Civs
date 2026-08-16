@@ -32,6 +32,11 @@ const METRIC = Object.freeze({
   CAMERA_TELEPORT: 'camera_teleport_count',
   CAMERA_TARGET_SWITCH: 'camera_target_switch_count',
   CAMERA_FSM_TRANSITION: 'camera_fsm_transition_count',
+  // Hazard-driven aborts: the pathfinder happily walks the agent through water or under
+  // 1x1 overhangs, but the body takes suffocation/drowning damage every tick it stays there.
+  // The interrupt in runPathLeg counts + reports so the caller can REPLAN instead of letting
+  // Steve sit there taking damage.
+  HAZARD_ABORT: 'hazard_abort_count',
   // --- AI World neural layer (MVP) ---
   AIWORLD_POLICY_DISAGREEMENT: 'aiworld_policy_disagreement_count',
   AIWORLD_POLICY_FALLBACK: 'aiworld_policy_fallback_count',
@@ -66,7 +71,8 @@ const COUNTERS = Object.freeze([
   METRIC.CAMERA_TELEPORT,
   METRIC.CAMERA_TARGET_SWITCH,
   METRIC.CAMERA_FSM_TRANSITION,
-  METRIC.AIWORLD_POLICY_DISAGREEMENT,
+    METRIC.HAZARD_ABORT,
+    METRIC.AIWORLD_POLICY_DISAGREEMENT,
   METRIC.AIWORLD_POLICY_FALLBACK,
   METRIC.AIWORLD_GOAL_COMPLETED,
   METRIC.AIWORLD_STALL,

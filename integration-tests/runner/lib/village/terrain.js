@@ -31,9 +31,13 @@ async function blockIs(harness, x, y, z, material) {
  * @param {number} z
  */
 async function isAirish(harness, x, y, z) {
-  // air + cave_air + void_air share #minecraft:air in modern versions? Prefer explicit air first.
+  // Treat water + air + cave_air + void_air as "not solid for standing on". Without the
+  // water check, findSurfaceY() happily returns the water SURFACE as a walkable column
+  // and the NPC ends up standing on water — the "Jesus" bug. Standing in shallow water
+  // (one block deep over solid ground) is fine; the NPC's feet sit on the solid block.
   if (await blockIs(harness, x, y, z, 'air')) return true;
   if (await blockIs(harness, x, y, z, 'cave_air')) return true;
+  if (await blockIs(harness, x, y, z, 'water')) return true;
   return false;
 }
 
@@ -48,9 +52,13 @@ async function isAirish(harness, x, y, z) {
  * @returns {Promise<number>}
  */
 async function findSurfaceY(harness, x, z, opts = {}) {
+  // The QA Paper world is NOT a flat superflat pad — terrain varies ±10–20 y around
+  // cfg.origin.y=80. A narrow probe window (±6) misses hills/valleys and the agent ends
+  // up placing blocks at cfg.origin.y+1/2 in mid-air (the "voando/flat" bug). Scan a
+  // wide band first and trust the real surface, not origin.y.
   const fallbackY = Math.floor(opts.fallbackY ?? 80);
-  const maxY = Math.floor(opts.maxY ?? fallbackY + 6);
-  const minY = Math.floor(opts.minY ?? fallbackY - 6);
+  const maxY = Math.floor(opts.maxY ?? fallbackY + 24);
+  const minY = Math.floor(opts.minY ?? fallbackY - 24);
   const ix = Math.floor(x);
   const iz = Math.floor(z);
   const key = `${ix},${iz},${minY},${maxY}`;
@@ -80,9 +88,16 @@ async function findSurfaceY(harness, x, z, opts = {}) {
       return y;
     }
   }
-  surfaceCache.set(key, fallbackY);
-  return fallbackY;
-}
+  // Probe loop ran out without finding a walkable column — every isAirish() call failed
+    // (almost always means RCON is down or pointed at a closed port). Surface the failure
+    // instead of silently returning fallbackY so the "NPC placing blocks in mid-air" bug
+    // can be diagnosed from logs.
+    if (process.env.SURFACE_FALLBACK_DEBUG === '1') {
+      console.warn(`[findSurfaceY] no walkable column in [${minY},${maxY}] at (${ix},${iz}); falling back to ${fallbackY} (likely RCON unreachable)`);
+    }
+    surfaceCache.set(key, fallbackY);
+    return fallbackY;
+  }
 
 /**
  * True if a column looks like natural ground we may path/place on.

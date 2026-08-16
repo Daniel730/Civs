@@ -85,21 +85,42 @@ async function runPathLeg(harness, actorName, goal, opts) {
   }
 
   const deadline = Date.now() + timeoutMs;
-  let last = null;
-  let maxStuckMs = 0;
-  let collisions = 0;
-  while (Date.now() < deadline) {
-    await sleep(pollMs);
-    const st = await cap.act(actorName, 'walk_status');
-    last = st;
-    const d = (st && st.data) || {};
-    if (typeof d.distance_to_goal === 'number') {
-      gaugeMetric(METRIC.DISTANCE_TO_GOAL, d.distance_to_goal, { actor: actorName });
+    let last = null;
+    let maxStuckMs = 0;
+    let collisions = 0;
+    let abortedForHazard = null;
+    while (Date.now() < deadline) {
+      await sleep(pollMs);
+      const st = await cap.act(actorName, 'walk_status');
+      last = st;
+      const d = (st && st.data) || {};
+      if (typeof d.distance_to_goal === 'number') {
+        gaugeMetric(METRIC.DISTANCE_TO_GOAL, d.distance_to_goal, { actor: actorName });
+      }
+      if (typeof d.stuck_ms === 'number') maxStuckMs = Math.max(maxStuckMs, d.stuck_ms);
+      if (typeof d.collisions === 'number') collisions = Math.max(collisions, d.collisions);
+      if (d.active === false || d.done === true) break;
+      // Hazard interrupt: poll the NPC's full observe (every ~1.2s) and abort if the body has
+      // wandered into water OR is suffocating under a 1x1 overhang. The Paper pathfinder happily
+      // walks through both — the agent takes suffocation/drowning damage every tick it stays
+      // there ("GTA SA bug"). Aborting + REPLAN keeps the NPC player-like.
+      if (Date.now() % 1200 < pollMs) {
+        try {
+          const obs = await cap.observe(actorName);
+          const od = (obs && obs.data) || {};
+          if (od.in_water === true || od.head_in_water === true) {
+            abortedForHazard = 'in_water';
+          } else if (od.last_damage_cause === 'SUFFOCATION' || od.suffocating === true) {
+            abortedForHazard = 'suffocating';
+          }
+          if (abortedForHazard) {
+            countMetric(METRIC.HAZARD_ABORT, { actor: actorName, hazard: abortedForHazard });
+            try { await cap.act(actorName, 'walk_cancel'); } catch (_) { /* best effort */ }
+            break;
+          }
+        } catch (_) { /* observe is best effort */ }
+      }
     }
-    if (typeof d.stuck_ms === 'number') maxStuckMs = Math.max(maxStuckMs, d.stuck_ms);
-    if (typeof d.collisions === 'number') collisions = Math.max(collisions, d.collisions);
-    if (d.active === false || d.done === true) break;
-  }
   const data = (last && last.data) || {};
   if (maxStuckMs > 0) observeMetric(METRIC.STUCK_DURATION, maxStuckMs, { actor: actorName });
   if (collisions > 0) countMetric(METRIC.COLLISION, { actor: actorName }, collisions);
@@ -109,20 +130,21 @@ async function runPathLeg(harness, actorName, goal, opts) {
   }
 
   const arrivedByServer = !!(last && last.success) && !last.reason;
-  const distanceToGoal = typeof data.distance_to_goal === 'number' ? data.distance_to_goal : null;
-  const arrived = arrivedByServer || (distanceToGoal != null && distanceToGoal <= arrive + 0.6);
-  return {
-    status: arrived ? 'ARRIVED' : 'INCOMPLETE',
-    reason: arrived ? null : (last && last.reason) || 'poll_timeout',
-    plan: started.data,
-    status_data: data,
-    travelled: data.travelled,
-    distanceToGoal,
-    collisions,
-    serverReplans: data.replans || 0,
-    stuckMs: maxStuckMs,
-  };
-}
+    const distanceToGoal = typeof data.distance_to_goal === 'number' ? data.distance_to_goal : null;
+    const arrived = arrivedByServer || (distanceToGoal != null && distanceToGoal <= arrive + 0.6);
+    return {
+      status: abortedForHazard ? 'HAZARD_ABORTED' : (arrived ? 'ARRIVED' : 'INCOMPLETE'),
+      reason: abortedForHazard || ((arrived ? null : (last && last.reason) || 'poll_timeout')),
+      plan: started.data,
+      status_data: data,
+      travelled: data.travelled,
+      distanceToGoal,
+      collisions,
+      serverReplans: data.replans || 0,
+      stuckMs: maxStuckMs,
+      hazard: abortedForHazard,
+    };
+  }
 
 /**
  * Legacy fallback: many small `step` calls from Node. Slow and visibly stuttery — only used
@@ -204,6 +226,39 @@ async function walkTo(harness, actorName, stand, opts = {}) {
     y: Math.floor(stand.y),
     z: Math.floor(stand.z) + 0.5,
   };
+
+  // Pre-flight goal shape check: the goal cell must have a clear 2-block-tall column above it
+  // (the NPC's body is 2 blocks tall). If the head block is solid (a 1x1 doorway, a low
+  // overhang, a fence post directly over the goal), climbing up to the next clear Y prevents
+  // the pathfinder from routing through suffocation. Bounded to +4 so we never overshoot.
+  // This is the "GTA SA bug" workaround for the head-height case the Paper server-side
+  // pathfinder happily walks into.
+  if (harness.raw) {
+    try {
+      const headBlock = await harness.raw(
+        `execute in minecraft:overworld if block ${Math.floor(goal.x)} ${goal.y + 1} ${Math.floor(goal.z)} minecraft:air`
+      );
+      const headClear = String(headBlock || '').toLowerCase().includes('test passed');
+      if (!headClear) {
+        for (let bump = 1; bump <= 4; bump++) {
+          const tryY = goal.y + bump;
+          const headTry = await harness.raw(
+            `execute in minecraft:overworld if block ${Math.floor(goal.x)} ${tryY + 1} ${Math.floor(goal.z)} minecraft:air`
+          );
+          const footTry = await harness.raw(
+            `execute in minecraft:overworld if block ${Math.floor(goal.x)} ${tryY} ${Math.floor(goal.z)} minecraft:air`
+          );
+          if (
+            String(headTry || '').toLowerCase().includes('test passed') &&
+            String(footTry || '').toLowerCase().includes('test passed')
+          ) {
+            goal.y = tryY;
+            break;
+          }
+        }
+      }
+    } catch (_) { /* pre-flight is best effort */ }
+  }
 
   const t0 = Date.now();
   let cur = posFromObserve(await cap.observe(actorName));

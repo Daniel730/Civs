@@ -16,8 +16,9 @@ const {
   stockpileMaterials,
   walkTo,
   cleanupTargets,
-  findSurfaceY,
-  chooseFocus,
+    findSurfaceY,
+    blockIs,
+    chooseFocus,
   biasJob,
   construction,
 } = require('../lib/village');
@@ -88,11 +89,16 @@ async function safeWalk(harness, actorName, stand, opts = {}) {
 }
 
 const cfg = {
-  rconHost: process.env.RCON_HOST || '127.0.0.1',
-  rconPort: Number.parseInt(process.env.RCON_PORT || '25576', 10),
-  rconPassword: process.env.RCON_PASSWORD || 'civsqa',
-  mcHost: process.env.MC_HOST || '127.0.0.1',
-  mcPort: Number.parseInt(process.env.MC_PORT || '25566', 10),
+  // Defaults match the QA Paper server reachable from this WSL host:
+    //   MC    : 192.168.152.149:25566  (Paper server runs on this same host)
+    //   RCON  : 192.168.152.149:25576  (server.properties `rcon.port`, NOT 25575)
+    // 25575 was inherited from a bot-server QA profile and silently breaks findSurfaceY
+    // probes (ECONNREFUSED) — see "voando/flat" bug. Override via env vars for remote runs.
+    rconHost: process.env.RCON_HOST || '192.168.152.149',
+    rconPort: Number.parseInt(process.env.RCON_PORT || '25576', 10),
+    rconPassword: process.env.RCON_PASSWORD || 'civsqa',
+    mcHost: process.env.MC_HOST || '192.168.152.149',
+    mcPort: Number.parseInt(process.env.MC_PORT || '25566', 10),
   actorName: process.env.ACTOR_NAME || 'Steve',
   helperName: process.env.HELPER_NAME || 'Alex',
   cameraName: process.env.CAMERA_NAME || 'Cam',
@@ -1123,12 +1129,32 @@ async function connectActor(harness, name, attempt = 1) {
     return { actor, ok: false, reason: actor.reason };
   }
   await actor.grantOp();
-  // BOOTSTRAP ONLY (login placement, not part of the work loop): move the fresh session to
-  // the village. No gamemode switch, no gear handout — it stays in the server's survival mode.
-  await actor.teleport(cfg.origin.x, cfg.origin.y + 2, cfg.origin.z);
-  const alive = await ensureAlive(harness, name);
-  return { actor, ok: true, alive };
-}
+      // BOOTSTRAP ONLY (login placement, not part of the work loop): move the fresh session to
+      // the village. No gamemode switch, no gear handout — it stays in the server's survival mode.
+      // Player-like: probe the REAL surface first (world is not flat), then stand on it without
+      // submerging. findSurfaceY now treats water as non-solid, so groundY is the SOLID block under
+      // any water above (e.g. a river over dirt). We then climb until the NPC's HEAD (groundY+2) is
+      // in air — otherwise Steve lands in shallow water head-first and starts drowning (the
+      // "Jesus drowning while looking up" symptom). Bounded to ±6 climbs so we never overshoot into
+      // mid-air on a tall overhang.
+      const groundY = await findSurfaceY(harness, cfg.origin.x, cfg.origin.z, {
+        fallbackY: cfg.origin.y,
+        maxY: cfg.origin.y + 24,
+        minY: cfg.origin.y - 24,
+      });
+      let standY = groundY + 1;
+      // Climb out of water: if the NPC's head block (standY+1) is water/cave_air, keep stepping
+      // up until the head is in plain air OR we've climbed 6 blocks (give up — surface is too
+      // submerged to stand safely here).
+      for (let i = 0; i < 6; i++) {
+        const headAir = !(await blockIs(harness, cfg.origin.x, standY + 1, cfg.origin.z, 'water'));
+        if (headAir) break;
+        standY += 1;
+      }
+      await actor.teleport(cfg.origin.x, standY, cfg.origin.z);
+      const alive = await ensureAlive(harness, name);
+      return { actor, ok: true, alive };
+    }
 
 /**
  * Town check (player-like).
@@ -1943,27 +1969,48 @@ async function main() {
           if (process.env.AIWORLD_DEBUG) {
             console.log('[ollama-debug] snap=' + JSON.stringify(snap));
           }
-          // DECISION CACHE: calling Ollama every tick freezes the Steve for ~60-120s while he
-          // waits (looked "burro" — stood still between actions). Cache the brain's focus for
-          // FOCUS_TTL ms and only re-query when it expires OR survival escalates to DANGER/ESCAPE
-          // (so he still reacts instantly to real threats). Between calls the cached focus drives
-          // per-tick sub-actions (mine/break/walk) with ZERO brain latency -> looks autonomous.
-          const FOCUS_TTL = 45000;
-          const survEscalated = assessment.state === 'DANGER' || assessment.state === 'ESCAPE';
-          const cacheFresh =
-            state.cachedFocus &&
-            (state.cachedFocusUntil || 0) > Date.now() &&
-            !(survEscalated && state.cachedFocusSafe);
-          let decision = cacheFresh ? state.cachedDecision : null;
-          if (!decision) {
-            decision = await ollamaBrainInst.decide(snap);
-            if (decision && FOCUSES.includes(decision.focus)) {
-              state.cachedFocus = decision.focus;
-              state.cachedFocusUntil = Date.now() + FOCUS_TTL;
-              state.cachedFocusSafe = assessment.state === 'SAFE' || assessment.state === 'CAUTION';
-              state.cachedDecision = decision;
-            }
-          }
+          // DECISION CACHE (plan-then-execute): calling Ollama every tick freezes the Steve
+                    // for ~60-120s while he waits (looked "burro"). Cache the brain's focus for FOCUS_TTL
+                    // ms and only re-query when it expires OR the world state changes meaningfully. The
+                    // cache stays alive across ticks so the Steve executes a coherent plan (mine for 30s,
+                    // build for 60s, gather...) instead of re-deciding every 6s. The fingerprint captures
+                    // the things that should trigger REPLAN: HP drop, position change, mob identity, town
+                    // status. The signal is local to the worker — Ollama never sees raw ticks, only the
+                    // intent + the world model — so the NPC looks autonomous between plans.
+                    const FOCUS_TTL = 45000;
+                    const survEscalated = assessment.state === 'DANGER' || assessment.state === 'ESCAPE';
+                    // Build a coarse fingerprint of the things that should cause REPLAN. Two snapshots
+                    // with the same fingerprint -> reuse the cached decision. Anything that matters for
+                    // "should I do the same thing I was doing?" changing -> invalidate.
+                    const planFingerprint = JSON.stringify({
+                      hp: assessment.healthPct != null ? Math.round(assessment.healthPct * 100) : null,
+                      pos: [od.x != null ? Math.floor(od.x / 50) : null, od.z != null ? Math.floor(od.z / 50) : null],
+                      mob: (od.nearest_hostile && od.nearest_hostile.type) || null,
+                      mobCount: (assessment.threats || []).length,
+                      town: town && town.ok ? 'ok' : 'missing',
+                      surv: assessment.state,
+                      light: od.light_level != null ? (od.light_level < 8 ? 'dark' : 'lit') : null,
+                    });
+                    const fingerprintChanged = state.cachedPlanFingerprint && state.cachedPlanFingerprint !== planFingerprint;
+                    const cacheFresh =
+                      state.cachedFocus &&
+                      (state.cachedFocusUntil || 0) > Date.now() &&
+                      !(survEscalated && state.cachedFocusSafe) &&
+                      !fingerprintChanged;
+                    let decision = cacheFresh ? state.cachedDecision : null;
+                    if (!decision) {
+                      decision = await ollamaBrainInst.decide(snap);
+                      if (decision && FOCUSES.includes(decision.focus)) {
+                        state.cachedFocus = decision.focus;
+                        state.cachedFocusUntil = Date.now() + FOCUS_TTL;
+                        state.cachedFocusSafe = assessment.state === 'SAFE' || assessment.state === 'CAUTION';
+                        state.cachedDecision = decision;
+                        state.cachedPlanFingerprint = planFingerprint;
+                        if (process.env.AIWORLD_DEBUG && fingerprintChanged) {
+                          console.log('[ollama-debug] replan triggered (fingerprint changed)');
+                        }
+                      }
+                    }
           if (process.env.AIWORLD_DEBUG) {
             console.log('[ollama-debug] mode=' + aiwMode + ' model=' + ollamaBrainInst.model + ' decision=' + JSON.stringify(decision));
           }
