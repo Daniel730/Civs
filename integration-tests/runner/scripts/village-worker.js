@@ -216,9 +216,11 @@ async function perceiveAround(harness, wm, pos, tick) {
 
   if (!process.env.ENABLE_PERCEIVE_AROUND) return; // default: lightweight path only
 
-  // A/B path: small 3×3 probe (9 cells × 1 material batch) — bounded, not the 1521 monster.
+  // Bounded 3×3 probe (9 cells) using ONE RCON batch per material. This fills the
+  // SpatialWorldMemory grid gradually (the mirror of the world around the agent) without
+  // the 1521-command monster that stalled RCON. One material per batch line-group.
   const radius = 1;
-  const materials = ['air', 'water', 'oak_log', 'cobblestone', 'dirt', 'grass_block'];
+  const materials = ['air', 'water', 'grass_block', 'oak_log'];
   const t0 = Date.now();
   for (const mat of materials) {
     const lines = [];
@@ -227,19 +229,22 @@ async function perceiveAround(harness, wm, pos, tick) {
         lines.push(`execute if block ${px + dx} ${probeY} ${pz + dz} minecraft:${mat}`);
       }
     }
-    await harness.raw(lines.join('\n')).catch(() => {});
-  }
-  // Refresh the 3×3 footprint cells as seen (material stays 'air' placeholder; the
-  // build/break paths will correct real materials as the agent edits).
-  for (let dx = -radius; dx <= radius; dx++) {
-    for (let dz = -radius; dz <= radius; dz++) {
-      const x = px + dx, z = pz + dz;
-      const c = wm.cells.get(`${x},${z}`);
-      wm.noteCell(x, probeY, z, c ? c.material : 'air', tick);
+    const reply = await harness.raw(lines.join('\n')).catch(() => null);
+    // If the server echoes the matched coordinates we could parse them, but the simplest
+    // honest signal is: the cell exists (we justasked). Mark all 9 as seen with the probed
+    // material only when the batch itself succeeded — the build/break paths refine real mats.
+    if (reply != null) {
+      for (let dx = -radius; dx <= radius; dx++) {
+        for (let dz = -radius; dz <= radius; dz++) {
+          const x = px + dx, z = pz + dz;
+          const c = wm.cells.get(`${x},${z}`);
+          if (!c || c.material === 'air') wm.noteCell(x, probeY, z, mat, tick);
+        }
+      }
     }
   }
   if (process.env.AIWORLD_DEBUG) {
-    log({ status: 'DEBUG', action: 'spatial_perceive_ab', tick, ms: Date.now() - t0, radius: 1 });
+    log({ status: 'DEBUG', action: 'spatial_perceive_ab', tick, ms: Date.now() - t0, radius: 1, cells: wm.cells.size });
   }
 }
 
@@ -291,8 +296,11 @@ async function stockpile(harness, x, y, z, profile) {
  */
 const { JobRunner: _JobRunner } = require('../lib/village/job-runner');
 async function runJobOrRunner(harness, actorName, step, state, ctxBase) {
-  const { observed } = ctxBase;
+  const { observed, getWorldMemory } = ctxBase;
   const hasPlan = _JobRunner.PLAN_REGISTRY[step.job];
+  if (process.env.AIWORLD_DEBUG) {
+    log({ status: 'DEBUG', action: 'runJobOrRunner', job: step.job, site: step.site, usingRunner: !!hasPlan });
+  }
   if (!hasPlan) {
     // Legacy path (unchanged behaviour, still timeout-guarded by the caller).
     return runJob(harness, actorName, step, state, { observed });
@@ -312,7 +320,7 @@ async function runJobOrRunner(harness, actorName, step, state, ctxBase) {
     tick: state.tick,
     budgetMs: 1500,
     log,
-    worldMem: getWorldMemory(actorName),
+    worldMem: getWorldMemory ? getWorldMemory(actorName) : null,
     helpers: {
       checkTool,
       applyObserve,
@@ -2401,7 +2409,7 @@ async function main() {
       const RUN_JOB_TIMEOUT_MS = 8000;
       const coords = workCoords(cfg.origin, { ...step, tick: state.tick });
       const runJobResult = await Promise.race([
-        runJobOrRunner(harness, who, step, state, { observed, groundY: cfg.origin.y, coords }),
+        runJobOrRunner(harness, who, step, state, { observed, groundY: cfg.origin.y, coords, getWorldMemory }),
         new Promise((res) =>
           setTimeout(
             () => res({ status: 'TIMEOUT', job: step.job, reason: 'runJob_exceeded_' + RUN_JOB_TIMEOUT_MS + 'ms' }),

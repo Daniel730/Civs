@@ -21,7 +21,9 @@ export RCON_PASSWORD=civsqa
 # Surface-fallback warnings ON — lets us spot RCON drift / hard-coded origin.y in logs
 export SURFACE_FALLBACK_DEBUG=1
 export AIWORLD_DEBUG=1
-# FASE A (wiki lower-latency): modelos trocados para qwen3 (4b default + 1.7b ultra-rápido)
+# SpatialWorldMemory mirror: probe 3x3 around Steve each tick (bounded RCON batch, NOT the 1521 monster).
+export ENABLE_PERCEIVE_AROUND=1
+# FASE A (wiki lower-latency): fast brain = qwen3:4b (default) + qwen3:1.7b (ultra-rápido).
 # ASSIM QUE o pull terminar (veja /tmp/pull_qwen4b.log). Por ora mantemos civs-brain
 # (ja existe local) ate os qwen3 estarem baixados, para o worker nao crashar no Ollama.
 export OLLAMA_MODEL=qwen3:4b

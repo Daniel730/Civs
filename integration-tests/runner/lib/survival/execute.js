@@ -69,6 +69,31 @@ async function executeSurvival(harness, actorName, assessment, ctx = {}) {
       }
 
       if (action.kind === 'flee') {
+        // PLAYER-LIKE DROWNING RECOVERY: if the body is submerged (in_water/drowning), a
+        // horizontal flee walk_path cannot lift it off the riverbed — the NPC just sits at
+        // the bottom and drowns. A real player holds jump to swim up. Do the same: spam
+        // jump until the body is no longer in water, THEN flee horizontally.
+        const drowning = !!(assessment.threats && (assessment.threats.includes('drowning') || assessment.threats.includes('in_water')))
+          || (assessment.raw && assessment.raw.in_water === true);
+        if (drowning) {
+          let surfaced = false;
+          for (let i = 0; i < 12; i++) {
+            await cap.act(actorName, 'jump').catch(() => {});
+            await new Promise((r) => setTimeout(r, 250));
+            const ob = await cap.observe(actorName).catch(() => null);
+            const od = (ob && ob.data) || {};
+            if (od.in_water !== true && od.head_in_water !== true) { surfaced = true; break; }
+          }
+          steps.push({ flee: { success: surfaced, navigator: 'swim_up', reason: surfaced ? null : 'still_submerged' } });
+          if (!surfaced) {
+            // Last resort: recovery teleport to safe origin (D-AP-021).
+            const tp = await cap.teleport(actorName, origin.x, origin.y + 1, origin.z);
+            countMetric(METRIC.GOAL_ABANDON, { actor: actorName, reason: 'drown_stuck_recover' });
+            steps.push({ flee: { success: !!(tp && tp.success), navigator: 'recovery_teleport', reason: 'still_submerged' } });
+          }
+          await cap.sprint(actorName, false);
+          return { status: 'PASS', handled: true, kind: 'flee', steps };
+        }
         await cap.sprint(actorName, true);
         let fleeTo = origin;
         // B4: flee AWAY from the threat, not blindly to origin. If we know the threat's position,

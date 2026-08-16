@@ -29,6 +29,8 @@
 
 // ---- Step executors (atomic actions) ----------------------------------------------
 
+const { planBlueprint, compileBlueprint, expandPlacementOrder } = require('../village/construction');
+
 async function execToolCheck(harness, actorName, step, ctx) {
   const { checkTool, applyObserve } = ctx.helpers;
   const held = ctx.held;
@@ -101,9 +103,24 @@ async function execBreak(harness, actorName, step, ctx) {
 }
 
 async function execPlace(harness, actorName, step, ctx) {
-  const { placeAesthetic } = ctx.helpers;
-  const pr = await placeAesthetic(harness, actorName, { x: step.x, y: step.y, z: step.z, material: step.material, role: step.role || 'wall' }, ctx.worldMem);
-  return { ok: !!(pr && pr.success), result: { place: pr } };
+  const { placeAesthetic, buildPlaceEvent } = ctx.helpers;
+  const block = step.block || { x: step.x, y: step.y, z: step.z, material: step.material, role: step.role || 'wall' };
+  const pr = await placeAesthetic(harness, actorName, block, ctx.worldMem);
+  const ok = !!(pr && pr.success);
+  if (buildPlaceEvent) {
+    ctx.log(buildPlaceEvent({
+      actor: actorName,
+      job: step.job || ctx.step.job || 'builder',
+      material: block.material,
+      target: { x: block.x, y: block.y, z: block.z },
+      held: ctx.held,
+      invDiff: { gained: [], lost: [], dropped: [] },
+      success: ok,
+      reason: ok ? null : (pr && pr.reason) || 'place_failed',
+      position: null,
+    }));
+  }
+  return { ok, result: { place: pr } };
 }
 
 async function execGather(harness, actorName, step, ctx) {
@@ -184,7 +201,7 @@ function planTorch(ctx) {
  */
 async function planMiner(ctx) {
   const { harness, actorName, cfg, groundY, step } = ctx;
-  const material = step.material || 'STONE';
+  const material = step.job === 'lumberjack' ? 'OAK_LOG' : (step.material || 'STONE');
   const fb = await harness.cap.findBlock(actorName, material, 12).catch(() => null);
   if (fb && fb.success && fb.data && fb.data.nearest) {
     const { x, y, z } = fb.data.nearest;
@@ -203,11 +220,58 @@ async function planMiner(ctx) {
   ];
 }
 
+/**
+ * Builder: generate the construction blueprint ONCE (cached in state.builderPlan), then
+ * emit incremental steps: walk-to + place per block. This replaces the legacy runJob
+ * `construction.runProject` call which re-ran compileBlueprint + validateBlueprint +
+ * construct EVERY tick (CPU/IO-bound → 12s+ ticks). Here the heavy plan is built once and
+ * the runner places 1-3 blocks per tick (~1.5s budget), resuming via state.builderPlan.cursor.
+ * The actual placement quality is preserved: execPlace calls placeAesthetic (same as runProject).
+ */
+async function planBuilder(ctx) {
+  const { cfg, step, state } = ctx;
+  const siteKey = step.site || step.label || 'shack';
+  // Build (or reuse) the cached blueprint plan.
+  if (!state.builderPlan || state.builderPlan.job !== step.job || state.builderPlan.site !== siteKey) {
+    const template = planBlueprint(cfg.origin, { ...step, tick: state.tick });
+    const blueprint = compileBlueprint(template, {
+      style: 'medieval_village',
+      purpose: template.purpose || 'house',
+      site: step.site,
+    });
+    const ordered = expandPlacementOrder(blueprint);
+    state.builderPlan = { job: step.job, site: siteKey, blocks: ordered, cursor: 0 };
+  }
+  const plan = state.builderPlan;
+  if (plan.cursor >= plan.blocks.length) {
+    // Whole structure placed — clear so next tick the planner can pick a new job.
+    state.builderPlan = null;
+    return [];
+  }
+  // Emit up to 3 blocks worth of steps this tick (walk + place each).
+  const slice = plan.blocks.slice(plan.cursor, plan.cursor + 3);
+  plan.cursor += slice.length;
+  const steps = [];
+  for (const b of slice) {
+    const near = {
+      x: b.x,
+      y: Math.max(b.y, cfg.origin.y + 1),
+      z: b.z + (b.role === 'path' ? 0 : 1),
+    };
+    steps.push({ type: 'walk', to: near, opts: { arrive: 2.5, timeoutMs: 3000, stepLen: 0.45, pauseMs: 100 } });
+    steps.push({ type: 'place', x: b.x, y: b.y, z: b.z, material: b.material, role: b.role, block: b });
+  }
+  return steps;
+}
+
 // Registry: job name -> plan function. Add new jobs here ONLY.
 const PLAN_REGISTRY = {
   gather: planGather,
   torch: planTorch,
   miner: planMiner,
+  lumberjack: planMiner, // same shape: find nearest log -> walk -> break (planMiner uses step.material || STONE)
+  farmer: planBuilder,  // farmer builds farm structures via the same blueprint pipeline
+  builder: planBuilder,
 };
 
 // ---- Runner -------------------------------------------------------------------------
