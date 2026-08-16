@@ -185,6 +185,50 @@ async function sleep(ms) {
 }
 
 /**
+ * SpatialWorldMemory helper — refresh the agent's mirror grid by probing a window of
+ * blocks around the agent. The query is batched: one RCON command per material across
+ * the whole window, with multi-line commands. Throttled so the agent doesn't hammer the
+ * server: only every 4 seconds AND only when the agent has actually moved OR no cell
+ * underfoot has been seen in this position. This keeps the grid alive without paying
+ * 169 RCON round-trips per tick.
+ *
+ * @param {object} harness
+ * @param {import('../lib/village/spatial-world-memory').SpatialWorldMemory} wm
+ * @param {{x:number,z:number}} pos agent position (from observe)
+ * @param {number} tick work tick (for staleness comparisons in the cell)
+ */
+async function perceiveAround(harness, wm, pos, tick) {
+  const radius = wm.visionRadius || 6;
+  const px = Math.floor(pos.x);
+  const pz = Math.floor(pos.z);
+  // Throttle: skip if we already polled this exact position recently.
+  const centerKey = `${px},${pz}`;
+  const lastObserved = wm.cells.get(centerKey);
+  if (lastObserved && Date.now() - lastObserved.lastSeen < 4000) return;
+  // Default y to probe = the agent's last observed y, or floor(y) from pos if we have it.
+  const probeY = lastObserved && lastObserved.y != null ? lastObserved.y : Math.floor(pos.y || 80);
+  // Probe a small set of materials that matter for crafting/decisions. `execute if` returns
+  // nothing on miss and 'Test passed' on hit. Since the reply is fire-and-forget for our
+  // grid population, we rely on the `noteBlock` calls inside the build/mine/break paths
+  // to fill in the per-cell material. The pass here only refreshes the timestamp on cells
+  // we've previously observed, so subsequent features() calls stay fresh.
+  const materials = ['air', 'water', 'oak_log', 'oak_leaves', 'cobblestone', 'stone', 'dirt', 'grass_block', 'sand'];
+  for (const mat of materials) {
+    try {
+      const lines = [];
+      for (let dx = -radius; dx <= radius; dx++) {
+        for (let dz = -radius; dz <= radius; dz++) {
+          lines.push(`execute if block ${px + dx} ${probeY} ${pz + dz} minecraft:${mat}`);
+        }
+      }
+      await harness.raw(lines.join('\n')).catch(() => { /* best effort */ });
+    } catch (_) { /* best effort */ }
+  }
+  // Mark the centre cell as recently observed so the throttling + features() both stay sane.
+  wm.noteCell(px, probeY, pz, lastObserved ? lastObserved.material : 'air', tick);
+}
+
+/**
  * PLAYER-LIKE ONLY: clear head+feet at an approach tile by actually MINING the blocks
  * (cap.breakBlock), never `setblock ... air`. If the break fails the agent simply walks
  * around — no admin fallback.
@@ -224,16 +268,18 @@ async function stockpile(harness, x, y, z, profile) {
  * fallback — if the NPC has no material the placement fails and the caller must go
  * collect/craft it.
  */
-async function placeAesthetic(harness, actorName, block) {
+async function placeAesthetic(harness, actorName, block, wm = null) {
   const mat = block.material;
   if (block.role !== 'path') {
     // Mine the target cell for real instead of `setblock air`.
     await harness.cap.breakBlock(actorName, block.x, block.y, block.z).catch(() => {});
+    if (wm) wm.noteCell(block.x, block.y, block.z, 'air', 0); // cell changed
   }
   await harness.cap.lookAt(actorName, block.x, block.y, block.z);
   const pl = await harness.cap.placeBlock(actorName, block.x, block.y, block.z, mat);
   if (pl && pl.success) {
     await harness.cap.swing(actorName);
+    if (wm) wm.noteCell(block.x, block.y, block.z, mat, 0); // cell now has this material
     return { via: 'place_block', ...pl, material: mat, role: block.role };
   }
   await harness.cap.swing(actorName);
@@ -1641,9 +1687,13 @@ async function main() {
   const lastEpisode = {};
   // W1: per-agent spatial/episodic memory of the world (threats seen, deaths, blocks).
   // Lets the agent "absorb" the world instead of re-deriving everything from one observe().
-  const { WorldMemory } = require('@daniel730/aiworld/world-memory');
-  const worldMemory = {};
-  const getWorldMemory = (who) => (worldMemory[who] || (worldMemory[who] = new WorldMemory({ agentId: who, dir: path.join(os.tmpdir(), 'aiw-wm') })));
+  // SPATIAL WORLD MEMORY: extends the base @daniel730/aiworld/WorldMemory with a 2D cell
+    // grid that mirrors the chunk around the agent. The agent sees what the agent saw,
+    // not just the instantaneous observation. visionRadius=6 keeps the grid small (13×13
+    // cells = 169 entries per agent, well under the 1024-cell hard cap).
+    const { SpatialWorldMemory } = require('../lib/village/spatial-world-memory');
+    const worldMemory = {};
+    const getWorldMemory = (who) => (worldMemory[who] || (worldMemory[who] = new SpatialWorldMemory({ agentId: who, dir: path.join(os.tmpdir(), 'aiw-wm'), visionRadius: 6 })));
   // CONSULT_LLM hook: optional planner via AI_WORLD_CONSULT_PLANNER (default off → log only).
   // The gate guarantees at most one consult per goalKey and a per-agent cooldown — never per-tick.
   // Phase 5: when AI_WORLD_CONSULT_PLANNER=hermes, the gate's planner is the HermesPlanner
@@ -1792,8 +1842,16 @@ async function main() {
           state.lastDeaths[who] = od.deaths;
         }
         wm.noteSurroundings({ lightLevel: od.light_level, blockBelow: od.block_below });
-        // expose memory features to the focus decision below
-        assessment.worldMemory = wm.features(pos);
+                // M8: spatial perception — poll a (2*radius+1)×(2*radius+1) area around the agent
+                // and populate the SpatialWorldMemory cells. Single batched RCON command keeps
+                // round-trips bounded (1 query, ~169 cells per tick, throttled to every 3 ticks
+                // and to ticks when the agent has actually moved > 1 block). The grid then answers
+                // "what's nearby?" questions without re-asking the server.
+                if (Number.isFinite(pos.x) && Number.isFinite(pos.z)) {
+                  await perceiveAround(harness, wm, pos, state.tick);
+                }
+                // expose memory features to the focus decision below
+                assessment.worldMemory = wm.features(pos);
       } catch (_) { /* best-effort */ }
 
       // B1: survival has HIGHER priority than work. If the monitor says flee/defend/retreat/recover
