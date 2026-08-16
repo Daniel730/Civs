@@ -20,6 +20,7 @@ export MC_PORT=25566
 export RCON_PASSWORD=civsqa
 # Surface-fallback warnings ON — lets us spot RCON drift / hard-coded origin.y in logs
 export SURFACE_FALLBACK_DEBUG=1
+export AIWORLD_DEBUG=1
 
 # Launch
 setsid nohup /home/dansilva/.nvm/versions/node/v25.8.0/bin/node \

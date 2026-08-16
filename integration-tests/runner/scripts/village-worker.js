@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 const fs = require('fs');
+const os = require('os');
 const path = require('path');
 const { Harness } = require('../lib/harness');
 const { RawKeepAliveActor } = require('../lib/actor');
@@ -207,6 +208,17 @@ async function perceiveAround(harness, wm, pos, tick) {
   if (lastObserved && Date.now() - lastObserved.lastSeen < 4000) return;
   // Default y to probe = the agent's last observed y, or floor(y) from pos if we have it.
   const probeY = lastObserved && lastObserved.y != null ? lastObserved.y : Math.floor(pos.y || 80);
+  // Always log so we can see the perception pass firing in the agent log (helpful while
+  // iterating; the worldMemory grid is otherwise invisible).
+  log({
+    status: 'PASS',
+    action: 'spatial_perceive',
+    worker: 'Steve',
+    tick,
+    pos: { x: px, y: probeY, z: pz },
+    radius,
+    cellCountBefore: wm.cells.size,
+  });
   // Probe a small set of materials that matter for crafting/decisions. `execute if` returns
   // nothing on miss and 'Test passed' on hit. Since the reply is fire-and-forget for our
   // grid population, we rely on the `noteBlock` calls inside the build/mine/break paths
@@ -1821,7 +1833,7 @@ async function main() {
       try {
         const wm = getWorldMemory(who);
         const od = (observed && observed.data) || {};
-        const pos = { x: od.x, z: od.z };
+        const pos = { x: od.x, y: od.y, z: od.z };
         if (assessment.threats && assessment.threats.length) {
           for (const t of assessment.threats) {
             const h = (od.nearest_hostile) || {};
@@ -1842,17 +1854,22 @@ async function main() {
           state.lastDeaths[who] = od.deaths;
         }
         wm.noteSurroundings({ lightLevel: od.light_level, blockBelow: od.block_below });
-                // M8: spatial perception — poll a (2*radius+1)×(2*radius+1) area around the agent
-                // and populate the SpatialWorldMemory cells. Single batched RCON command keeps
-                // round-trips bounded (1 query, ~169 cells per tick, throttled to every 3 ticks
-                // and to ticks when the agent has actually moved > 1 block). The grid then answers
-                // "what's nearby?" questions without re-asking the server.
-                if (Number.isFinite(pos.x) && Number.isFinite(pos.z)) {
-                  await perceiveAround(harness, wm, pos, state.tick);
-                }
-                // expose memory features to the focus decision below
-                assessment.worldMemory = wm.features(pos);
-      } catch (_) { /* best-effort */ }
+        // M8: spatial perception — poll a (2*radius+1)×(2*radius+1) area around the agent
+        // and populate the SpatialWorldMemory cells.
+        if (Number.isFinite(pos.x) && Number.isFinite(pos.z)) {
+          try {
+            await perceiveAround(harness, wm, pos, state.tick);
+          } catch (perr) {
+            log({ status: 'ERROR', action: 'spatial_perceive_failed', worker: who, error: String(perr && perr.message || perr) });
+          }
+        } else {
+          log({ status: 'DEBUG', action: 'spatial_perceive_skip', worker: who, reason: 'pos_not_finite', pos });
+        }
+        // expose memory features to the focus decision below
+        assessment.worldMemory = wm.features(pos);
+      } catch (wmErr) {
+        log({ status: 'ERROR', action: 'world_memory_failed', worker: who, error: String(wmErr && wmErr.message || wmErr), stack: wmErr && wmErr.stack ? wmErr.stack.split('\n').slice(0, 4) : null });
+      }
 
       // B1: survival has HIGHER priority than work. If the monitor says flee/defend/retreat/recover
       // (state not SAFE/CAUTION), execute that action and skip the work tick entirely — never let
