@@ -8,7 +8,7 @@ const {
   makeWorldMemory,
   evaluateTriggers,
   makeMessage,
-} = require('../lib/ai-world/hermes-bridge');
+} = require('@daniel730/aiworld/hermes-bridge');
 
 test('evaluateTriggers: low confidence triggers consult', () => {
   const r = evaluateTriggers({}, {}, { confidence: 0.1 });

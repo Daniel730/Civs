@@ -3,8 +3,8 @@ const assert = require('node:assert');
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
-const rt = require('../lib/ai-world/agent-runtime');
-const { EVENT } = require('../lib/ai-world/events');
+const rt = require('@daniel730/aiworld/agent-runtime');
+const { EVENT } = require('@daniel730/aiworld/events');
 
 test('loadOrCreateAgent: fresh agent has bounded memory + goals', () => {
   const a = rt.loadOrCreateAgent('TestUnit', { occupation: 'builder' });

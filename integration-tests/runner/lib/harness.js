@@ -51,7 +51,7 @@ function centsToMoney(cents) {
 class Harness {
   constructor(opts) {
     this.opts = Object.assign(
-      { host: '127.0.0.1', port: 25575, password: 'civs-itest', timeout: 15000 },
+      { host: '127.0.0.1', port: 25576, password: 'civsqa', timeout: 15000 },
       opts
     );
     this.rcon = null;

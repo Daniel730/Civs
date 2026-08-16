@@ -18,6 +18,7 @@
  */
 
 const { METRIC, countMetric, gaugeMetric } = require('../metrics');
+const { getRetaliationAbility } = require('../combat-log');
 
 const STATES = Object.freeze(['SAFE', 'CAUTION', 'DANGER', 'ESCAPE', 'RECOVER']);
 const SEVERITY = Object.freeze({ SAFE: 0, CAUTION: 1, DANGER: 2, ESCAPE: 3, RECOVER: 4 });
@@ -232,6 +233,8 @@ class SurvivalMonitor {
    * return `work`.
    */
   recommend(state, raw, d) {
+    const retaliation = getRetaliationAbility(d.held, d.inventory);
+    const canStrike = retaliation.bool;
     switch (state) {
       case 'RECOVER':
         return {
@@ -241,7 +244,17 @@ class SurvivalMonitor {
           priority: 100,
           reason: raw.reason,
         };
-      case 'ESCAPE':
+      case 'ESCAPE': {
+        const hasHostile = !!(d.nearest_hostile && Number.isFinite(Number(d.nearest_hostile.distance)));
+        // M12: armed NPCs fight hostiles even in ESCAPE; unarmed flee as before.
+        if (canStrike && hasHostile) {
+          return {
+            kind: 'defend',
+            target: (d.nearest_hostile && d.nearest_hostile.type) || 'nearest',
+            priority: 95,
+            reason: raw.reason,
+          };
+        }
         return {
           kind: 'flee',
           target: this.workOrigin,
@@ -249,10 +262,11 @@ class SurvivalMonitor {
           priority: 90,
           reason: raw.reason,
         };
+      }
       case 'DANGER': {
         const hasHostile = raw.threats.includes('hostile_close');
-        const canFight =
-          raw.healthPct > this.cfg.criticalHealthPct && hasHostile;
+        // M12: an armed NPC retaliates regardless of low health; unarmed use old rules.
+        const canFight = canStrike && hasHostile;
         // D-AP-021-adjacent: low health with NO hostile nearby means the agent is just
         // hurt, not under attack. Retreating home is a no-op if already home (it just
         // stands idle), so heal instead — give food and let regen close the gap.

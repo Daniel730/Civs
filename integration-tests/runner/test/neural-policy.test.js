@@ -5,9 +5,9 @@ const {
   buildExperience,
   computeReward,
   VEC_LEN,
-} = require('../lib/ai-world/state-rep');
-const { NeuralPolicy } = require('../lib/ai-world/neural-policy');
-const { ExperienceStore } = require('../lib/ai-world/experience-store');
+} = require('@daniel730/aiworld/state-rep');
+const { NeuralPolicy } = require('@daniel730/aiworld/neural-policy');
+const { ExperienceStore } = require('@daniel730/aiworld/experience-store');
 
 describe('state-rep.encodeState', () => {
   it('produces a fixed-length normalized vector with no NaN', () => {

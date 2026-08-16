@@ -8,17 +8,17 @@ const assert = require('node:assert');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
-const { recordFocusDecision } = require('../lib/ai-world/decision');
+const { recordFocusDecision } = require('@daniel730/aiworld/decision');
 const { contextOf } = require('../scripts/aiworld-train');
 
 test('recordFocusDecision persists survivalState into the experience record', () => {
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'aiw-ss-'));
-  const { ExperienceStore } = require('../lib/ai-world/experience-store');
+  const { ExperienceStore } = require('@daniel730/aiworld/experience-store');
   const store = new ExperienceStore({ dir: tmp });
   // Monkeypatch the shared store used by decision.js via require cache reset
-  const dec = require('../lib/ai-world/decision');
+  const dec = require('@daniel730/aiworld/decision');
   // Directly drive recordDecision through the store API to mirror what decision.js does:
-  const { buildExperience } = require('../lib/ai-world/state-rep');
+  const { buildExperience } = require('@daniel730/aiworld/state-rep');
   const exp = buildExperience({
     agentId: 'Steve',
     observation: { health: 10, max_health: 20 },
@@ -45,7 +45,7 @@ test('contextOf derives DANGER from legacy stateRep.vec danger_flag', () => {
 
 test('recordFocusDecision (live path) writes survivalState to the dataset', () => {
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'aiw-live-'));
-  const { ExperienceStore } = require('../lib/ai-world/experience-store');
+  const { ExperienceStore } = require('@daniel730/aiworld/experience-store');
   const store = new ExperienceStore({ dir: tmp });
   const ep = store.recordDecision({
     agentId: 'Steve',

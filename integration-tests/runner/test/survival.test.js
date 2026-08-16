@@ -59,10 +59,19 @@ describe('SurvivalMonitor', () => {
 
   it('escalates to DANGER and fights when a hostile is on top of the agent', () => {
     const m = new SurvivalMonitor({ actor: 'Steve', workOrigin: WORK });
-    const a = m.assess(obs({ hostiles: 2, nearest_hostile: { type: 'ZOMBIE', distance: 3 } }));
+    const a = m.assess(obs({ hostiles: 2, nearest_hostile: { type: 'ZOMBIE', distance: 3 }, held: 'IRON_SWORD' }));
     assert.equal(a.state, 'DANGER');
     assert.equal(a.action.kind, 'defend');
     assert.equal(a.action.target, 'ZOMBIE');
+  });
+
+  it('retreats when in DANGER without a weapon', () => {
+    const m = new SurvivalMonitor({ actor: 'Steve', workOrigin: WORK });
+    const a = m.assess(
+      obs({ health: 20, hostiles: 1, nearest_hostile: { type: 'ZOMBIE', distance: 3 } })
+    );
+    assert.equal(a.state, 'DANGER');
+    assert.equal(a.action.kind, 'retreat');
   });
 
   it('retreats instead of fighting when health is nearly gone', () => {
@@ -79,6 +88,25 @@ describe('SurvivalMonitor', () => {
     const a = m.assess(obs({ in_lava: true }));
     assert.equal(a.state, 'ESCAPE');
     assert.equal(a.reason, 'lava');
+  });
+
+  it('defends instead of fleeing when ESCAPE with weapon and hostile nearby', () => {
+    const m = new SurvivalMonitor({ actor: 'Steve', workOrigin: WORK });
+    const a = m.assess(
+      obs({ health: 5, hostiles: 1, nearest_hostile: { type: 'ZOMBIE', distance: 3 }, held: 'DIAMOND_SWORD' })
+    );
+    assert.equal(a.state, 'ESCAPE');
+    assert.equal(a.action.kind, 'defend');
+    assert.equal(a.action.target, 'ZOMBIE');
+  });
+
+  it('flees when ESCAPE without weapon even with hostile nearby', () => {
+    const m = new SurvivalMonitor({ actor: 'Steve', workOrigin: WORK });
+    const a = m.assess(
+      obs({ health: 5, hostiles: 1, nearest_hostile: { type: 'ZOMBIE', distance: 3 } })
+    );
+    assert.equal(a.state, 'ESCAPE');
+    assert.equal(a.action.kind, 'flee');
   });
 
   it('ESCAPEs while drowning', () => {

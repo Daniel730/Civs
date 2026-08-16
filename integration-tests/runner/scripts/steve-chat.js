@@ -17,14 +17,14 @@ const fs = require('fs');
 const path = require('path');
 const ROOT = __dirname + '/..';
 const { Harness } = require(ROOT + '/lib/harness');
-const { startChatListener } = require(ROOT + '/lib/ai-world/chat-listener');
-const { OllamaChat } = require(ROOT + '/lib/ai-world/ollama-chat');
+const { startChatListener } = require('@daniel730/aiworld/chat-listener');
+const { OllamaChat } = require('@daniel730/aiworld/ollama-chat');
 
 const chatFile = process.env.AIWORLD_CHAT_FILE || '/tmp/steve-chat.txt';
 const workerLog = process.env.AIWORLD_WORKER_LOG || '/home/dansilva/aiworld-civs-live.log';
 const harness = new Harness({
   host: process.env.MC_HOST || '127.0.0.1',
-  port: Number(process.env.MC_RCON_PORT || 25575),
+  port: Number(process.env.MC_RCON_PORT || 25576),
   password: process.env.MC_RCON_PW || 'civsqa',
 });
 

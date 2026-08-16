@@ -9,7 +9,7 @@ const os = require('os');
 const path = require('path');
 const assert = require('assert');
 const test = require('node:test');
-const { NeuralPolicy } = require('../lib/ai-world/neural-policy');
+const { NeuralPolicy } = require('@daniel730/aiworld/neural-policy');
 
 const VEC = new Array(17).fill(0);
 const FOCUSES = ['survive', 'found', 'build', 'maintain', 'secure'];

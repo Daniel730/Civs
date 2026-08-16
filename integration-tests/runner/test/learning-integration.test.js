@@ -3,7 +3,7 @@ const assert = require('node:assert');
 const os = require('os');
 const fs = require('fs');
 const path = require('path');
-const { recordFocusDecision, recordFocusOutcome } = require('../lib/ai-world/decision');
+const { recordFocusDecision, recordFocusOutcome } = require('@daniel730/aiworld/decision');
 
 /**
  * Phase 3 (Learning) integration: the worker loop calls recordFocusDecision() at decision time

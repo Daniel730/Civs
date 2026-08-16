@@ -1,7 +1,7 @@
 const { describe, it, beforeEach } = require('node:test');
 const assert = require('node:assert/strict');
 const { walkTo, runPathLeg, resetPathCapability } = require('../lib/village/walk');
-const { IntentionCache, AntiStall, STALL_LADDER } = require('../lib/ai-world/intention-cache');
+const { IntentionCache, AntiStall, STALL_LADDER } = require('@daniel730/aiworld/intention-cache');
 const { METRIC, initMetrics, resetMetrics, metricsSnapshot } = require('../lib/metrics');
 
 /**

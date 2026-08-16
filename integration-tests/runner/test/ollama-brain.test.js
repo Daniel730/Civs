@@ -8,7 +8,7 @@ const path = require('path');
 const ROOT = path.resolve(__dirname, '..');
 
 test('OllamaBrain.decide returns null when no server is reachable (fallback path)', async () => {
-  const { OllamaBrain } = require(path.join(ROOT, 'lib', 'ai-world', 'ollama-brain'));
+  const { OllamaBrain } = require('@daniel730/aiworld/ollama-brain');
   // Point at a port where nothing listens -> isAvailable() false -> decide() null
   const brain = new OllamaBrain({ endpoint: 'http://127.0.0.1:9', model: 'x', timeoutMs: 300 });
   const decision = await brain.decide({ healthPct: 1, survivalState: 'DANGER', threats: ['zombie'] });
@@ -16,10 +16,10 @@ test('OllamaBrain.decide returns null when no server is reachable (fallback path
 });
 
 test('OllamaBrain.decide parses a JSON focus from the model response', async () => {
-  const { OllamaBrain } = require(path.join(ROOT, 'lib', 'ai-world', 'ollama-brain'));
+  const { OllamaBrain } = require('@daniel730/aiworld/ollama-brain');
   // Stub the http layer by overriding postJSON via a fake module is overkill; instead test the
   // pure helpers (buildPrompt + extractJSON) which the worker depends on.
-  const mod = require(path.join(ROOT, 'lib', 'ai-world', 'ollama-brain'));
+  const mod = require('@daniel730/aiworld/ollama-brain');
   const json = mod.extractJSON('here is your answer: {"focus":"build","reason":"settlement needs a wall"} done');
   assert.ok(json && json.focus === 'build', 'extractJSON pulls the focus object out of prose');
   assert.strictEqual(json.reason, 'settlement needs a wall');
@@ -28,7 +28,7 @@ test('OllamaBrain.decide parses a JSON focus from the model response', async () 
 });
 
 test('OllamaBrain reads OLLAMA_MODEL env as default model (trained civs-brain)', () => {
-  const { OllamaBrain } = require(path.join(ROOT, 'lib', 'ai-world', 'ollama-brain'));
+  const { OllamaBrain } = require('@daniel730/aiworld/ollama-brain');
   const prev = process.env.OLLAMA_MODEL;
   process.env.OLLAMA_MODEL = 'civs-brain';
   try {
@@ -41,7 +41,7 @@ test('OllamaBrain reads OLLAMA_MODEL env as default model (trained civs-brain)',
 });
 
 test('OllamaBrain explicit model overrides env', () => {
-  const { OllamaBrain } = require(path.join(ROOT, 'lib', 'ai-world', 'ollama-brain'));
+  const { OllamaBrain } = require('@daniel730/aiworld/ollama-brain');
   const prev = process.env.OLLAMA_MODEL;
   process.env.OLLAMA_MODEL = 'civs-brain';
   try {
@@ -54,7 +54,7 @@ test('OllamaBrain explicit model overrides env', () => {
 });
 
 test('OllamaBrain.buildPrompt injects full world-memory into the user snapshot', () => {
-  const { buildPrompt } = require(path.join(ROOT, 'lib', 'ai-world', 'ollama-brain'));
+  const { buildPrompt } = require('@daniel730/aiworld/ollama-brain');
   const [system, user] = buildPrompt({
     healthPct: 0.5,
     survivalState: 'CAUTION',
@@ -74,13 +74,13 @@ test('OllamaBrain.buildPrompt injects full world-memory into the user snapshot',
 });
 
 test('OllamaBrain.buildPrompt shows "nothing remembered" when memory empty', () => {
-  const { buildPrompt } = require(path.join(ROOT, 'lib', 'ai-world', 'ollama-brain'));
+  const { buildPrompt } = require('@daniel730/aiworld/ollama-brain');
   const [, user] = buildPrompt({ healthPct: 1, survivalState: 'SAFE', worldMemory: {}, currentFocus: 'maintain', completedPlaces: 0 });
   assert.ok(/memory: nothing remembered yet/.test(user.content), 'empty memory stated clearly');
 });
 
 test('OllamaBrain.decide uses injected transport and returns model focus (memory-aware E2E)', async () => {
-  const { OllamaBrain } = require(path.join(ROOT, 'lib', 'ai-world', 'ollama-brain'));
+  const { OllamaBrain } = require('@daniel730/aiworld/ollama-brain');
   // Mock transport: /api/tags -> 200 (available); /api/generate -> model says "build"
   const transport = async (endpoint, p, payload) => {
     if (p === '/api/tags') return { status: 200, body: '{}' };
@@ -102,7 +102,7 @@ test('OllamaBrain.decide uses injected transport and returns model focus (memory
 });
 
 test('OllamaBrain.decide reads thinking field when response is empty (hermes-* models)', async () => {
-  const { OllamaBrain } = require(path.join(ROOT, 'lib', 'ai-world', 'ollama-brain'));
+  const { OllamaBrain } = require('@daniel730/aiworld/ollama-brain');
   // hermes-* fine-tunes emit reasoning in `thinking` and leave `response` blank.
   const transport = async (ep, p) => {
     if (p === '/api/tags') return { status: 200, body: '{}' };
@@ -124,7 +124,7 @@ test('OllamaBrain.decide reads thinking field when response is empty (hermes-* m
 });
 
 test('OllamaBrain.decide returns null on invalid focus from model (falls back)', async () => {
-  const { OllamaBrain } = require(path.join(ROOT, 'lib', 'ai-world', 'ollama-brain'));
+  const { OllamaBrain } = require('@daniel730/aiworld/ollama-brain');
   const transport = async (endpoint, p) => {
     if (p === '/api/tags') return { status: 200, body: '{}' };
     if (p === '/api/generate') return { status: 200, body: JSON.stringify({ response: '{"focus":"fly_away","reason":"nonsense","target":null}' }) };

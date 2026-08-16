@@ -10,7 +10,7 @@ const os = require('os');
 const path = require('path');
 const assert = require('assert');
 const test = require('node:test');
-const { NeuralPolicy, linearScore, VEC_LEN } = require('../lib/ai-world/neural-policy');
+const { NeuralPolicy, linearScore, VEC_LEN } = require('@daniel730/aiworld/neural-policy');
 const { aggregate } = require('../scripts/aiworld-train');
 
 const VEC = new Array(VEC_LEN).fill(0);

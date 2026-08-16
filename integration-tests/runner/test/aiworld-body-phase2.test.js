@@ -51,7 +51,7 @@ test('B4: flee computes a point AWAY from the threat when threat position is kno
 });
 
 test('W1-W3: WorldMemory records threats, exposes features, and chooseFocus avoids danger zones', () => {
-  const { WorldMemory } = require(path.join(ROOT, 'lib', 'ai-world', 'world-memory'));
+  const { WorldMemory } = require('@daniel730/aiworld/world-memory');
   const wm = new WorldMemory({ agentId: 'Steve', ttlMs: 60000 });
   wm.noteThreat({ x: 50, z: 50, type: 'zombie', distance: 3 });
   const f1 = wm.features({ x: 52, z: 52 });

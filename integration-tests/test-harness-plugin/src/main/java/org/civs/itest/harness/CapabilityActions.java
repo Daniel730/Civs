@@ -76,7 +76,8 @@ final class CapabilityActions {
                 case "attack" -> attack(sender, p, args, t0);
                 case "hotbar" -> hotbar(sender, p, args, t0);
                 case "give_item" -> giveItem(sender, p, args, t0);
-                case "run_as" -> runAs(sender, p, args, t0);
+                                case "craft_item" -> craftItem(sender, p, args, t0);
+                                case "run_as" -> runAs(sender, p, args, t0);
                 case "game_mode" -> gameMode(sender, p, args, t0);
                 case "die" -> die(sender, p, t0);
                 case "respawn" -> respawn(sender, p, t0);
@@ -658,6 +659,53 @@ final class CapabilityActions {
         boolean ok = p.performCommand(cmd);
         return json(sender, ok, "run_as", cmd, System.currentTimeMillis() - t0,
                 ok ? null : "performCommand_returned_false", null);
+    }
+
+    private static boolean craftItem(CommandSender sender, Player p, String[] args, long t0) {
+        if (args.length < 2) throw new IllegalArgumentException("craft_item <MATERIAL> [amount]");
+        Material mat = Material.valueOf(args[0].toUpperCase(Locale.ROOT));
+        int amount = args.length >= 2 ? Integer.parseInt(args[1]) : 1;
+        // Crafting consumes materials from the player's inventory.
+        ItemStack[] contents = p.getInventory().getContents();
+        int have = 0;
+        for (ItemStack stack : contents) {
+            if (stack != null && stack.getType() == mat) {
+                have += stack.getAmount();
+            }
+        }
+        if (have < amount) {
+            return json(sender, false, "craft_item", mat.name(), System.currentTimeMillis() - t0,
+                    "insufficient_materials",
+                    "\"have\":" + have + ",\"need\":" + amount);
+        }
+        // Remove the required materials.
+        int remaining = amount;
+        for (int i = 0; i < contents.length; i++) {
+            ItemStack stack = contents[i];
+            if (stack != null && stack.getType() == mat) {
+                if (stack.getAmount() >= remaining) {
+                    if (stack.getAmount() == remaining) {
+                        p.getInventory().setItem(i, null);
+                    } else {
+                        stack.setAmount(stack.getAmount() - remaining);
+                        p.getInventory().setItem(i, stack);
+                    }
+                    remaining = 0;
+                    break;
+                } else {
+                    remaining -= stack.getAmount();
+                    p.getInventory().setItem(i, null);
+                }
+            }
+        }
+        // Add the crafted items.
+        ItemStack crafted = new ItemStack(mat, amount);
+        var leftover = p.getInventory().addItem(crafted);
+        boolean ok = leftover.isEmpty();
+        return json(sender, ok, "craft_item", mat.name(), System.currentTimeMillis() - t0,
+                ok ? null : "inventory_full",
+                "\"amount\":" + amount + ",\"leftover\":" + leftover.values().stream()
+                        .mapToInt(ItemStack::getAmount).sum());
     }
 
     private static boolean giveItem(CommandSender sender, Player p, String[] args, long t0) {

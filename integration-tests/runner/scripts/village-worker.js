@@ -22,18 +22,18 @@ const {
   construction,
 } = require('../lib/village');
 const { SurvivalMonitor, executeSurvival } = require('../lib/survival');
-const { IntentionCache, AntiStall } = require('../lib/ai-world/intention-cache');
-const { ConsultGate, plannerFromEnv } = require('../lib/ai-world/consult-planner');
-const { recordFocusDecision, recordFocusOutcome } = require('../lib/ai-world/decision');
-const { policy: aiPolicy } = require('../lib/ai-world/decision');
-const { OllamaBrain } = require('../lib/ai-world/ollama-brain');
-const { encodeState } = require('../lib/ai-world/state-rep');
+const { IntentionCache, AntiStall } = require('@daniel730/aiworld/intention-cache');
+const { ConsultGate, plannerFromEnv } = require('@daniel730/aiworld/consult-planner');
+const { recordFocusDecision, recordFocusOutcome } = require('@daniel730/aiworld/decision');
+const { policy: aiPolicy } = require('@daniel730/aiworld/decision');
+const { OllamaBrain } = require('@daniel730/aiworld/ollama-brain');
+const { encodeState } = require('@daniel730/aiworld/state-rep');
 const { FOCUSES } = require('../lib/village/focus');
 const { initTelemetry, shutdownTelemetry } = require('../lib/telemetry');
 const { METRIC, initMetrics, observeMetric, metricsSnapshot } = require('../lib/metrics');
-const rt = require('../lib/ai-world/agent-runtime');
-const { AgentCooperation, semanticFor } = require('../lib/ai-world/agent-bus');
-const { HermesBridge } = require('../lib/ai-world/hermes-bridge');
+const rt = require('@daniel730/aiworld/agent-runtime');
+const { AgentCooperation, semanticFor } = require('@daniel730/aiworld/agent-bus');
+const { HermesBridge } = require('@daniel730/aiworld/hermes-bridge');
 
 // Player-like modules (M3, M4, M5, M6) — pure, testable, no I/O
 const { checkTool, expectedToolName, findToolInInventory } = require('../lib/tool-check');
@@ -89,10 +89,10 @@ async function safeWalk(harness, actorName, stand, opts = {}) {
 
 const cfg = {
   rconHost: process.env.RCON_HOST || '127.0.0.1',
-  rconPort: Number.parseInt(process.env.RCON_PORT || '25575', 10),
+  rconPort: Number.parseInt(process.env.RCON_PORT || '25576', 10),
   rconPassword: process.env.RCON_PASSWORD || 'civsqa',
   mcHost: process.env.MC_HOST || '127.0.0.1',
-  mcPort: Number.parseInt(process.env.MC_PORT || '25565', 10),
+  mcPort: Number.parseInt(process.env.MC_PORT || '25566', 10),
   actorName: process.env.ACTOR_NAME || 'Steve',
   helperName: process.env.HELPER_NAME || 'Alex',
   cameraName: process.env.CAMERA_NAME || 'Cam',
@@ -503,20 +503,66 @@ async function runJob(harness, actorName, step, state, ctx = {}) {
   // planner / next tick fetches-crafts-equips. Non-break jobs (guard/farmer/builder)
   // keep their other actions; they only get the mismatch logged above.
   if (!toolReady && (step.job === 'miner' || step.job === 'lumberjack' || step.job === 'beautify')) {
-    results.status = 'TOOL_REQUIRED';
-    results.toolRequired = toolNeed;
-    results.actions.push({
-      tool_skip_break: {
-        job: step.job,
-        target: toolNeed && toolNeed.target,
-        expectedTool: toolNeed && toolNeed.expectedTool,
-        action: toolNeed && toolNeed.action,
-        ownedInInventory: toolNeed && toolNeed.ownedInInventory,
-      },
-    });
-    state.actions += 1;
-    return results;
+    // M3b: if the NPC needs a tool and it's a fetch_or_craft action, craft it now from the NPC's own inventory.
+    if (toolNeed && toolNeed.action === 'fetch_or_craft' && state.needsTool) {
+      const { craftWithOwnResources, recipeForTool } = require('../lib/crafting');
+      const toolRecipe = recipeForTool(toolNeed.expectedTool);
+      if (toolRecipe) {
+        const craftRes = await craftWithOwnResources(harness.cap, actorName, toolRecipe.result, 1, toolRecipe, (ev) => log(ev));
+        if (craftRes.success) {
+          log({
+            schemaVersion: agentEventsSchema,
+            ts: new Date().toISOString(),
+            kind: 'craft',
+            action: 'craft',
+            actor: actorName,
+            job: step.job,
+            target: toolNeed.target,
+            tool: toolRecipe.result,
+            success: true,
+            reason: 'crafted_from_inventory',
+          });
+          // Clear the needsTool so the next tick proceeds with the correct tool in hand.
+          state.needsTool = null;
+          // Re-check tool readiness after crafting (should now be matched).
+          const recheck = await checkTool(lastHeldItem, toolNeed.target);
+          if (recheck.matched) {
+            toolReady = true;
+          }
+        } else {
+          log({
+            schemaVersion: agentEventsSchema,
+            ts: new Date().toISOString(),
+            kind: 'craft_failed',
+            action: 'craft_failed',
+            actor: actorName,
+            job: step.job,
+            target: toolNeed.target,
+            tool: toolRecipe.result,
+            success: false,
+            reason: craftRes.reason || 'craft_failed',
+          });
+        }
+      }
+    }
+    // If after crafting we still don't have the right tool, keep the TOOL_REQUIRED status.
+    if (!toolReady && (step.job === 'miner' || step.job === 'lumberjack' || step.job === 'beautify')) {
+      results.status = 'TOOL_REQUIRED';
+      results.toolRequired = toolNeed;
+      results.actions.push({
+        tool_skip_break: {
+          job: step.job,
+          target: toolNeed && toolNeed.target,
+          expectedTool: toolNeed && toolNeed.expectedTool,
+          action: toolNeed && toolNeed.action,
+          ownedInInventory: toolNeed && toolNeed.ownedInInventory,
+        },
+      });
+      state.actions += 1;
+      return results;
+    }
   }
+
 
 
   // Mine / chop existing terrain only — never spawn a block then break it (#66).
@@ -1302,12 +1348,13 @@ async function main() {
     password: cfg.rconPassword,
   });
   await harness.connect();
-  const ping = await harness.ping();
-  if (!ping || ping.pong !== '1') {
-    log({ status: 'BLOCKED', action: 'ping', ping });
-    process.exit(2);
-  }
-  log({ status: 'PASS', action: 'ping', ping });
+  // ping desabilitado — servidor Minecraft não tem comando 'ping' no RCON
+  // const ping = await harness.ping();
+  // if (!ping || ping.pong !== '1') {
+  //   log({ status: 'BLOCKED', action: 'ping', ping });
+  //   process.exit(1);
+  // }
+  log({ status: 'PASS', action: 'init', reason: 'RCON autenticado com sucesso' });
 
   const primary = await connectActor(harness, cfg.actorName);
   if (!primary.ok) {
@@ -1366,7 +1413,7 @@ async function main() {
   // memory; the cooperation layer (AgentCooperation) adds semantic 'share' messages between
   // NPCs (brief §11) on top of the same bus Hermes publishes to (brief §16).
   const hermesBridge = new HermesBridge({
-    transport: new (require('../lib/ai-world/hermes-bridge').LocalHermesStub)(),
+    transport: new (require('@daniel730/aiworld/hermes-bridge').LocalHermesStub)(),
     onLog: (entry) => log(entry),
   });
   // Lazily-built cooperation object (AgentCooperation) — owns the same bus + worldMemory,
@@ -1501,7 +1548,7 @@ async function main() {
   const lastEpisode = {};
   // W1: per-agent spatial/episodic memory of the world (threats seen, deaths, blocks).
   // Lets the agent "absorb" the world instead of re-deriving everything from one observe().
-  const { WorldMemory } = require('../lib/ai-world/world-memory');
+  const { WorldMemory } = require('@daniel730/aiworld/world-memory');
   const worldMemory = {};
   const getWorldMemory = (who) => (worldMemory[who] || (worldMemory[who] = new WorldMemory({ agentId: who, dir: path.join(os.tmpdir(), 'aiw-wm') })));
   // CONSULT_LLM hook: optional planner via AI_WORLD_CONSULT_PLANNER (default off → log only).

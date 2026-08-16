@@ -5,7 +5,7 @@ const { Harness } = require('../lib/harness');
 const { Capabilities } = require('../lib/capabilities');
 
 async function main() {
-  const h = new Harness({ host: '127.0.0.1', port: 25575, password: 'civsqa' });
+  const h = new Harness({ host: '100.115.208.23', port: 25575, password: 'civsqa' });
   await h.connect();
   const cap = new Capabilities(h);
   for (const who of ['Steve', 'Alex']) {

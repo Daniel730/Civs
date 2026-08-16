@@ -127,10 +127,15 @@ async function executeSurvival(harness, actorName, assessment, ctx = {}) {
           await cap.hotbar(actorName, 0).catch(() => {});
         }
         // AIM at the threat before swinging — otherwise we swing at the air and only
-        // connect by luck. The harness `look_at` points the actor; attackNearest then
-        // lands. Without this the NPC "beats the air like an idiot" (Dan, 2026-08-12).
-        const mob = (assessment && assessment.raw && assessment.raw.nearest_hostile) || null;
-        let aimed = false;
+                // connect by luck. The harness `look_at` points the actor; attackNearest then
+                // lands. Without this the NPC "beats the air like an idiot" (Dan, 2026-08-12).
+                // NOTE: assessment has NO .raw field (assess() in threat.js never attaches the
+                // observe payload), so read the hostile from the live observe data instead —
+                // otherwise mob is always null and the NPC never aims.
+                const rawObs = (ctx && ctx.observed && ctx.observed.data) || {};
+                const mob = rawObs.nearest_hostile ||
+                  (assessment && assessment.raw && assessment.raw.nearest_hostile) || null;
+                let aimed = false;
         if (mob && typeof mob.x === 'number' && typeof mob.z === 'number') {
           const la = await cap.lookAt(actorName, mob.x, typeof mob.y === 'number' ? mob.y : 80, mob.z).catch(() => null);
           aimed = !!(la && la.success);
@@ -139,6 +144,10 @@ async function executeSurvival(harness, actorName, assessment, ctx = {}) {
         for (let i = 0; i < 3; i++) {
           if (typeof cap.attackNearest !== 'function') break;
           const hit = await cap.attackNearest(actorName);
+          // M4: record the real swing so the per-actor attack cooldown is honest.
+          if (typeof ctx.combatLogger === 'object' && ctx.combatLogger && typeof ctx.combatLogger.noteAttack === 'function') {
+            try { ctx.combatLogger.noteAttack(actorName); } catch (_) {}
+          }
           steps.push({ attack: !!(hit && hit.success), reason: hit && hit.reason });
           if (typeof cap.swing === 'function') await cap.swing(actorName);
           await sleep(250);

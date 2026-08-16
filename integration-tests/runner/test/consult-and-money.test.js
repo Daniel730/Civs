@@ -7,8 +7,8 @@ const test = require('node:test');
 const assert = require('node:assert/strict');
 
 const { parseBalance, centsToMoney } = require('../lib/harness');
-const { ConsultGate, StubPlanner, plannerFromEnv } = require('../lib/ai-world/consult-planner');
-const { AntiStall, STALL_LADDER } = require('../lib/ai-world/intention-cache');
+const { ConsultGate, StubPlanner, plannerFromEnv } = require('@daniel730/aiworld/consult-planner');
+const { AntiStall, STALL_LADDER } = require('@daniel730/aiworld/intention-cache');
 
 test.describe('parseBalance (money probe hardening)', () => {
   test('reproduces the balance=1e6 delta case exactly', () => {

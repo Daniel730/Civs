@@ -1,7 +1,7 @@
 const { describe, it } = require('node:test');
 const assert = require('node:assert');
-const { AgentCooperation, semanticFor, SEMANTIC_RESOLUTION } = require('../lib/ai-world/agent-bus');
-const { AgentBus, makeMessage } = require('../lib/ai-world/hermes-bridge');
+const { AgentCooperation, semanticFor, SEMANTIC_RESOLUTION } = require('@daniel730/aiworld/agent-bus');
+const { AgentBus, makeMessage } = require('@daniel730/aiworld/hermes-bridge');
 
 describe('semanticFor', () => {
   it('miner -> share, closed space, miner: factKey', () => {

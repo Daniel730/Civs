@@ -11,7 +11,7 @@
  */
 const path = require('node:path');
 const { scenario } = require('../lib/dsl');
-const { createAgent, createQuestLoop, persistAgent, EVENT } = require('../lib/ai-world');
+const { createAgent, createQuestLoop, persistAgent, EVENT } = require('@daniel730/aiworld');
 const { walkTo } = require('../lib/village/walk');
 
 const ACTOR = process.env.ACTOR_NAME || 'QaBot';

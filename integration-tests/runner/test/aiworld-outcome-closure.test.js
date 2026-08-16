@@ -9,9 +9,9 @@ const assert = require('node:assert');
 const fs = require('fs');
 const os = require('os');
 const path = require('path');
-const { ExperienceStore } = require('../lib/ai-world/experience-store');
-const { recordFocusDecision, recordFocusOutcome } = require('../lib/ai-world/decision');
-const { computeReward } = require('../lib/ai-world/state-rep');
+const { ExperienceStore } = require('@daniel730/aiworld/experience-store');
+const { recordFocusDecision, recordFocusOutcome } = require('@daniel730/aiworld/decision');
+const { computeReward } = require('@daniel730/aiworld/state-rep');
 const { aggregate } = require('../scripts/aiworld-train');
 
 const SURV = (s) => ({ state: s, healthPct: 1, distanceFromWork: 0 });
@@ -55,7 +55,7 @@ test('a successful work tick closes its decision with a positive outcome (not pe
 
 test('recordFocusDecision + recordFocusOutcome through decision.js attach real reward', () => {
   const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'aiw-closure2-'));
-  const { ExperienceStore } = require('../lib/ai-world/experience-store');
+  const { ExperienceStore } = require('@daniel730/aiworld/experience-store');
   // Force decision.js to use our temp store via module-level singleton reset is not trivial;
   // instead drive the public API which is what the worker calls.
   const store = new ExperienceStore({ dir: tmp });

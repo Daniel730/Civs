@@ -25,7 +25,7 @@ const {
   createPersonality,
   executeMineObjective,
   toPersistentSnapshot,
-} = require('../lib/ai-world');
+} = require('@daniel730/aiworld');
 
 describe('ai-world agent state', () => {
   it('creates persistent agent with personality that affects scores', () => {
