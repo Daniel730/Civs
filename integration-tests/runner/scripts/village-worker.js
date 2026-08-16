@@ -154,7 +154,15 @@ function loadState() {
       s.blocked = s.blocked || {};
       s.blocked.barracks = true;
     }
-    return s;
+    // M7: cachedDecision was being JSON.stringified as Object.keys() because something
+        // along the chain replaced the object with its key array. Normalize here so the
+        // Ollama plan survives worker restarts and the NPC continues its build/place job
+        // instead of falling back to a fresh rotation.
+        if (Array.isArray(s.cachedDecision)) {
+          // Old broken shape — discard; the next Ollama call (or deterministic fallback) refills it.
+          s.cachedDecision = null;
+        }
+        return s;
   } catch (_) {
     return {
       tick: 0,
@@ -1105,14 +1113,25 @@ async function runJob(harness, actorName, step, state, ctx = {}) {
   }
 
   const obs = await cap.observe(actorName);
-  results.observe =
-    obs && obs.data ? { x: obs.data.x, y: obs.data.y, z: obs.data.z, held: obs.data.held } : null;
-  // Preserve any status already set by an early-return path (e.g. M3 TOOL_REQUIRED);
-  // only default to PASS when nothing more specific was recorded.
-  results.status = results.status || 'PASS';
-  state.actions += 1;
-  return results;
-}
+    results.observe =
+      obs && obs.data ? { x: obs.data.x, y: obs.data.y, z: obs.data.z, held: obs.data.held } : null;
+    // M7: persist the NPC's current world position so the next worker process can resume in
+    // place even when the loop crashes before saveState fires. Without this the worker boots
+    // back at (5200, 80, 5200) and the Steve walks back from scratch every restart.
+    if (results.observe) {
+      state.lastObservedPos = {
+        x: Math.floor(results.observe.x),
+        y: Math.floor(results.observe.y),
+        z: Math.floor(results.observe.z),
+      };
+      state.lastObservedAt = Date.now();
+    }
+    // Preserve any status already set by an early-return path (e.g. M3 TOOL_REQUIRED);
+    // only default to PASS when nothing more specific was recorded.
+    results.status = results.status || 'PASS';
+    state.actions += 1;
+    return results;
+  }
 
 /**
  * PLAYER-LIKE NO-OP (was: godmode gear handout).
@@ -1405,6 +1424,37 @@ async function main() {
     process.exit(2);
   }
   log({ status: 'PASS', action: 'actor_online', player: cfg.actorName });
+
+  // CONTINUITY ACROSS RESTART: pull the NPC's current world position from RCON and adopt it
+  // as the new origin so the next work tick builds around where Steve already is (instead of
+  // teleporting him back to (5200, 80, 5200) and losing the place he had been working at).
+  // Falls back to cfg.origin when the NPC is dead / un-observable.
+  try {
+    const posRes = await harness.cap.observe(cfg.actorName);
+    const od = (posRes && posRes.data) || {};
+    if (Number.isFinite(od.x) && Number.isFinite(od.y) && Number.isFinite(od.z)) {
+      cfg.origin = {
+        x: Math.floor(od.x),
+        y: Math.floor(od.y),
+        z: Math.floor(od.z),
+      };
+      state.lastObservedPos = cfg.origin;
+      state.lastObservedAt = Date.now();
+      log({
+        status: 'PASS',
+        action: 'continuity_origin',
+        reason: 'adopted_current_position',
+        origin: cfg.origin,
+      });
+    }
+  } catch (e) {
+    log({
+      status: 'DEGRADED',
+      action: 'continuity_origin',
+      reason: 'observe_failed',
+      error: e && e.message,
+    });
+  }
 
   let helper = null;
   if (cfg.enableHelper) {
