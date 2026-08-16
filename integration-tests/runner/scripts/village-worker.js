@@ -186,58 +186,60 @@ async function sleep(ms) {
 }
 
 /**
- * SpatialWorldMemory helper — refresh the agent's mirror grid by probing a window of
- * blocks around the agent. The query is batched: one RCON command per material across
- * the whole window, with multi-line commands. Throttled so the agent doesn't hammer the
- * server: only every 4 seconds AND only when the agent has actually moved OR no cell
- * underfoot has been seen in this position. This keeps the grid alive without paying
- * 169 RCON round-trips per tick.
+ * SpatialWorldMemory helper — refresh the agent's mirror grid.
+ *
+ * FASE A (wiki lower-latency): the previous version fired 9 materials × 169 cells =
+ * 1521 `execute if block` commands in ONE RCON string every ~4s. That is a monster
+ * command the MC server must parse+execute sequentially and was the prime suspect for
+ * the 8.7s/tick symptom. We replaced it with an O(1) operation: mark only the cell
+ * underfoot as recently seen (so the grid timestamps + features() stay honest). The
+ * grid still fills in ORGANICALLY — findSurfaceY, clearFooting, breakBlock and
+ * placeBlock all call wm.noteCell() as the agent actually moves and edits the world.
+ *
+ * The heavy batched probe is kept BEHIND A/B flag ENABLE_PERCEIVE_AROUND (default off).
+ * If you re-enable it, it probes a SMALL 3×3 footprint only, never the full 13×13.
  *
  * @param {object} harness
  * @param {import('../lib/village/spatial-world-memory').SpatialWorldMemory} wm
- * @param {{x:number,z:number}} pos agent position (from observe)
+ * @param {{x:number,y?:number,z:number}} pos agent position (from observe)
  * @param {number} tick work tick (for staleness comparisons in the cell)
  */
 async function perceiveAround(harness, wm, pos, tick) {
-  const radius = wm.visionRadius || 6;
   const px = Math.floor(pos.x);
   const pz = Math.floor(pos.z);
-  // Throttle: skip if we already polled this exact position recently.
-  const centerKey = `${px},${pz}`;
-  const lastObserved = wm.cells.get(centerKey);
-  if (lastObserved && Date.now() - lastObserved.lastSeen < 4000) return;
-  // Default y to probe = the agent's last observed y, or floor(y) from pos if we have it.
-  const probeY = lastObserved && lastObserved.y != null ? lastObserved.y : Math.floor(pos.y || 80);
-  // Always log so we can see the perception pass firing in the agent log (helpful while
-  // iterating; the worldMemory grid is otherwise invisible).
-  log({
-    status: 'PASS',
-    action: 'spatial_perceive',
-    worker: 'Steve',
-    tick,
-    pos: { x: px, y: probeY, z: pz },
-    radius,
-    cellCountBefore: wm.cells.size,
-  });
-  // Probe a small set of materials that matter for crafting/decisions. `execute if` returns
-  // nothing on miss and 'Test passed' on hit. Since the reply is fire-and-forget for our
-  // grid population, we rely on the `noteBlock` calls inside the build/mine/break paths
-  // to fill in the per-cell material. The pass here only refreshes the timestamp on cells
-  // we've previously observed, so subsequent features() calls stay fresh.
-  const materials = ['air', 'water', 'oak_log', 'oak_leaves', 'cobblestone', 'stone', 'dirt', 'grass_block', 'sand'];
-  for (const mat of materials) {
-    try {
-      const lines = [];
-      for (let dx = -radius; dx <= radius; dx++) {
-        for (let dz = -radius; dz <= radius; dz++) {
-          lines.push(`execute if block ${px + dx} ${probeY} ${pz + dz} minecraft:${mat}`);
-        }
-      }
-      await harness.raw(lines.join('\n')).catch(() => { /* best effort */ });
-    } catch (_) { /* best effort */ }
-  }
-  // Mark the centre cell as recently observed so the throttling + features() both stay sane.
+  const probeY = Number.isFinite(pos.y) ? Math.floor(pos.y) : (wm.cells.get(`${px},${pz}`) || {}).y || 62;
+  const lastObserved = wm.cells.get(`${px},${pz}`);
+
+  // Always mark the underfoot cell as freshly seen (O(1), no RCON).
   wm.noteCell(px, probeY, pz, lastObserved ? lastObserved.material : 'air', tick);
+
+  if (!process.env.ENABLE_PERCEIVE_AROUND) return; // default: lightweight path only
+
+  // A/B path: small 3×3 probe (9 cells × 1 material batch) — bounded, not the 1521 monster.
+  const radius = 1;
+  const materials = ['air', 'water', 'oak_log', 'cobblestone', 'dirt', 'grass_block'];
+  const t0 = Date.now();
+  for (const mat of materials) {
+    const lines = [];
+    for (let dx = -radius; dx <= radius; dx++) {
+      for (let dz = -radius; dz <= radius; dz++) {
+        lines.push(`execute if block ${px + dx} ${probeY} ${pz + dz} minecraft:${mat}`);
+      }
+    }
+    await harness.raw(lines.join('\n')).catch(() => {});
+  }
+  // Refresh the 3×3 footprint cells as seen (material stays 'air' placeholder; the
+  // build/break paths will correct real materials as the agent edits).
+  for (let dx = -radius; dx <= radius; dx++) {
+    for (let dz = -radius; dz <= radius; dz++) {
+      const x = px + dx, z = pz + dz;
+      const c = wm.cells.get(`${x},${z}`);
+      wm.noteCell(x, probeY, z, c ? c.material : 'air', tick);
+    }
+  }
+  if (process.env.AIWORLD_DEBUG) {
+    log({ status: 'DEBUG', action: 'spatial_perceive_ab', tick, ms: Date.now() - t0, radius: 1 });
+  }
 }
 
 /**
@@ -1732,6 +1734,9 @@ async function main() {
     if (busy) return;
     busy = true;
     state.tick += 1;
+    const _t0 = Date.now();
+    const _phases = {};
+    const _mark = (name) => { _phases[name] = Date.now() - _t0; };
     // Phase 2: flush persistent agent memory to disk periodically so NPCs remember
     // across restarts. Done FIRST (before the survival/try branch) so it runs even when
     // the agent is in danger and the loop returns early after the survival action.
@@ -1745,13 +1750,13 @@ async function main() {
         }
       }
     }
+    const who = helper && helper.ok && state.tick % 2 === 0 ? cfg.helperName : cfg.actorName;
     try {
       const town = await harness.assert.town(cfg.town);
       if ((!town || !town.ok) && state.tick % 12 === 1) {
         const recovery = await ensureTown(harness, cfg.actorName);
         log({ status: recovery.status, action: 'ensure_town', recovery });
       }
-      const who = helper && helper.ok && state.tick % 2 === 0 ? cfg.helperName : cfg.actorName;
 
       // 0a. Keep the player client online (auto-heal dropped keepalive connections).
       const actor = actorByName[who];
@@ -1807,6 +1812,7 @@ async function main() {
             const assessment = monitor
               ? monitor.assess((observed && observed.data) || {})
               : { state: 'SAFE', action: { kind: 'work' }, changed: false };
+            _mark('assess');
 
             // --- Combat/survival event (M4: lib/combat-log.js CombatLog) --------------
             // Built from the REAL flat observe payload so attacker / light / hazards
@@ -1830,6 +1836,7 @@ async function main() {
       // W2: feed the world memory from this tick's observation so the agent "absorbs" the world.
       // The observe payload carries deaths/last_damage/light even when no mob is in range, so the
       // agent builds a memory of WHERE and HOW it gets hurt — not just when a hostile is visible.
+      _mark('worldMemory_start');
       try {
         const wm = getWorldMemory(who);
         const od = (observed && observed.data) || {};
@@ -1870,6 +1877,7 @@ async function main() {
       } catch (wmErr) {
         log({ status: 'ERROR', action: 'world_memory_failed', worker: who, error: String(wmErr && wmErr.message || wmErr), stack: wmErr && wmErr.stack ? wmErr.stack.split('\n').slice(0, 4) : null });
       }
+      _mark('worldMemory_end');
 
       // B1: survival has HIGHER priority than work. If the monitor says flee/defend/retreat/recover
       // (state not SAFE/CAUTION), execute that action and skip the work tick entirely — never let
@@ -2026,6 +2034,7 @@ async function main() {
       //    Replaces the old per-tick nextJob() rotation: the agent stays on ONE objective
       //    until it makes enough meaningful progress, so it actually builds/mines/farms.
       const decisionStart = Date.now();
+      _mark('chooseFocus');
       const focusCandidate = chooseFocus(state, {
         survivalState: assessment.state,
         townOk: !!(town && town.ok),
@@ -2319,6 +2328,7 @@ async function main() {
       // must keep ticking and executing the jobs that DO work (mine/gather/torch/explore) —
       // otherwise the Steve looks frozen (only survival/defend runs, everything else stalls).
       const actionStart = Date.now();
+      _mark('runJob');
       const RUN_JOB_TIMEOUT_MS = 25000;
       const runJobResult = await Promise.race([
         runJob(harness, who, step, state, { observed }),
@@ -2524,6 +2534,19 @@ async function main() {
     } catch (e) {
       log({ status: 'FAIL', action: 'work_tick', reason: String(e.message || e) });
     } finally {
+      const dur = Date.now() - _t0;
+      // FASE A (wiki lower-latency): always emit phase breakdown so we can PROVE where the
+      // tick time goes. Filtered to ticks > 1500ms to avoid log spam on healthy ticks.
+      if (dur > 1500) {
+        log({
+          status: 'DEBUG',
+          action: 'tick_duration',
+          worker: who,
+          tick: state.tick,
+          ms: dur,
+          phases: _phases,
+        });
+      }
       busy = false;
     }
   };
