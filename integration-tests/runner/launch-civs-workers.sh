@@ -24,7 +24,7 @@ export AIWORLD_DEBUG=1
 # FASE A (wiki lower-latency): modelos trocados para qwen3 (4b default + 1.7b ultra-rápido)
 # ASSIM QUE o pull terminar (veja /tmp/pull_qwen4b.log). Por ora mantemos civs-brain
 # (ja existe local) ate os qwen3 estarem baixados, para o worker nao crashar no Ollama.
-export OLLAMA_MODEL=civs-brain
+export OLLAMA_MODEL=qwen3:4b
 export OLLAMA_MODEL_FAST=qwen3:1.7b
 # RCON client: maxPending=2 (queries independentes em paralelo; benchmark no wiki).
 export RCON_MAX_PENDING=2

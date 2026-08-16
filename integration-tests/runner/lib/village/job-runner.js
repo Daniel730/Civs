@@ -84,6 +84,15 @@ async function execWalk(harness, actorName, step, ctx) {
   };
 }
 
+async function execFindBlock(harness, actorName, step, ctx) {
+  const fb = await harness.cap.findBlock(actorName, step.material, step.radius || 12).catch(() => null);
+  if (fb && fb.success && fb.data && fb.data.nearest) {
+    ctx._lastFound = { x: fb.data.nearest.x, y: fb.data.nearest.y, z: fb.data.nearest.z };
+    return { ok: true, result: { found: ctx._lastFound } };
+  }
+  return { ok: false, reason: 'no_block_found' };
+}
+
 async function execBreak(harness, actorName, step, ctx) {
   const br = await harness.cap.breakBlock(actorName, step.x, step.y, step.z).catch(() => null);
   if (br && br.success && ctx.worldMem) ctx.worldMem.noteCell(step.x, step.y, step.z, 'air', ctx.tick);
@@ -127,6 +136,7 @@ async function execCraft(harness, actorName, step, ctx) {
 
 const STEP_EXECUTORS = {
   tool_check: execToolCheck,
+  find_block: execFindBlock,
   walk: execWalk,
   break: execBreak,
   place: execPlace,
@@ -167,10 +177,37 @@ function planTorch(ctx) {
   return steps;
 }
 
+/**
+ * Miner: find the nearest mineable block (STONE by default), walk to it, break it.
+ * Async because it needs one RCON findBlock call to discover the target before planning.
+ * The runner executes: find_block -> walk -> break, then the job is done (1 block/tick-budget).
+ */
+async function planMiner(ctx) {
+  const { harness, actorName, cfg, groundY, step } = ctx;
+  const material = step.material || 'STONE';
+  const fb = await harness.cap.findBlock(actorName, material, 12).catch(() => null);
+  if (fb && fb.success && fb.data && fb.data.nearest) {
+    const { x, y, z } = fb.data.nearest;
+    return [
+      { type: 'walk', to: { x, y, z }, opts: { arrive: 2.5, timeoutMs: 6000, speed: 4.5 } },
+      { type: 'break', x, y, z, material },
+    ];
+  }
+  // Fallback: dig at a fixed offset from origin (player-like: mine what's underfoot nearby).
+  const digX = Math.floor(cfg.origin.x + (step.dx || 0) + 5);
+  const digZ = Math.floor(cfg.origin.z + (step.dz || 0) + 5);
+  const digY = groundY;
+  return [
+    { type: 'walk', to: { x: digX, y: digY, z: digZ }, opts: { arrive: 2.5, timeoutMs: 6000, speed: 4.5 } },
+    { type: 'break', x: digX, y: digY, z: digZ, material },
+  ];
+}
+
 // Registry: job name -> plan function. Add new jobs here ONLY.
 const PLAN_REGISTRY = {
   gather: planGather,
   torch: planTorch,
+  miner: planMiner,
 };
 
 // ---- Runner -------------------------------------------------------------------------
@@ -187,7 +224,7 @@ async function runJobStep(harness, actorName, step, state, ctx) {
   if (!state.activeJob || state.activeJob.job !== step.job || state.activeJob.stepKey !== (step.site || step.label)) {
     const plan = PLAN_REGISTRY[step.job];
     if (!plan) return { status: 'UNSUPPORTED', done: false, cursor: 0, steps: [], results: [], reason: `no_plan_for_${step.job}` };
-    const steps = plan(ctx);
+    const steps = await plan(ctx);
     state.activeJob = { job: step.job, stepKey: step.site || step.label, steps, cursor: 0, startedAt: start };
   }
 

@@ -2392,7 +2392,7 @@ async function main() {
       // guarded by the 25s timeout below as a safety net).
       const actionStart = Date.now();
       _mark('runJob');
-      const RUN_JOB_TIMEOUT_MS = 25000;
+      const RUN_JOB_TIMEOUT_MS = 8000;
       const coords = workCoords(cfg.origin, { ...step, tick: state.tick });
       const runJobResult = await Promise.race([
         runJobOrRunner(harness, who, step, state, { observed, groundY: cfg.origin.y, coords }),
