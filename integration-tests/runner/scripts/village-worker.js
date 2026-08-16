@@ -43,6 +43,7 @@ const { CombatLog, ATTACK_COOLDOWN_MS } = require('../lib/combat-log');
 const { applyObserve, diffInventory } = require('../lib/inventory-diff');
 // M6: typed, agent-oriented action events (break/mine/gather/place) with full context.
 const { buildMineEvent, buildBreakEvent, buildGatherEvent, buildPlaceEvent, SCHEMA_VERSION: agentEventsSchema } = require('../lib/agent-events');
+const { craftWithOwnResources, recipeForTool } = require('../lib/crafting');
 
 const REPORTS = path.join(__dirname, '..', 'reports');
 const LOG_JSONL = path.join(REPORTS, 'village-worker.jsonl');
@@ -274,6 +275,69 @@ async function stockpile(harness, x, y, z, profile) {
   }
   await stockpileMaterials(harness, x, y, z, profile);
   return { skipped: false };
+}
+
+/**
+ * Fase B (wiki lower-latency): incremental job executor.
+ *
+ * Jobs that have a `planX` in the JobRunner registry (lib/village/job-runner.js) run
+ * INCREMENTALLY: the runner executes at most ~1.5s of atomic steps per tick and persists
+ * { steps, cursor } in state.activeJob, so the next tick resumes mid-job. This keeps the
+ * tick bounded (<2s) even when a job is large (torch grid = 49 placements, gather = 4
+ * forages). Jobs without a plan fall back to the legacy runJob() (still bounded by the
+ * 25s Promise.race timeout as a safety net).
+ *
+ * Adding a new incremental job = add a planX to job-runner.js. No changes here.
+ */
+const { JobRunner: _JobRunner } = require('../lib/village/job-runner');
+async function runJobOrRunner(harness, actorName, step, state, ctxBase) {
+  const { observed } = ctxBase;
+  const hasPlan = _JobRunner.PLAN_REGISTRY[step.job];
+  if (!hasPlan) {
+    // Legacy path (unchanged behaviour, still timeout-guarded by the caller).
+    return runJob(harness, actorName, step, state, { observed });
+  }
+  // Build the runner context. Helpers are local functions in this file; worldMem comes
+  // from the per-agent SpatialWorldMemory (getWorldMemory). log is the worker logger.
+  const obsData = (observed && observed.data) || {};
+  const ctx = {
+    harness,
+    actorName,
+    step,
+    state,
+    cfg,
+    groundY: ctxBase.groundY,
+    coords: ctxBase.coords,
+    origin: cfg.origin,
+    tick: state.tick,
+    budgetMs: 1500,
+    log,
+    worldMem: getWorldMemory(actorName),
+    helpers: {
+      checkTool,
+      applyObserve,
+      diffInventory,
+      buildGatherEvent,
+      buildPlaceEvent,
+      findToolInInventory,
+      craftWithOwnResources,
+      recipeForTool,
+      safeWalk,
+      placeAesthetic,
+      clearFooting,
+    },
+    held: obsData.held != null ? obsData.held : null,
+    inventory: Array.isArray(obsData.inventory) ? obsData.inventory : [],
+  };
+  const res = await _JobRunner.runJobStep(harness, actorName, step, state, ctx);
+  return {
+    status: res.status,
+    job: step.job,
+    done: res.done,
+    reason: res.reason,
+    activeJob: state.activeJob,
+    stepsRun: res.results,
+  };
 }
 
 /**
@@ -2323,15 +2387,15 @@ async function main() {
         observation.setActivity(who, step.job);
       }
 
-      // 3. Act. Guard against a HANGING job (e.g. construction.runProject awaiting an
-      // unresolved call) so ONE stuck job can never stall the whole work loop. The loop
-      // must keep ticking and executing the jobs that DO work (mine/gather/torch/explore) —
-      // otherwise the Steve looks frozen (only survival/defend runs, everything else stalls).
+      // 3. Act. Fase B: jobs with a plan in JobRunner run INCREMENTALLY (bounded ~1.5s/tick,
+      // resume via state.activeJob). Jobs without a plan use the legacy runJob (still
+      // guarded by the 25s timeout below as a safety net).
       const actionStart = Date.now();
       _mark('runJob');
       const RUN_JOB_TIMEOUT_MS = 25000;
+      const coords = workCoords(cfg.origin, { ...step, tick: state.tick });
       const runJobResult = await Promise.race([
-        runJob(harness, who, step, state, { observed }),
+        runJobOrRunner(harness, who, step, state, { observed, groundY: cfg.origin.y, coords }),
         new Promise((res) =>
           setTimeout(
             () => res({ status: 'TIMEOUT', job: step.job, reason: 'runJob_exceeded_' + RUN_JOB_TIMEOUT_MS + 'ms' }),
