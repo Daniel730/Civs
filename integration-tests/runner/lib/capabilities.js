@@ -208,17 +208,31 @@ class Capabilities {
     );
   }
   findBlock(player, material, radius, max) {
-    const args = [material];
-    if (radius != null) args.push(radius);
-    if (max != null) args.push(max);
-    return this.act(player, 'find_block', ...args);
+      const args = [material];
+      if (radius != null) args.push(radius);
+      if (max != null) args.push(max);
+      return this.act(player, 'find_block', ...args);
+    }
+    worldNearby(player, radius) {
+      const r = radius == null ? '' : ` ${radius}`;
+      return this._capSpan('world_nearby', player, 'world_nearby', () =>
+        this.harness.raw(`test world nearby ${player}${r}`).then((line) => this._parse(line))
+      );
+    }
+    // Inventory + crafting ports used by lib/crafting.js — the crafting helper expects
+    // `ports.inventory(player)` and `ports.craftItem(player, material, amount)` to return
+    // `{ success, data: { items } }` / `{ success }`. Without these, the NPC can't pre-check
+    // ingredients and silently fails every craft attempt (the "no tools" symptom).
+    async inventory(player) {
+      return this._capSpan('inventory', player, 'inventory', () =>
+        this.harness.raw(`test inventory ${player}`).then((line) => this._parse(line))
+      );
+    }
+    async craftItem(player, material, amount) {
+      return this._capSpan('craft_item', player, 'craft_item', () =>
+        this.harness.raw(`test craft_item ${player} ${material} ${amount}`).then((line) => this._parse(line))
+      );
+    }
   }
-  worldNearby(player, radius) {
-    const r = radius == null ? '' : ` ${radius}`;
-    return this._capSpan('world_nearby', player, 'world_nearby', () =>
-      this.harness.raw(`test world nearby ${player}${r}`).then((line) => this._parse(line))
-    );
-  }
-}
 
 module.exports = { Capabilities };

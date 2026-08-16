@@ -255,13 +255,21 @@ async function ensureAlive(harness, actorName, preObserved) {
     return { status: 'PASS', action: 'ensure_alive', player: actorName, health, revived: false };
   }
   const respawn = await harness.cap.respawn(actorName);
-  // PLAYER-LIKE: no `gamemode`, no admin teleport, no gear handout after respawn.
-  // The agent respawns like a player and walks back to the village on its own.
-  await safeWalk(harness, actorName, {
-    x: cfg.origin.x,
-    y: cfg.origin.y + 1,
-    z: cfg.origin.z,
-  }).catch(() => {});
+    // PLAYER-LIKE: no `gamemode`, no admin teleport, no gear handout after respawn.
+    // The agent respawns like a player and walks back to the village on its own.
+    // ensureAlive used cfg.origin.y (flat-world default 80) but the actual surface is now
+    // found via findSurfaceY — walking to y=81 puts the body in mid-air or inside the block
+    // column above the real ground, and the respawn survivor suffocates walking back.
+    const revivalGroundY = await findSurfaceY(harness, cfg.origin.x, cfg.origin.z, {
+      fallbackY: cfg.origin.y,
+      maxY: cfg.origin.y + 24,
+      minY: cfg.origin.y - 24,
+    });
+    await safeWalk(harness, actorName, {
+      x: cfg.origin.x,
+      y: revivalGroundY + 1,
+      z: cfg.origin.z,
+    }).catch(() => {});
   obs = await harness.cap.observe(actorName);
   const healthAfter = obs && obs.data ? Number(obs.data.health) : Number.NaN;
   return {
@@ -311,12 +319,21 @@ async function runJob(harness, actorName, step, state, ctx = {}) {
   // allow-cheats=false; the NPC works with exactly the same rules as a human player.
 
   if (step.job === 'placeregion') {
-    // Ensure the town exists AND Steve is a member (Civs pre-reqs for regions require
-    // member=settlement:...). ensureTown founds NpcPad as Steve (runAs) which enrolls him.
-    try { await ensureTown(harness, actorName); } catch (_) {}
-    const px = cfg.origin.x + (step.dx || 0);
-    const pz = cfg.origin.z + (step.dz || 0);
-    const py = cfg.origin.y;
+      // Ensure the town exists AND Steve is a member (Civs pre-reqs for regions require
+      // member=settlement:...). ensureTown founds NpcPad as Steve (runAs) which enrolls him.
+      try { await ensureTown(harness, actorName); } catch (_) {}
+      const px = cfg.origin.x + (step.dx || 0);
+      const pz = cfg.origin.z + (step.dz || 0);
+      // PLACEREGION was using cfg.origin.y (flat-world default of 80) regardless of actual
+      // terrain — the NPC ran back to the (5200, 80, 5200) coordinate trying to place at a
+      // y where the chunk is mid-air or 3 blocks below the real surface, and walked in circles
+      // unable to reach it. Use the REAL surface like every other job does.
+      const realGroundY = await findSurfaceY(harness, px, pz, {
+        fallbackY: cfg.origin.y,
+        maxY: cfg.origin.y + 24,
+        minY: cfg.origin.y - 24,
+      });
+      const py = realGroundY;
     // Founding exception: stockpile fill then placeregion (documented in VILLAGE-AESTHETICS).
     const stock = await stockpile(harness, px, py, pz, step.stockpile || 'utility');
     const walk = await safeWalk(
