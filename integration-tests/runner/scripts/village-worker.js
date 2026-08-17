@@ -111,6 +111,8 @@ const cfg = {
     y: Number.parseInt(process.env.VILLAGE_Y || '80', 10),
     z: Number.parseInt(process.env.VILLAGE_Z || '5200', 10),
   },
+  // Surface-fallback: find a safe surface Y at origin if the default is unsafe
+  surfaceFallback: process.env.SURFACE_FALLBACK === '1',
   intervalMs: Number.parseInt(process.env.WORKER_MS || '6000', 10),
   enableHelper: process.env.ENABLE_HELPER === '1',
   viewerName: process.env.VIEWER_NAME || 'Viewer',
@@ -182,8 +184,121 @@ function saveState(state) {
   fs.writeFileSync(STATE_FILE, JSON.stringify(state, null, 2));
 }
 
-async function sleep(ms) {
+function sleep(ms) {
   return new Promise((r) => setTimeout(r, ms));
+}
+
+/**
+ * Adjust origin to a safe surface Y coordinate if surfaceFallback is enabled.
+ * This prevents Steve from spawning in mid-air or inside blocks in a normal world.
+ */
+async function adjustOriginToSurface(harness, cfg) {
+  if (!cfg.surfaceFallback) {
+    return cfg.origin;
+  }
+
+  const surfaceY = await findSurfaceY(harness, cfg.origin.x, cfg.origin.z, {
+    fallbackY: cfg.origin.y,
+    maxY: cfg.origin.y + 24,
+    minY: cfg.origin.y - 24,
+  });
+
+  log({
+    status: 'INFO',
+    action: 'adjust_origin_to_surface',
+    oldOrigin: { ...cfg.origin },
+    newY: surfaceY,
+    reason: 'surface_fallback_enabled',
+  });
+
+  return { ...cfg.origin, y: surfaceY };
+}
+
+/**
+ * Deterministic mode: record observations to JSONL dataset for offline learning.
+ * Each observation includes: timestamp, actor, position, inventory, world state, decision, outcome.
+ * Used for invariants and error detection (DETERMINISTIC_MODE=1).
+ */
+async function recordDeterministicObservation(harness, actorName, state, decision, outcome) {
+  if (process.env.DETERMINISTIC_MODE !== '1') return;
+
+  const observed = await harness.cap.observe(actorName).catch(() => null);
+  const pos = observed && observed.data ? observed.data : {};
+
+  const observation = {
+    timestamp: new Date().toISOString(),
+    actor: actorName,
+    tick: state.tick,
+    position: {
+      x: pos.x ? Number(pos.x) : null,
+      y: pos.y ? Number(pos.y) : null,
+      z: pos.z ? Number(pos.z) : null,
+    },
+    health: pos.health ? Number(pos.health) : null,
+    inventory: pos.inventory || [],
+    held: pos.held || null,
+    decision,
+    outcome,
+    world: {
+      light: pos.lightLevel ? Number(pos.lightLevel) : null,
+      biome: pos.biome || null,
+    },
+  };
+
+  const datasetPath = path.join(REPORTS, 'aiworld-deterministic-dataset.jsonl');
+  fs.mkdirSync(REPORTS, { recursive: true });
+  fs.appendFileSync(datasetPath, JSON.stringify(observation) + '\n');
+
+  // Keep only last 1000 observations to prevent disk bloat
+  const all = fs.readFileSync(datasetPath, 'utf8').split('\n').filter((l) => l.trim());
+  if (all.length > 1000) {
+    fs.writeFileSync(datasetPath, all.slice(-1000).join('\n') + '\n');
+  }
+}
+
+/**
+ * Detect invariants and errors from deterministic dataset.
+ * Returns array of invariant violations (DETERMINISTIC_MODE=1).
+ */
+async function detectInvariants() {
+  if (process.env.DETERMINISTIC_MODE !== '1') return [];
+
+  const datasetPath = path.join(REPORTS, 'aiworld-deterministic-dataset.jsonl');
+  if (!fs.existsSync(datasetPath)) return [];
+
+  const lines = fs.readFileSync(datasetPath, 'utf8').split('\n').filter((l) => l.trim());
+  const observations = lines.map((l) => JSON.parse(l));
+  const violations = [];
+
+  // Invariant 1: Health should never drop to 0 without a death event.
+  for (let i = 1; i < observations.length; i++) {
+    const prev = observations[i - 1];
+    const curr = observations[i];
+    if (prev.health > 0 && curr.health === 0) {
+      violations.push({
+        type: 'health_drop_to_zero',
+        actor: curr.actor,
+        tick: curr.tick,
+        position: curr.position,
+        priorHealth: prev.health,
+      });
+    }
+  }
+
+  // Invariant 2: Inventory should not lose items without an action.
+  for (let i = 1; i < observations.length; i++) {
+    const prev = observations[i - 1];
+    const curr = observations[i];
+    if (prev.inventory && curr.inventory) {
+      const prevCount = prev.inventory.reduce((sum, item) => sum + (item.amount || 0), 0);
+      const currCount = curr.inventory.reduce((sum, item) => sum + (item.amount || 0), 0);
+      if (currCount < prevCount - 5) {
+        violations.push({ type: 'inventory_loss_without_action', actor: curr.actor, tick: curr.tick });
+      }
+    }
+  }
+
+  return violations;
 }
 
 /**
@@ -1550,6 +1665,9 @@ async function main() {
   // }
   log({ status: 'PASS', action: 'init', reason: 'RCON autenticado com sucesso' });
 
+  // Adjust origin to safe surface before connecting the actor (SURFACE_FALLBACK=1).
+  cfg.origin = await adjustOriginToSurface(harness, cfg);
+
   const primary = await connectActor(harness, cfg.actorName);
   if (!primary.ok) {
     log({ status: 'BLOCKED', action: 'actor_connect', reason: primary.reason });
@@ -2420,6 +2538,10 @@ async function main() {
       const result = runJobResult;
       observeMetric(METRIC.ACTION_LATENCY, Date.now() - actionStart, { actor: who, job: step.job });
 
+      // Deterministic-mode dataset recording (DETERMINISTIC_MODE=1). Captures the
+      // decision (step) + outcome (result) for offline learning & invariant checks.
+      await recordDeterministicObservation(harness, who, state, step, result).catch(() => {});
+
       let agentPos = null;
       let afterHealthPct = assessment.healthPct != null ? assessment.healthPct : 1;
       try {
@@ -2624,6 +2746,13 @@ async function main() {
           ms: dur,
           phases: _phases,
         });
+      }
+      // Deterministic-mode invariant scan (DETERMINISTIC_MODE=1). Non-fatal: only logs.
+      if (process.env.DETERMINISTIC_MODE === '1') {
+        const v = await detectInvariants().catch(() => []);
+        if (v && v.length) {
+          log({ status: 'WARN', action: 'deterministic_invariants', count: v.length, violations: v.slice(0, 10) });
+        }
       }
       busy = false;
     }
