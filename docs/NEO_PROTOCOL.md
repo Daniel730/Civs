@@ -53,17 +53,34 @@ Commit (only after all above pass)
 
 ---
 
-## Agent Roles (A2A Separation)
+## Agent Roles (A2A Separation) — IMPLEMENTED 2026-08-17
 
-| Role | Can | Cannot | Model Tier |
-|------|-----|--------|------------|
-| **Architect** | Analyze, research, propose, document | Write implementation code | Strong |
-| **Coder** | Edit files, create tests, implement | Decide architecture, skip tests | Medium |
-| **Reviewer** | Read diffs, run static analysis, question | Implement, approve own code | Cheap |
-| **Tester** | Run tests, lint, build, smoke, report | Edit code, decide pass/fail | Cheap |
-| **Neo (Orchestrator)** | Delegate, sequence, enforce gates | Write code, skip steps | N/A |
+| Role | Skill | Can | Cannot | Model (free) |
+|------|-------|-----|--------|--------------|
+| **Architect** | `civs-a2a-architect` | Analyze, research, propose, document | Write implementation code | `z-ai/glm-5.2:free` / `mistral-small-latest` |
+| **Coder** | `civs-a2a-coder` | Edit files, create tests, implement | Decide architecture, skip tests | `mistral-small-latest` (local) |
+| **Reviewer** | `civs-a2a-reviewer` | Read diffs, run static analysis, question | Implement, approve own code | `poolside/laguna-s-2.1:free` |
+| **Tester** | `civs-a2a-tester` | Run tests, lint, build, smoke, report | Edit code, decide pass/fail | `mistral-small-latest` (local) |
+| **Neo (Orchestrator)** | `civs-neo-orchestrator` | Delegate, sequence, enforce gates | Write code, skip steps | N/A |
 
 Each role is a separate A2A agent with its own context and model.
+Skills created at `~/AppData/Local/hermes/skills/software-development/civs-a2a-*`.
+
+## How to invoke (Neo protocol)
+```
+User request
+  → Neo loads civs-neo-orchestrator
+  → Neo delegates to Architect (civs-a2a-architect)
+  → Architect returns analysis
+  → Neo delegates to Coder (civs-a2a-coder)
+  → Coder returns implementation + tests
+  → Neo delegates to Tester (civs-a2a-tester)
+  → Tester returns evidence
+  → Neo delegates to Reviewer (civs-a2a-reviewer)
+  → Reviewer returns APPROVE / REQUEST_CHANGES
+  → If APPROVE: Neo commits (or asks user)
+  → If REQUEST_CHANGES: loop back to Coder
+```
 
 ---
 
