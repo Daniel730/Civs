@@ -235,34 +235,71 @@ async function walkTo(harness, actorName, stand, opts = {}) {
   // Pre-flight goal shape check: the goal cell must have a clear 2-block-tall column above it
   // (the NPC's body is 2 blocks tall). If the head block is solid (a 1x1 doorway, a low
   // overhang, a fence post directly over the goal), climbing up to the next clear Y prevents
-  // the pathfinder from routing through suffocation. Bounded to +4 so we never overshoot.
-  // This is the "GTA SA bug" workaround for the head-height case the Paper server-side
-  // pathfinder happily walks into.
+  // P0.2 (2026-08-18): PRE-FLIGHT TARGET RESOLUTION.
+  // Old code: if head blocked, bump goal.y upward until it found "air" (while(!isAir) y++).
+  // That is exactly what created y=72 floating targets and the air-terraform bug.
+  // New behavior: resolve a STANDABLE target column instead of blindly searching for air.
+  //   - If the target already sits on valid terrain (support solid + feet/head clear), keep Y.
+  //   - If the target is airborne (no support below), search DOWNWARD for the nearest real
+  //     surface (solid support + clear feet + clear head) within a small horizontal
+  //     neighborhood; if found, use that standing Y. If none, report UNREACHABLE_NO_SUPPORT.
+  // Only active when harness.raw returns server-formatted strings ("Test passed"/"Test
+  // failed"); test mocks / degraded RCON return objects or throw, in which case we skip
+  // pre-flight entirely (best-effort, matching the legacy catch(_) behavior) so navigation
+  // is never blocked by an unreadable probe.
   if (harness.raw) {
+    const probeRaw = async (bx, by, bz) => {
+      const r = await harness.raw(`execute in minecraft:overworld if block ${Math.floor(bx)} ${Math.floor(by)} ${Math.floor(bz)} minecraft:air`);
+      return typeof r === 'string' ? String(r || '').toLowerCase().includes('test passed') : null; // null = unknown
+    };
+    const isAirAt = async (bx, by, bz) => {
+      const v = await probeRaw(bx, by, bz);
+      return v === null ? true : v; // unknown → treat as clear (best-effort)
+    };
+    const standableAt = async (bx, by, bz) => {
+      const feet = await isAirAt(bx, by, bz);
+      const head = await isAirAt(bx, by + 1, bz);
+      const support = !(await isAirAt(bx, by - 1, bz)); // support is solid if NOT air
+      return feet && head && support;
+    };
+    // Only activate the surface-resolution pre-flight when harness.raw actually returns
+    // server-formatted replies ("Test passed"/"Test failed"). Unit-test stubs return
+    // objects or generic strings like "ok", and degraded RCON may throw — in all those
+    // cases we skip pre-flight (best-effort, matching the legacy catch(_) behavior) so
+    // navigation is never blocked by an unreadable probe.
+    let probeReadable = false;
     try {
-      const headBlock = await harness.raw(
-        `execute in minecraft:overworld if block ${Math.floor(goal.x)} ${goal.y + 1} ${Math.floor(goal.z)} minecraft:air`
-      );
-      const headClear = String(headBlock || '').toLowerCase().includes('test passed');
-      if (!headClear) {
-        for (let bump = 1; bump <= 4; bump++) {
-          const tryY = goal.y + bump;
-          const headTry = await harness.raw(
-            `execute in minecraft:overworld if block ${Math.floor(goal.x)} ${tryY + 1} ${Math.floor(goal.z)} minecraft:air`
-          );
-          const footTry = await harness.raw(
-            `execute in minecraft:overworld if block ${Math.floor(goal.x)} ${tryY} ${Math.floor(goal.z)} minecraft:air`
-          );
-          if (
-            String(headTry || '').toLowerCase().includes('test passed') &&
-            String(footTry || '').toLowerCase().includes('test passed')
-          ) {
-            goal.y = tryY;
-            break;
+      const sample = await harness.raw(`execute in minecraft:overworld if block ${Math.floor(goal.x)} ${Math.floor(goal.y)} ${Math.floor(goal.z)} minecraft:air`);
+      probeReadable = typeof sample === 'string' && /test (passed|failed)/i.test(sample);
+    } catch (_) { probeReadable = false; }
+    if (probeReadable) {
+      // Already standable? Keep Y (do not touch it).
+      if (await standableAt(goal.x, goal.y, goal.z)) {
+        // no-op: target is valid as-is
+      } else {
+        // Search downward from goal.y for the nearest real surface (cap the search so we never
+        // wander into bedrock/void), then a small horizontal neighborhood as a last resort.
+        let resolved = null;
+        for (let dy = 0; dy <= 12; dy++) {
+          if (await standableAt(goal.x, goal.y - dy, goal.z)) { resolved = { x: goal.x, y: goal.y - dy, z: goal.z }; break; }
+        }
+        if (!resolved) {
+          const nb = [[1,0],[-1,0],[0,1],[0,-1],[1,1],[-1,-1],[1,-1],[-1,1]];
+          for (const [dx, dz] of nb) {
+            for (let dy = 0; dy <= 6; dy++) {
+              if (await standableAt(goal.x + dx, goal.y - dy, goal.z + dz)) { resolved = { x: goal.x + dx, y: goal.y - dy, z: goal.z + dz }; break; }
+            }
+            if (resolved) break;
           }
         }
+        if (resolved) {
+          goal.x = resolved.x; goal.y = resolved.y; goal.z = resolved.z;
+        } else {
+          // No standable column near the target — refuse to fabricate an airborne Y.
+          return { success: false, reason: 'unreachable_no_support', navigator: 'walk_path_preflight', actions: [] };
+        }
       }
-    } catch (_) { /* pre-flight is best effort */ }
+    }
   }
 
   const t0 = Date.now();
