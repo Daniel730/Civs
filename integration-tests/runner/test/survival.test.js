@@ -246,7 +246,7 @@ describe('executeSurvival', () => {
     assert.equal(h.calls.length, 0);
   });
 
-  it('respawns and returns home on recover', async () => {
+  it('respawns WITHOUT teleporting back to origin on recover (player-like)', async () => {
     const h = fakeHarness();
     const out = await executeSurvival(
       h,
@@ -255,8 +255,8 @@ describe('executeSurvival', () => {
       { workOrigin: WORK }
     );
     assert.equal(out.handled, true);
-    assert.ok(h.calls.some((c) => c[0] === 'respawn'));
-    assert.ok(h.calls.some((c) => c[0] === 'teleport'));
+    assert.ok(h.calls.some((c) => c[0] === 'respawn'), 'should respawn');
+    assert.ok(!h.calls.some((c) => c[0] === 'teleport'), 'recover must NOT teleport back to origin (player-like: adopt server spawn instead)');
   });
 
   it('attacks on defend (diamond sword)', async () => {
