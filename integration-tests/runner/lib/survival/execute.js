@@ -80,27 +80,12 @@ async function executeSurvival(harness, actorName, assessment, ctx = {}) {
           await harness.raw(`gamemode survival ${actorName}`);
           await sleep(300);
         }
-        if (origin) {
-          // Respawn drops the bot at world spawn, which can be kilometres away: close the gap,
-          // then walk the last stretch so the arrival still reads as a person arriving.
-          const y = ctx.findSurfaceY
-            ? await ctx.findSurfaceY(origin.x + 3, origin.z + 3)
-            : origin.y;
-          const tp = await cap.teleport(actorName, origin.x + 3, (y || origin.y) + 1, origin.z + 3);
-          steps.push({ returnTeleport: !!(tp && tp.success) });
-          countMetric(METRIC.GOAL_ABANDON, { actor: actorName, reason: 'survival_recover' });
-          const walk = await walkToFn(
-            harness,
-            actorName,
-            { x: origin.x, y: (y || origin.y) + 1, z: origin.z },
-            {
-              arrive: 2.0,
-              timeoutMs: 9000,
-              allowTeleport: false,
-            }
-          );
-          steps.push({ walkHome: { success: walk.success, navigator: walk.navigator } });
-        }
+        // FASE 1.5 (2026-08-18): NO returnTeleport after respawn. The old code teleported the
+        // NPC back to cfg.origin (5200,80,5200) on every death — but origin is a FIXED coordinate
+        // that may be ocean/air in a fresh world, so the NPC kept getting yanked to a bad spot.
+        // Player-like: after respawn the server drops the NPC at its natural spawn; we adopt that
+        // position via continuity_origin on the next tick (harness.cap.observe) instead of forcing
+        // a teleport. No godmode return-to-base.
         return { status: 'PASS', handled: true, kind: 'recover', steps };
       }
 
