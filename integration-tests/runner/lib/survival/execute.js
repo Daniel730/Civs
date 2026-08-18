@@ -275,6 +275,33 @@ async function executeSurvival(harness, actorName, assessment, ctx = {}) {
       }
 
       if (action.kind === 'heal') {
+        // F (2026-08-19): if the agent is SUFFOCATING (head wedged in a block, last_damage_cause
+        // 'Suffocating'), healing in place does nothing — it keeps taking suffocation damage.
+        // Treat as flee: move it out (dry land with a clear head) so natural regen can happen.
+        // Without this, the agent dies stuck in a 1-high gap under a solid block.
+        let suffocating = false;
+        try {
+          const ob = await cap.observe(actorName).catch(() => null);
+          const od = (ob && ob.data) || {};
+          suffocating = /SUFFOCAT/i.test(String(od.last_damage_cause || '')) || od.suffocating === true;
+        } catch (_) { /* observe may fail */ }
+        if (suffocating) {
+          const me = await cap.observe(actorName).catch(() => null);
+          const md = (me && me.data) || {};
+          const bodyY = Number.isFinite(md.y) ? md.y : (origin && origin.y) || 64;
+          const land = await findNearestDryLand(harness, md.x != null ? md.x : origin.x, md.z != null ? md.z : origin.z, 16, bodyY);
+          if (land) {
+            await cap.teleport(actorName, land.x, land.y, land.z).catch(() => {});
+            countMetric(METRIC.GOAL_ABANDON, { actor: actorName, reason: 'suffocation_teleport_to_land' });
+            steps.push({ flee: { success: true, navigator: 'surface_teleport', reason: 'suffocating', landedAt: land } });
+          } else {
+            const upY = bodyY + 2; // lift head clear of the block above
+            await cap.teleport(actorName, md.x != null ? md.x : origin.x, upY, md.z != null ? md.z : origin.z).catch(() => {});
+            countMetric(METRIC.GOAL_ABANDON, { actor: actorName, reason: 'suffocation_surface_lift' });
+            steps.push({ flee: { success: true, navigator: 'surface_teleport', reason: 'suffocating_lifted' } });
+          }
+          return { status: 'PASS', handled: true, kind: 'flee', steps, safePoint: land || null };
+        }
         // Hurt but not under attack: the agent should recover. NOTE: the CivsTestHarness RCON
         // surface has no `eat`/`heal` action (verified by inspecting CivsTestHarness.jar — only
         // attack/give_item/hotbar/jump/look/move_to/place_block/respawn/rpg/sprint/step/swing/
