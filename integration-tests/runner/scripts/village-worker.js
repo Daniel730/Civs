@@ -2171,6 +2171,15 @@ async function main() {
             handled: !!(sv && sv.handled),
             steps: sv && sv.steps ? JSON.stringify(sv.steps) : null,
           });
+          // C-FIX (2026-08-18): if survival floated the NPC to dry land, adopt that point as the
+          // new work origin so the next tick doesn't flee straight back toward the water that
+          // was the old origin (drown->teleport->drown loop). Only moves origin when we actually
+          // landed on solid ground, not on a blind +2 nudge.
+          if (sv && sv.safePoint) {
+            cfg.origin = { x: sv.safePoint.x, y: sv.safePoint.y, z: sv.safePoint.z };
+            if (sm && sm.setWorkOrigin) sm.setWorkOrigin(who, cfg.origin);
+            log({ status: 'INFO', action: 'origin_relocated', worker: who, to: cfg.origin, reason: 'surfaced_to_dry_land' });
+          }
           if (sv && sv.handled) {
             observeMetric(METRIC.AIWORLD_POLICY_DISAGREEMENT, { agent: who, mode: 'survival_preempt' });
             saveState(state);

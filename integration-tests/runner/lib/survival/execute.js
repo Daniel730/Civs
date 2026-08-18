@@ -13,7 +13,43 @@ const { METRIC, countMetric, timeMetric } = require('../metrics');
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 /**
- * @param {object} harness
+ * Find the nearest dry-land block (grass/dirt/sand/etc, NOT water/air) within `radius`
+ * of (x,z). Probes columns from the body's current height downward to y=55 so it works on
+ * raised riverbanks (the old version only checked y=60 and returned y=61, which landed the
+ * NPC back IN the water and caused an infinite drown->teleport->drown loop). Returns the
+ * surface y (top of the dry block) so a teleport drops the body ON solid ground, not in liquid.
+ * Used as a player-like "get out of the water" recovery when the pathfinder cannot navigate liquid.
+ */
+async function findNearestDryLand(harness, x, z, radius = 16, fromY = 64) {
+  const dry = ['grass_block', 'dirt', 'sand', 'stone', 'cobblestone', 'oak_planks', 'snow_block', 'podzol', 'coarse_dirt', 'mycelium', 'dirt_path', 'grass_path'];
+  let best = null;
+  let bestDist = Infinity;
+  const topY = Math.max(70, Math.min(90, Math.floor(fromY) + 4));
+  for (let dx = -radius; dx <= radius; dx++) {
+    for (let dz = -radius; dz <= radius; dz++) {
+      const dist = Math.abs(dx) + Math.abs(dz);
+      if (dist >= bestDist) continue;
+      const px = Math.floor(x) + dx;
+      const pz = Math.floor(z) + dz;
+      // Scan downward from topY looking for the first dry foot block with a clear head above it.
+      for (let y = topY; y >= 55; y--) {
+        let isDry = false;
+        for (const m of dry) {
+          const r = await harness.raw(`execute if block ${px} ${y} ${pz} minecraft:${m}`).catch(() => '');
+          if (!r.includes('Test failed')) { isDry = true; break; }
+        }
+        if (!isDry) continue;
+        const head = await harness.raw(`execute if block ${px} ${y + 1} ${pz} minecraft:air`).catch(() => '');
+        const headClear = head.includes('Test passed');
+        if (headClear) { best = { x: px + 0.5, y: y + 1, z: pz + 0.5 }; bestDist = dist; break; }
+      }
+    }
+  }
+  return best;
+}
+
+
+/**
  * @param {string} actorName
  * @param {object} assessment result of SurvivalMonitor#assess
  * @param {{
@@ -86,13 +122,37 @@ async function executeSurvival(harness, actorName, assessment, ctx = {}) {
           }
           steps.push({ flee: { success: surfaced, navigator: 'swim_up', reason: surfaced ? null : 'still_submerged' } });
           if (!surfaced) {
-            // Last resort: recovery teleport to safe origin (D-AP-021).
-            const tp = await cap.teleport(actorName, origin.x, origin.y + 1, origin.z);
-            countMetric(METRIC.GOAL_ABANDON, { actor: actorName, reason: 'drown_stuck_recover' });
-            steps.push({ flee: { success: !!(tp && tp.success), navigator: 'recovery_teleport', reason: 'still_submerged' } });
+            // The Paper pathfinder cannot navigate vertically through water, so jump did not
+            // lift the body. Player-like last resort: "climb out" by teleporting to the nearest
+            // dry land within a SMALL radius (≤16 blocks). This is NOT a long-distance jump —
+            // it only frees the NPC from being stuck in water so it can resume real walking.
+            // D-AP-021: teleport only as last resort, and only to escape a stuck/death loop.
+            // FIX (2026-08-18): scan from the body's ACTUAL height (md.y) so on a raised
+            // riverbank we don't teleport to y=61 (which is IN the water) — that caused an
+            // infinite drown->teleport->drown loop. Land on the surface of solid ground.
+            const me = await cap.observe(actorName).catch(() => null);
+            const md = (me && me.data) || {};
+            const bodyY = Number.isFinite(md.y) ? md.y : (origin && origin.y) || 64;
+            const land = await findNearestDryLand(harness, md.x != null ? md.x : origin.x, md.z != null ? md.z : origin.z, 16, bodyY);
+            if (land) {
+              const tp = await cap.teleport(actorName, land.x, land.y, land.z);
+              countMetric(METRIC.GOAL_ABANDON, { actor: actorName, reason: 'water_stuck_teleport_to_land' });
+              steps.push({ flee: { success: !!(tp && tp.success), navigator: 'surface_teleport', reason: 'stuck_in_water', landedAt: land } });
+            } else {
+              // No dry land nearby — lift the body just above the water surface with a clear
+              // head (NOT +10, which dropped it straight back into the river). +2 over current
+              // y is enough to break the submersion so the next tick's swim_up can finish.
+              const upY = bodyY + 2;
+              const tp = await cap.teleport(actorName, md.x != null ? md.x : origin.x, upY, md.z != null ? md.z : origin.z);
+              countMetric(METRIC.GOAL_ABANDON, { actor: actorName, reason: 'drown_surface_teleport' });
+              steps.push({ flee: { success: !!(tp && tp.success), navigator: 'surface_teleport', reason: 'still_submerged' } });
+            }
           }
           await cap.sprint(actorName, false);
-          return { status: 'PASS', handled: true, kind: 'flee', steps };
+          // Report the dry-land point (if any) so the caller can adopt it as the new safe origin
+          // and stop fleeing back toward water on the next tick.
+          const safePoint = (steps.find((s) => s.flee && s.flee.landedAt) || {}).flee;
+          return { status: 'PASS', handled: true, kind: 'flee', steps, safePoint: safePoint ? safePoint.landedAt : null };
         }
         await cap.sprint(actorName, true);
         let fleeTo = origin;
