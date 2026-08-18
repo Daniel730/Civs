@@ -277,8 +277,14 @@ async function walkTo(harness, actorName, stand, opts = {}) {
       if (await standableAt(goal.x, goal.y, goal.z)) {
         // no-op: target is valid as-is
       } else {
-        // Search downward from goal.y for the nearest real surface (cap the search so we never
-        // wander into bedrock/void), then a small horizontal neighborhood as a last resort.
+        // Target is airborne (no support below). Try to resolve a real standing surface
+        // by searching DOWNWARD (and a small horizontal neighborhood). If we find one, snap
+        // to it — this kills the y=72 floating-target bug. If we CANNOT find any standable
+        // column nearby, do NOT fabricate an airborne Y, but ALSO do not hard-block: leave
+        // the original goal and let the server-side walk_path decide reachability. The P0.1
+        // physics guard already prevents any world edit from an invalid body, so a bad
+        // navigation target can never produce a floating build — at worst the walk fails and
+        // the job re-plans. Blocking here was over-aggressive on irregular/narrow terrain.
         let resolved = null;
         for (let dy = 0; dy <= 12; dy++) {
           if (await standableAt(goal.x, goal.y - dy, goal.z)) { resolved = { x: goal.x, y: goal.y - dy, z: goal.z }; break; }
@@ -294,10 +300,8 @@ async function walkTo(harness, actorName, stand, opts = {}) {
         }
         if (resolved) {
           goal.x = resolved.x; goal.y = resolved.y; goal.z = resolved.z;
-        } else {
-          // No standable column near the target — refuse to fabricate an airborne Y.
-          return { success: false, reason: 'unreachable_no_support', navigator: 'walk_path_preflight', actions: [] };
         }
+        // else: leave goal as-is; walk_path will report unreachable if truly invalid.
       }
     }
   }

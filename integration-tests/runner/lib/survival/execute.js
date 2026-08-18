@@ -118,10 +118,23 @@ async function executeSurvival(harness, actorName, assessment, ctx = {}) {
             await new Promise((r) => setTimeout(r, 250));
             const ob = await cap.observe(actorName).catch(() => null);
             const od = (ob && ob.data) || {};
-            if (od.in_water !== true && od.head_in_water !== true) { surfaced = true; break; }
+            // Trust the server's water flag strictly. Accept either naming the harness uses.
+            const stillInWater = od.in_water === true || od.inWater === true || od.head_in_water === true || od.headInWater === true;
+            if (!stillInWater) { surfaced = true; break; }
           }
           steps.push({ flee: { success: surfaced, navigator: 'swim_up', reason: surfaced ? null : 'still_submerged' } });
-          if (!surfaced) {
+          // C-FIX (2026-08-18): even if swim_up reported success, RE-CONFIRM with a fresh
+          // observe. The old code trusted `surfaced` and skipped the teleport, leaving Steve
+          // in an infinite swim_up->still_wet loop (the "walking in circles / can't find exit"
+          // symptom). If he is STILL in water after jumping, force the last-resort teleport to
+          // dry land instead of believing the false success.
+          let confirmedDry = surfaced;
+          if (surfaced) {
+            const confirm = await cap.observe(actorName).catch(() => null);
+            const cd = (confirm && confirm.data) || {};
+            confirmedDry = !(cd.in_water === true || cd.inWater === true || cd.head_in_water === true || cd.headInWater === true);
+          }
+          if (!confirmedDry) {
             // The Paper pathfinder cannot navigate vertically through water, so jump did not
             // lift the body. Player-like last resort: "climb out" by teleporting to the nearest
             // dry land within a SMALL radius (≤16 blocks). This is NOT a long-distance jump —
