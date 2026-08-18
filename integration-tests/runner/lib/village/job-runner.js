@@ -138,8 +138,19 @@ async function execPlace(harness, actorName, step, ctx) {
 }
 
 async function execGather(harness, actorName, step, ctx) {
-  const { applyObserve, diffInventory, buildGatherEvent } = ctx.helpers;
+  const { applyObserve, diffInventory, buildGatherEvent, checkTool } = ctx.helpers;
   const { x, y, z } = step;
+  // D2 (2026-08-18): a block only drops with the correct tool. Verify BEFORE breaking so we
+  // don't punch bare-handed (no drop) or with the wrong item. If tool is missing, signal
+  // RECOVERY so the worker fetches/equips/crafts it (the "doesn't know if it's droppable" bug).
+  if (checkTool && step.target) {
+    const verdict = checkTool(ctx.held, step.target);
+    if (!verdict.matched) {
+      ctx.state.needsTool = { job: step.job || 'gather', target: step.target, expectedTool: verdict.expectedTool, action: verdict.action || 'fetch_or_craft' };
+      ctx.log({ kind: 'tool_check', action: 'tool_check', actor: actorName, job: step.job, target: step.target, ...verdict });
+      return { ok: false, reason: 'tool_missing_for_drop', verdict };
+    }
+  }
   const obsBefore = await harness.cap.observe(actorName);
   const invBefore = applyObserve(obsBefore);
   const gPos = obsBefore && obsBefore.data ? { x: obsBefore.data.x, y: obsBefore.data.y, z: obsBefore.data.z } : null;
@@ -187,8 +198,13 @@ function planGather(ctx) {
     const ang = ((state.tick || 0) * 1.7 + t * 1.57) % (Math.PI * 2);
     const gx = Math.floor(cfg.origin.x + Math.cos(ang) * (8 + t * 2));
     const gz = Math.floor(cfg.origin.z + Math.sin(ang) * (8 + t * 2));
+    const target = targets[t % targets.length];
     steps.push({ type: 'walk', to: { x: gx, y: groundY + 1, z: gz }, opts: { arrive: 2.5, timeoutMs: 6000, speed: 4.5 } });
-    steps.push({ type: 'gather', x: gx, y: groundY, z: gz, job: 'gather' });
+    // D1 (2026-08-18): verify the right tool is in hand BEFORE breaking. If checkTool fails
+    // the runner records needsTool (fetch/equip/craft) and the worker resolves it instead of
+    // punching the block bare-handed / with the wrong item (the "bonus chest in hand" bug).
+    steps.push({ type: 'tool_check', target });
+    steps.push({ type: 'gather', x: gx, y: groundY, z: gz, job: 'gather', target });
   }
   return steps;
 }
@@ -221,6 +237,8 @@ async function planMiner(ctx) {
     const { x, y, z } = fb.data.nearest;
     return [
       { type: 'walk', to: { x, y, z }, opts: { arrive: 2.5, timeoutMs: 6000, speed: 4.5 } },
+      // D1 (2026-08-18): ensure correct tool in hand before breaking (no bare-hand punching).
+      { type: 'tool_check', target: material },
       { type: 'break', x, y, z, material },
     ];
   }
@@ -314,17 +332,25 @@ async function inspectBody(harness, actorName) {
   const onGround = d.on_ground === true;
   const below = String(d.block_below || '').toUpperCase();
   const feet = String(d.block_feet || '').toUpperCase();
+  const head = String(d.block_head || d.head_block || '').toUpperCase();
   const supportSolid = below !== '' && below !== 'AIR' && below !== 'CAVE_AIR' && below !== 'VOID_AIR';
   const feetClear = feet === '' || feet === 'AIR' || feet === 'CAVE_AIR' || feet === 'VOID_AIR';
+  // E1 (2026-08-18): a solid block at head height = suffocation risk. The server reports
+  // block_head / head_block; if present and not air, the body is wedged (e.g. walked into a
+  // 1-high gap under a solid block). Flag non-standable so the job enters RECOVERY and the
+  // NPC moves out instead of suffocating ("se enfia em lugares rasos e morre sufocado").
+  const headSolid = head !== '' && head !== 'AIR' && head !== 'CAVE_AIR' && head !== 'VOID_AIR';
+  const suffocating = headSolid;
   const standable = onGround || (supportSolid && feetClear);
   return {
     ok: true,
     pos: { x, y, z },
-    standable,
+    standable: standable && !suffocating,
     grounded: onGround,
     airborne: !standable,
+    suffocating,
     inWater,
-    reason: standable ? null : 'body_not_standable',
+    reason: !standable ? 'body_not_standable' : (suffocating ? 'head_blocked_suffocation' : null),
   };
 }
 
@@ -420,5 +446,7 @@ module.exports = {
   JobRunner: { runJobStep, PLAN_REGISTRY },
   planGather,
   planTorch,
+  inspectBody,
+  execGather,
   STEP_EXECUTORS,
 };

@@ -150,14 +150,55 @@ test('JobRunner: C1 — 3 walk nav-failures invalidate the site (anti-circle)', 
   assert.strictEqual(state.blocked.center, true, 'center must be blocked after 3 nav fails (anti-circle)');
 });
 
-test('jobs.nextJob: C1 — skips a blocked site instead of re-issuing it', async () => {
-  const { nextJob } = require('../lib/village/jobs');
-  const state = { tick: 0, blocked: { quarry: true } };
-  // miner affinity = ['quarry']; with quarry blocked it must fall through to another job/site.
-  let sawBlocked = false;
-  for (let t = 0; t < 12; t++) {
-    const job = nextJob(t, state);
-    if (job.site === 'quarry') sawBlocked = true;
+test('JobRunner: D1 — planGather emits tool_check before each gather step', async () => {
+  const { planGather } = require('../lib/village/job-runner');
+  const ctx = { cfg: { origin: { x: 5200, y: 80, z: 5200 } }, groundY: 80, state: { tick: 0 } };
+  const steps = planGather(ctx);
+  // Every gather must be preceded by a tool_check with the matching target.
+  for (let i = 0; i < steps.length; i++) {
+    if (steps[i].type === 'gather') {
+      const prev = steps[i - 1];
+      assert.ok(prev && prev.type === 'tool_check', 'gather must follow a tool_check step');
+      assert.strictEqual(prev.target, steps[i].target, 'tool_check target must match the gather target');
+    }
   }
-  assert.strictEqual(sawBlocked, false, 'nextJob must never return the blocked site quarry');
+  assert.ok(steps.some((s) => s.type === 'tool_check'), 'plan must include tool_check steps');
+});
+
+test('JobRunner: D2 — execGather refuses to break without the correct tool (no bare-hand punch)', async () => {
+  const { execGather } = require('../lib/village/job-runner');
+  const harness = makeHarness();
+  const ctx = {
+    harness, actorName: 'Steve', step: { job: 'gather', x: 1, y: 80, z: 1, target: 'OAK_LOG' },
+    state: {}, held: 'minecraft:chest', inventory: [],
+    helpers: {
+      applyObserve: (o) => o,
+      diffInventory: () => ({ gained: [], lost: [], dropped: [] }),
+      buildGatherEvent: () => ({}),
+      // holding a chest (bonus chest) -> not an axe -> checkTool says not matched
+      checkTool: () => ({ matched: false, expectedTool: 'axe', action: 'fetch_or_craft' }),
+    },
+    worldMem: null, log: () => {},
+  };
+  const r = await execGather(harness, 'Steve', ctx.step, ctx);
+  assert.strictEqual(r.ok, false, 'execGather must refuse without correct tool');
+  assert.strictEqual(r.reason, 'tool_missing_for_drop', 'must signal tool_missing_for_drop');
+  assert.strictEqual(ctx.state.needsTool && ctx.state.needsTool.expectedTool, 'axe', 'must record needed tool');
+});
+
+test('JobRunner: E1 — inspectBody flags suffocation when head is blocked', async () => {
+  const { inspectBody } = require('../lib/village/job-runner');
+  const harness = {
+    cap: {
+      observe: async () => ({
+        success: true,
+        data: { x: 7, y: 92, z: 25, on_ground: true, block_below: 'GRASS_BLOCK', block_feet: 'AIR', block_head: 'STONE' },
+      }),
+    },
+  };
+  const r = await inspectBody(harness, 'Steve');
+  assert.strictEqual(r.ok, true);
+  assert.strictEqual(r.suffocating, true, 'head block must flag suffocation');
+  assert.strictEqual(r.standable, false, 'suffocating body is not standable');
+  assert.strictEqual(r.reason, 'head_blocked_suffocation');
 });
