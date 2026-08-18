@@ -188,17 +188,18 @@ test('JobRunner: D2 — execGather refuses to break without the correct tool (no
 
 test('JobRunner: E1 — inspectBody flags suffocation when head is blocked', async () => {
   const { inspectBody } = require('../lib/village/job-runner');
+  // CivsTestHarness observe emits last_damage_cause ('Suffocating') instead of block_head.
   const harness = {
     cap: {
       observe: async () => ({
         success: true,
-        data: { x: 7, y: 92, z: 25, on_ground: true, block_below: 'GRASS_BLOCK', block_feet: 'AIR', block_head: 'STONE' },
+        data: { x: 7, y: 92, z: 25, on_ground: true, block_below: 'GRASS_BLOCK', block_feet: 'AIR', last_damage_cause: 'Suffocating' },
       }),
     },
   };
   const r = await inspectBody(harness, 'Steve');
   assert.strictEqual(r.ok, true);
-  assert.strictEqual(r.suffocating, true, 'head block must flag suffocation');
+  assert.strictEqual(r.suffocating, true, 'Suffocating damage cause must flag suffocation');
   assert.strictEqual(r.standable, false, 'suffocating body is not standable');
   assert.strictEqual(r.reason, 'head_blocked_suffocation');
 });

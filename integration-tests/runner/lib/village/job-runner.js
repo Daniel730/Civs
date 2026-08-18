@@ -339,8 +339,11 @@ async function inspectBody(harness, actorName) {
   // block_head / head_block; if present and not air, the body is wedged (e.g. walked into a
   // 1-high gap under a solid block). Flag non-standable so the job enters RECOVERY and the
   // NPC moves out instead of suffocating ("se enfia em lugares rasos e morre sufocado").
+  // NOTE: CivsTestHarness observe does NOT emit block_head/head_block. It DOES emit
+  // last_damage_cause ('Suffocating' when wedged) -> use that as the suffocation signal.
   const headSolid = head !== '' && head !== 'AIR' && head !== 'CAVE_AIR' && head !== 'VOID_AIR';
-  const suffocating = headSolid;
+  const lastDmgSuffocate = String(d.last_damage_cause || '').toUpperCase().includes('SUFFOCAT');
+  const suffocating = headSolid || lastDmgSuffocate;
   const standable = onGround || (supportSolid && feetClear);
   return {
     ok: true,
