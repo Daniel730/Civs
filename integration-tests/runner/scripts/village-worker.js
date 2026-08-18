@@ -51,12 +51,50 @@ const STATE_FILE = path.join(REPORTS, 'village-worker-state.json');
 const MEMORY_PATH = path.join(REPORTS, 'construction-memory.json');
 
 /**
+ * Probe the block at (x,y,z) and return its material id (lowercase) or null.
+ * Read-only — uses the same `execute if block` probe as execute.js#findNearestDryLand.
+ */
+async function blockAt(harness, x, y, z) {
+  for (const m of ['air', 'water', 'grass_block', 'dirt', 'sand', 'stone', 'oak_planks', 'cobblestone', 'snow_block', 'podzol', 'coarse_dirt', 'mycelium', 'oak_fence', 'dirt_path', 'grass_path']) {
+    try {
+      const r = await harness.raw(`execute in minecraft:overworld if block ${Math.floor(x)} ${Math.floor(y)} ${Math.floor(z)} minecraft:${m}`);
+      if (r && String(r).toLowerCase().includes('test passed')) return m;
+    } catch (_) { /* best effort */ }
+  }
+  return null;
+}
+
+/**
+ * Find the nearest standable (non-water, non-air) block within `radius` of (x,z) at column y.
+ * Used so safeWalk never paths INTO water (the "GTA SA bug" / riverbank loop). Read-only probe.
+ */
+async function nearestDryLand(harness, x, z, y, radius = 10) {
+  const dry = ['grass_block', 'dirt', 'sand', 'stone', 'cobblestone', 'oak_planks', 'snow_block', 'podzol', 'coarse_dirt', 'mycelium', 'dirt_path', 'grass_path'];
+  let best = null, bestDist = Infinity;
+  for (let dx = -radius; dx <= radius; dx++) {
+    for (let dz = -radius; dz <= radius; dz++) {
+      const dist = Math.abs(dx) + Math.abs(dz);
+      if (dist >= bestDist) continue;
+      const px = Math.floor(x) + dx, pz = Math.floor(z) + dz;
+      const foot = await blockAt(harness, px, y, pz);
+      const head = await blockAt(harness, px, y + 1, pz);
+      if (foot && dry.includes(foot) && head === 'air') { best = { x: px + 0.5, y, z: pz + 0.5 }; bestDist = dist; }
+    }
+  }
+  return best;
+}
+
+/**
  * safeWalk — stable locomotion wrapper around walkTo (server-side A* walk_path).
  * Guarantees: (a) never teleports (allowTeleport:false), (b) uses walk_path hops for any
  * distance (low recoverDistance) so the agent actually travels instead of blinking,
  * (c) anti-stuck: if walk_path stalls/falls back to legacy stepping, retries the goal with
- * small standable offsets (±2, ±4) before giving up. This kills the "teleporting, walking in
- * circles, hitting walls, falling in holes, climbing fences" stupidity from greedy-step fallbacks.
+ * standable offsets (±2..±6, diagonals) before giving up, (d) WATER-AWARE: if the target cell
+ * (or the body's current footing) is water, re-route to the nearest dry land so Steve stops
+ * looping on the riverbank, (e) HOP-BACK: on a `stuck` result, insert an intermediate waypoint
+ * halfway to the goal and retry (real progress instead of spinning on the same blocked cell).
+ * This kills the "teleporting, walking in circles, hitting walls, falling in holes, climbing
+ * fences, looping on water" stupidity from greedy-step fallbacks.
  */
 async function safeWalk(harness, actorName, stand, opts = {}) {
   const baseOpts = Object.assign(
@@ -64,19 +102,27 @@ async function safeWalk(harness, actorName, stand, opts = {}) {
     opts,
     { allowTeleport: false } // HARD: safeWalk NEVER teleports — locomotion must be real travel
   );
+
+  // (d) WATER-AWARE: never path into a submerged target cell. Re-route to dry land nearby.
+  const targetFoot = await blockAt(harness, stand.x, stand.y, stand.z).catch(() => null);
+  let goal = { x: stand.x, y: stand.y, z: stand.z };
+  if (targetFoot === 'water') {
+    const dry = await nearestDryLand(harness, stand.x, stand.z, stand.y, 10);
+    if (dry) { goal = dry; }
+  }
+
+  // Expanded offset ring: cardinal ±2/±4/±6 plus diagonals. Larger ring contours bigger obstacles.
   const offsets = [
     [0, 0],
-    [2, 0],
-    [-2, 0],
-    [0, 2],
-    [0, -2],
-    [3, 3],
-    [-3, -3],
+    [2, 0], [-2, 0], [0, 2], [0, -2],
+    [4, 0], [-4, 0], [0, 4], [0, -4],
+    [3, 3], [-3, -3], [3, -3], [-3, 3],
+    [6, 0], [-6, 0], [0, 6], [0, -6],
   ];
   let last = null;
   for (const [dx, dz] of offsets) {
-    const goal = { x: stand.x + dx, y: stand.y, z: stand.z + dz };
-    const w = await walkTo(harness, actorName, goal, baseOpts).catch(() => ({
+    const g = { x: goal.x + dx, y: goal.y, z: goal.z + dz };
+    const w = await walkTo(harness, actorName, g, baseOpts).catch(() => ({
       success: false,
       reason: 'walk_threw',
       navigator: 'error',
@@ -85,6 +131,24 @@ async function safeWalk(harness, actorName, stand, opts = {}) {
     const badNavigator = w.navigator === 'walk_step' || w.navigator === 'walk_step_fallback' || w.navigator === 'recovery_teleport';
     if (w.success && !badNavigator) {
       return Object.assign({ recoveredOffset: dx || dz ? [dx, dz] : null }, w);
+    }
+    // (e) HOP-BACK on stuck: insert an intermediate waypoint halfway to the goal and retry once.
+    if (w.reason === 'stuck' || w.navigator === 'walk_path_hops') {
+      try {
+        const me = await harness.cap.observe(actorName);
+        const md = (me && me.data) || {};
+        if (typeof md.x === 'number') {
+          const mid = { x: md.x + (g.x - md.x) * 0.5, y: g.y, z: md.z + (g.z - md.z) * 0.5 };
+          const wb = await walkTo(harness, actorName, mid, baseOpts).catch(() => ({ success: false }));
+          if (wb.success && wb.navigator !== 'walk_step' && wb.navigator !== 'recovery_teleport') {
+            const w2 = await walkTo(harness, actorName, g, baseOpts).catch(() => ({ success: false }));
+            if (w2.success && w2.navigator !== 'walk_step' && w2.navigator !== 'recovery_teleport') {
+              return Object.assign({ recoveredOffset: [dx, dz], hopBack: true }, w2);
+            }
+            last = w2;
+          }
+        }
+      } catch (_) { /* best effort */ }
     }
   }
   return last || { success: false, reason: 'all_offsets_failed', navigator: 'none' };

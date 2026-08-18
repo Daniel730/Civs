@@ -305,11 +305,18 @@ async function walkTo(harness, actorName, stand, opts = {}) {
     } else {
       // B3: no-teleport mode. Walk the gap in foot-steps via intermediate waypoints so the
       // agent actually travels (and is observable) instead of teleporting as "locomotion".
-      // Each hop is within A* range; if any hop stalls we report stuck honestly.
+      // Each hop is within A* range. FIX (2026-08-18): tolerate PARTIAL hops — a hop that
+      // moved the body but didn't fully arrive is still progress; keep walking from where we
+      // stopped. Only give up (honest `stuck`) when a hop made ZERO progress, or we run out
+      // of time. Hazard aborts (in_water/suffocating) try a LATERAL hop to skirt the hazard
+      // instead of bailing — this is what stopped Steve from looping on the riverbank.
       const stepDist = Math.max(8, Math.floor(recoverDistance * 0.8));
       let from = cur;
       let remaining = initial;
-      while (remaining > recoverDistance) {
+      let safetyHops = 0;
+      const MAX_HOPS = 200; // hard ceiling so a pathological map can't loop forever
+      while (remaining > recoverDistance && safetyHops < MAX_HOPS) {
+        safetyHops += 1;
         const dx = goal.x - from.x;
         const dz = goal.z - from.z;
         const len = Math.sqrt(dx * dx + dz * dz) || 1;
@@ -318,23 +325,64 @@ async function walkTo(harness, actorName, stand, opts = {}) {
           y: goal.y,
           z: Math.floor(from.z + (dz / len) * stepDist) + 0.5,
         };
+        const beforeHop = from;
         const leg = await runPathLeg(harness, actorName, hop, { ...opts, timeoutMs: 6000 });
         actions.push({ walkPathHop: { status: leg.status, reason: leg.reason, to: hop } });
-        if (leg.status !== 'ARRIVED' && leg.status !== 'UNSUPPORTED') {
+
+        const afterHop = posFromObserve(await cap.observe(actorName)) || from;
+        const moved = horizDist(beforeHop, afterHop);
+        from = afterHop;
+        remaining = horizDist(from, goal);
+
+        if (leg.status === 'UNSUPPORTED') break; // legacy fallback handles it
+
+        // HAZARD: server aborted the path because the body hit water/suffocation. Try a
+        // lateral hop (perpendicular to travel) to skirt the hazard, then resume forward.
+        if (leg.hazard && moved < 1.0) {
+          const lateral = { x: -dz / len, z: dx / len }; // unit perpendicular
+          for (const s of [1, -1]) {
+            const side = {
+              x: Math.floor(from.x + lateral.x * s * 4) + 0.5,
+              y: goal.y,
+              z: Math.floor(from.z + lateral.z * s * 4) + 0.5,
+            };
+            const sideLeg = await runPathLeg(harness, actorName, side, { ...opts, timeoutMs: 5000 });
+            actions.push({ walkPathHopSide: { status: sideLeg.status, reason: sideLeg.reason, to: side } });
+            const afterSide = posFromObserve(await cap.observe(actorName)) || from;
+            if (horizDist(from, afterSide) > 1.0) { from = afterSide; remaining = horizDist(from, goal); break; }
+          }
+          // If we couldn't skirt, report honestly so the caller invalidates the target.
+          if (horizDist(beforeHop, from) < 1.0) {
+            countMetric(METRIC.GOAL_ABANDON, { actor: actorName, reason: 'hop_hazard_stuck' });
+            return {
+              success: false,
+              reason: leg.reason || 'stuck',
+              steps: actions.length,
+              final_distance: remaining,
+              recoverTeleport: false,
+              navigator: 'walk_path_hops',
+              actions,
+              ...from,
+            };
+          }
+          continue; // resumed forward progress after skirting hazard
+        }
+
+        // REAL STUCK: hop neither arrived nor moved. Honest failure.
+        if (leg.status !== 'ARRIVED' && moved < 1.0) {
           countMetric(METRIC.GOAL_ABANDON, { actor: actorName, reason: 'out_of_path_range_stuck' });
           return {
             success: false,
-            reason: 'stuck',
+            reason: leg.reason || 'stuck',
             steps: actions.length,
-            final_distance: horizDist(from, goal),
+            final_distance: remaining,
             recoverTeleport: false,
             navigator: 'walk_path_hops',
             actions,
             ...from,
           };
         }
-        from = posFromObserve(await cap.observe(actorName)) || from;
-        remaining = horizDist(from, goal);
+        // Otherwise: arrived OR moved-partially → loop continues from `from` (progress kept).
       }
       cur = from;
     }
