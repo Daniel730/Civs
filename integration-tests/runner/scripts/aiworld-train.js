@@ -52,7 +52,12 @@ function loadExperiences(dir) {
 }
 
 function train(exps, minCount) {
-  const { weights, ctxsWithData, totalN } = aggregate(exps, minCount);
+  // aggregate() returns { bias, stats: { ..., ctxsWithData, ... } }; the weights file is the
+  // bias map. Map it to `weights` so the writer below (and any consumer) gets a defined value.
+  const { bias, stats } = aggregate(exps, minCount);
+  const weights = bias || {};
+  const ctxsWithData = (stats && stats.ctxsWithData) || 0;
+  const totalN = (stats && stats.ratedSamples) || 0;
   return { weights, ctxsWithData, totalN };
 }
 
@@ -173,8 +178,8 @@ function main() {
   fs.mkdirSync(path.dirname(a.out), { recursive: true });
   fs.writeFileSync(a.out, JSON.stringify(weights, null, 2));
   console.log(`[train] wrote ${a.out}`);
-  console.log(`[train] samples=${totalN} contexts_with_data=${ctxsWithData} globalAvgReward=${weights.globalAvgReward}`);
-  console.log('[train] bias=', JSON.stringify(weights.bias));
+  console.log(`[train] samples=${totalN} contexts_with_data=${ctxsWithData} globalAvgReward=${stats.globalAvgReward}`);
+  console.log('[train] bias=', JSON.stringify(weights));
   process.exit(0);
 }
 
