@@ -257,25 +257,23 @@ function sleep(ms) {
  * This prevents Steve from spawning in mid-air or inside blocks in a normal world.
  */
 async function adjustOriginToSurface(harness, cfg) {
+  // FASE 1 (2026-08-18): NO surface probing that moves the NPC. The old code called
+  // findSurfaceY (which depends on `execute if block`, BROKEN on CivsTestHarness -> always
+  // "Test passed") and used the result to teleport Steve onto a (often floating/ocean)
+  // coordinate. We no longer teleport on spawn, so this function must NOT alter the origin.
+  // The real spawn position is adopted later from harness.cap.observe() in the continuity
+  // block (see main(): continuity_origin). Keep cfg.origin untouched here.
   if (!cfg.surfaceFallback) {
     return cfg.origin;
   }
-
-  const surfaceY = await findSurfaceY(harness, cfg.origin.x, cfg.origin.z, {
-    fallbackY: cfg.origin.y,
-    maxY: cfg.origin.y + 24,
-    minY: cfg.origin.y - 24,
-  });
-
   log({
     status: 'INFO',
     action: 'adjust_origin_to_surface',
-    oldOrigin: { ...cfg.origin },
-    newY: surfaceY,
-    reason: 'surface_fallback_enabled',
+    note: 'disabled_in_fase1_no_teleport',
+    origin: { ...cfg.origin },
+    reason: 'surface_fallback_enabled_but_no_spawn_teleport',
   });
-
-  return { ...cfg.origin, y: surfaceY };
+  return cfg.origin;
 }
 
 /**
@@ -1476,29 +1474,13 @@ async function connectActor(harness, name, attempt = 1) {
     return { actor, ok: false, reason: actor.reason };
   }
   await actor.grantOp();
-      // BOOTSTRAP ONLY (login placement, not part of the work loop): move the fresh session to
-      // the village. No gamemode switch, no gear handout — it stays in the server's survival mode.
-      // Player-like: probe the REAL surface first (world is not flat), then stand on it without
-      // submerging. findSurfaceY now treats water as non-solid, so groundY is the SOLID block under
-      // any water above (e.g. a river over dirt). We then climb until the NPC's HEAD (groundY+2) is
-      // in air — otherwise Steve lands in shallow water head-first and starts drowning (the
-      // "Jesus drowning while looking up" symptom). Bounded to ±6 climbs so we never overshoot into
-      // mid-air on a tall overhang.
-      const groundY = await findSurfaceY(harness, cfg.origin.x, cfg.origin.z, {
-        fallbackY: cfg.origin.y,
-        maxY: cfg.origin.y + 24,
-        minY: cfg.origin.y - 24,
-      });
-      let standY = groundY + 1;
-      // Climb out of water: if the NPC's head block (standY+1) is water/cave_air, keep stepping
-      // up until the head is in plain air OR we've climbed 6 blocks (give up — surface is too
-      // submerged to stand safely here).
-      for (let i = 0; i < 6; i++) {
-        const headAir = !(await blockIs(harness, cfg.origin.x, standY + 1, cfg.origin.z, 'water'));
-        if (headAir) break;
-        standY += 1;
-      }
-      await actor.teleport(cfg.origin.x, standY, cfg.origin.z);
+      // FASE 1 (2026-08-18): NO spawn teleport. The NPC stays exactly where the server
+      // placed it on login (natural spawn) — player-like. We do NOT grab it and yank it to
+      // VILLAGE_X/Y/Z, and we do NOT probe a (broken) surface and teleport there. The old
+      // code used findSurfaceY (which depends on `execute if block`, broken on CivsTestHarness
+      // -> always "Test passed") and then teleported Steve to a floating/ocean coordinate.
+      // Gravity is the server's job now: if spawn is in air, Steve falls; if in water, the
+      // survive/flee layer already handles egress. No godmode "save" teleport.
       const alive = await ensureAlive(harness, name);
       return { actor, ok: true, alive };
     }

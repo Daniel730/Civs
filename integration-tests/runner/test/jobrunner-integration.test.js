@@ -19,7 +19,7 @@ function makeHarness() {
     walkTo: async () => { calls.walkTo++; return { success: true, navigator: 'walk_path', final_distance: 0.4 }; },
     breakBlock: async () => { calls.breakBlock++; return { success: true }; },
     placeBlock: async () => { calls.placeBlock++; return { success: true }; },
-    observe: async () => { calls.observe++; return { success: true, data: { x: 5200, y: 80, z: 5200, health: 20, inventory: [] } }; },
+    observe: async () => { calls.observe++; return { success: true, data: { x: 5200, y: 80, z: 5200, health: 20, on_ground: true, block_below: 'GRASS_BLOCK', block_feet: 'AIR', inventory: [] } }; },
     swing: async () => { calls.swing++; },
     findBlock: async () => ({ success: false }),
     lookAt: async () => ({}),

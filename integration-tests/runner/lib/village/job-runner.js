@@ -286,39 +286,31 @@ async function inspectBody(harness, actorName) {
   const ob = await harness.cap.observe(actorName).catch(() => null);
   const d = (ob && ob.data) || {};
   const x = d.x, y = d.y, z = d.z;
-  const inWater = !!(d.in_water === true || d.head_in_water === true);
+  const inWater = !!(d.in_water === true || d.head_in_water === true || d.block_below === 'WATER' || d.block_feet === 'WATER');
   if (typeof x !== 'number' || typeof y !== 'number' || typeof z !== 'number') {
     // Cannot determine position → do NOT block (best-effort, let survival handle).
     return { ok: false, standable: true, airborne: false, reason: 'observe_failed', pos: null };
   }
-  // If the harness cannot probe blocks (no harness.raw, e.g. unit-test stub), skip the
-  // body check entirely and assume standable — never block legit work on an unreadable probe.
-  if (typeof harness.raw !== 'function') {
-    return { ok: true, pos: { x, y, z }, standable: true, grounded: true, airborne: false, inWater, reason: null };
-  }
-  // Probe feet (y), support (y-1), head (y+1). A real server returns the string
-  // "Test passed"/"Test failed"; test mocks may return an object ({success:true}) or
-  // throw. In ALL non-string cases we treat the column as standable (best-effort) so the
-  // guard never false-positives and blocks legit work in tests or degraded RCON.
-  const probe = async (bx, by, bz) => {
-    try {
-      const r = await harness.raw(`execute in minecraft:overworld if block ${Math.floor(bx)} ${Math.floor(by)} ${Math.floor(bz)} minecraft:air`);
-      if (typeof r !== 'string') return true; // mock / unknown → assume clear
-      return String(r || '').toLowerCase().includes('test passed');
-    } catch (_) { return true; } // best-effort: never block on probe failure
-  };
-  const feetAir = await probe(x, y, z);
-  const headAir = await probe(x, y + 1, z);
-  const supportSolid = !(await probe(x, y - 1, z)); // support is NOT air → solid/enforceable
-  const onGround = supportSolid && feetAir && headAir;
+  // FASE 1 (2026-08-18): trust the server's own physics report from `observe` instead of
+  // probing with `execute if block` (which is BROKEN on CivsTestHarness — it always returns
+  // "Test passed", so every column looked like air and Steve was perpetually flagged
+  // airborne). The harness observe payload carries the ground truth:
+  //   on_ground (bool), block_below (material string), block_feet (material string).
+  // Standable = server says on_ground OR there is a solid (non-air) block directly below feet.
+  const onGround = d.on_ground === true;
+  const below = String(d.block_below || '').toUpperCase();
+  const feet = String(d.block_feet || '').toUpperCase();
+  const supportSolid = below !== '' && below !== 'AIR' && below !== 'CAVE_AIR' && below !== 'VOID_AIR';
+  const feetClear = feet === '' || feet === 'AIR' || feet === 'CAVE_AIR' || feet === 'VOID_AIR';
+  const standable = onGround || (supportSolid && feetClear);
   return {
     ok: true,
     pos: { x, y, z },
-    standable: onGround,
+    standable,
     grounded: onGround,
-    airborne: !onGround,
+    airborne: !standable,
     inWater,
-    reason: onGround ? null : 'body_not_standable',
+    reason: standable ? null : 'body_not_standable',
   };
 }
 
