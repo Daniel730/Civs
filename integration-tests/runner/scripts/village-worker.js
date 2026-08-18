@@ -230,11 +230,16 @@ function loadState() {
           // Old broken shape — discard; the next Ollama call (or deterministic fallback) refills it.
           s.cachedDecision = null;
         }
+        // C1 (2026-08-18): per-site nav-failure counter so unreachable waypoints get invalidated
+        // (anti "walks in circles"). Persisted so the block survives worker restarts.
+        s.siteFails = s.siteFails || {};
+        s.blocked = s.blocked || {};
         return s;
   } catch (_) {
     return {
       tick: 0,
       blocked: {},
+      siteFails: {},
       completedPlaces: {},
       actions: 0,
       failCounts: {},

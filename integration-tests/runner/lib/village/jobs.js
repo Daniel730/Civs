@@ -84,6 +84,17 @@ function siteForJob(job, tick) {
 function nextJob(tick, state = {}) {
   const n = Math.max(0, Math.floor(tick));
   const rotate = JOBS.filter((j) => j !== 'placeregion');
+  const blocked = state.blocked || {};
+  // C1 (2026-08-18): skip sites that have failed repeatedly (walk_path stalled). When every
+  // affinity site for a job is blocked, fall through to the next rotated job instead of
+  // re-issuing the same unreachable waypoint (the "Steve walks in circles" bug).
+  const pickSite = (job) => {
+    const affinity = JOB_SITE_AFFINITY[job];
+    const keys = affinity && affinity.length ? affinity : Object.keys(SITES);
+    const available = keys.filter((k) => !blocked[k]);
+    if (available.length) return available[n % available.length];
+    return null; // all blocked for this job
+  };
   // Placeregion cadence — founding still needs honest stockpile (documented exception).
   if (n > 0 && n % 11 === 0) {
     const attempt = nextPlaceAttempt(state);
@@ -91,12 +102,21 @@ function nextJob(tick, state = {}) {
   }
   // Extra beautify ticks so platform scars heal faster than new builds appear.
   if (n > 0 && n % 4 === 0) {
-    const siteKey = siteForJob('beautify', n);
-    return { job: 'beautify', site: siteKey, ...SITES[siteKey] };
+    const siteKey = pickSite('beautify');
+    if (siteKey) return { job: 'beautify', site: siteKey, ...SITES[siteKey] };
   }
   const job = rotate[n % rotate.length];
-  const siteKey = siteForJob(job, n);
-  return { job, site: siteKey, ...SITES[siteKey] };
+  const siteKey = pickSite(job);
+  if (siteKey) return { job, site: siteKey, ...SITES[siteKey] };
+  // All affinity sites blocked for the rotated job: pick ANY unblocked site/job so we never stall.
+  for (const j of rotate) {
+    const sk = pickSite(j);
+    if (sk) return { job: j, site: sk, ...SITES[sk] };
+  }
+  // Truly nothing available (all sites blocked everywhere): return the rotated job with its
+  // first affinity site anyway — survival/recovery will handle the bad spot, better than looping.
+  const fallbackKey = (JOB_SITE_AFFINITY[job] || Object.keys(SITES))[0];
+  return { job, site: fallbackKey, ...SITES[fallbackKey] };
 }
 
 /**

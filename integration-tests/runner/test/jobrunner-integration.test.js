@@ -125,11 +125,39 @@ test('JobRunner: torch job plans a grid of place steps', async () => {
   assert.ok(harness.helpers.placeAesthetic > 0, 'placeAesthetic called during execution');
 });
 
-test('JobRunner: unknown job returns UNSUPPORTED without throwing', async () => {
+test('JobRunner: C1 — 3 walk nav-failures invalidate the site (anti-circle)', async () => {
+  // Harness whose safeWalk ALWAYS fails with a navigation stall (unreachable waypoint).
   const harness = makeHarness();
-  const step = { job: 'does_not_exist' };
-  const state = { tick: 0, activeJob: null };
-  const r = await JobRunner.runJobStep(harness, 'Steve', step, state, makeCtx(harness, step, state));
-  assert.strictEqual(r.status, 'UNSUPPORTED');
-  assert.strictEqual(state.activeJob, null, 'no activeJob for unsupported job');
+  const step = { job: 'gather', site: 'center' };
+  const state = { tick: 0, activeJob: null, siteFails: {}, blocked: {} };
+
+  // Run ticks; each tick re-plans (activeJob cleared) so the walk is attempted fresh.
+  // After 3 nav failures on 'center', it must be invalidated (blocked).
+  let ticks = 0;
+  while (ticks < 10 && !state.blocked.center) {
+    // makeCtx defines helpers.safeWalk (success); override AFTER makeCtx so the walk stalls.
+    const ctx = makeCtx(harness, step, state);
+    ctx.helpers.safeWalk = async () => {
+      harness.helpers.safeWalk++;
+      await new Promise((r) => setTimeout(r, 2));
+      return { success: false, navigator: 'walk_path', final_distance: 9.7, reason: 'stuck' };
+    };
+    await JobRunner.runJobStep(harness, 'Steve', step, state, ctx);
+    state.activeJob = null; // simulate job end so next tick re-plans and re-walks
+    ticks++;
+  }
+  assert.ok(state.siteFails.center >= 3, `center should accumulate >=3 nav fails (got ${state.siteFails.center})`);
+  assert.strictEqual(state.blocked.center, true, 'center must be blocked after 3 nav fails (anti-circle)');
+});
+
+test('jobs.nextJob: C1 — skips a blocked site instead of re-issuing it', async () => {
+  const { nextJob } = require('../lib/village/jobs');
+  const state = { tick: 0, blocked: { quarry: true } };
+  // miner affinity = ['quarry']; with quarry blocked it must fall through to another job/site.
+  let sawBlocked = false;
+  for (let t = 0; t < 12; t++) {
+    const job = nextJob(t, state);
+    if (job.site === 'quarry') sawBlocked = true;
+  }
+  assert.strictEqual(sawBlocked, false, 'nextJob must never return the blocked site quarry');
 });

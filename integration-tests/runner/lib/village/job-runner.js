@@ -27,6 +27,20 @@
  * worker must survive restarts mid-job (continuity requirement from the user).
  */
 
+// C1 (2026-08-18): log when a site is invalidated after repeated nav failures.
+function logNavBlock(siteKey, fails) {
+  // ctx.log may be undefined in unit tests — guard.
+  if (typeof logNavBlock._log === 'function') {
+    logNavBlock._log({
+      status: 'WARN',
+      action: 'nav_site_blocked',
+      site: siteKey,
+      fails,
+      reason: 'walk_path stalled 3x -> site invalidated (anti-circle)',
+    });
+  }
+}
+
 // ---- Step executors (atomic actions) ----------------------------------------------
 
 const { planBlueprint, compileBlueprint, expandPlacementOrder } = require('../village/construction');
@@ -323,6 +337,7 @@ async function inspectBody(harness, actorName) {
 async function runJobStep(harness, actorName, step, state, ctx) {
   const budgetMs = ctx.budgetMs || 1500;
   const start = Date.now();
+  if (ctx && typeof ctx.log === 'function') logNavBlock._log = ctx.log;
 
   // Lazily build the step list if this is a fresh job (or the job type changed).
   if (!state.activeJob || state.activeJob.job !== step.job || state.activeJob.stepKey !== (step.site || step.label)) {
@@ -363,6 +378,23 @@ async function runJobStep(harness, actorName, step, state, ctx) {
     try {
       const r = await exec(harness, actorName, st, ctx);
       results.push({ step: st, ok: r.ok, result: r.result });
+      // C1 (2026-08-18): track walk failures per site so we can invalidate unreachable
+      // waypoints instead of re-issuing them (the "walks in circles" bug). Only count real
+      // navigation failures, not transient/physics-guard refusals.
+      if (st.type === 'walk' && !r.ok) {
+        const reason = (r.result && r.result.walk && r.result.walk.reason) || '';
+        const isNavFail = /walk_threw|stuck|no_path|start_not_standable|timeout/.test(reason);
+        if (isNavFail) {
+          const siteKey = step.site || step.label || 'unknown';
+          state.siteFails = state.siteFails || {};
+          state.siteFails[siteKey] = (state.siteFails[siteKey] || 0) + 1;
+          if (state.siteFails[siteKey] >= 3) {
+            state.blocked = state.blocked || {};
+            state.blocked[siteKey] = true;
+            logNavBlock(siteKey, state.siteFails[siteKey]);
+          }
+        }
+      }
       if (r.done) { aj.cursor = aj.steps.length; break; }
       if (r.setCursor != null) { aj.cursor = r.setCursor; continue; }
       aj.cursor++;
