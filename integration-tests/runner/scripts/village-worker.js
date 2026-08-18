@@ -1726,6 +1726,36 @@ async function main() {
   }
   log({ status: 'PASS', action: 'actor_online', player: cfg.actorName });
 
+  // Adopt the NPC's real world position as origin (shared by startup + periodic re-adopt).
+  function adoptOrigin(od, reason) {
+    if (!(Number.isFinite(od.x) && Number.isFinite(od.y) && Number.isFinite(od.z))) {
+      if (reason === 'startup') {
+        log({ status: 'DEGRADED', action: 'continuity_origin', reason: 'observe_invalid', od });
+      }
+      return;
+    }
+    const prev = cfg.origin;
+    cfg.origin = { x: Math.floor(od.x), y: Math.floor(od.y), z: Math.floor(od.z) };
+    state.lastObservedPos = cfg.origin;
+    state.lastObservedAt = Date.now();
+    // C1/C3 continuity fix (2026-08-18): when the adopted origin MOVES far from the old one
+    // (Steve respawned / walked away / world reset), the old per-site nav-fail blocks and
+    // waypoint affinity are stale -> clear them so the NPC re-explores from the new spot
+    // instead of staying "stranded" near a ghost origin.
+    if (prev && (Math.abs(prev.x - cfg.origin.x) > 32 || Math.abs(prev.z - cfg.origin.z) > 32)) {
+      state.siteFails = {};
+      state.blocked = state.blocked || {};
+      // keep only legitimate non-nav blocks (e.g. placeregion completion exclusivity)
+      for (const k of Object.keys(state.blocked)) {
+        if (k === 'inn' || k === 'barracks') delete state.blocked[k];
+      }
+      log({ status: 'PASS', action: 'origin_readopted', reason, from: prev, to: cfg.origin, clearedNavBlocks: true });
+    } else if (reason === 'startup') {
+      log({ status: 'PASS', action: 'continuity_origin', reason: 'adopted_current_position', origin: cfg.origin });
+    }
+    try { saveState(state); } catch (_) { /* best-effort */ }
+  }
+
   // CONTINUITY ACROSS RESTART: pull the NPC's current world position from RCON and adopt it
   // as the new origin so the next work tick builds around where Steve already is (instead of
   // teleporting him back to (5200, 80, 5200) and losing the place he had been working at).
@@ -1733,21 +1763,7 @@ async function main() {
   try {
     const posRes = await harness.cap.observe(cfg.actorName);
     const od = (posRes && posRes.data) || {};
-    if (Number.isFinite(od.x) && Number.isFinite(od.y) && Number.isFinite(od.z)) {
-      cfg.origin = {
-        x: Math.floor(od.x),
-        y: Math.floor(od.y),
-        z: Math.floor(od.z),
-      };
-      state.lastObservedPos = cfg.origin;
-      state.lastObservedAt = Date.now();
-      log({
-        status: 'PASS',
-        action: 'continuity_origin',
-        reason: 'adopted_current_position',
-        origin: cfg.origin,
-      });
-    }
+    adoptOrigin(od, 'startup');
   } catch (e) {
     log({
       status: 'DEGRADED',
@@ -2007,6 +2023,17 @@ async function main() {
           /* best-effort */
         }
       }
+    }
+    // C1/C3 continuity fix (2026-08-18): periodically re-adopt Steve's real position as origin.
+    // If he respawned / wandered / the world was reset, the persisted origin goes stale and the
+    // monitor flags him "stranded" (origin ~5200 blocks from his real spot) -> RECOVER loop that
+    // never works. Re-adopting keeps origin == where he actually is, so work proceeds.
+    if (state.tick % 30 === 0) {
+      try {
+        const posRes = await harness.cap.observe(cfg.actorName);
+        const od = (posRes && posRes.data) || {};
+        adoptOrigin(od, 'periodic');
+      } catch (_) { /* best-effort */ }
     }
     const who = helper && helper.ok && state.tick % 2 === 0 ? cfg.helperName : cfg.actorName;
     try {
