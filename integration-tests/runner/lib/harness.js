@@ -69,10 +69,18 @@ class Harness {
       async (span) => {
         // Never put password in span attributes (opts may contain it).
         this.rcon = await Rcon.connect(this.opts);
+        this.rcon.on('close', () => { this.rcon = null; });
         recordResultStatus(span, 'PASS');
         return this;
       }
     );
+  }
+  /** Reconnect if the underlying socket dropped. Safe to call when already connected. */
+  async ensureConnected() {
+    if (this.rcon) {
+      try { await this.rcon.send('list'); return true; } catch (_) { this.rcon = null; }
+    }
+    try { await this.connect(); return true; } catch (_) { return false; }
   }
   async close() {
     return withSpan('rcon.close', { 'rcon.operation': 'close' }, async (span) => {
@@ -94,6 +102,17 @@ class Harness {
         'rcon.command_prefix': op,
       },
       async (span) => {
+        if (!this.rcon) {
+          // Socket dropped — try to reconnect once before giving up.
+          try { await this.connect(); } catch (_) { /* fall through to send error */ }
+        }
+        if (!this.rcon) {
+          // Reconnect failed: surface a clear, catchable error instead of calling
+          // null.send (which throws a cryptic TypeError that can crash the worker).
+          const err = new Error('Not connected');
+          err.code = 'RCON_DISCONNECTED';
+          throw err;
+        }
         const res = await this.rcon.send(cmd);
         const text = String(res).replace(STRIP_COLOR, '').trim();
         setSpanAttrs(span, {

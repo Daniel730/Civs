@@ -1991,6 +1991,23 @@ async function main() {
     const _t0 = Date.now();
     const _phases = {};
     const _mark = (name) => { _phases[name] = Date.now() - _t0; };
+    // P2 (2026-08-18): RCON resilience. If the socket dropped (server restart / transient
+    // RCON blip), try to re-establish BEFORE running the tick. If still down, skip this tick
+    // gracefully (log WARN, do not spam FAIL work_tick) and let the next interval retry.
+    // This keeps the worker alive across RCON outages instead of wedging in a "Not connected"
+    // loop or crashing on null.send.
+    try {
+      const connected = await harness.ensureConnected();
+      if (!connected) {
+        log({ status: 'WARN', action: 'rcon_reconnecting', worker: who, tick: state.tick });
+        busy = false;
+        return;
+      }
+    } catch (_) {
+      log({ status: 'WARN', action: 'rcon_reconnect_failed', worker: who, tick: state.tick });
+      busy = false;
+      return;
+    }
     // Phase 2: flush persistent agent memory to disk periodically so NPCs remember
     // across restarts. Done FIRST (before the survival/try branch) so it runs even when
     // the agent is in danger and the loop returns early after the survival action.
