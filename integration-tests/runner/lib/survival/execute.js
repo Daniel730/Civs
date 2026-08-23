@@ -72,13 +72,17 @@ async function executeSurvival(harness, actorName, assessment, ctx = {}) {
   // F (2026-08-19): if the body is SUFFOCATING (head wedged in a block, last_damage_cause
   // 'Suffocating'), move it out FIRST — before heal/recover/retreat logic, which would
   // otherwise heal/respawn in place and let it keep taking suffocation damage and die.
-  // Covers every survival state (heal/recover/retreat) because the body check is generic.
+  // Trigger from the monitor assessment (now classifies suffocation in threat.js F2) OR a
+  // direct observe — covers every survival state because the check is generic.
   let suffocating = false;
-  try {
-    const ob = await cap.observe(actorName).catch(() => null);
-    const od = (ob && ob.data) || {};
-    suffocating = /SUFFOCAT/i.test(String(od.last_damage_cause || '')) || od.suffocating === true;
-  } catch (_) { /* observe may fail */ }
+  if (action && /SUFFOCAT/i.test(String((action.reason) || ''))) suffocating = true;
+  if (!suffocating) {
+    try {
+      const ob = await cap.observe(actorName).catch(() => null);
+      const od = (ob && ob.data) || {};
+      suffocating = /SUFFOCAT/i.test(String(od.last_damage_cause || '')) || od.suffocating === true;
+    } catch (_) { /* observe may fail */ }
+  }
   if (suffocating) {
     const me = await cap.observe(actorName).catch(() => null);
     const md = (me && me.data) || {};
