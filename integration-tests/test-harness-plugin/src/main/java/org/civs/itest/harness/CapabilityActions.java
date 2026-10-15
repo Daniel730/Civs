@@ -50,16 +50,19 @@ final class CapabilityActions {
         String action = a[2].toLowerCase(Locale.ROOT);
         String[] args = new String[a.length - 3];
         System.arraycopy(a, 3, args, 0, args.length);
-        return plugin.syncCap(() -> execute(sender, playerName, action, args));
+        return plugin.syncCap(() -> execute(sender, playerName, action, args, plugin));
     }
 
-    private static boolean execute(CommandSender sender, String playerName, String action, String[] args) {
+    private static boolean execute(CommandSender sender, String playerName, String action, String[] args,
+                                   TestHarnessPlugin plugin) {
         long t0 = System.currentTimeMillis();
         Player p = Bukkit.getPlayerExact(playerName);
         if (p == null || !p.isOnline()) {
             return json(sender, false, action, null, System.currentTimeMillis() - t0, "player_offline", null);
         }
         try {
+            Boolean motion = MotionActions.dispatch(sender, p, action, args, t0, plugin);
+            if (motion != null) return motion;
             return switch (action) {
                 case "teleport" -> teleport(sender, p, args, t0);
                 case "look" -> look(sender, p, args, t0);
@@ -73,7 +76,8 @@ final class CapabilityActions {
                 case "attack" -> attack(sender, p, args, t0);
                 case "hotbar" -> hotbar(sender, p, args, t0);
                 case "give_item" -> giveItem(sender, p, args, t0);
-                case "run_as" -> runAs(sender, p, args, t0);
+                                case "craft_item" -> craftItem(sender, p, args, t0);
+                                case "run_as" -> runAs(sender, p, args, t0);
                 case "game_mode" -> gameMode(sender, p, args, t0);
                 case "die" -> die(sender, p, t0);
                 case "respawn" -> respawn(sender, p, t0);
@@ -109,7 +113,8 @@ final class CapabilityActions {
                 if (n >= 40) break;
             }
             items.append(']');
-            String data = "\"world\":" + quote(loc.getWorld() != null ? loc.getWorld().getName() : "")
+            String data = survivalData(p, loc)
+                    + ",\"world\":" + quote(loc.getWorld() != null ? loc.getWorld().getName() : "")
                     + ",\"x\":" + loc.getX()
                     + ",\"y\":" + loc.getY()
                     + ",\"z\":" + loc.getZ()
@@ -128,6 +133,91 @@ final class CapabilityActions {
                     + ",\"inventory\":" + items;
             return json(sender, true, "observe", playerName, 0, null, data);
         });
+    }
+
+    /**
+     * Threat / hazard context for the agent survival layer.
+     *
+     * <p>Everything the SAFE/CAUTION/DANGER FSM needs has to arrive in the same round trip as the
+     * position — polling health, hostiles and hazards separately would cost three extra RCON calls
+     * per tick and could report a mix of two different world states.
+     */
+    private static String survivalData(Player p, Location loc) {
+        World w = loc.getWorld();
+        String blockBelow = "AIR";
+        String blockFeet = "AIR";
+        int light = 15;
+        if (w != null) {
+            try {
+                Block below = w.getBlockAt(loc.getBlockX(), loc.getBlockY() - 1, loc.getBlockZ());
+                Block feet = w.getBlockAt(loc.getBlockX(), loc.getBlockY(), loc.getBlockZ());
+                blockBelow = below.getType().name();
+                blockFeet = feet.getType().name();
+                light = feet.getLightLevel();
+            } catch (Exception ignored) {
+                // unloaded chunk — keep defaults
+            }
+        }
+
+        int hostiles = 0;
+        String nearestType = null;
+        double nearestDist = -1;
+        try {
+            for (Entity e : p.getNearbyEntities(20, 12, 20)) {
+                if (!(e instanceof org.bukkit.entity.Monster)) continue;
+                hostiles++;
+                double d = e.getLocation().distance(loc);
+                if (nearestDist < 0 || d < nearestDist) {
+                    nearestDist = d;
+                    nearestType = e.getType().name();
+                }
+            }
+        } catch (Exception ignored) {
+            // entity list can throw while chunks unload
+        }
+
+        String damageCause = null;
+        double lastDamage = 0;
+        try {
+            var ev = p.getLastDamageCause();
+            if (ev != null) {
+                damageCause = ev.getCause().name();
+                lastDamage = ev.getFinalDamage();
+            }
+        } catch (Exception ignored) {
+            // no damage recorded yet
+        }
+
+        int deaths = -1;
+        try {
+            deaths = p.getStatistic(org.bukkit.Statistic.DEATHS);
+        } catch (Exception ignored) {
+            // statistics may be unavailable for protocol actors
+        }
+
+        boolean inWater = blockFeet.equals("WATER") || blockFeet.contains("BUBBLE");
+        boolean inLava = blockFeet.equals("LAVA");
+        return "\"dead\":" + p.isDead()
+                + ",\"on_ground\":" + p.isOnGround()
+                + ",\"fall_distance\":" + round2(p.getFallDistance())
+                + ",\"remaining_air\":" + p.getRemainingAir()
+                + ",\"in_water\":" + inWater
+                + ",\"in_lava\":" + inLava
+                + ",\"light_level\":" + light
+                + ",\"block_below\":" + quote(blockBelow)
+                + ",\"block_feet\":" + quote(blockFeet)
+                + ",\"hostiles\":" + hostiles
+                + ",\"nearest_hostile\":" + (nearestType == null ? "null"
+                        : "{\"type\":" + quote(nearestType) + ",\"distance\":" + round2(nearestDist) + "}")
+                + ",\"last_damage_cause\":" + (damageCause == null ? "null" : quote(damageCause))
+                + ",\"last_damage\":" + round2(lastDamage)
+                + ",\"deaths\":" + deaths
+                + ",\"world_time\":" + (w != null ? w.getTime() : -1)
+                + ",\"storm\":" + (w != null && w.hasStorm());
+    }
+
+    private static double round2(double v) {
+        return Math.round(v * 100.0) / 100.0;
     }
 
     private static boolean teleport(CommandSender sender, Player p, String[] args, long t0) {
@@ -569,6 +659,53 @@ final class CapabilityActions {
         boolean ok = p.performCommand(cmd);
         return json(sender, ok, "run_as", cmd, System.currentTimeMillis() - t0,
                 ok ? null : "performCommand_returned_false", null);
+    }
+
+    private static boolean craftItem(CommandSender sender, Player p, String[] args, long t0) {
+        if (args.length < 2) throw new IllegalArgumentException("craft_item <MATERIAL> [amount]");
+        Material mat = Material.valueOf(args[0].toUpperCase(Locale.ROOT));
+        int amount = args.length >= 2 ? Integer.parseInt(args[1]) : 1;
+        // Crafting consumes materials from the player's inventory.
+        ItemStack[] contents = p.getInventory().getContents();
+        int have = 0;
+        for (ItemStack stack : contents) {
+            if (stack != null && stack.getType() == mat) {
+                have += stack.getAmount();
+            }
+        }
+        if (have < amount) {
+            return json(sender, false, "craft_item", mat.name(), System.currentTimeMillis() - t0,
+                    "insufficient_materials",
+                    "\"have\":" + have + ",\"need\":" + amount);
+        }
+        // Remove the required materials.
+        int remaining = amount;
+        for (int i = 0; i < contents.length; i++) {
+            ItemStack stack = contents[i];
+            if (stack != null && stack.getType() == mat) {
+                if (stack.getAmount() >= remaining) {
+                    if (stack.getAmount() == remaining) {
+                        p.getInventory().setItem(i, null);
+                    } else {
+                        stack.setAmount(stack.getAmount() - remaining);
+                        p.getInventory().setItem(i, stack);
+                    }
+                    remaining = 0;
+                    break;
+                } else {
+                    remaining -= stack.getAmount();
+                    p.getInventory().setItem(i, null);
+                }
+            }
+        }
+        // Add the crafted items.
+        ItemStack crafted = new ItemStack(mat, amount);
+        var leftover = p.getInventory().addItem(crafted);
+        boolean ok = leftover.isEmpty();
+        return json(sender, ok, "craft_item", mat.name(), System.currentTimeMillis() - t0,
+                ok ? null : "inventory_full",
+                "\"amount\":" + amount + ",\"leftover\":" + leftover.values().stream()
+                        .mapToInt(ItemStack::getAmount).sum());
     }
 
     private static boolean giveItem(CommandSender sender, Player p, String[] args, long t0) {

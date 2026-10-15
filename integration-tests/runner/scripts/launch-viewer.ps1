@@ -307,6 +307,26 @@ if (-not $SkipAutoSpectate) {
         Write-Host "RCON: $op => $r"
       }
       Write-Host "PASS: $Username should now be spectating $SpectateTarget" -ForegroundColor Green
+      Write-Host "Starting continuous Viewer follow loop (Ctrl+C in this window stops re-assert only)..."
+      $followDeadline = (Get-Date).AddHours(12)
+      $n = 0
+      while ((Get-Date) -lt $followDeadline) {
+        Start-Sleep -Seconds 3
+        $n++
+        try {
+          foreach ($op in @(
+            "gamemode spectator $Username",
+            "execute as $Username run spectate $SpectateTarget"
+          )) {
+            $null = Send-Rcon -RconHost $rconHost -Port $RconPort -Password $RconPassword -Command $op
+          }
+          if ($n -eq 1 -or $n % 20 -eq 0) {
+            Write-Host "VIEWER_FOLLOW sync #$n -> spectate $SpectateTarget"
+          }
+        } catch {
+          Write-Host "VIEWER_FOLLOW error: $_" -ForegroundColor Yellow
+        }
+      }
     }
   } finally {
     Pop-Location

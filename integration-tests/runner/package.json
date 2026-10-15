@@ -18,8 +18,15 @@
     "village-watch": "node scripts/village-watch.js",
     "village-worker": "node scripts/village-worker.js",
     "test:village-unit": "node --test test/village-jobs.test.js",
+    "test:observation-unit": "node --test test/observation-director.test.js test/cinematic.test.js",
+    "test:nightshift-unit": "node --test test/cinematic.test.js test/director-fsm.test.js test/metrics.test.js test/motion.test.js test/survival.test.js test/focus.test.js test/consult-and-money.test.js test/terrain.test.js test/neural-policy.test.js",
+    "observe-e2e": "node scripts/observe-e2e.js",
+    "aiworld:train": "node scripts/aiworld-train.js",
+    "aiworld:train:steve": "node scripts/aiworld-train.js --agent Steve",
+    "aiworld:train:alex": "node scripts/aiworld-train.js --agent Alex",
     "test:ai-world-unit": "node --test test/ai-world.test.js",
     "test:construction-unit": "node --test test/construction-quality.test.js",
+    "analyze-worker-log": "node scripts/analyze-worker-log.js",
     "construction-scenarios": "node scripts/construction-scenarios.js",
     "lint": "biome check .",
     "lint:fix": "biome check --write .",
@@ -31,6 +38,7 @@
     "test:mutation:dsl": "stryker run --mutate lib/dsl.js"
   },
   "dependencies": {
+    "@daniel730/aiworld": "git+https://github.com/Daniel730/aiworld.git#master",
     "@modelcontextprotocol/sdk": "^1.12.1",
     "@opentelemetry/api": "^1.9.0",
     "@opentelemetry/context-async-hooks": "^1.30.1",

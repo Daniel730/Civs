@@ -207,15 +207,10 @@ function workCoords(origin, step) {
         place: null,
       };
     case 'guard': {
-      // Orbit on the apron ring (outside barracks walls), integer blocks only.
-      const ring = SITE_FOOTPRINT.barracks + 2;
-      const stand = floorStand(
-        ox + Math.cos(tick * 0.7) * ring,
-        oy + 1,
-        oz + Math.sin(tick * 0.7) * ring
-      );
+      // Stand on the barracks apron (stable — no orbit). The bot defends in place; the
+      // camera's orbit shot conveys motion, not the bot itself.
       return {
-        stand,
+        stand: apronStand(ox, oy, oz, Math.min(SITE_FOOTPRINT.barracks, 5), 2),
         target: { x: Math.floor(ox), y: oy + 1, z: Math.floor(oz) },
         place: null,
       };
@@ -236,11 +231,11 @@ function workCoords(origin, step) {
         cleanup: true,
       };
     default: {
-      const a = tick * 0.55;
-      const ring = SITE_FOOTPRINT.center + 5;
+      // Unknown job: stand on a stable apron position (never orbit — orbiting reads as
+      // "walking in circles"). The camera's orbit shot conveys motion instead.
       return {
-        stand: floorStand(origin.x + Math.cos(a) * ring, oy + 1, origin.z + Math.sin(a) * ring),
-        target: { x: origin.x, y: oy, z: origin.z },
+        stand: apronStand(origin.x, oy, origin.z, Math.min(footprint, 5), 2),
+        target: { x: Math.floor(origin.x), y: oy, z: Math.floor(origin.z) },
         place: null,
       };
     }

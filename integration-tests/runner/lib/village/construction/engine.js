@@ -73,34 +73,21 @@ async function construct(opts) {
       // Prefer capability; fall back to transaction set (logged).
       const mat = block.material;
       try {
-        if (harness.cap.giveItem)
-          await harness.cap.giveItem(actorName, String(mat).toUpperCase(), 4);
         if (harness.cap.lookAt) await harness.cap.lookAt(actorName, block.x, block.y, block.z);
         let oldBlock = 'AIR';
         if (harness.block && harness.block.at) {
           oldBlock = await harness.block.at(block.x, block.y, block.z, world);
         }
         const pl = await harness.cap.placeBlock(actorName, block.x, block.y, block.z, mat);
-        if (pl && pl.success) {
-          await tx.setBlock({
-            x: block.x,
-            y: block.y,
-            z: block.z,
-            newBlock: mat,
-            oldBlock,
-            reason: `role:${block.role}`,
-            apply: false,
-          });
-        } else {
-          await tx.setBlock({
-            x: block.x,
-            y: block.y,
-            z: block.z,
-            newBlock: mat,
-            oldBlock,
-            reason: `role:${block.role}:fallback`,
-          });
-        }
+        await tx.setBlock({
+          x: block.x,
+          y: block.y,
+          z: block.z,
+          newBlock: mat,
+          oldBlock,
+          reason: `role:${block.role}:${pl && pl.success ? 'place' : 'place_failed'}`,
+          apply: false,
+        });
       } catch {
         await tx.setBlock({
           x: block.x,
@@ -108,6 +95,7 @@ async function construct(opts) {
           z: block.z,
           newBlock: mat,
           reason: `role:${block.role}:error_fallback`,
+          apply: false,
         });
       }
     } else {

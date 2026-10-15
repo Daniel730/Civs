@@ -61,7 +61,7 @@ Every capability returns structured JSON (via `TEST-RESULT json=…`):
 
 Rules:
 
-- Never return fake success.
+2. Runner `capabilities.js` + scenario covering break/sneak/attack/observe; revise if probes diverge from Paper API.
 - Only expose actions verified against Paper API and/or live server.
 - Capabilities that need an online player fail with `reason=player_offline` if absent.
 
@@ -92,7 +92,7 @@ Rules:
 ## Roadmap (priority order)
 
 ### P0 — Safety
-- Isolated testserver only; never destructive prod experiments.
+4. Expand: hotbar select, interact, container open after probe evidence exists.
 - Explicit capability failures; evidence bundles on scenario fail.
 
 ### P1 — Capability core (now)
