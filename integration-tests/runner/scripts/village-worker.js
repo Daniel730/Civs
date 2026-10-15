@@ -51,12 +51,50 @@ const STATE_FILE = path.join(REPORTS, 'village-worker-state.json');
 const MEMORY_PATH = path.join(REPORTS, 'construction-memory.json');
 
 /**
+ * Probe the block at (x,y,z) and return its material id (lowercase) or null.
+ * Read-only — uses the same `execute if block` probe as execute.js#findNearestDryLand.
+ */
+async function blockAt(harness, x, y, z) {
+  for (const m of ['air', 'water', 'grass_block', 'dirt', 'sand', 'stone', 'oak_planks', 'cobblestone', 'snow_block', 'podzol', 'coarse_dirt', 'mycelium', 'oak_fence', 'dirt_path', 'grass_path']) {
+    try {
+      const r = await harness.raw(`execute in minecraft:overworld if block ${Math.floor(x)} ${Math.floor(y)} ${Math.floor(z)} minecraft:${m}`);
+      if (r && String(r).toLowerCase().includes('test passed')) return m;
+    } catch (_) { /* best effort */ }
+  }
+  return null;
+}
+
+/**
+ * Find the nearest standable (non-water, non-air) block within `radius` of (x,z) at column y.
+ * Used so safeWalk never paths INTO water (the "GTA SA bug" / riverbank loop). Read-only probe.
+ */
+async function nearestDryLand(harness, x, z, y, radius = 10) {
+  const dry = ['grass_block', 'dirt', 'sand', 'stone', 'cobblestone', 'oak_planks', 'snow_block', 'podzol', 'coarse_dirt', 'mycelium', 'dirt_path', 'grass_path'];
+  let best = null, bestDist = Infinity;
+  for (let dx = -radius; dx <= radius; dx++) {
+    for (let dz = -radius; dz <= radius; dz++) {
+      const dist = Math.abs(dx) + Math.abs(dz);
+      if (dist >= bestDist) continue;
+      const px = Math.floor(x) + dx, pz = Math.floor(z) + dz;
+      const foot = await blockAt(harness, px, y, pz);
+      const head = await blockAt(harness, px, y + 1, pz);
+      if (foot && dry.includes(foot) && head === 'air') { best = { x: px + 0.5, y, z: pz + 0.5 }; bestDist = dist; }
+    }
+  }
+  return best;
+}
+
+/**
  * safeWalk — stable locomotion wrapper around walkTo (server-side A* walk_path).
  * Guarantees: (a) never teleports (allowTeleport:false), (b) uses walk_path hops for any
  * distance (low recoverDistance) so the agent actually travels instead of blinking,
  * (c) anti-stuck: if walk_path stalls/falls back to legacy stepping, retries the goal with
- * small standable offsets (±2, ±4) before giving up. This kills the "teleporting, walking in
- * circles, hitting walls, falling in holes, climbing fences" stupidity from greedy-step fallbacks.
+ * standable offsets (±2..±6, diagonals) before giving up, (d) WATER-AWARE: if the target cell
+ * (or the body's current footing) is water, re-route to the nearest dry land so Steve stops
+ * looping on the riverbank, (e) HOP-BACK: on a `stuck` result, insert an intermediate waypoint
+ * halfway to the goal and retry (real progress instead of spinning on the same blocked cell).
+ * This kills the "teleporting, walking in circles, hitting walls, falling in holes, climbing
+ * fences, looping on water" stupidity from greedy-step fallbacks.
  */
 async function safeWalk(harness, actorName, stand, opts = {}) {
   const baseOpts = Object.assign(
@@ -64,19 +102,27 @@ async function safeWalk(harness, actorName, stand, opts = {}) {
     opts,
     { allowTeleport: false } // HARD: safeWalk NEVER teleports — locomotion must be real travel
   );
+
+  // (d) WATER-AWARE: never path into a submerged target cell. Re-route to dry land nearby.
+  const targetFoot = await blockAt(harness, stand.x, stand.y, stand.z).catch(() => null);
+  let goal = { x: stand.x, y: stand.y, z: stand.z };
+  if (targetFoot === 'water') {
+    const dry = await nearestDryLand(harness, stand.x, stand.z, stand.y, 10);
+    if (dry) { goal = dry; }
+  }
+
+  // Expanded offset ring: cardinal ±2/±4/±6 plus diagonals. Larger ring contours bigger obstacles.
   const offsets = [
     [0, 0],
-    [2, 0],
-    [-2, 0],
-    [0, 2],
-    [0, -2],
-    [3, 3],
-    [-3, -3],
+    [2, 0], [-2, 0], [0, 2], [0, -2],
+    [4, 0], [-4, 0], [0, 4], [0, -4],
+    [3, 3], [-3, -3], [3, -3], [-3, 3],
+    [6, 0], [-6, 0], [0, 6], [0, -6],
   ];
   let last = null;
   for (const [dx, dz] of offsets) {
-    const goal = { x: stand.x + dx, y: stand.y, z: stand.z + dz };
-    const w = await walkTo(harness, actorName, goal, baseOpts).catch(() => ({
+    const g = { x: goal.x + dx, y: goal.y, z: goal.z + dz };
+    const w = await walkTo(harness, actorName, g, baseOpts).catch(() => ({
       success: false,
       reason: 'walk_threw',
       navigator: 'error',
@@ -85,6 +131,24 @@ async function safeWalk(harness, actorName, stand, opts = {}) {
     const badNavigator = w.navigator === 'walk_step' || w.navigator === 'walk_step_fallback' || w.navigator === 'recovery_teleport';
     if (w.success && !badNavigator) {
       return Object.assign({ recoveredOffset: dx || dz ? [dx, dz] : null }, w);
+    }
+    // (e) HOP-BACK on stuck: insert an intermediate waypoint halfway to the goal and retry once.
+    if (w.reason === 'stuck' || w.navigator === 'walk_path_hops') {
+      try {
+        const me = await harness.cap.observe(actorName);
+        const md = (me && me.data) || {};
+        if (typeof md.x === 'number') {
+          const mid = { x: md.x + (g.x - md.x) * 0.5, y: g.y, z: md.z + (g.z - md.z) * 0.5 };
+          const wb = await walkTo(harness, actorName, mid, baseOpts).catch(() => ({ success: false }));
+          if (wb.success && wb.navigator !== 'walk_step' && wb.navigator !== 'recovery_teleport') {
+            const w2 = await walkTo(harness, actorName, g, baseOpts).catch(() => ({ success: false }));
+            if (w2.success && w2.navigator !== 'walk_step' && w2.navigator !== 'recovery_teleport') {
+              return Object.assign({ recoveredOffset: [dx, dz], hopBack: true }, w2);
+            }
+            last = w2;
+          }
+        }
+      } catch (_) { /* best effort */ }
     }
   }
   return last || { success: false, reason: 'all_offsets_failed', navigator: 'none' };
@@ -111,6 +175,8 @@ const cfg = {
     y: Number.parseInt(process.env.VILLAGE_Y || '80', 10),
     z: Number.parseInt(process.env.VILLAGE_Z || '5200', 10),
   },
+  // Surface-fallback: find a safe surface Y at origin if the default is unsafe
+  surfaceFallback: process.env.SURFACE_FALLBACK === '1',
   intervalMs: Number.parseInt(process.env.WORKER_MS || '6000', 10),
   enableHelper: process.env.ENABLE_HELPER === '1',
   viewerName: process.env.VIEWER_NAME || 'Viewer',
@@ -164,11 +230,16 @@ function loadState() {
           // Old broken shape — discard; the next Ollama call (or deterministic fallback) refills it.
           s.cachedDecision = null;
         }
+        // C1 (2026-08-18): per-site nav-failure counter so unreachable waypoints get invalidated
+        // (anti "walks in circles"). Persisted so the block survives worker restarts.
+        s.siteFails = s.siteFails || {};
+        s.blocked = s.blocked || {};
         return s;
   } catch (_) {
     return {
       tick: 0,
       blocked: {},
+      siteFails: {},
       completedPlaces: {},
       actions: 0,
       failCounts: {},
@@ -182,8 +253,119 @@ function saveState(state) {
   fs.writeFileSync(STATE_FILE, JSON.stringify(state, null, 2));
 }
 
-async function sleep(ms) {
+function sleep(ms) {
   return new Promise((r) => setTimeout(r, ms));
+}
+
+/**
+ * Adjust origin to a safe surface Y coordinate if surfaceFallback is enabled.
+ * This prevents Steve from spawning in mid-air or inside blocks in a normal world.
+ */
+async function adjustOriginToSurface(harness, cfg) {
+  // FASE 1 (2026-08-18): NO surface probing that moves the NPC. The old code called
+  // findSurfaceY (which depends on `execute if block`, BROKEN on CivsTestHarness -> always
+  // "Test passed") and used the result to teleport Steve onto a (often floating/ocean)
+  // coordinate. We no longer teleport on spawn, so this function must NOT alter the origin.
+  // The real spawn position is adopted later from harness.cap.observe() in the continuity
+  // block (see main(): continuity_origin). Keep cfg.origin untouched here.
+  if (!cfg.surfaceFallback) {
+    return cfg.origin;
+  }
+  log({
+    status: 'INFO',
+    action: 'adjust_origin_to_surface',
+    note: 'disabled_in_fase1_no_teleport',
+    origin: { ...cfg.origin },
+    reason: 'surface_fallback_enabled_but_no_spawn_teleport',
+  });
+  return cfg.origin;
+}
+
+/**
+ * Deterministic mode: record observations to JSONL dataset for offline learning.
+ * Each observation includes: timestamp, actor, position, inventory, world state, decision, outcome.
+ * Used for invariants and error detection (DETERMINISTIC_MODE=1).
+ */
+async function recordDeterministicObservation(harness, actorName, state, decision, outcome) {
+  if (process.env.DETERMINISTIC_MODE !== '1') return;
+
+  const observed = await harness.cap.observe(actorName).catch(() => null);
+  const pos = observed && observed.data ? observed.data : {};
+
+  const observation = {
+    timestamp: new Date().toISOString(),
+    actor: actorName,
+    tick: state.tick,
+    position: {
+      x: pos.x ? Number(pos.x) : null,
+      y: pos.y ? Number(pos.y) : null,
+      z: pos.z ? Number(pos.z) : null,
+    },
+    health: pos.health ? Number(pos.health) : null,
+    inventory: pos.inventory || [],
+    held: pos.held || null,
+    decision,
+    outcome,
+    world: {
+      light: pos.lightLevel ? Number(pos.lightLevel) : null,
+      biome: pos.biome || null,
+    },
+  };
+
+  const datasetPath = path.join(REPORTS, 'aiworld-deterministic-dataset.jsonl');
+  fs.mkdirSync(REPORTS, { recursive: true });
+  fs.appendFileSync(datasetPath, JSON.stringify(observation) + '\n');
+
+  // Keep only last 1000 observations to prevent disk bloat
+  const all = fs.readFileSync(datasetPath, 'utf8').split('\n').filter((l) => l.trim());
+  if (all.length > 1000) {
+    fs.writeFileSync(datasetPath, all.slice(-1000).join('\n') + '\n');
+  }
+}
+
+/**
+ * Detect invariants and errors from deterministic dataset.
+ * Returns array of invariant violations (DETERMINISTIC_MODE=1).
+ */
+async function detectInvariants() {
+  if (process.env.DETERMINISTIC_MODE !== '1') return [];
+
+  const datasetPath = path.join(REPORTS, 'aiworld-deterministic-dataset.jsonl');
+  if (!fs.existsSync(datasetPath)) return [];
+
+  const lines = fs.readFileSync(datasetPath, 'utf8').split('\n').filter((l) => l.trim());
+  const observations = lines.map((l) => JSON.parse(l));
+  const violations = [];
+
+  // Invariant 1: Health should never drop to 0 without a death event.
+  for (let i = 1; i < observations.length; i++) {
+    const prev = observations[i - 1];
+    const curr = observations[i];
+    if (prev.health > 0 && curr.health === 0) {
+      violations.push({
+        type: 'health_drop_to_zero',
+        actor: curr.actor,
+        tick: curr.tick,
+        position: curr.position,
+        priorHealth: prev.health,
+      });
+    }
+  }
+
+  // Invariant 2: Inventory should not lose items without an action.
+  for (let i = 1; i < observations.length; i++) {
+    const prev = observations[i - 1];
+    const curr = observations[i];
+    if (prev.inventory && curr.inventory) {
+      const prevCount = prev.inventory.reduce((sum, item) => sum + (item.amount || 0), 0);
+      const currCount = curr.inventory.reduce((sum, item) => sum + (item.amount || 0), 0);
+      if (currCount < prevCount - 5) {
+        violations.push({ type: 'inventory_loss_without_action', actor: curr.actor, tick: curr.tick });
+      }
+    }
+  }
+
+  return violations;
 }
 
 /**
@@ -1297,29 +1479,13 @@ async function connectActor(harness, name, attempt = 1) {
     return { actor, ok: false, reason: actor.reason };
   }
   await actor.grantOp();
-      // BOOTSTRAP ONLY (login placement, not part of the work loop): move the fresh session to
-      // the village. No gamemode switch, no gear handout — it stays in the server's survival mode.
-      // Player-like: probe the REAL surface first (world is not flat), then stand on it without
-      // submerging. findSurfaceY now treats water as non-solid, so groundY is the SOLID block under
-      // any water above (e.g. a river over dirt). We then climb until the NPC's HEAD (groundY+2) is
-      // in air — otherwise Steve lands in shallow water head-first and starts drowning (the
-      // "Jesus drowning while looking up" symptom). Bounded to ±6 climbs so we never overshoot into
-      // mid-air on a tall overhang.
-      const groundY = await findSurfaceY(harness, cfg.origin.x, cfg.origin.z, {
-        fallbackY: cfg.origin.y,
-        maxY: cfg.origin.y + 24,
-        minY: cfg.origin.y - 24,
-      });
-      let standY = groundY + 1;
-      // Climb out of water: if the NPC's head block (standY+1) is water/cave_air, keep stepping
-      // up until the head is in plain air OR we've climbed 6 blocks (give up — surface is too
-      // submerged to stand safely here).
-      for (let i = 0; i < 6; i++) {
-        const headAir = !(await blockIs(harness, cfg.origin.x, standY + 1, cfg.origin.z, 'water'));
-        if (headAir) break;
-        standY += 1;
-      }
-      await actor.teleport(cfg.origin.x, standY, cfg.origin.z);
+      // FASE 1 (2026-08-18): NO spawn teleport. The NPC stays exactly where the server
+      // placed it on login (natural spawn) — player-like. We do NOT grab it and yank it to
+      // VILLAGE_X/Y/Z, and we do NOT probe a (broken) surface and teleport there. The old
+      // code used findSurfaceY (which depends on `execute if block`, broken on CivsTestHarness
+      // -> always "Test passed") and then teleported Steve to a floating/ocean coordinate.
+      // Gravity is the server's job now: if spawn is in air, Steve falls; if in water, the
+      // survive/flee layer already handles egress. No godmode "save" teleport.
       const alive = await ensureAlive(harness, name);
       return { actor, ok: true, alive };
     }
@@ -1550,12 +1716,45 @@ async function main() {
   // }
   log({ status: 'PASS', action: 'init', reason: 'RCON autenticado com sucesso' });
 
+  // Adjust origin to safe surface before connecting the actor (SURFACE_FALLBACK=1).
+  cfg.origin = await adjustOriginToSurface(harness, cfg);
+
   const primary = await connectActor(harness, cfg.actorName);
   if (!primary.ok) {
     log({ status: 'BLOCKED', action: 'actor_connect', reason: primary.reason });
     process.exit(2);
   }
   log({ status: 'PASS', action: 'actor_online', player: cfg.actorName });
+
+  // Adopt the NPC's real world position as origin (shared by startup + periodic re-adopt).
+  function adoptOrigin(od, reason) {
+    if (!(Number.isFinite(od.x) && Number.isFinite(od.y) && Number.isFinite(od.z))) {
+      if (reason === 'startup') {
+        log({ status: 'DEGRADED', action: 'continuity_origin', reason: 'observe_invalid', od });
+      }
+      return;
+    }
+    const prev = cfg.origin;
+    cfg.origin = { x: Math.floor(od.x), y: Math.floor(od.y), z: Math.floor(od.z) };
+    state.lastObservedPos = cfg.origin;
+    state.lastObservedAt = Date.now();
+    // C1/C3 continuity fix (2026-08-18): when the adopted origin MOVES far from the old one
+    // (Steve respawned / walked away / world reset), the old per-site nav-fail blocks and
+    // waypoint affinity are stale -> clear them so the NPC re-explores from the new spot
+    // instead of staying "stranded" near a ghost origin.
+    if (prev && (Math.abs(prev.x - cfg.origin.x) > 32 || Math.abs(prev.z - cfg.origin.z) > 32)) {
+      state.siteFails = {};
+      state.blocked = state.blocked || {};
+      // keep only legitimate non-nav blocks (e.g. placeregion completion exclusivity)
+      for (const k of Object.keys(state.blocked)) {
+        if (k === 'inn' || k === 'barracks') delete state.blocked[k];
+      }
+      log({ status: 'PASS', action: 'origin_readopted', reason, from: prev, to: cfg.origin, clearedNavBlocks: true });
+    } else if (reason === 'startup') {
+      log({ status: 'PASS', action: 'continuity_origin', reason: 'adopted_current_position', origin: cfg.origin });
+    }
+    try { saveState(state); } catch (_) { /* best-effort */ }
+  }
 
   // CONTINUITY ACROSS RESTART: pull the NPC's current world position from RCON and adopt it
   // as the new origin so the next work tick builds around where Steve already is (instead of
@@ -1564,21 +1763,7 @@ async function main() {
   try {
     const posRes = await harness.cap.observe(cfg.actorName);
     const od = (posRes && posRes.data) || {};
-    if (Number.isFinite(od.x) && Number.isFinite(od.y) && Number.isFinite(od.z)) {
-      cfg.origin = {
-        x: Math.floor(od.x),
-        y: Math.floor(od.y),
-        z: Math.floor(od.z),
-      };
-      state.lastObservedPos = cfg.origin;
-      state.lastObservedAt = Date.now();
-      log({
-        status: 'PASS',
-        action: 'continuity_origin',
-        reason: 'adopted_current_position',
-        origin: cfg.origin,
-      });
-    }
+    adoptOrigin(od, 'startup');
   } catch (e) {
     log({
       status: 'DEGRADED',
@@ -1809,6 +1994,23 @@ async function main() {
     const _t0 = Date.now();
     const _phases = {};
     const _mark = (name) => { _phases[name] = Date.now() - _t0; };
+    // P2 (2026-08-18): RCON resilience. If the socket dropped (server restart / transient
+    // RCON blip), try to re-establish BEFORE running the tick. If still down, skip this tick
+    // gracefully (log WARN, do not spam FAIL work_tick) and let the next interval retry.
+    // This keeps the worker alive across RCON outages instead of wedging in a "Not connected"
+    // loop or crashing on null.send.
+    try {
+      const connected = await harness.ensureConnected();
+      if (!connected) {
+        log({ status: 'WARN', action: 'rcon_reconnecting', worker: who, tick: state.tick });
+        busy = false;
+        return;
+      }
+    } catch (_) {
+      log({ status: 'WARN', action: 'rcon_reconnect_failed', worker: who, tick: state.tick });
+      busy = false;
+      return;
+    }
     // Phase 2: flush persistent agent memory to disk periodically so NPCs remember
     // across restarts. Done FIRST (before the survival/try branch) so it runs even when
     // the agent is in danger and the loop returns early after the survival action.
@@ -1821,6 +2023,17 @@ async function main() {
           /* best-effort */
         }
       }
+    }
+    // C1/C3 continuity fix (2026-08-18): periodically re-adopt Steve's real position as origin.
+    // If he respawned / wandered / the world was reset, the persisted origin goes stale and the
+    // monitor flags him "stranded" (origin ~5200 blocks from his real spot) -> RECOVER loop that
+    // never works. Re-adopting keeps origin == where he actually is, so work proceeds.
+    if (state.tick % 30 === 0) {
+      try {
+        const posRes = await harness.cap.observe(cfg.actorName);
+        const od = (posRes && posRes.data) || {};
+        adoptOrigin(od, 'periodic');
+      } catch (_) { /* best-effort */ }
     }
     const who = helper && helper.ok && state.tick % 2 === 0 ? cfg.helperName : cfg.actorName;
     try {
@@ -1989,6 +2202,15 @@ async function main() {
             handled: !!(sv && sv.handled),
             steps: sv && sv.steps ? JSON.stringify(sv.steps) : null,
           });
+          // C-FIX (2026-08-18): if survival floated the NPC to dry land, adopt that point as the
+          // new work origin so the next tick doesn't flee straight back toward the water that
+          // was the old origin (drown->teleport->drown loop). Only moves origin when we actually
+          // landed on solid ground, not on a blind +2 nudge.
+          if (sv && sv.safePoint) {
+            cfg.origin = { x: sv.safePoint.x, y: sv.safePoint.y, z: sv.safePoint.z };
+            if (sm && sm.setWorkOrigin) sm.setWorkOrigin(who, cfg.origin);
+            log({ status: 'INFO', action: 'origin_relocated', worker: who, to: cfg.origin, reason: 'surfaced_to_dry_land' });
+          }
           if (sv && sv.handled) {
             observeMetric(METRIC.AIWORLD_POLICY_DISAGREEMENT, { agent: who, mode: 'survival_preempt' });
             saveState(state);
@@ -2420,6 +2642,10 @@ async function main() {
       const result = runJobResult;
       observeMetric(METRIC.ACTION_LATENCY, Date.now() - actionStart, { actor: who, job: step.job });
 
+      // Deterministic-mode dataset recording (DETERMINISTIC_MODE=1). Captures the
+      // decision (step) + outcome (result) for offline learning & invariant checks.
+      await recordDeterministicObservation(harness, who, state, step, result).catch(() => {});
+
       let agentPos = null;
       let afterHealthPct = assessment.healthPct != null ? assessment.healthPct : 1;
       try {
@@ -2624,6 +2850,13 @@ async function main() {
           ms: dur,
           phases: _phases,
         });
+      }
+      // Deterministic-mode invariant scan (DETERMINISTIC_MODE=1). Non-fatal: only logs.
+      if (process.env.DETERMINISTIC_MODE === '1') {
+        const v = await detectInvariants().catch(() => []);
+        if (v && v.length) {
+          log({ status: 'WARN', action: 'deterministic_invariants', count: v.length, violations: v.slice(0, 10) });
+        }
       }
       busy = false;
     }

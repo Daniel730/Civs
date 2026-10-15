@@ -89,7 +89,7 @@
                  open-ended range below to always resolve the latest 26.1.2 build. If this range
                  fails to resolve, replace it with an explicit "26.1.2.build.N" version from
                  https://repo.papermc.io/repository/maven-public/io/papermc/paper/paper-api/ -->
-            <version>26.1.2.build.72-stable</version>
+            <version>26.2.build.121-stable</version>
             <scope>provided</scope>
         </dependency>
         <dependency>

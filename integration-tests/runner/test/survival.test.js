@@ -133,6 +133,16 @@ describe('SurvivalMonitor', () => {
     assert.equal(a.deathCause, 'fall');
   });
 
+  it('F2: classifies SUFFOCATION as a hard hazard (ESCAPE) so the NPC moves out instead of healing in place', () => {
+    const m = new SurvivalMonitor({ actor: 'Steve', workOrigin: WORK });
+    // coords near WORK so it is NOT flagged 'stranded' (out_of_work_area would mask suffocation)
+    const a = m.assess(obs({ health: 12, max_health: 20, last_damage_cause: 'SUFFOCATING', x: 5201, y: 80, z: 5201 }));
+    assert.ok(a.threats.includes('suffocating'), 'suffocating must be in threats');
+    assert.equal(a.state, 'ESCAPE', 'suffocation must escalate to ESCAPE (move out)');
+    assert.equal(a.action.kind, 'flee', 'action must be flee (move out), not heal');
+    assert.equal(a.action.reason, 'suffocating');
+  });
+
   it('counts each death once with a bucketed cause', () => {
     const m = new SurvivalMonitor({ actor: 'Steve', workOrigin: WORK });
     m.assess(obs({ deaths: 0 }));
@@ -246,7 +256,7 @@ describe('executeSurvival', () => {
     assert.equal(h.calls.length, 0);
   });
 
-  it('respawns and returns home on recover', async () => {
+  it('respawns WITHOUT teleporting back to origin on recover (player-like)', async () => {
     const h = fakeHarness();
     const out = await executeSurvival(
       h,
@@ -255,8 +265,8 @@ describe('executeSurvival', () => {
       { workOrigin: WORK }
     );
     assert.equal(out.handled, true);
-    assert.ok(h.calls.some((c) => c[0] === 'respawn'));
-    assert.ok(h.calls.some((c) => c[0] === 'teleport'));
+    assert.ok(h.calls.some((c) => c[0] === 'respawn'), 'should respawn');
+    assert.ok(!h.calls.some((c) => c[0] === 'teleport'), 'recover must NOT teleport back to origin (player-like: adopt server spawn instead)');
   });
 
   it('attacks on defend (diamond sword)', async () => {

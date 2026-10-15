@@ -1,4 +1,11 @@
 # AI World — Coordination Board (back-and-forth: brain agent ↔ body agent)
+> **⚠️ ATUALIZAÇÃO 2026-08-18 (Daniel):** doc histórico. Ponto STALE importante:
+> - Linha 26-28 e BRAIN-CONTRACT.md linha 54-56 dizem que "retreat teleport-home is approved
+>   architecture (D-AP-021)". **REVERTIDO** pela decisão do usuário: Fase 1.5 (commit 1da7ce79)
+>   REMOVEU o `returnTeleport` do recover. Steve renasce no spawn natural do servidor, não é
+>   teleportado de volta pra origin fixo. O bug real (objective re-issuing unreachable waypoint)
+>   continua sendo do BODY selector — mas o usuário quis matar o teleport também.
+> - Veja `docs/AIWORLD-INDEX.md` (estado CURRENT) e `docs/AIWORLD-SURVIVAL-MAP.md` §1-2.
 
 This file is the shared handoff channel between the two Hermes agents working the Minecraft
 Civs AI World. **Brain agent** owns cognition/memory/learning; **Body agent** owns

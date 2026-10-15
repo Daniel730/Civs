@@ -13,7 +13,43 @@ const { METRIC, countMetric, timeMetric } = require('../metrics');
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 /**
- * @param {object} harness
+ * Find the nearest dry-land block (grass/dirt/sand/etc, NOT water/air) within `radius`
+ * of (x,z). Probes columns from the body's current height downward to y=55 so it works on
+ * raised riverbanks (the old version only checked y=60 and returned y=61, which landed the
+ * NPC back IN the water and caused an infinite drown->teleport->drown loop). Returns the
+ * surface y (top of the dry block) so a teleport drops the body ON solid ground, not in liquid.
+ * Used as a player-like "get out of the water" recovery when the pathfinder cannot navigate liquid.
+ */
+async function findNearestDryLand(harness, x, z, radius = 16, fromY = 64) {
+  const dry = ['grass_block', 'dirt', 'sand', 'stone', 'cobblestone', 'oak_planks', 'snow_block', 'podzol', 'coarse_dirt', 'mycelium', 'dirt_path', 'grass_path'];
+  let best = null;
+  let bestDist = Infinity;
+  const topY = Math.max(70, Math.min(90, Math.floor(fromY) + 4));
+  for (let dx = -radius; dx <= radius; dx++) {
+    for (let dz = -radius; dz <= radius; dz++) {
+      const dist = Math.abs(dx) + Math.abs(dz);
+      if (dist >= bestDist) continue;
+      const px = Math.floor(x) + dx;
+      const pz = Math.floor(z) + dz;
+      // Scan downward from topY looking for the first dry foot block with a clear head above it.
+      for (let y = topY; y >= 55; y--) {
+        let isDry = false;
+        for (const m of dry) {
+          const r = await harness.raw(`execute if block ${px} ${y} ${pz} minecraft:${m}`).catch(() => '');
+          if (!r.includes('Test failed')) { isDry = true; break; }
+        }
+        if (!isDry) continue;
+        const head = await harness.raw(`execute if block ${px} ${y + 1} ${pz} minecraft:air`).catch(() => '');
+        const headClear = head.includes('Test passed');
+        if (headClear) { best = { x: px + 0.5, y: y + 1, z: pz + 0.5 }; bestDist = dist; break; }
+      }
+    }
+  }
+  return best;
+}
+
+
+/**
  * @param {string} actorName
  * @param {object} assessment result of SurvivalMonitor#assess
  * @param {{
@@ -33,6 +69,38 @@ async function executeSurvival(harness, actorName, assessment, ctx = {}) {
   // Allow callers (tests) to inject a walk implementation; default to the real one.
   const walkToFn = ctx.walkTo || walkTo;
 
+  // F (2026-08-19): if the body is SUFFOCATING (head wedged in a block, last_damage_cause
+  // 'Suffocating'), move it out FIRST — before heal/recover/retreat logic, which would
+  // otherwise heal/respawn in place and let it keep taking suffocation damage and die.
+  // Trigger from the monitor assessment (now classifies suffocation in threat.js F2) OR a
+  // direct observe — covers every survival state because the check is generic.
+  let suffocating = false;
+  if (action && /SUFFOCAT/i.test(String((action.reason) || ''))) suffocating = true;
+  if (!suffocating) {
+    try {
+      const ob = await cap.observe(actorName).catch(() => null);
+      const od = (ob && ob.data) || {};
+      suffocating = /SUFFOCAT/i.test(String(od.last_damage_cause || '')) || od.suffocating === true;
+    } catch (_) { /* observe may fail */ }
+  }
+  if (suffocating) {
+    const me = await cap.observe(actorName).catch(() => null);
+    const md = (me && me.data) || {};
+    const bodyY = Number.isFinite(md.y) ? md.y : (origin && origin.y) || 64;
+    const land = await findNearestDryLand(harness, md.x != null ? md.x : origin.x, md.z != null ? md.z : origin.z, 16, bodyY);
+    if (land) {
+      await cap.teleport(actorName, land.x, land.y, land.z).catch(() => {});
+      countMetric(METRIC.GOAL_ABANDON, { actor: actorName, reason: 'suffocation_teleport_to_land' });
+      steps.push({ flee: { success: true, navigator: 'surface_teleport', reason: 'suffocating', landedAt: land } });
+    } else {
+      const upY = bodyY + 2; // lift head clear of the block above
+      await cap.teleport(actorName, md.x != null ? md.x : origin.x, upY, md.z != null ? md.z : origin.z).catch(() => {});
+      countMetric(METRIC.GOAL_ABANDON, { actor: actorName, reason: 'suffocation_surface_lift' });
+      steps.push({ flee: { success: true, navigator: 'surface_teleport', reason: 'suffocating_lifted' } });
+    }
+    return { status: 'PASS', handled: true, kind: 'flee', steps, safePoint: land || null };
+  }
+
   return timeMetric(
     METRIC.ACTION_LATENCY,
     { actor: actorName, action: `survival_${action.kind}` },
@@ -44,27 +112,12 @@ async function executeSurvival(harness, actorName, assessment, ctx = {}) {
           await harness.raw(`gamemode survival ${actorName}`);
           await sleep(300);
         }
-        if (origin) {
-          // Respawn drops the bot at world spawn, which can be kilometres away: close the gap,
-          // then walk the last stretch so the arrival still reads as a person arriving.
-          const y = ctx.findSurfaceY
-            ? await ctx.findSurfaceY(origin.x + 3, origin.z + 3)
-            : origin.y;
-          const tp = await cap.teleport(actorName, origin.x + 3, (y || origin.y) + 1, origin.z + 3);
-          steps.push({ returnTeleport: !!(tp && tp.success) });
-          countMetric(METRIC.GOAL_ABANDON, { actor: actorName, reason: 'survival_recover' });
-          const walk = await walkToFn(
-            harness,
-            actorName,
-            { x: origin.x, y: (y || origin.y) + 1, z: origin.z },
-            {
-              arrive: 2.0,
-              timeoutMs: 9000,
-              allowTeleport: false,
-            }
-          );
-          steps.push({ walkHome: { success: walk.success, navigator: walk.navigator } });
-        }
+        // FASE 1.5 (2026-08-18): NO returnTeleport after respawn. The old code teleported the
+        // NPC back to cfg.origin (5200,80,5200) on every death — but origin is a FIXED coordinate
+        // that may be ocean/air in a fresh world, so the NPC kept getting yanked to a bad spot.
+        // Player-like: after respawn the server drops the NPC at its natural spawn; we adopt that
+        // position via continuity_origin on the next tick (harness.cap.observe) instead of forcing
+        // a teleport. No godmode return-to-base.
         return { status: 'PASS', handled: true, kind: 'recover', steps };
       }
 
@@ -82,17 +135,54 @@ async function executeSurvival(harness, actorName, assessment, ctx = {}) {
             await new Promise((r) => setTimeout(r, 250));
             const ob = await cap.observe(actorName).catch(() => null);
             const od = (ob && ob.data) || {};
-            if (od.in_water !== true && od.head_in_water !== true) { surfaced = true; break; }
+            // Trust the server's water flag strictly. Accept either naming the harness uses.
+            const stillInWater = od.in_water === true || od.inWater === true || od.head_in_water === true || od.headInWater === true;
+            if (!stillInWater) { surfaced = true; break; }
           }
           steps.push({ flee: { success: surfaced, navigator: 'swim_up', reason: surfaced ? null : 'still_submerged' } });
-          if (!surfaced) {
-            // Last resort: recovery teleport to safe origin (D-AP-021).
-            const tp = await cap.teleport(actorName, origin.x, origin.y + 1, origin.z);
-            countMetric(METRIC.GOAL_ABANDON, { actor: actorName, reason: 'drown_stuck_recover' });
-            steps.push({ flee: { success: !!(tp && tp.success), navigator: 'recovery_teleport', reason: 'still_submerged' } });
+          // C-FIX (2026-08-18): even if swim_up reported success, RE-CONFIRM with a fresh
+          // observe. The old code trusted `surfaced` and skipped the teleport, leaving Steve
+          // in an infinite swim_up->still_wet loop (the "walking in circles / can't find exit"
+          // symptom). If he is STILL in water after jumping, force the last-resort teleport to
+          // dry land instead of believing the false success.
+          let confirmedDry = surfaced;
+          if (surfaced) {
+            const confirm = await cap.observe(actorName).catch(() => null);
+            const cd = (confirm && confirm.data) || {};
+            confirmedDry = !(cd.in_water === true || cd.inWater === true || cd.head_in_water === true || cd.headInWater === true);
+          }
+          if (!confirmedDry) {
+            // The Paper pathfinder cannot navigate vertically through water, so jump did not
+            // lift the body. Player-like last resort: "climb out" by teleporting to the nearest
+            // dry land within a SMALL radius (≤16 blocks). This is NOT a long-distance jump —
+            // it only frees the NPC from being stuck in water so it can resume real walking.
+            // D-AP-021: teleport only as last resort, and only to escape a stuck/death loop.
+            // FIX (2026-08-18): scan from the body's ACTUAL height (md.y) so on a raised
+            // riverbank we don't teleport to y=61 (which is IN the water) — that caused an
+            // infinite drown->teleport->drown loop. Land on the surface of solid ground.
+            const me = await cap.observe(actorName).catch(() => null);
+            const md = (me && me.data) || {};
+            const bodyY = Number.isFinite(md.y) ? md.y : (origin && origin.y) || 64;
+            const land = await findNearestDryLand(harness, md.x != null ? md.x : origin.x, md.z != null ? md.z : origin.z, 16, bodyY);
+            if (land) {
+              const tp = await cap.teleport(actorName, land.x, land.y, land.z);
+              countMetric(METRIC.GOAL_ABANDON, { actor: actorName, reason: 'water_stuck_teleport_to_land' });
+              steps.push({ flee: { success: !!(tp && tp.success), navigator: 'surface_teleport', reason: 'stuck_in_water', landedAt: land } });
+            } else {
+              // No dry land nearby — lift the body just above the water surface with a clear
+              // head (NOT +10, which dropped it straight back into the river). +2 over current
+              // y is enough to break the submersion so the next tick's swim_up can finish.
+              const upY = bodyY + 2;
+              const tp = await cap.teleport(actorName, md.x != null ? md.x : origin.x, upY, md.z != null ? md.z : origin.z);
+              countMetric(METRIC.GOAL_ABANDON, { actor: actorName, reason: 'drown_surface_teleport' });
+              steps.push({ flee: { success: !!(tp && tp.success), navigator: 'surface_teleport', reason: 'still_submerged' } });
+            }
           }
           await cap.sprint(actorName, false);
-          return { status: 'PASS', handled: true, kind: 'flee', steps };
+          // Report the dry-land point (if any) so the caller can adopt it as the new safe origin
+          // and stop fleeing back toward water on the next tick.
+          const safePoint = (steps.find((s) => s.flee && s.flee.landedAt) || {}).flee;
+          return { status: 'PASS', handled: true, kind: 'flee', steps, safePoint: safePoint ? safePoint.landedAt : null };
         }
         await cap.sprint(actorName, true);
         let fleeTo = origin;
@@ -223,6 +313,7 @@ async function executeSurvival(harness, actorName, assessment, ctx = {}) {
         // teleport/walk_path exist), so we cannot force-feed or heal via commands. The honest,
         // non-spammy behaviour is to move the agent to its safe work origin (already home in most
         // cases — teleport is a no-op then) and let natural regen happen. Never throws.
+        // (Suffocation is already handled at the top of executeSurvival — F 2026-08-19.)
         try {
           await cap.teleport(actorName, origin.x, origin.y + 1, origin.z);
         } catch (_) { /* teleport best-effort */ }

@@ -1,4 +1,10 @@
 # AI World — Brain ↔ Body contract
+> **⚠️ ATUALIZAÇÃO 2026-08-18 (Daniel):** doc histórico. Ponto STALE:
+> - Linha 54-56 diz que o `execute.js` retreat teleporta home (D-AP-021) e que "the objective
+>   must not immediately re-issue the same unreachable waypoint". A 1ª parte foi **REVERTIDA**
+>   (Fase 1.5, commit 1da7ce79: returnTeleport REMOVIDO). A 2ª parte (waypoint re-issue) continua
+>   sendo um GAP real no BODY selector (ver AIWORLD-BODY-MAP.md §2/§5).
+> - Veja `docs/AIWORLD-INDEX.md` para estado CURRENT.
 
 This pins down what the **brain** (cognition, `lib/ai-world/`) emits and what the
 **body** (locomotion/objective-selector, `lib/village/`, `lib/survival/`, `objective-plan.js`)

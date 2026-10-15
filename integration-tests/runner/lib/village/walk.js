@@ -235,34 +235,75 @@ async function walkTo(harness, actorName, stand, opts = {}) {
   // Pre-flight goal shape check: the goal cell must have a clear 2-block-tall column above it
   // (the NPC's body is 2 blocks tall). If the head block is solid (a 1x1 doorway, a low
   // overhang, a fence post directly over the goal), climbing up to the next clear Y prevents
-  // the pathfinder from routing through suffocation. Bounded to +4 so we never overshoot.
-  // This is the "GTA SA bug" workaround for the head-height case the Paper server-side
-  // pathfinder happily walks into.
+  // P0.2 (2026-08-18): PRE-FLIGHT TARGET RESOLUTION.
+  // Old code: if head blocked, bump goal.y upward until it found "air" (while(!isAir) y++).
+  // That is exactly what created y=72 floating targets and the air-terraform bug.
+  // New behavior: resolve a STANDABLE target column instead of blindly searching for air.
+  //   - If the target already sits on valid terrain (support solid + feet/head clear), keep Y.
+  //   - If the target is airborne (no support below), search DOWNWARD for the nearest real
+  //     surface (solid support + clear feet + clear head) within a small horizontal
+  //     neighborhood; if found, use that standing Y. If none, report UNREACHABLE_NO_SUPPORT.
+  // Only active when harness.raw returns server-formatted strings ("Test passed"/"Test
+  // failed"); test mocks / degraded RCON return objects or throw, in which case we skip
+  // pre-flight entirely (best-effort, matching the legacy catch(_) behavior) so navigation
+  // is never blocked by an unreadable probe.
   if (harness.raw) {
+    const probeRaw = async (bx, by, bz) => {
+      const r = await harness.raw(`execute in minecraft:overworld if block ${Math.floor(bx)} ${Math.floor(by)} ${Math.floor(bz)} minecraft:air`);
+      return typeof r === 'string' ? String(r || '').toLowerCase().includes('test passed') : null; // null = unknown
+    };
+    const isAirAt = async (bx, by, bz) => {
+      const v = await probeRaw(bx, by, bz);
+      return v === null ? true : v; // unknown → treat as clear (best-effort)
+    };
+    const standableAt = async (bx, by, bz) => {
+      const feet = await isAirAt(bx, by, bz);
+      const head = await isAirAt(bx, by + 1, bz);
+      const support = !(await isAirAt(bx, by - 1, bz)); // support is solid if NOT air
+      return feet && head && support;
+    };
+    // Only activate the surface-resolution pre-flight when harness.raw actually returns
+    // server-formatted replies ("Test passed"/"Test failed"). Unit-test stubs return
+    // objects or generic strings like "ok", and degraded RCON may throw — in all those
+    // cases we skip pre-flight (best-effort, matching the legacy catch(_) behavior) so
+    // navigation is never blocked by an unreadable probe.
+    let probeReadable = false;
     try {
-      const headBlock = await harness.raw(
-        `execute in minecraft:overworld if block ${Math.floor(goal.x)} ${goal.y + 1} ${Math.floor(goal.z)} minecraft:air`
-      );
-      const headClear = String(headBlock || '').toLowerCase().includes('test passed');
-      if (!headClear) {
-        for (let bump = 1; bump <= 4; bump++) {
-          const tryY = goal.y + bump;
-          const headTry = await harness.raw(
-            `execute in minecraft:overworld if block ${Math.floor(goal.x)} ${tryY + 1} ${Math.floor(goal.z)} minecraft:air`
-          );
-          const footTry = await harness.raw(
-            `execute in minecraft:overworld if block ${Math.floor(goal.x)} ${tryY} ${Math.floor(goal.z)} minecraft:air`
-          );
-          if (
-            String(headTry || '').toLowerCase().includes('test passed') &&
-            String(footTry || '').toLowerCase().includes('test passed')
-          ) {
-            goal.y = tryY;
-            break;
+      const sample = await harness.raw(`execute in minecraft:overworld if block ${Math.floor(goal.x)} ${Math.floor(goal.y)} ${Math.floor(goal.z)} minecraft:air`);
+      probeReadable = typeof sample === 'string' && /test (passed|failed)/i.test(sample);
+    } catch (_) { probeReadable = false; }
+    if (probeReadable) {
+      // Already standable? Keep Y (do not touch it).
+      if (await standableAt(goal.x, goal.y, goal.z)) {
+        // no-op: target is valid as-is
+      } else {
+        // Target is airborne (no support below). Try to resolve a real standing surface
+        // by searching DOWNWARD (and a small horizontal neighborhood). If we find one, snap
+        // to it — this kills the y=72 floating-target bug. If we CANNOT find any standable
+        // column nearby, do NOT fabricate an airborne Y, but ALSO do not hard-block: leave
+        // the original goal and let the server-side walk_path decide reachability. The P0.1
+        // physics guard already prevents any world edit from an invalid body, so a bad
+        // navigation target can never produce a floating build — at worst the walk fails and
+        // the job re-plans. Blocking here was over-aggressive on irregular/narrow terrain.
+        let resolved = null;
+        for (let dy = 0; dy <= 12; dy++) {
+          if (await standableAt(goal.x, goal.y - dy, goal.z)) { resolved = { x: goal.x, y: goal.y - dy, z: goal.z }; break; }
+        }
+        if (!resolved) {
+          const nb = [[1,0],[-1,0],[0,1],[0,-1],[1,1],[-1,-1],[1,-1],[-1,1]];
+          for (const [dx, dz] of nb) {
+            for (let dy = 0; dy <= 6; dy++) {
+              if (await standableAt(goal.x + dx, goal.y - dy, goal.z + dz)) { resolved = { x: goal.x + dx, y: goal.y - dy, z: goal.z + dz }; break; }
+            }
+            if (resolved) break;
           }
         }
+        if (resolved) {
+          goal.x = resolved.x; goal.y = resolved.y; goal.z = resolved.z;
+        }
+        // else: leave goal as-is; walk_path will report unreachable if truly invalid.
       }
-    } catch (_) { /* pre-flight is best effort */ }
+    }
   }
 
   const t0 = Date.now();
@@ -305,11 +346,18 @@ async function walkTo(harness, actorName, stand, opts = {}) {
     } else {
       // B3: no-teleport mode. Walk the gap in foot-steps via intermediate waypoints so the
       // agent actually travels (and is observable) instead of teleporting as "locomotion".
-      // Each hop is within A* range; if any hop stalls we report stuck honestly.
+      // Each hop is within A* range. FIX (2026-08-18): tolerate PARTIAL hops — a hop that
+      // moved the body but didn't fully arrive is still progress; keep walking from where we
+      // stopped. Only give up (honest `stuck`) when a hop made ZERO progress, or we run out
+      // of time. Hazard aborts (in_water/suffocating) try a LATERAL hop to skirt the hazard
+      // instead of bailing — this is what stopped Steve from looping on the riverbank.
       const stepDist = Math.max(8, Math.floor(recoverDistance * 0.8));
       let from = cur;
       let remaining = initial;
-      while (remaining > recoverDistance) {
+      let safetyHops = 0;
+      const MAX_HOPS = 200; // hard ceiling so a pathological map can't loop forever
+      while (remaining > recoverDistance && safetyHops < MAX_HOPS) {
+        safetyHops += 1;
         const dx = goal.x - from.x;
         const dz = goal.z - from.z;
         const len = Math.sqrt(dx * dx + dz * dz) || 1;
@@ -318,23 +366,64 @@ async function walkTo(harness, actorName, stand, opts = {}) {
           y: goal.y,
           z: Math.floor(from.z + (dz / len) * stepDist) + 0.5,
         };
+        const beforeHop = from;
         const leg = await runPathLeg(harness, actorName, hop, { ...opts, timeoutMs: 6000 });
         actions.push({ walkPathHop: { status: leg.status, reason: leg.reason, to: hop } });
-        if (leg.status !== 'ARRIVED' && leg.status !== 'UNSUPPORTED') {
+
+        const afterHop = posFromObserve(await cap.observe(actorName)) || from;
+        const moved = horizDist(beforeHop, afterHop);
+        from = afterHop;
+        remaining = horizDist(from, goal);
+
+        if (leg.status === 'UNSUPPORTED') break; // legacy fallback handles it
+
+        // HAZARD: server aborted the path because the body hit water/suffocation. Try a
+        // lateral hop (perpendicular to travel) to skirt the hazard, then resume forward.
+        if (leg.hazard && moved < 1.0) {
+          const lateral = { x: -dz / len, z: dx / len }; // unit perpendicular
+          for (const s of [1, -1]) {
+            const side = {
+              x: Math.floor(from.x + lateral.x * s * 4) + 0.5,
+              y: goal.y,
+              z: Math.floor(from.z + lateral.z * s * 4) + 0.5,
+            };
+            const sideLeg = await runPathLeg(harness, actorName, side, { ...opts, timeoutMs: 5000 });
+            actions.push({ walkPathHopSide: { status: sideLeg.status, reason: sideLeg.reason, to: side } });
+            const afterSide = posFromObserve(await cap.observe(actorName)) || from;
+            if (horizDist(from, afterSide) > 1.0) { from = afterSide; remaining = horizDist(from, goal); break; }
+          }
+          // If we couldn't skirt, report honestly so the caller invalidates the target.
+          if (horizDist(beforeHop, from) < 1.0) {
+            countMetric(METRIC.GOAL_ABANDON, { actor: actorName, reason: 'hop_hazard_stuck' });
+            return {
+              success: false,
+              reason: leg.reason || 'stuck',
+              steps: actions.length,
+              final_distance: remaining,
+              recoverTeleport: false,
+              navigator: 'walk_path_hops',
+              actions,
+              ...from,
+            };
+          }
+          continue; // resumed forward progress after skirting hazard
+        }
+
+        // REAL STUCK: hop neither arrived nor moved. Honest failure.
+        if (leg.status !== 'ARRIVED' && moved < 1.0) {
           countMetric(METRIC.GOAL_ABANDON, { actor: actorName, reason: 'out_of_path_range_stuck' });
           return {
             success: false,
-            reason: 'stuck',
+            reason: leg.reason || 'stuck',
             steps: actions.length,
-            final_distance: horizDist(from, goal),
+            final_distance: remaining,
             recoverTeleport: false,
             navigator: 'walk_path_hops',
             actions,
             ...from,
           };
         }
-        from = posFromObserve(await cap.observe(actorName)) || from;
-        remaining = horizDist(from, goal);
+        // Otherwise: arrived OR moved-partially → loop continues from `from` (progress kept).
       }
       cur = from;
     }

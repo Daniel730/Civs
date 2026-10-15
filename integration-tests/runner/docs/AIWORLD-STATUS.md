@@ -1,4 +1,13 @@
 # AI World — Status (honest, measured) — UPDATED 2026-08-13
+> **⚠️ ATUALIZAÇÃO 2026-08-18 (Daniel):** este doc é HISTÓRICO, não verdades absolutas.
+> Pontos que ficaram STALE desde 2026-08-13 e foram corrigidos no código:
+> - **Ports:** o doc diz RCON `127.0.0.1:25575` / MC `192.168.152.149:25565`. **ERRADO.**
+>   O código (`village-worker.js` 159-164, `harness.js` 54) usa **RCON 25576 / MC 25566**.
+>   25575 era de um perfil bot-server e "silently breaks" (comentário do código).
+> - **Suite:** doc diz `npm run test:nightshift-unit` 131/131. **AGORA:** `npm run test:unit` **368/368** (2026-08-18).
+> - **Teleport:** doc implica teleport-home aprovado. **REVERTIDO** em Fase 1/1.5 (commits
+>   efb4f9e1 + 1da7ce79): spawn teleport e returnTeleport REMOVIDOS. Steve é player-like.
+> - Veja `docs/AIWORLD-INDEX.md` para o estado CURRENT consolidado.
 
 Branch local: `fix/camera-observation-alex-steve`. Two Hermes agents work in back-and-forth:
 **brain agent** (cognition/memory/learning) and **body agent** (locomotion/objective-selector).

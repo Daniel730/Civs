@@ -153,6 +153,12 @@ class SurvivalMonitor {
       };
     }
     if (d.in_lava === true) threats.push('lava');
+    // F2 (2026-08-19): suffocation (head wedged in a block) is a hard survival hazard — the body
+    // takes damage every tick it stays. The observe payload carries last_damage_cause ('Suffocating');
+    // classify it so the NPC ESCAPES (moves out) instead of being logged as low_health and healing
+    // in place (which did nothing and let it die — qa13 showed 238x 'Suffocating').
+    const cause0 = bucketCause(d.last_damage_cause);
+    if (cause0 === 'suffocating' || d.suffocating === true) threats.push('suffocating');
     if (pct <= this.cfg.criticalHealthPct) threats.push('critical_health');
     if (Number.isFinite(Number(d.remaining_air)) && Number(d.remaining_air) < this.cfg.lowAir) {
       threats.push('drowning');

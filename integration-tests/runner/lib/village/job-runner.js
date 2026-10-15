@@ -27,6 +27,20 @@
  * worker must survive restarts mid-job (continuity requirement from the user).
  */
 
+// C1 (2026-08-18): log when a site is invalidated after repeated nav failures.
+function logNavBlock(siteKey, fails) {
+  // ctx.log may be undefined in unit tests — guard.
+  if (typeof logNavBlock._log === 'function') {
+    logNavBlock._log({
+      status: 'WARN',
+      action: 'nav_site_blocked',
+      site: siteKey,
+      fails,
+      reason: 'walk_path stalled 3x -> site invalidated (anti-circle)',
+    });
+  }
+}
+
 // ---- Step executors (atomic actions) ----------------------------------------------
 
 const { planBlueprint, compileBlueprint, expandPlacementOrder } = require('../village/construction');
@@ -124,8 +138,19 @@ async function execPlace(harness, actorName, step, ctx) {
 }
 
 async function execGather(harness, actorName, step, ctx) {
-  const { applyObserve, diffInventory, buildGatherEvent } = ctx.helpers;
+  const { applyObserve, diffInventory, buildGatherEvent, checkTool } = ctx.helpers;
   const { x, y, z } = step;
+  // D2 (2026-08-18): a block only drops with the correct tool. Verify BEFORE breaking so we
+  // don't punch bare-handed (no drop) or with the wrong item. If tool is missing, signal
+  // RECOVERY so the worker fetches/equips/crafts it (the "doesn't know if it's droppable" bug).
+  if (checkTool && step.target) {
+    const verdict = checkTool(ctx.held, step.target);
+    if (!verdict.matched) {
+      ctx.state.needsTool = { job: step.job || 'gather', target: step.target, expectedTool: verdict.expectedTool, action: verdict.action || 'fetch_or_craft' };
+      ctx.log({ kind: 'tool_check', action: 'tool_check', actor: actorName, job: step.job, target: step.target, ...verdict });
+      return { ok: false, reason: 'tool_missing_for_drop', verdict };
+    }
+  }
   const obsBefore = await harness.cap.observe(actorName);
   const invBefore = applyObserve(obsBefore);
   const gPos = obsBefore && obsBefore.data ? { x: obsBefore.data.x, y: obsBefore.data.y, z: obsBefore.data.z } : null;
@@ -173,8 +198,13 @@ function planGather(ctx) {
     const ang = ((state.tick || 0) * 1.7 + t * 1.57) % (Math.PI * 2);
     const gx = Math.floor(cfg.origin.x + Math.cos(ang) * (8 + t * 2));
     const gz = Math.floor(cfg.origin.z + Math.sin(ang) * (8 + t * 2));
+    const target = targets[t % targets.length];
     steps.push({ type: 'walk', to: { x: gx, y: groundY + 1, z: gz }, opts: { arrive: 2.5, timeoutMs: 6000, speed: 4.5 } });
-    steps.push({ type: 'gather', x: gx, y: groundY, z: gz, job: 'gather' });
+    // D1 (2026-08-18): verify the right tool is in hand BEFORE breaking. If checkTool fails
+    // the runner records needsTool (fetch/equip/craft) and the worker resolves it instead of
+    // punching the block bare-handed / with the wrong item (the "bonus chest in hand" bug).
+    steps.push({ type: 'tool_check', target });
+    steps.push({ type: 'gather', x: gx, y: groundY, z: gz, job: 'gather', target });
   }
   return steps;
 }
@@ -207,6 +237,8 @@ async function planMiner(ctx) {
     const { x, y, z } = fb.data.nearest;
     return [
       { type: 'walk', to: { x, y, z }, opts: { arrive: 2.5, timeoutMs: 6000, speed: 4.5 } },
+      // D1 (2026-08-18): ensure correct tool in hand before breaking (no bare-hand punching).
+      { type: 'tool_check', target: material },
       { type: 'break', x, y, z, material },
     ];
   }
@@ -274,6 +306,57 @@ const PLAN_REGISTRY = {
   builder: planBuilder,
 };
 
+// ---- Physical-safety guard (P0.1, 2026-08-18) ------------------------------------
+// Inspects the actor's body BEFORE any world-mutating step (break/place/gather/craft).
+// If the body is not in a valid standable state (airborne with no support, or not
+// grounded), the job must NOT execute world edits — it must enter RECOVERY instead.
+// This is defense-in-depth: even if navigation produces a bad target Y, place/break can
+// never run from an invalid airborne position (no more floating houses / air terraforming).
+const WORLD_MUTATING = new Set(['break', 'place', 'gather', 'craft']);
+
+async function inspectBody(harness, actorName) {
+  const ob = await harness.cap.observe(actorName).catch(() => null);
+  const d = (ob && ob.data) || {};
+  const x = d.x, y = d.y, z = d.z;
+  const inWater = !!(d.in_water === true || d.head_in_water === true || d.block_below === 'WATER' || d.block_feet === 'WATER');
+  if (typeof x !== 'number' || typeof y !== 'number' || typeof z !== 'number') {
+    // Cannot determine position → do NOT block (best-effort, let survival handle).
+    return { ok: false, standable: true, airborne: false, reason: 'observe_failed', pos: null };
+  }
+  // FASE 1 (2026-08-18): trust the server's own physics report from `observe` instead of
+  // probing with `execute if block` (which is BROKEN on CivsTestHarness — it always returns
+  // "Test passed", so every column looked like air and Steve was perpetually flagged
+  // airborne). The harness observe payload carries the ground truth:
+  //   on_ground (bool), block_below (material string), block_feet (material string).
+  // Standable = server says on_ground OR there is a solid (non-air) block directly below feet.
+  const onGround = d.on_ground === true;
+  const below = String(d.block_below || '').toUpperCase();
+  const feet = String(d.block_feet || '').toUpperCase();
+  const head = String(d.block_head || d.head_block || '').toUpperCase();
+  const supportSolid = below !== '' && below !== 'AIR' && below !== 'CAVE_AIR' && below !== 'VOID_AIR';
+  const feetClear = feet === '' || feet === 'AIR' || feet === 'CAVE_AIR' || feet === 'VOID_AIR';
+  // E1 (2026-08-18): a solid block at head height = suffocation risk. The server reports
+  // block_head / head_block; if present and not air, the body is wedged (e.g. walked into a
+  // 1-high gap under a solid block). Flag non-standable so the job enters RECOVERY and the
+  // NPC moves out instead of suffocating ("se enfia em lugares rasos e morre sufocado").
+  // NOTE: CivsTestHarness observe does NOT emit block_head/head_block. It DOES emit
+  // last_damage_cause ('Suffocating' when wedged) -> use that as the suffocation signal.
+  const headSolid = head !== '' && head !== 'AIR' && head !== 'CAVE_AIR' && head !== 'VOID_AIR';
+  const lastDmgSuffocate = String(d.last_damage_cause || '').toUpperCase().includes('SUFFOCAT');
+  const suffocating = headSolid || lastDmgSuffocate;
+  const standable = onGround || (supportSolid && feetClear);
+  return {
+    ok: true,
+    pos: { x, y, z },
+    standable: standable && !suffocating,
+    grounded: onGround,
+    airborne: !standable,
+    suffocating,
+    inWater,
+    reason: !standable ? 'body_not_standable' : (suffocating ? 'head_blocked_suffocation' : null),
+  };
+}
+
 // ---- Runner -------------------------------------------------------------------------
 
 /**
@@ -283,6 +366,7 @@ const PLAN_REGISTRY = {
 async function runJobStep(harness, actorName, step, state, ctx) {
   const budgetMs = ctx.budgetMs || 1500;
   const start = Date.now();
+  if (ctx && typeof ctx.log === 'function') logNavBlock._log = ctx.log;
 
   // Lazily build the step list if this is a fresh job (or the job type changed).
   if (!state.activeJob || state.activeJob.job !== step.job || state.activeJob.stepKey !== (step.site || step.label)) {
@@ -302,9 +386,44 @@ async function runJobStep(harness, actorName, step, state, ctx) {
       aj.cursor++;
       continue;
     }
+    // P0.1 (2026-08-18): PHYSICS GUARD. No world-mutating step may run from an invalid
+    // airborne body. inspectBody() checks feet/support/head; if not standable, we refuse
+    // the edit and signal RECOVERY so survival/navigation can fix the body position first.
+    // Walk is explicitly allowed — it IS the recovery path. (Defense-in-depth: even a bad
+    // navigation target Y can never produce a floating-house / air-terraform edit.)
+    if (WORLD_MUTATING.has(st.type)) {
+      const body = await inspectBody(harness, actorName);
+      if (!body.ok || !body.standable) {
+        return {
+          status: 'RECOVERY',
+          done: false,
+          cursor: aj.cursor,
+          steps: aj.steps,
+          results: results.concat([{ step: st, ok: false, reason: 'actor_not_physically_valid', body }]),
+          reason: 'actor_not_physically_valid',
+        };
+      }
+    }
     try {
       const r = await exec(harness, actorName, st, ctx);
       results.push({ step: st, ok: r.ok, result: r.result });
+      // C1 (2026-08-18): track walk failures per site so we can invalidate unreachable
+      // waypoints instead of re-issuing them (the "walks in circles" bug). Only count real
+      // navigation failures, not transient/physics-guard refusals.
+      if (st.type === 'walk' && !r.ok) {
+        const reason = (r.result && r.result.walk && r.result.walk.reason) || '';
+        const isNavFail = /walk_threw|stuck|no_path|start_not_standable|timeout/.test(reason);
+        if (isNavFail) {
+          const siteKey = step.site || step.label || 'unknown';
+          state.siteFails = state.siteFails || {};
+          state.siteFails[siteKey] = (state.siteFails[siteKey] || 0) + 1;
+          if (state.siteFails[siteKey] >= 3) {
+            state.blocked = state.blocked || {};
+            state.blocked[siteKey] = true;
+            logNavBlock(siteKey, state.siteFails[siteKey]);
+          }
+        }
+      }
       if (r.done) { aj.cursor = aj.steps.length; break; }
       if (r.setCursor != null) { aj.cursor = r.setCursor; continue; }
       aj.cursor++;
@@ -330,5 +449,7 @@ module.exports = {
   JobRunner: { runJobStep, PLAN_REGISTRY },
   planGather,
   planTorch,
+  inspectBody,
+  execGather,
   STEP_EXECUTORS,
 };
