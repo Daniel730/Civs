@@ -99,14 +99,8 @@ async function sleep(ms) {
   return new Promise((r) => setTimeout(r, ms));
 }
 
-/** Clear head+feet air at an approach tile without cutting the floor. */
-async function clearFooting(harness, x, y, z) {
-  const ix = Math.floor(x);
-  const iy = Math.floor(y);
-  const iz = Math.floor(z);
-  await harness.raw(`setblock ${ix} ${iy} ${iz} air`);
-  await harness.raw(`setblock ${ix} ${iy + 1} ${iz} air`);
-}
+// clearFooting removed (M2 #66): no setblock air. walkTo handles obstruction via its own
+// teleport recovery; the actor approaches on natural terrain instead of clearing it.
 
 /** Honest stockpile fills ONLY for Civs placeregion founding (#66 exception). */
 async function stockpile(harness, x, y, z, profile) {
@@ -114,29 +108,25 @@ async function stockpile(harness, x, y, z, profile) {
 }
 
 /**
- * Place one blueprint block via capability. Prefer place_block; setblock only for
- * slabs/paths/fences the capability cannot place — never pre-clear the ground pad.
+ * Place one blueprint block via capability ONLY (M2 #66). The material MUST already
+ * be in the actor's own inventory (collected/crafted). No give, no setblock fallback,
+ * no pre-clear of the target cell. If place_block fails, report honest failure.
  */
 async function placeAesthetic(harness, actorName, block) {
   const mat = block.material;
-  // Paths replace surface; walls/roof need empty air — clear only the target cell if not path
-  if (block.role !== 'path') {
-    await harness.raw(`setblock ${block.x} ${block.y} ${block.z} air`);
-  }
-  await harness.cap.giveItem(actorName, mat.toUpperCase(), 8);
   await harness.cap.lookAt(actorName, block.x, block.y, block.z);
   const pl = await harness.cap.placeBlock(actorName, block.x, block.y, block.z, mat);
   if (pl && pl.success) {
     await harness.cap.swing(actorName);
     return { via: 'place_block', ...pl, material: mat, role: block.role };
   }
-  await harness.raw(`setblock ${block.x} ${block.y} ${block.z} ${mat}`);
   await harness.cap.swing(actorName);
   return {
-    via: 'setblock',
-    success: true,
+    via: 'place_block',
+    success: false,
     material: mat,
     role: block.role,
+    reason: pl && pl.reason ? pl.reason : 'cap_place_failed',
     x: block.x,
     y: block.y,
     z: block.z,
@@ -156,9 +146,9 @@ async function runJob(harness, actorName, step, state) {
     policy: 'playerlike_v1',
   };
 
-  // Creative ONLY for Civs founding stockpile (build-reqs). All other jobs: survival.
-  const founding = step.job === 'placeregion';
-  await harness.raw(`gamemode ${founding ? 'creative' : 'survival'} ${actorName}`);
+  // M2 #66: actor stays in survival for ALL jobs including founding. The stockpile
+  // fill uses server setblock (documented exception for cv placeregion only); the
+  // actor's gamemode does not gate those RCON commands, so no creative toggle here.
 
   if (step.job === 'placeregion') {
     const px = cfg.origin.x + (step.dx || 0);
@@ -170,7 +160,7 @@ async function runJob(harness, actorName, step, state) {
       harness,
       actorName,
       { x: px + 1, y: py + 1, z: pz + 1 },
-      { clearFooting: (x, y, z) => clearFooting(harness, x, y, z), timeoutMs: 12000 }
+      { timeoutMs: 12000 }
     );
     results.actions.push({ walk });
     await cap.lookAt(actorName, px, py + 1, pz);
@@ -189,7 +179,6 @@ async function runJob(harness, actorName, step, state) {
       ok,
       cheat: 'stockpile_fill_for_civs_founding',
     });
-    await harness.raw(`gamemode survival ${actorName}`);
     if (ok) {
       state.completedPlaces[step.type] = true;
       const exclusiveOther = EXCLUSIVE_PAIRS[step.type];
@@ -223,7 +212,6 @@ async function runJob(harness, actorName, step, state) {
   results.groundY = groundY;
 
   const walk = await walkTo(harness, actorName, stand, {
-    clearFooting: (x, y, z) => clearFooting(harness, x, y, z),
     timeoutMs: 14000,
     stepLen: 0.45,
     pauseMs: 140,
@@ -244,20 +232,15 @@ async function runJob(harness, actorName, step, state) {
     results.actions.push({ look });
   }
 
-  if (step.job === 'miner' || step.job === 'builder' || step.job === 'beautify') {
-    await cap.giveItem(actorName, 'STONE_PICKAXE', 1);
+  // Tools (M2 #66): NO give. Select the held tool if already owned; the actor must
+  // have gathered/crafted it. If missing, the job proceeds tool-less (honest failure).
+  if (step.job === 'miner') {
     await cap.hotbar(actorName, 0);
-  }
-  if (step.job === 'farmer') {
-    await cap.giveItem(actorName, 'IRON_HOE', 1);
+  } else if (step.job === 'farmer') {
     await cap.hotbar(actorName, 0);
-  }
-  if (step.job === 'lumberjack') {
-    await cap.giveItem(actorName, 'IRON_AXE', 1);
+  } else if (step.job === 'lumberjack') {
     await cap.hotbar(actorName, 0);
-  }
-  if (step.job === 'guard') {
-    await cap.giveItem(actorName, 'IRON_SWORD', 1);
+  } else if (step.job === 'guard') {
     await cap.hotbar(actorName, 0);
   }
 
@@ -304,13 +287,11 @@ async function runJob(harness, actorName, step, state) {
     for (const t of targets) {
       if (t.action === 'break') {
         const br = await cap.breakBlock(actorName, t.x, t.y, t.z);
-        if (!br || !br.success) {
-          await harness.raw(`setblock ${t.x} ${t.y} ${t.z} air`);
-        }
-        cleaned.push({ ...t, ok: true });
+        cleaned.push({ ...t, ok: !!(br && br.success) });
       } else if (t.action === 'set_grass') {
-        await harness.raw(`setblock ${t.x} ${t.y} ${t.z} grass_block`);
-        cleaned.push({ ...t, ok: true });
+        // Restore grass via capability break leaves the cell empty; player-like restore
+        // is out of scope for the no-cheat loop — skip the setblock (M2 #66).
+        cleaned.push({ ...t, ok: false, reason: 'no_setblock' });
       }
     }
     await cap.swing(actorName);
@@ -381,10 +362,8 @@ async function connectActor(harness, name) {
     return { actor, ok: false, reason: actor.reason };
   }
   await actor.grantOp();
-  // Spawn-in: brief creative only to land safely, then survival for player-like work.
-  await harness.raw(`gamemode creative ${name}`);
+  // Spawn-in: land at origin (survival only — M2 #66: no creative/gamemode toggle).
   await actor.teleport(cfg.origin.x, cfg.origin.y + 2, cfg.origin.z);
-  await harness.raw(`gamemode survival ${name}`);
   return { actor, ok: true };
 }
 
@@ -393,7 +372,9 @@ async function ensureTown(harness, actorName) {
   const town = await harness.assert.town(cfg.town);
   if (town && town.ok) return { status: 'PASS', town };
   const { x, y, z } = cfg.origin;
-  await harness.raw(`gamemode creative ${actorName}`);
+  // Documented exception (#66): server-side setblock fill for Civs build-reqs only.
+  // No gamemode toggle, no item give/clear/replace — actor stays survival and must
+  // already hold the settlement token to found the town (honest, player-like).
   await stockpile(harness, x, y, z, 'utility');
   // Bookshelves required by council_room build-reqs
   for (const [bx, by, bz] of [
@@ -411,22 +392,15 @@ async function ensureTown(harness, actorName) {
   await harness.raw(`setblock ${x} ${y} ${z} grass_block`);
   await harness.raw(`setblock ${x} ${y + 1} ${z} air`);
   const place = await harness.raw(`cv placeregion ${actorName} council_room ${x} ${y} ${z}`);
-  await harness.raw(`clear ${actorName}`);
-  await harness.raw(`cv give ${actorName} settlement 1`);
-  await harness.raw(`tp ${actorName} ${x + 2} ${y + 1} ${z + 2}`);
   await harness.cap.hotbar(actorName, 0);
-  await harness.raw(
-    `item replace entity ${actorName} weapon.mainhand from entity ${actorName} container.0`
-  );
   await harness.cap.runAs(actorName, `cv town ${cfg.town}`);
   await sleep(400);
-  await harness.raw(`gamemode survival ${actorName}`);
   const again = await harness.assert.town(cfg.town);
   return {
     status: again && again.ok ? 'PASS' : 'FAIL',
     place: String(place || '').slice(0, 160),
     town: again,
-    cheat: 'ensure_town_stockpile_fill',
+    cheat: 'ensure_town_stockpile_fill_only',
   };
 }
 

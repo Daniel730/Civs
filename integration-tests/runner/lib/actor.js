@@ -124,13 +124,10 @@ class RawKeepAliveActor {
         'minecraft.capability': 'place_town',
       },
       async () => {
+        // M2 #66: NO clear / cv give / item replace. The actor must already hold the
+        // town item in its own inventory (collected/crafted) to found the town.
         if (x != null) await this.teleport(x, y != null ? y : 80, z);
-        await this.sendCommand(`clear ${this.name}`);
-        await this.give(townType, 1);
         await this.sendCommand(`test act ${this.name} hotbar 0`);
-        await this.sendCommand(
-          `item replace entity ${this.name} weapon.mainhand from entity ${this.name} container.0`
-        );
         // FACT: /cv town requires CommandSender instanceof Player — RCON `execute as`
         // still fails as non-player for Civs. Use harness run_as (Player.performCommand path).
         return this.sendCommand(`test act ${this.name} run_as cv town ${townName}`);

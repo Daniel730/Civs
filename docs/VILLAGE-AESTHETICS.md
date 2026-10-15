@@ -18,10 +18,13 @@ Bots must look and act like **survival players** on **existing natural terrain**
 
 | Shortcut | When allowed | Why |
 |----------|--------------|-----|
-| Stockpile `fill`/`setblock` | Immediately before `cv placeregion` / `ensureTown` only | Civs build-reqs need in-world block counts |
-| `gamemode creative` | Founding tick only, then back to survival | Needed to place dense stockpile quickly |
+| Stockpile `fill`/`setblock` (server-side) | Immediately before `cv placeregion` / `ensureTown` only | Civs build-reqs need in-world block counts |
 | Soft teleport | `walkTo` recovery (`too_far` / stuck) only | Not normal movement |
-| `setblock` fallback | Slabs/paths/fences when `place_block` fails | Capability honesty limit |
+
+**Removed (M2 #66):** `gamemode creative` toggle for founding, `item replace`, `clear`, and
+`cv give` on the actor. The actor stays in **survival** for every job and must already hold
+any required item (town token, tools) in its **own collected/crafted inventory** — construction
+uses `cap.placeBlock` with material from inventory, never `give`.
 
 Standalone **stockpile work ticks** (fill without placing a region) are **forbidden** — they were the main world-wrecker.
 
@@ -38,7 +41,9 @@ Standalone **stockpile work ticks** (fill without placing a region) are **forbid
 - Floor platforms / 5×5 plank pads under decorative shells
 - Random `place_block` towers or scatter pads
 - Hard `tp` every work tick
-- Creative gamemode for miner/builder/farmer/patrol/beautify
+- Creative gamemode for ANY job (founding included) — actor stays survival
+- `give` / `clear` / `item replace` / `cv give` on the actor (must use own inventory)
+- `setblock` fallback after `place_block` failure (report honest failure instead)
 - Spawning stone/log with `setblock` then `break_block`
 - Placing junk inside Civs region footprints meant for build-reqs
 - Inventing Paper APIs or Mineflayer clients

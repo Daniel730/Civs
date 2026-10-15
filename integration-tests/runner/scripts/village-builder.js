@@ -190,18 +190,13 @@ async function pasteSchem(harness, actor, schem, x, y, z) {
 
 async function preparePad(harness, actor) {
   const { x, y, z } = cfg.origin;
-  const size = 40;
+  // M2 #66: NO terraforming fill / gamemode creative. The builder places regions on
+  // natural terrain (stockpile fill before placeregion is the documented exception).
   await harness.raw(`time set day`);
   await harness.raw(`weather clear`);
-  await harness.raw(`gamemode creative ${actor.name}`);
   await actor.teleport(x, y + 2, z);
-  await harness.raw(`fill ${x - size} ${y} ${z - size} ${x + size} ${y} ${z + size} grass_block`);
-  await harness.raw(`fill ${x - size} ${y + 1} ${z - size} ${x + size} ${y + 8} ${z + size} air`);
-  // Visible border for cinematic
-  await harness.raw(`fill ${x - size} ${y} ${z - size} ${x + size} ${y} ${z - size} stone_bricks`);
-  await harness.raw(`fill ${x - size} ${y} ${z + size} ${x + size} ${y} ${z + size} stone_bricks`);
-  await harness.raw(`say Village pad ready at ${x} ${y} ${z}`);
-  return { x, y, z, size };
+  await harness.raw(`say Village build start at ${x} ${y} ${z}`);
+  return { x, y, z, size: 0 };
 }
 
 async function placeRegionStep(harness, actor, step) {
